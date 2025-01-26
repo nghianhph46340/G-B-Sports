@@ -6,14 +6,12 @@
 
 <script>
 export default {
-    setup () {
-        
+    setup() {
 
+        console.log('TheNoitification');
         return {}
     }
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
