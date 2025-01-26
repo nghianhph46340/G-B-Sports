@@ -2,8 +2,8 @@
     <div class="container mt-3">
         <div class="scoll d-flex align-items-center">
             <marquee class="d-flex align-items-center" width="100%" height="100%"
-                style="background-color: red; height: 50px; color: white; font-size: 18px; " behavior="scroll"
-                direction="">Chào mừng
+                style="background-color: rgb(130, 181, 202); height: 50px; color: white; font-size: 18px; "
+                behavior="scroll" direction="">Chào mừng
                 đã đến với
                 gian hàng của
                 chúng tôi, chúng tôi đang deal
@@ -35,8 +35,14 @@
     </div>
 </template>
 
-<script setup>
-
+<script>
+import { LeftCircleOutlined, RightCircleOutlined } from "@ant-design/icons-vue";
+export default {
+    components: {
+        LeftCircleOutlined,
+        RightCircleOutlined,
+    },
+};
 </script>
 
 <style scoped>

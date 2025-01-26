@@ -137,6 +137,17 @@ const store = useGbStore()
 
 .nav-link:hover {
     text-decoration: underline;
-    transform: matrix(1.1, 0, 0, 1.1, 0, 0);
+    transform: matrix(1.08, 0, 0, 1.08, 0, 0);
+    font-weight: bold;
+}
+
+span {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+p {
+    font-family: Arial, Helvetica, sans-serif;
 }
 </style>
