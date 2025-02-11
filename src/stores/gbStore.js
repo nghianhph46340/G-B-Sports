@@ -11,8 +11,8 @@ export const useGbStore = defineStore('gbStore', {
             check: true,
             language: 'EN',
             status: false,
-            id: 0
-
+            id: 0,
+            checkNoitification: true
         }
     },
     actions: {
@@ -58,6 +58,9 @@ export const useGbStore = defineStore('gbStore', {
         },
         showModalSideBar1(show) {
             this.statusSideBar1 = show
+        },
+        closeNoitification() {
+            this.checkNoitification = false
         }
     }
 })
