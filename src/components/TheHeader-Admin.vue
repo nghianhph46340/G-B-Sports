@@ -65,11 +65,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(sanPham, index) in listSanPham">
+                            <tr v-for="(ctsp, index) in store.getAllChiTietSanPham" :key="ctsp.id_chi_tiet_san_pham">
                                 <th scope="row">{{ index + 1 }}</th>
-                                <td>{{ sanPham.ma_san_pham }}</td>
-
-
+                                <td>Đôn có gì</td>
+                                <td>{{ ctsp.ten_san_pham }}</td>
+                                <td>Đôn có gì</td>
+                                <td>Đôn có gì</td>
+                                <td>{{ ctsp.trang_thai }}</td>
+                                <td>Giới tính</td>
+                                <td>{{ ctsp.ten_chat_lieu }}</td>
+                                <td>{{ ctsp.ten_thuong_hieu }}</td>
+                                <td>{{ ctsp.ten_danh_muc }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -82,14 +88,15 @@
     </a-layout>
 </template>
 <script setup>
+import { useGbStore } from '@/stores/gbStore';
 import { ref } from 'vue';
-import { useGbStore } from '../stores/gbStore';
 import { PieChartOutlined, DesktopOutlined, UserOutlined, TeamOutlined, FileOutlined } from '@ant-design/icons-vue';
+import { onMounted } from 'vue';
+onMounted(() => {
+    store.getAllSP();
+    store.getAllCTSP();
+})
 const store = useGbStore();
-const listSanPham = store.getAllSanPham;
-if (listSanPham.length == 0) {
-    console.log("méo có gì luôn")
-}
 const collapsed = ref(false);
 const selectedKeys = ref(['1']);
 </script>

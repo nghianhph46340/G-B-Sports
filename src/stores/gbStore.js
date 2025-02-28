@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
-import { sanPhamService } from '../services/sanPhamService'
+import { sanPhamService } from '@/services/sanPhamService'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -26,13 +26,14 @@ export const useGbStore = defineStore('gbStore', {
             if (sanPhamRespone.error) {
                 toast.error("Không lấy được dữ liệu")
                 return;
+            } else {
+                this.getAllSanPham = sanPhamRespone;
             }
-            this.getAllSanPham = sanPhamRespone;
+
 
         },
         async getAllCTSP() {
             const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham();
-            console.log(chiTietSanPhamRespone);
             if (chiTietSanPhamRespone.error) {
                 toast.error("Không lấy được dữ liệu")
                 return;

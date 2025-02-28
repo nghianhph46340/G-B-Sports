@@ -20,13 +20,14 @@ const getAllChiTietSanPham = async () => {
     try {
         const { data } = await axiosInstance.get(qlsp + 'getAllCTSP');
         console.log(qlsp + 'getAllCTSP');
-        console.log(data);
+        console.log(data.data);
         return data;
     } catch (error) {
         console.log(error);
         console.log('Không lấy được danh sách chi tiết sản phẩm');
     }
 }
+
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham
