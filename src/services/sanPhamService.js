@@ -12,8 +12,6 @@ const getAllSanPham = async () => {
         console.log('Không lấy được danh sách sản phẩm')
     }
 
-
-
 }
 
 const getAllChiTietSanPham = async () => {

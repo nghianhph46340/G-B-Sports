@@ -86,10 +86,8 @@ import { ref } from 'vue';
 import { useGbStore } from '../stores/gbStore';
 import { PieChartOutlined, DesktopOutlined, UserOutlined, TeamOutlined, FileOutlined } from '@ant-design/icons-vue';
 const store = useGbStore();
-const listSanPham = store.getAllSanPham;
-if (listSanPham.length == 0) {
-    console.log("méo có gì luôn")
-}
+const listSanPham = store.ge;
+
 const collapsed = ref(false);
 const selectedKeys = ref(['1']);
 </script>
