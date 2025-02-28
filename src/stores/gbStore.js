@@ -1,8 +1,8 @@
-// import { gbService } from '@/services/gbService'
+
 import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
-
+import { sanPhamService } from '../services/sanPhamService'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -12,11 +12,32 @@ export const useGbStore = defineStore('gbStore', {
             language: 'EN',
             status: false,
             id: 0,
-            checkNoitification: true
+            checkNoitification: true,
+            getAllSanPham: [],
+            getAllChiTietSanPham: []
         }
     },
     actions: {
         //Viết các hàm action
+        async getAllSP() {
+            const sanPhamRespone = await sanPhamService.getAllSanPham();
+            console.log(sanPhamRespone);
+            if (sanPhamRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            }
+            this.getAllSanPham = sanPhamRespone;
+
+        },
+        async getAllCTSP() {
+            const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham();
+            console.log(chiTietSanPhamRespone);
+            if (chiTietSanPhamRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            }
+            this.getAllChiTietSanPham = chiTietSanPhamRespone;
+        },
         getLangue(check) {
             const vni = {
                 "nguoiDung": "Đăng nhập",

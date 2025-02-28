@@ -1,7 +1,9 @@
 <template>
     <a-layout style="min-height: 100vh">
         <a-layout-sider v-model:collapsed="collapsed" collapsible>
-            <div class="logo" />
+            <div class="logo" style="text-align: center;">
+                <img class="w-75" src="../images/logo/logoGB2.png" alt="Logo" />
+            </div>
             <a-menu v-model:selectedKeys="selectedKeys" theme="dark" mode="inline">
                 <a-menu-item key="1">
                     <pie-chart-outlined />
@@ -46,17 +48,48 @@
                     <a-breadcrumb-item>Bill</a-breadcrumb-item>
                 </a-breadcrumb>
                 <div :style="{ padding: '24px', background: '#fff', minHeight: '360px' }">
-                    Bill is a cat.
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">STT</th>
+                                <th scope="col">Mã sản phẩm</th>
+                                <th scope="col">Tên sản phẩm</th>
+                                <th scope="col">Hình ảnh</th>
+                                <th scope="col">Mô tả</th>
+                                <th scope="col">Trạng thái</th>
+                                <th scope="col">Giới tính</th>
+                                <th scope="col">Chất liệu</th>
+                                <th scope="col">Thương hiệu</th>
+                                <th scope="col">Danh mục</th>
+                                <th scope="col">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(sanPham, index) in listSanPham">
+                                <th scope="row">{{ index + 1 }}</th>
+                                <td>{{ sanPham.ma_san_pham }}</td>
+
+
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </a-layout-content>
             <a-layout-footer style="text-align: center">
-                Ant Design ©2018 Created by Ant UED
+                G-B Sports ©2024 Created by GB-Sports
             </a-layout-footer>
         </a-layout>
     </a-layout>
 </template>
 <script setup>
 import { ref } from 'vue';
+import { useGbStore } from '../stores/gbStore';
+import { PieChartOutlined, DesktopOutlined, UserOutlined, TeamOutlined, FileOutlined } from '@ant-design/icons-vue';
+const store = useGbStore();
+const listSanPham = store.getAllSanPham;
+if (listSanPham.length == 0) {
+    console.log("méo có gì luôn")
+}
 const collapsed = ref(false);
 const selectedKeys = ref(['1']);
 </script>

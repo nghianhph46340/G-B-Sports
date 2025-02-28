@@ -6,7 +6,7 @@ const routes = [...home, ...admin];
 
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 
