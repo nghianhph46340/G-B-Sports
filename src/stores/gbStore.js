@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
 import { sanPhamService } from '@/services/sanPhamService'
+import { useRoute } from 'vue-router'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -14,21 +15,45 @@ export const useGbStore = defineStore('gbStore', {
             id: 0,
             checkNoitification: true,
             getAllSanPham: [],
-            getAllChiTietSanPham: []
+            getAllChiTietSanPham: [],
+            // menuKeyMap: {
+            //     1: "/admin",
+            //     3: "/admin/quanlysanpham",
+            //     4: "/admin/sanpham",
+            //     5: "/admin/thuonghieu",
+            //     6: "/admin/danhmuc",
+            //     7: "/admin/thuoc-tinh"
+            // },
+            checkRouter: ''
         }
     },
     actions: {
         //Viết các hàm action
+        // getKeyByPath(key) {
+        //     // const route = useRoute();
+        //     for (let index = 0; index < this.menuKeyMap.length; index++) {
+        //         if (key === this.menuKeyMap[key]) {
+        //             this.checkRouter = key
+        //         }
+        //     }
+        // },
+        getPath(path) {
+            this.checkRouter = path
+        },
         async getAllSP() {
-            const sanPhamRespone = await sanPhamService.getAllSanPham();
-            console.log(sanPhamRespone);
-            console.log(sanPhamRespone);
-            if (sanPhamRespone.error) {
-                toast.error("Không lấy được dữ liệu")
-                return;
+            if (this.getAllChiTietSanPham.length === 0) {
+                const sanPhamRespone = await sanPhamService.getAllSanPham();
+                console.log(sanPhamRespone);
+                if (!sanPhamRespone || sanPhamRespone.error) {
+                    toast.error("Không lấy được dữ liệu")
+                    return;
+                } else {
+                    this.getAllSanPham = sanPhamRespone;
+                }
             } else {
-                this.getAllSanPham = sanPhamRespone;
+                toast.error("Bị lấy dữ liệu nhiều lần")
             }
+
 
 
         },
@@ -66,7 +91,6 @@ export const useGbStore = defineStore('gbStore', {
             }
         },
         showModal(show) {
-
             this.status = show
         },
         showModalSideBar(id) {

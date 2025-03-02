@@ -4,8 +4,6 @@ const qlsp = 'admin/quan_ly_san_pham/'
 const getAllSanPham = async () => {
     try {
         const { data } = await axiosInstance.get(qlsp + 'SanPham');
-        console.log(qlsp + 'SanPham');
-        console.log(data.data);
         return data;
     } catch (error) {
         console.log(error);
@@ -19,8 +17,6 @@ const getAllSanPham = async () => {
 const getAllChiTietSanPham = async () => {
     try {
         const { data } = await axiosInstance.get(qlsp + 'getAllCTSP');
-        console.log(qlsp + 'getAllCTSP');
-        console.log(data.data);
         return data;
     } catch (error) {
         console.log(error);
