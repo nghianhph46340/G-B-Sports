@@ -21,8 +21,6 @@ export const useGbStore = defineStore('gbStore', {
         //Viết các hàm action
         async getAllSP() {
             const sanPhamRespone = await sanPhamService.getAllSanPham();
-            console.log(sanPhamRespone);
-            console.log(sanPhamRespone);
             if (sanPhamRespone.error) {
                 toast.error("Không lấy được dữ liệu")
                 return;
