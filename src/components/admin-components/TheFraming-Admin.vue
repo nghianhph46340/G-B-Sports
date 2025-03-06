@@ -6,7 +6,7 @@
             </div>
 
             <a-menu v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
-                <a-menu-item key="1" @click="changeRoute('/admin')">
+                <a-menu-item key="1" @click="changeRoute('/admin');">
                     <HomeOutlined />
                     <span>Bán hàng</span>
                 </a-menu-item>
@@ -21,7 +21,7 @@
                             <span>Sản phẩm</span>
                         </span>
                     </template>
-                    <a-menu-item key="3" @click="changeRoute('/admin/quanlysanpham')">Tất cả
+                    <a-menu-item key="3" @click="changeRoute('/admin/quanlysanpham');">Tất cả
                         sản
                         phẩm</a-menu-item>
                     <a-menu-item key="4">Sản phẩm</a-menu-item>
@@ -89,33 +89,58 @@ import { useRouter } from 'vue-router';
 import TheAvatarAdmin from './TheAvatar-Admin.vue';
 import TheSearchAdmin from './TheSearch-Admin.vue';
 import { useGbStore } from '@/stores/gbStore';
+import { useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 const store = useGbStore();
 const collapsed = ref(false);
-const selectedKeys = ref(['1']);
+const selectedKeys = ref([store.indexMenu]);
+console.log(selectedKeys);
 const pageTitle = ref('Bán hàng');
 const changeRoute = (path) => {
-    console.log(path);
-    router.push(path);
     store.getPath(path);
+    store.getIndex(path);
+    router.push(path);
+    console.log(store.checkRouter);
+    // let paths = router.path;
     switch (path) {
         case '/admin':
             pageTitle.value = 'Bán hàng';
             break;
-
         case '/admin/quanlysanpham':
             pageTitle.value = 'Sản phẩm';
             break;
-
         default:
             pageTitle.value = 'Bán hàng';
             break;
 
     }
 };
+// const getIndexPath = () => {
+//     const paths = route.path;
+//     console.log(paths + 'patchGetIndex');
+//     switch (paths) {
+//         case '/admin':
+//             selectedKeys.value = ['1'];
+//             break;
+
+//         case '/admin/quanlysanpham':
+//             selectedKeys.value = ['3'];
+//             break;
+
+//         default:
+//             selectedKeys.value = ['1'];
+//             break;
+
+//     }
+// }
 // watch(() => router.path, (newPath) => {
 //     selectedKeys.value = [getKeyByPath(newPath)];
 // });
+onMounted(() => {
+    store.getIndex(route.path);
+    selectedKeys.value = store.indexMenu;
+})
 </script>
 <style scoped>
 :deep(.ant-menu-item-selected) {
