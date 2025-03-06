@@ -6,13 +6,14 @@
             </div>
 
             <a-menu v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
-                <a-menu-item key="1" @click="changeRoute('/admin');">
-                    <HomeOutlined />
-                    <span>Bán hàng</span>
-                </a-menu-item>
+
                 <a-menu-item key="2">
                     <AreaChartOutlined />
                     <span>Báo cáo thống kê</span>
+                </a-menu-item>
+                <a-menu-item key="1" @click="changeRoute('/admin');">
+                    <HomeOutlined />
+                    <span>Bán hàng</span>
                 </a-menu-item>
                 <a-sub-menu key="sub1">
                     <template #title>
