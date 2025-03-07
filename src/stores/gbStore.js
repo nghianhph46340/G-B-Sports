@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
 import { sanPhamService } from '@/services/sanPhamService'
-import {nhanVienService} from '@/services/nhanVienService'
+import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
@@ -18,6 +18,7 @@ export const useGbStore = defineStore('gbStore', {
             getAllSanPham: [],
             getAllChiTietSanPham: [],
             searchChiTietSanPham: [],
+            getCTSPBySanPhams: [],
             checkRouter: '',
             getImages: [],
             indexMenu: ['1'],
@@ -27,7 +28,7 @@ export const useGbStore = defineStore('gbStore', {
     },
     actions: {
         // GetAll Nhan Vien
-        async getAllNhanVien(){
+        async getAllNhanVien() {
             const nhanVien = await nhanVienService.getAllNhanVien();
             if (nhanVien.error) {
                 toast.error('Không lấy được dữ liệu')
@@ -68,9 +69,28 @@ export const useGbStore = defineStore('gbStore', {
             }
             return getImageRespone
         },
+        //Lấy danh sách chi tiết sản phẩm theo sản phẩm
+        async getCTSPBySanPham(id) {
+            const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id);
+            if (getCTSPBySanPhamRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.getCTSPBySanPhams = getCTSPBySanPhamRespone;
+                try {
+                    const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
+                        const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true);
+                        ctsp.hinh_anh = await images.length > 0 ? images[0].hinh_anh : "Không có ảnh chính"; // Thêm trường hinh_anh vào object ctsp
+                    });
+                    this.getCTSPBySanPhams = await Promise.all(imagePromises);
+                    this.getCTSPBySanPhams = getCTSPBySanPhamRespone;
+                } catch (error) {
+                    console.log(error);
+                }
+            }
 
-        // GetAll San Pham
-
+        },
+        //Lấy danh sách sản phẩm
         async getAllSP() {
             if (this.getAllChiTietSanPham.length === 0) {
                 const sanPhamRespone = await sanPhamService.getAllSanPham();
@@ -85,9 +105,7 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error("Bị lấy dữ liệu nhiều lần")
             }
         },
-
-        // GetAll Chi Tiet San Pham
-
+        //Lấy danh sách chi tiết sản phẩm
         async getAllCTSP() {
             const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham();
             if (chiTietSanPhamRespone.error) {
@@ -107,9 +125,7 @@ export const useGbStore = defineStore('gbStore', {
             }
 
         },
-
-        // Search Chi Tiet San Pham
-
+        //Tìm kiếm chi tiết sản phẩm
         async searchCTSP(search) {
             const chiTietSanPhamRespone = await sanPhamService.searchChiTietSanPham(search);
             if (chiTietSanPhamRespone.error) {

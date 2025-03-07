@@ -4,7 +4,7 @@
             <thead>
                 <tr>
                     <th scope="col">STT</th>
-                    <th scope="col">Tên sản phẩm</th>
+                    <th scope="col">Mã sản phẩm</th>
                     <th scope="col">Hình ảnh</th>
                     <th scope="col">Mô tả</th>
                     <th scope="col">Trạng thái</th>
@@ -20,8 +20,9 @@
             <tbody v-if="store.searchs === ''">
                 <tr v-for="(ctsp, index) in store.getAllChiTietSanPham" :key="ctsp.id_chi_tiet_san_pham">
                     <th scope="row">{{ index + 1 }}</th>
-                    <td>{{ ctsp.ten_san_pham }}</td>
                     <td><img style="width: 40px; height: auto;" :src="ctsp.hinh_anh" alt="sp"></td>
+                    <td>{{ ctsp.ten_san_pham }}</td>
+
                     <td>Đôn có gì</td>
                     <td>
                         <a-switch :checked="ctsp.trang_thai == 'Còn hàng' ? true : false" />
@@ -61,9 +62,24 @@
 
 <script setup>
 import { useGbStore } from '@/stores/gbStore';
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 
 const store = useGbStore();
+
+// Thêm hàm debounce
+const debounce = (fn, delay) => {
+    let timeoutId;
+    return (...args) => {
+        // Hủy timeout cũ nếu có
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        // Tạo timeout mới
+        timeoutId = setTimeout(() => {
+            fn(...args);
+        }, delay);
+    };
+};
 
 const selectColor = (color) => {
     const colors = {
@@ -79,18 +95,34 @@ const selectColor = (color) => {
         'Trắng': 'white',
         'Xám': 'gray',
     };
-
     return colors[color] || 'black'; // Mặc định trả về 'black' nếu không tìm thấy màu
 };
+
 onMounted(async () => {
-    console.log("Component mounted, fetching data...");
-    await store.getAllCTSP();
-    await store.searchCTSP(store.searchs);
-})
-// watch(() => store.searchs, async (newValue) => {
-//     console.log("Tìm kiếm: ", newValue);
-//     await store.searchCTSP(newValue);
-// });
+    try {
+        console.log("Component mounted, fetching data...");
+        await store.getAllCTSP();
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+});
+
+// Áp dụng debounce vào watch function
+watch(
+    () => store.searchs,
+    debounce(async (newValue) => {
+        try {
+            if (newValue) {
+                await store.searchCTSP(newValue);
+            } else {
+                await store.getAllCTSP();
+            }
+        } catch (error) {
+            console.error("Error searching:", error);
+        }
+    }, 300),
+    { immediate: true }
+);
 </script>
 
 <style scoped>
