@@ -1,15 +1,14 @@
 <template>
-    <TheHeaderAdmin />
-    <router-view></router-view>
+    <TheFraming />
 </template>
 
 <script>
-import TheHeaderAdmin from '@/components/TheHeader-Admin.vue';
+import TheFraming from '@/components/admin-components/TheFraming-Admin.vue';
 
 
 export default {
     components: {
-        TheHeaderAdmin
+        TheFraming
     }
 }
 </script>
