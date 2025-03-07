@@ -17,6 +17,7 @@ export const useGbStore = defineStore('gbStore', {
             getAllSanPham: [],
             getAllChiTietSanPham: [],
             searchChiTietSanPham: [],
+            getCTSPBySanPhams: [],
             checkRouter: '',
             getImages: [],
             indexMenu: ['1'],
@@ -54,6 +55,28 @@ export const useGbStore = defineStore('gbStore', {
             }
             return getImageRespone
         },
+        //Lấy danh sách chi tiết sản phẩm theo sản phẩm
+        async getCTSPBySanPham(id) {
+            const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id);
+            if (getCTSPBySanPhamRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.getCTSPBySanPhams = getCTSPBySanPhamRespone;
+                try {
+                    const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
+                        const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true);
+                        ctsp.hinh_anh = await images.length > 0 ? images[0].hinh_anh : "Không có ảnh chính"; // Thêm trường hinh_anh vào object ctsp
+                    });
+                    this.getCTSPBySanPhams = await Promise.all(imagePromises);
+                    this.getCTSPBySanPhams = getCTSPBySanPhamRespone;
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+
+        },
+        //Lấy danh sách sản phẩm
         async getAllSP() {
             if (this.getAllChiTietSanPham.length === 0) {
                 const sanPhamRespone = await sanPhamService.getAllSanPham();
@@ -68,6 +91,7 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error("Bị lấy dữ liệu nhiều lần")
             }
         },
+        //Lấy danh sách chi tiết sản phẩm
         async getAllCTSP() {
             const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham();
             if (chiTietSanPhamRespone.error) {
@@ -87,6 +111,7 @@ export const useGbStore = defineStore('gbStore', {
             }
 
         },
+        //Tìm kiếm chi tiết sản phẩm
         async searchCTSP(search) {
             const chiTietSanPhamRespone = await sanPhamService.searchChiTietSanPham(search);
             if (chiTietSanPhamRespone.error) {

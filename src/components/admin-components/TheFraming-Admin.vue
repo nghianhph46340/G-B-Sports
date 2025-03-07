@@ -9,7 +9,7 @@
 
                 <a-menu-item key="2">
                     <AreaChartOutlined />
-                    <span>Báo cáo thống kê</span>
+                    <span>Thống kê</span>
                 </a-menu-item>
                 <a-menu-item key="1" @click="changeRoute('/admin');">
                     <HomeOutlined />
@@ -147,12 +147,12 @@ onMounted(() => {
 :deep(.ant-menu-item-selected) {
     box-shadow: 0 0 1px rgba(0, 0, 0, 0.6);
     border-radius: 5px;
-    background-color: #7D3C98 !important;
+    background-color: #343434 !important;
     color: white !important;
 }
 
 :deep(.ant-menu-light .ant-menu-submenu-selected>.ant-menu-submenu-title) {
-    color: #7D3C98 !important;
+    color: #030303 !important;
 }
 
 #components-layout-demo-sider .logo {
