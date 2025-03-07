@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
 import { sanPhamService } from '@/services/sanPhamService'
+import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
@@ -21,10 +22,20 @@ export const useGbStore = defineStore('gbStore', {
             checkRouter: '',
             getImages: [],
             indexMenu: ['1'],
-            searchs: ''
+            searchs: '',
+            getAllNhanVienArr: []
         }
     },
     actions: {
+        // GetAll Nhan Vien
+        async getAllNhanVien() {
+            const nhanVien = await nhanVienService.getAllNhanVien();
+            if (nhanVien.error) {
+                toast.error('Không lấy được dữ liệu')
+                return;
+            }
+            this.getAllNhanVienArr = nhanVien;
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path
@@ -44,6 +55,9 @@ export const useGbStore = defineStore('gbStore', {
 
             }
         },
+
+        // Lấy ảnh sản phẩm
+
         async getImage(id, anhChinh) {
             const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh);
 

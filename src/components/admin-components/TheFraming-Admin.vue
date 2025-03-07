@@ -34,10 +34,6 @@
                     <AccountBookOutlined />
                     <span>Hóa đơn</span>
                 </a-menu-item>
-                <a-menu-item key="9">
-                    <SolutionOutlined />
-                    <span>Nhân viên</span>
-                </a-menu-item>
                 <a-sub-menu key="sub2">
                     <template #title>
                         <span>
@@ -45,7 +41,7 @@
                             <span>Tài khoản</span>
                         </span>
                     </template>
-                    <a-menu-item key="10">Nhân viên</a-menu-item>
+                    <a-menu-item key="10" @click="changeRoute('/admin/quanlynhanvien');">Nhân viên</a-menu-item>
                     <a-menu-item key="11">Khách hàng</a-menu-item>
                 </a-sub-menu>
                 <a-menu-item key="12">
@@ -110,6 +106,9 @@ const changeRoute = (path) => {
             break;
         case '/admin/quanlysanpham':
             pageTitle.value = 'Sản phẩm';
+            break;
+        case '/admin/quanlynhanvien':
+            pageTitle.value = 'Nhân viên';
             break;
         default:
             pageTitle.value = 'Bán hàng';
