@@ -49,6 +49,9 @@ export const useGbStore = defineStore('gbStore', {
                 case '/admin/quanlysanpham':
                     this.indexMenu = ['3'];
                     break;
+                case '/admin/quanlynhanvien':
+                    this.indexMenu = ['10'];
+                    break;
                 default:
                     this.indexMenu = ['1'];
                     break;
