@@ -44,11 +44,18 @@ const getImageInCTSP = async (id, anhChinh) => {
         // toast.error('Không lấy được hình anh')
     }
 }
-
-
+const getCTSPBySanPham = async (id) => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'CTSPTheoSanPham?id=' + id);
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
     getImageInCTSP,
-    searchChiTietSanPham
+    searchChiTietSanPham,
+    getCTSPBySanPham
 }
