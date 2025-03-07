@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
 import { sanPhamService } from '@/services/sanPhamService'
+import {nhanVienService} from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
@@ -20,10 +21,20 @@ export const useGbStore = defineStore('gbStore', {
             checkRouter: '',
             getImages: [],
             indexMenu: ['1'],
-            searchs: ''
+            searchs: '',
+            getAllNhanVienArr: []
         }
     },
     actions: {
+        // GetAll Nhan Vien
+        async getAllNhanVien(){
+            const nhanVien = await nhanVienService.getAllNhanVien();
+            if (nhanVien.error) {
+                toast.error('Không lấy được dữ liệu')
+                return;
+            }
+            this.getAllNhanVienArr = nhanVien;
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path
@@ -43,6 +54,9 @@ export const useGbStore = defineStore('gbStore', {
 
             }
         },
+
+        // Lấy ảnh sản phẩm
+
         async getImage(id, anhChinh) {
             const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh);
 
@@ -54,6 +68,9 @@ export const useGbStore = defineStore('gbStore', {
             }
             return getImageRespone
         },
+
+        // GetAll San Pham
+
         async getAllSP() {
             if (this.getAllChiTietSanPham.length === 0) {
                 const sanPhamRespone = await sanPhamService.getAllSanPham();
@@ -68,6 +85,9 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error("Bị lấy dữ liệu nhiều lần")
             }
         },
+
+        // GetAll Chi Tiet San Pham
+
         async getAllCTSP() {
             const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham();
             if (chiTietSanPhamRespone.error) {
@@ -87,6 +107,9 @@ export const useGbStore = defineStore('gbStore', {
             }
 
         },
+
+        // Search Chi Tiet San Pham
+
         async searchCTSP(search) {
             const chiTietSanPhamRespone = await sanPhamService.searchChiTietSanPham(search);
             if (chiTietSanPhamRespone.error) {
