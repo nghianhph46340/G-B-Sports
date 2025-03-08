@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
 import { sanPhamService } from '@/services/sanPhamService'
+import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
@@ -16,30 +17,83 @@ export const useGbStore = defineStore('gbStore', {
             checkNoitification: true,
             getAllSanPham: [],
             getAllChiTietSanPham: [],
-            // menuKeyMap: {
-            //     1: "/admin",
-            //     3: "/admin/quanlysanpham",
-            //     4: "/admin/sanpham",
-            //     5: "/admin/thuonghieu",
-            //     6: "/admin/danhmuc",
-            //     7: "/admin/thuoc-tinh"
-            // },
-            checkRouter: ''
+            searchChiTietSanPham: [],
+            getCTSPBySanPhams: [],
+            checkRouter: '',
+            getImages: [],
+            indexMenu: ['1'],
+            searchs: '',
+            getAllNhanVienArr: []
         }
     },
     actions: {
-        //Viết các hàm action
-        // getKeyByPath(key) {
-        //     // const route = useRoute();
-        //     for (let index = 0; index < this.menuKeyMap.length; index++) {
-        //         if (key === this.menuKeyMap[key]) {
-        //             this.checkRouter = key
-        //         }
-        //     }
-        // },
+        // GetAll Nhan Vien
+        async getAllNhanVien() {
+            const nhanVien = await nhanVienService.getAllNhanVien();
+            if (nhanVien.error) {
+                toast.error('Không lấy được dữ liệu')
+                return;
+            }
+            this.getAllNhanVienArr = nhanVien;
+        },
         getPath(path) {
+            this.checkRouter = '';
             this.checkRouter = path
         },
+        getIndex(path) {
+            this.indexMenu = ['1'];
+            switch (path) {
+                case '/admin':
+                    this.indexMenu = ['1'];
+                    break;
+                case '/admin/quanlysanpham':
+                    this.indexMenu = ['3'];
+                    break;
+                case '/admin/quanlynhanvien':
+                    this.indexMenu = ['10'];
+                    break;
+                default:
+                    this.indexMenu = ['1'];
+                    break;
+
+            }
+        },
+
+        // Lấy ảnh sản phẩm
+
+        async getImage(id, anhChinh) {
+            const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh);
+
+            if (getImageRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.getImages = getImageRespone
+            }
+            return getImageRespone
+        },
+        //Lấy danh sách chi tiết sản phẩm theo sản phẩm
+        async getCTSPBySanPham(id) {
+            const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id);
+            if (getCTSPBySanPhamRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.getCTSPBySanPhams = getCTSPBySanPhamRespone;
+                try {
+                    const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
+                        const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true);
+                        ctsp.hinh_anh = await images.length > 0 ? images[0].hinh_anh : "Không có ảnh chính"; // Thêm trường hinh_anh vào object ctsp
+                    });
+                    this.getCTSPBySanPhams = await Promise.all(imagePromises);
+                    this.getCTSPBySanPhams = getCTSPBySanPhamRespone;
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+
+        },
+        //Lấy danh sách sản phẩm
         async getAllSP() {
             if (this.getAllChiTietSanPham.length === 0) {
                 const sanPhamRespone = await sanPhamService.getAllSanPham();
@@ -53,10 +107,8 @@ export const useGbStore = defineStore('gbStore', {
             } else {
                 toast.error("Bị lấy dữ liệu nhiều lần")
             }
-
-
-
         },
+        //Lấy danh sách chi tiết sản phẩm
         async getAllCTSP() {
             const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham();
             if (chiTietSanPhamRespone.error) {
@@ -64,6 +116,37 @@ export const useGbStore = defineStore('gbStore', {
                 return;
             }
             this.getAllChiTietSanPham = chiTietSanPhamRespone;
+            try {
+                const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
+                    const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true);
+                    ctsp.hinh_anh = await images.length > 0 ? images[0].hinh_anh : "Không có ảnh chính"; // Thêm trường hinh_anh vào object ctsp
+                });
+                this.getAllChiTietSanPham = await Promise.all(imagePromises);
+                this.getAllChiTietSanPham = chiTietSanPhamRespone;
+            } catch (error) {
+                console.log(error);
+            }
+
+        },
+        //Tìm kiếm chi tiết sản phẩm
+        async searchCTSP(search) {
+            const chiTietSanPhamRespone = await sanPhamService.searchChiTietSanPham(search);
+            if (chiTietSanPhamRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            }
+            // this.searchChiTietSanPham = chiTietSanPhamRespone;
+            try {
+                const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
+                    const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true);
+                    ctsp.hinh_anh = await images.length > 0 ? images[0].hinh_anh : "Không có ảnh chính"; // Thêm trường hinh_anh vào object ctsp
+                });
+                this.searchChiTietSanPham = await Promise.all(imagePromises);
+                this.searchChiTietSanPham = chiTietSanPhamRespone;
+            } catch (error) {
+                console.log(error);
+            }
+
         },
         getLangue(check) {
             const vni = {
@@ -109,5 +192,15 @@ export const useGbStore = defineStore('gbStore', {
         closeNoitification() {
             this.checkNoitification = false
         }
+    },
+    persist: {
+        enabled: true,
+        strategies: [
+            {
+                key: 'gbStore', // Tên key lưu trong localStorage
+                storage: localStorage, // Lưu vào localStorage
+                paths: ['checkRouter', 'indexMenu', 'language', 'checkNoitification'] // Chỉ lưu các state này
+            }
+        ]
     }
 })

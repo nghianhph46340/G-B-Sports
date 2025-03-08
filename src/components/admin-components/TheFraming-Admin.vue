@@ -6,13 +6,14 @@
             </div>
 
             <a-menu v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
-                <a-menu-item key="1" @click="changeRoute('/admin')">
-                    <HomeOutlined />
-                    <span>Bán hàng</span>
-                </a-menu-item>
+
                 <a-menu-item key="2">
                     <AreaChartOutlined />
-                    <span>Báo cáo thống kê</span>
+                    <span>Thống kê</span>
+                </a-menu-item>
+                <a-menu-item key="1" @click="changeRoute('/admin');">
+                    <HomeOutlined />
+                    <span>Bán hàng</span>
                 </a-menu-item>
                 <a-sub-menu key="sub1">
                     <template #title>
@@ -21,7 +22,7 @@
                             <span>Sản phẩm</span>
                         </span>
                     </template>
-                    <a-menu-item key="3" @click="changeRoute('/admin/quanlysanpham')">Tất cả
+                    <a-menu-item key="3" @click="changeRoute('/admin/quanlysanpham');">Tất cả
                         sản
                         phẩm</a-menu-item>
                     <a-menu-item key="4">Sản phẩm</a-menu-item>
@@ -33,10 +34,6 @@
                     <AccountBookOutlined />
                     <span>Hóa đơn</span>
                 </a-menu-item>
-                <a-menu-item key="9">
-                    <SolutionOutlined />
-                    <span>Nhân viên</span>
-                </a-menu-item>
                 <a-sub-menu key="sub2">
                     <template #title>
                         <span>
@@ -44,7 +41,7 @@
                             <span>Tài khoản</span>
                         </span>
                     </template>
-                    <a-menu-item key="10">Nhân viên</a-menu-item>
+                    <a-menu-item key="10" @click="changeRoute('/admin/quanlynhanvien');">Nhân viên</a-menu-item>
                     <a-menu-item key="11">Khách hàng</a-menu-item>
                 </a-sub-menu>
                 <a-menu-item key="12">
@@ -61,7 +58,7 @@
             <a-layout-header class=" d-flex align-items-center justify-content-between pe-4"
                 style="background: #fff; padding: 0">
                 <div class="">
-                    <h3 class="mt-2 ms-2">{{ pageTitle }}</h3>
+                    <h3 class="mt-2 ms-2" style="font-size: 30px;">{{ pageTitle }}</h3>
                 </div>
                 <TheSearchAdmin />
                 <div class="">
@@ -89,44 +86,72 @@ import { useRouter } from 'vue-router';
 import TheAvatarAdmin from './TheAvatar-Admin.vue';
 import TheSearchAdmin from './TheSearch-Admin.vue';
 import { useGbStore } from '@/stores/gbStore';
+import { useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute();
 const store = useGbStore();
 const collapsed = ref(false);
-const selectedKeys = ref(['1']);
+const selectedKeys = ref([store.indexMenu]);
+console.log(selectedKeys);
 const pageTitle = ref('Bán hàng');
 const changeRoute = (path) => {
-    console.log(path);
-    router.push(path);
     store.getPath(path);
+    store.getIndex(path);
+    router.push(path);
+    console.log(store.checkRouter);
+    // let paths = router.path;
     switch (path) {
         case '/admin':
             pageTitle.value = 'Bán hàng';
             break;
-
         case '/admin/quanlysanpham':
             pageTitle.value = 'Sản phẩm';
             break;
-
+        case '/admin/quanlynhanvien':
+            pageTitle.value = 'Nhân viên';
+            break;
         default:
             pageTitle.value = 'Bán hàng';
             break;
 
     }
 };
+// const getIndexPath = () => {
+//     const paths = route.path;
+//     console.log(paths + 'patchGetIndex');
+//     switch (paths) {
+//         case '/admin':
+//             selectedKeys.value = ['1'];
+//             break;
+
+//         case '/admin/quanlysanpham':
+//             selectedKeys.value = ['3'];
+//             break;
+
+//         default:
+//             selectedKeys.value = ['1'];
+//             break;
+
+//     }
+// }
 // watch(() => router.path, (newPath) => {
 //     selectedKeys.value = [getKeyByPath(newPath)];
 // });
+onMounted(() => {
+    store.getIndex(route.path);
+    selectedKeys.value = store.indexMenu;
+})
 </script>
 <style scoped>
 :deep(.ant-menu-item-selected) {
     box-shadow: 0 0 1px rgba(0, 0, 0, 0.6);
     border-radius: 5px;
-    background-color: #7D3C98 !important;
+    background-color: #343434 !important;
     color: white !important;
 }
 
 :deep(.ant-menu-light .ant-menu-submenu-selected>.ant-menu-submenu-title) {
-    color: #7D3C98 !important;
+    color: #030303 !important;
 }
 
 #components-layout-demo-sider .logo {
