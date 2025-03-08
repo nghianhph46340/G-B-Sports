@@ -58,7 +58,7 @@
             <a-layout-header class=" d-flex align-items-center justify-content-between pe-4"
                 style="background: #fff; padding: 0">
                 <div class="">
-                    <h3 class="mt-2 ms-2">{{ pageTitle }}</h3>
+                    <h3 class="mt-2 ms-2" style="font-size: 30px;">{{ pageTitle }}</h3>
                 </div>
                 <TheSearchAdmin />
                 <div class="">
