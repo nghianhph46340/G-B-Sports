@@ -1,8 +1,8 @@
 <template>
-    <a-space align="center" style="margin-bottom: 16px">
+    <!-- <a-space align="center" style="margin-bottom: 16px">
         CheckStrictly:
         <a-switch v-model:checked="rowSelection.checkStrictly"></a-switch>
-    </a-space>
+    </a-space> -->
     <!-- <a-table :columns="columns" :data-source="data" :row-selection="rowSelection" :expandable="expandableConfig"
         class="components-table-demo-nested" /> -->
     <a-table :columns="columns" :row-selection="rowSelection" :data-source="data" class="components-table-demo-nested"
@@ -11,9 +11,26 @@
             {{ record.id_san_pham }}
             <a-table :columns="columnsCTSP" :row-selection="rowSelection"
                 :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small">
+                <template #bodyCell="{ column, record: ctspRecord }">
+                    <template v-if="column.key === 'trang_thai'">
+                        <a-switch :checked="ctspRecord.trang_thai === 'Còn hàng' ? true : false" />
+                    </template>
 
+                </template>
             </a-table>
         </template>
+        <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'trang_thai'">
+                <a-switch :checked="record.trang_thai === 'Hoạt động' ? true : false" />
+            </template>
+            <template v-if="column.key === 'hinh_anh'">
+                <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" />
+            </template>
+            <template v-if="column.key === 'gia_ban'">
+                {{ record.gia_ban }}
+            </template>
+        </template>
+
 
     </a-table>
 </template>
@@ -41,13 +58,13 @@ const columns = [
         title: 'Mã sản phẩm',
         dataIndex: 'ma_san_pham',
         key: 'ma_san_pham',
-        width: '10%',
+        width: '9%',
     },
     {
         title: 'Tên sản phẩm',
         dataIndex: 'ten_san_pham',
         key: 'ten_san_pham',
-
+        width: '15%',
     },
     {
         title: 'Giới tính',
@@ -63,16 +80,17 @@ const columns = [
         width: '10%',
     },
     {
-        title: 'Giá',
-        dataIndex: 'gia_ban',
-        key: 'gia_ban',
-        width: '10%',
+        title: 'Danh mục/Thương hiệu/Chất liệu',
+        dataIndex: 'chi_muc',
+        key: 'chi_muc',
+        width: '23%',
     },
     {
         title: 'Trạng thái',
         dataIndex: 'trang_thai',
         key: 'trang_thai',
         width: '10%',
+
     },
 
     {
@@ -198,14 +216,15 @@ const expandableConfig = {
 onMounted(async () => {
     await store.getAllSP();
     data.value = await Promise.all(store.getAllSanPham.map(async (item) => {
+
         return {
             key: item.id_san_pham,
             id_san_pham: item.id_san_pham,
             ma_san_pham: item.ma_san_pham,
             ten_san_pham: item.ten_san_pham,
             gioi_tinh: item.gioi_tinh ? "Nam" : "Nữ",
-            hinh_anh: "",
-            gia_ban: item.gia_ban,
+            hinh_anh: item.hinh_anh,
+            chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
             trang_thai: item.trang_thai,
         };
     }));
@@ -241,11 +260,11 @@ onMounted(async () => {
 }
 
 /* Style cho phần mở rộng */
-:deep(.ant-table-expanded-row) {
+/* :deep(.ant-table-expanded-row) {
     background: #fafafa;
 }
 
 :deep(.ant-table-expanded-row > td) {
     padding: 16px 24px;
-}
+} */
 </style>
