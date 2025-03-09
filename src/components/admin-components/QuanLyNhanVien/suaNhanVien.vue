@@ -56,7 +56,7 @@
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gender" value="Nữ" >
+                                    <input class="form-check-input" type="radio" name="gender" value="Nữ">
                                     <label class="form-check-label">
                                         Nữ
                                     </label>
@@ -138,7 +138,7 @@
 
             <!-- Buttons -->
             <div class="mt-4">
-                <button type="submit" class="btn btn-warning me-2">Tạo tài khoản</button>
+                <button type="submit" class="btn me-2" style="background-color: #f32030; border: none;color: white; :hover{background-color: #f33b47}">Sửa nhân viên</button>
                 <button type="reset" class="btn btn-secondary">Làm mới</button>
             </div>
         </form>

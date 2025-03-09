@@ -7,7 +7,7 @@
 
             <a-menu v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
 
-                <a-menu-item key="2">
+                <a-menu-item key="2" @click="changeRoute('/admin/baocaothongke')">
                     <AreaChartOutlined />
                     <span>Thống kê</span>
                 </a-menu-item>
@@ -104,10 +104,19 @@ const changeRoute = (path) => {
         case '/admin':
             pageTitle.value = 'Bán hàng';
             break;
+        case '/admin/baocaothongke':
+            pageTitle.value = 'Thống kê';
+            break;
         case '/admin/quanlysanpham':
             pageTitle.value = 'Sản phẩm';
             break;
         case '/admin/quanlynhanvien':
+            pageTitle.value = 'Nhân viên';
+            break;
+        case '/admin/quanlynhanvien/add':
+            pageTitle.value = 'Nhân viên';
+            break;
+        case '/admin/quanlynhanvien/update':
             pageTitle.value = 'Nhân viên';
             break;
         default:
