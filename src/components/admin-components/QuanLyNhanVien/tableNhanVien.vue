@@ -60,7 +60,7 @@
                 style="width: 50px; height: 50px;" @error="handleImageError"></td>
             <td>{{ nhanVien.maNhanVien }}</td>
             <td>{{ nhanVien.tenNhanVien }}</td>
-            <td>{{ nhanVien.gioiTinh }}</td>
+            <td>{{ nhanVien.gioiTinh?"Nam":"Nữ" }}</td>
             <td>{{ nhanVien.ngaySinh }}</td>
             <td>{{ nhanVien.soDienThoai }}</td>
             <td>{{ nhanVien.diaChiLienHe }}</td>
