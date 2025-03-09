@@ -1,12 +1,16 @@
 import axiosInstance from "@/config/axiosConfig";
 
-const getAllNhanVien = async()=>{
-    const {data} = await axiosInstance.get('admin/quan-ly-nhan-vien')
-    if (data.error) {
-        console.log('Không lấy dc nhân viên')
+const getAllNhanVien = async(page, size) => {
+    try {
+        // Đảm bảo page luôn >= 1
+        const {data} = await axiosInstance.get(`admin/quan-ly-nhan-vien?page=${page}&size=${size}`)
+        return data;
+    } catch (error) {
+        console.error('Lỗi API:', error);
+        return { error: true };
     }
-    return data;
 }
+
 export const nhanVienService = {
-    getAllNhanVien
+    getAllNhanVien,
 }
