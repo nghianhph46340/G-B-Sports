@@ -5,6 +5,7 @@
     </a-space> -->
     <!-- <a-table :columns="columns" :data-source="data" :row-selection="rowSelection" :expandable="expandableConfig"
         class="components-table-demo-nested" /> -->
+    <menuAction />
     <a-table :columns="columns" :row-selection="rowSelection" :data-source="data" class="components-table-demo-nested"
         :expandable="expandableConfig" @expand="handleExpand">
         <template #expandedRowRender="{ record }">
@@ -13,7 +14,9 @@
                 :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small">
                 <template #bodyCell="{ column, record: ctspRecord }">
                     <template v-if="column.key === 'trang_thai'">
-                        <a-switch :checked="ctspRecord.trang_thai === 'Còn hàng' ? true : false" />
+                        <a-switch
+                            :style="{ backgroundColor: ctspRecord.trang_thai === 'Còn hàng' ? '#f33b47' : '#ccc' }"
+                            size="small" :checked="ctspRecord.trang_thai === 'Còn hàng' ? true : false" />
                     </template>
 
                 </template>
@@ -21,7 +24,8 @@
         </template>
         <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'trang_thai'">
-                <a-switch :checked="record.trang_thai === 'Hoạt động' ? true : false" />
+                <a-switch :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
+                    :checked="record.trang_thai === 'Hoạt động' ? true : false" />
             </template>
             <template v-if="column.key === 'hinh_anh'">
                 <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" />
@@ -35,6 +39,7 @@
     </a-table>
 </template>
 <script setup>
+import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
 const handleExpand = async (expanded, record) => {
     console.log("Record được truyền vào:", record); // Kiểm tra record
     if (expanded) {

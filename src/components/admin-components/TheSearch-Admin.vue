@@ -1,6 +1,6 @@
 <template>
-    <div class="container-fluid w-75">
-        <form class="d-flex align-items-center" role="search">
+    <div class="container-fluid" style="width: 85%;">
+        <form class="d-flex align-items-center justify-content-start" role="search">
             <SearchOutlined class="icon-search" />
             <input class="form-control me-2" v-model="search" type="search" placeholder="Bạn muốn tìm gì?"
                 aria-label="Search">
