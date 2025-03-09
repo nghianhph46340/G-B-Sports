@@ -26,7 +26,7 @@
       </template>
 
     </a-dropdown>
-    <span class="ms-2 " style="font-family: Verdana, Geneva, Tahoma, sans-serif;">Admin</span>
+    <!-- <span class="ms-2 " style="font-family: Verdana, Geneva, Tahoma, sans-serif;">Admin</span> -->
   </div>
 </template>
 <script setup>

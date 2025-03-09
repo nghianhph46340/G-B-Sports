@@ -1,6 +1,6 @@
 <template>
     <a-layout style="min-height: 100vh">
-        <a-layout-sider v-model:collapsed="collapsed" collapsible theme="light">
+        <a-layout-sider class="sider" v-model:collapsed="collapsed" :trigger="null" collapsible theme="light">
             <div class="logo p-3" style="text-align: center;">
                 <img class="w-75" src="../../images/logo/logo2.png" alt="Logo" />
             </div>
@@ -55,20 +55,19 @@
             </a-menu>
         </a-layout-sider>
         <a-layout>
-            <a-layout-header class=" d-flex align-items-center justify-content-between pe-4"
-                style="background: #fff; padding: 0">
-                <div class="">
-                    <h3 class="mt-2 ms-2" style="font-size: 30px;">{{ pageTitle }}</h3>
-                </div>
+            <a-layout-header class=" d-flex align-items-center justify-content-evenly pe-4 header-admin"
+                style="background: #fff; padding: 0; border-radius: 10px;">
+                <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
+                <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
                 <TheSearchAdmin />
                 <div class="">
 
                     <TheAvatarAdmin />
                 </div>
             </a-layout-header>
-            <a-layout-content style="margin: 16px 16px">
+            <a-layout-content class="content-admin" style="margin: 16px 16px">
 
-                <div :style="{ padding: '24px', background: '#fff', minHeight: '360px' }">
+                <div :style="{ padding: '24px', background: '#fff', minHeight: '360px', borderRadius: '10px' }">
                     <router-view></router-view>
                 </div>
             </a-layout-content>
@@ -81,7 +80,7 @@
 <script setup>
 
 import { computed, onMounted, ref } from 'vue';
-import { HomeOutlined, AreaChartOutlined, UserOutlined, ReconciliationOutlined, SolutionOutlined, LaptopOutlined, LogoutOutlined, AccountBookOutlined } from '@ant-design/icons-vue';
+import { HomeOutlined, AreaChartOutlined, UserOutlined, ReconciliationOutlined, MenuUnfoldOutlined, MenuFoldOutlined, LaptopOutlined, LogoutOutlined, AccountBookOutlined } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import TheAvatarAdmin from './TheAvatar-Admin.vue';
 import TheSearchAdmin from './TheSearch-Admin.vue';
@@ -93,6 +92,7 @@ const store = useGbStore();
 const collapsed = ref(false);
 const selectedKeys = ref([store.indexMenu]);
 console.log(selectedKeys);
+
 const pageTitle = ref('Bán hàng');
 const changeRoute = (path) => {
     store.getPath(path);
@@ -166,5 +166,41 @@ onMounted(() => {
 
 [data-theme='light'] .site-layout .site-layout-background {
     background: #484848;
+}
+
+#title-page {
+    background-color: #484848;
+    color: white;
+}
+
+
+.trigger {
+    font-size: 20px;
+    margin-left: 1rem;
+}
+
+.sider {
+    /* background-color: #484848; */
+    border-radius: 10px;
+    /* box-shadow: 0 50px 50px rgba(0, 0, 0, 0.6); */
+}
+
+.header-admin {
+    /* box-shadow: 0 0 50px rgba(0, 0, 0, 0.6); */
+    border-radius: 10px;
+}
+
+.content-admin {
+    box-shadow: 0 0 10px rgba(207, 207, 207, 0.6);
+    border-radius: 10px;
+}
+
+.logo {
+    /* border-radius: 10px; */
+    /* outline-of  outline-offset: 4px; */
+    /* outline-offset: 50px;
+    filter: drop-shadow(50px 0 50px rgba(2, 2, 1, 0.3)); */
+    border-bottom: 1px solid rgba(207, 207, 207, 0.6);
+
 }
 </style>
