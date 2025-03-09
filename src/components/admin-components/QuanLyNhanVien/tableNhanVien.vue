@@ -4,15 +4,15 @@
       <div class="me-3">
         <span class="fw-bold me-2" style="font-size: 16px;">Trạng thái:</span>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="status" id="active" value="active">
+          <input class="form-check-input" type="radio" name="trangThai" id="active" value="Đang hoạt động"  v-model="selectedTrangThai" @change="fetchData(0)">
           <label class="form-check-label" for="active">Đang hoạt động</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="status" id="inactive" value="inactive">
+          <input class="form-check-input" type="radio" name="trangThai" id="inactive" value="Đã nghỉ việc"  v-model="selectedTrangThai" @change="fetchData(0)">
           <label class="form-check-label" for="inactive">Đã nghỉ việc</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="status" id="refresh" value="refresh">
+          <input class="form-check-input" type="radio" name="trangThai" id="refresh" value=""  v-model="selectedTrangThai" @change="fetchData(0)">
           <label class="form-check-label" for="refresh">Làm mới</label>
         </div>
       </div>
@@ -26,7 +26,8 @@
         <div class="d-flex align-items-center">
           <label for="limitSelect" class="me-2 fw-medium text-muted mb-0">Hiển thị:</label>
           <select id="limitSelect" class="form-select form-select-sm w-auto" v-model="pageSize"
-            @change="handleSizeChange">
+
+            >
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="20">20</option>
@@ -92,19 +93,52 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const store = useGbStore();
 const pageSize = ref(5);
+const selectedTrangThai = ref('');
 
-const fetchData = (page) => {
-  if (page >= 0 && page < store.totalPages) {
+// const fetchData = (page) => {
+//   if (page >= 0 && page < store.totalPages) {
+//     store.getAllNhanVien(page, pageSize.value);
+//   }
+// };
+const fetchData = (page = 0) => {
+  if (page < 0 || page >= store.totalPages) return;
+
+  store.currentPage = page; // Cập nhật trang hiện tại
+
+  if (selectedTrangThai.value) {
+    store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+  } else {
     store.getAllNhanVien(page, pageSize.value);
   }
 };
+//Lọc theo trạng thái
+// Hàm gọi API lấy dữ liệu nhân viên theo trạng thái
+const fetchNhanVien = (page) => {
+  if (page >= 0 && page < store.totalPages) {
+  store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+  }
+};
+
 // Mounted hook
 onMounted(() => {
   store.getAllNhanVien(0, pageSize.value);
+  fetchNhanVien();
 
 });
 watch(pageSize, (newSize) => {
-  store.getAllNhanVien(0, newSize);
+//   store.currentPage = 0; // Reset về trang đầu tiên
+
+// if (selectedTrangThai.value) {
+//   store.getNhanVienLocTrangThai(0, newSize, selectedTrangThai.value);
+// } else {
+//   store.getAllNhanVien(0, newSize);
+// }
+fetchData(0);
+});
+
+// Theo dõi thay đổi của selectedStatus để lọc danh sách theo trạng thái
+watch([selectedTrangThai,pageSize], () => {
+  fetchNhanVien(0);
 });
 </script>
 <style scoped>
