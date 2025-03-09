@@ -25,7 +25,7 @@ export const useGbStore = defineStore('gbStore', {
             searchs: '',
             getAllNhanVienArr: [],
             totalPages: 0,
-            currentPage: 0,
+            currentPage: 0, 
             totalItems: 0
         }
     },
@@ -50,7 +50,28 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
-
+        async getNhanVienLocTrangThai(page = 0, size = 5, trangThai = this.selectTrangThai) {
+            try {
+                let params = { page, size };
+                if (trangThai) {
+                    params.trangThai = trangThai; // Chỉ thêm trạng thái nếu có giá trị
+                }
+                const nhanvienFilter = await nhanVienService.getNhanVienLocTrangThai(page, size, trangThai);
+                if (nhanvienFilter.error) {
+                    toast.error("Không lấy được dữ liệu");
+                    return;
+                } else {
+                    this.getAllNhanVienArr = nhanvienFilter.content || []; // Lấy danh sách nhân viên
+                    this.totalPages = nhanvienFilter.totalPages || 0;
+                    this.currentPage = page;
+                    this.totalItems = nhanvienFilter.totalElements || 0;
+                    this.selectedTrangThai = trangThai;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error("Có lỗi xảy ra");
+            }
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path

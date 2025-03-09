@@ -10,7 +10,16 @@ const getAllNhanVien = async(page, size) => {
         return { error: true };
     }
 }
-
+const getNhanVienLocTrangThai = async(page, size, trangThai) => {
+    try {
+        const {data} = await axiosInstance.get(`admin/quan-ly-nhan-vien/locTrangThai?page=${page}&size=${size}&trangThai=${trangThai}`)
+        return data;
+    } catch (error) {
+        console.error('Lỗi API',error);
+        return {error:true};
+    }
+}
 export const nhanVienService = {
     getAllNhanVien,
+    getNhanVienLocTrangThai
 }
