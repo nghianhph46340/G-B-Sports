@@ -1,11 +1,11 @@
 <template>
-    <a-layout style="min-height: 100vh">
-        <a-layout-sider class="sider" v-model:collapsed="collapsed" :trigger="null" collapsible theme="light">
-            <div class="logo p-3" style="text-align: center;">
-                <img class="w-75" src="../../images/logo/logo2.png" alt="Logo" />
+    <a-layout class="" style="min-height: 100vh">
+        <a-layout-sider class="sider " v-model:collapsed="collapsed" :trigger="null" collapsible theme="light">
+            <div class="logo p-3 " style="text-align: center;">
+                <img class="w-75 " src="../../images/logo/logo2.png" alt="Logo" />
             </div>
 
-            <a-menu v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
+            <a-menu class="" v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
 
                 <a-menu-item key="2" @click="changeRoute('/admin/baocaothongke')">
                     <AreaChartOutlined />
@@ -55,8 +55,8 @@
             </a-menu>
         </a-layout-sider>
         <a-layout>
-            <a-layout-header class=" d-flex align-items-center justify-content-evenly pe-4 header-admin"
-                style="background: #fff; padding: 0; border-radius: 10px;">
+            <a-layout-header class="sticky-top d-flex align-items-center justify-content-evenly pe-4 header-admin"
+                style="background: #fff; padding: 0; z-index: 1;">
                 <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
                 <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
                 <TheSearchAdmin />
@@ -182,7 +182,6 @@ onMounted(() => {
     color: white;
 }
 
-
 .trigger {
     font-size: 20px;
     margin-left: 1rem;
@@ -190,13 +189,16 @@ onMounted(() => {
 
 .sider {
     /* background-color: #484848; */
-    border-radius: 10px;
+    /* border-radius: 10px; */
     /* box-shadow: 0 50px 50px rgba(0, 0, 0, 0.6); */
 }
 
 .header-admin {
     /* box-shadow: 0 0 50px rgba(0, 0, 0, 0.6); */
-    border-radius: 10px;
+    border-bottom-right-radius: 10px;
+    box-shadow: 0 4px 10px -5px rgba(122, 122, 122, 0.6);
+    /* filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)); */
+
 }
 
 .content-admin {
@@ -205,11 +207,7 @@ onMounted(() => {
 }
 
 .logo {
-    /* border-radius: 10px; */
-    /* outline-of  outline-offset: 4px; */
-    /* outline-offset: 50px;
-    filter: drop-shadow(50px 0 50px rgba(2, 2, 1, 0.3)); */
     border-bottom: 1px solid rgba(207, 207, 207, 0.6);
-
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 1));
 }
 </style>
