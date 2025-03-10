@@ -1,12 +1,11 @@
 <template>
-    <a-layout class="sticky-top" style="min-height: 100vh">
-        <a-layout-sider class="sider sticky-top" v-model:collapsed="collapsed" :trigger="null" collapsible
-            theme="light">
-            <div class="logo p-3 sticky-top" style="text-align: center;">
-                <img class="w-75 sticky-top" src="../../images/logo/logo2.png" alt="Logo" />
+    <a-layout class="" style="min-height: 100vh">
+        <a-layout-sider class="sider " v-model:collapsed="collapsed" :trigger="null" collapsible theme="light">
+            <div class="logo p-3 " style="text-align: center;">
+                <img class="w-75 " src="../../images/logo/logo2.png" alt="Logo" />
             </div>
 
-            <a-menu class="sticky-top" v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
+            <a-menu class="" v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
 
                 <a-menu-item key="2" @click="changeRoute('/admin/baocaothongke')">
                     <AreaChartOutlined />
@@ -57,7 +56,7 @@
         </a-layout-sider>
         <a-layout>
             <a-layout-header class="sticky-top d-flex align-items-center justify-content-evenly pe-4 header-admin"
-                style="background: #fff; padding: 0;">
+                style="background: #fff; padding: 0; z-index: 1;">
                 <menu-unfold-outlined v-if="collapsed" class="trigger" @click="() => (collapsed = !collapsed)" />
                 <menu-fold-outlined v-else class="trigger" @click="() => (collapsed = !collapsed)" />
                 <TheSearchAdmin />
@@ -183,7 +182,6 @@ onMounted(() => {
     color: white;
 }
 
-
 .trigger {
     font-size: 20px;
     margin-left: 1rem;
@@ -199,6 +197,7 @@ onMounted(() => {
     /* box-shadow: 0 0 50px rgba(0, 0, 0, 0.6); */
     border-bottom-right-radius: 10px;
     box-shadow: 0 4px 10px -5px rgba(122, 122, 122, 0.6);
+    /* filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)); */
 
 }
 
@@ -209,6 +208,6 @@ onMounted(() => {
 
 .logo {
     border-bottom: 1px solid rgba(207, 207, 207, 0.6);
-
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 1));
 }
 </style>

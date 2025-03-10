@@ -20,12 +20,13 @@ export const useGbStore = defineStore('gbStore', {
             searchChiTietSanPham: [],
             getCTSPBySanPhams: [],
             checkRouter: '',
+            checkRoutePresent: '',
             getImages: [],
             indexMenu: ['1'],
             searchs: '',
             getAllNhanVienArr: [],
             totalPages: 0,
-            currentPage: 0, 
+            currentPage: 0,
             totalItems: 0
         }
     },
@@ -72,9 +73,34 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error("Có lỗi xảy ra");
             }
         },
+        async changeStatusSanPham(id) {
+            try {
+                // 🔥 Cập nhật ngay lập tức UI trước khi gọi API
+                const sanPham = this.getAllSanPham.find(sanPham => sanPham.id_san_pham === id);
+                if (sanPham) {
+                    sanPham.trang_thai = sanPham.trang_thai === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
+                }
+                // 🚀 Gọi API nhưng không chờ phản hồi để tránh lag
+                sanPhamService.changeStatusSanPham(id).then(response => {
+                    if (response.error) {
+                        toast.error('Có lỗi xảy ra');
+                        sanPham.trang_thai = sanPham.trang_thai === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
+                    } else {
+                        toast.success('Chuyển trạng thái thành công');
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path
+        },
+        getRoutePresent(path) {
+            this.checkRoutePresent = '';
+            this.checkRoutePresent = path
         },
         getIndex(path) {
             this.indexMenu = ['1'];
@@ -87,6 +113,9 @@ export const useGbStore = defineStore('gbStore', {
                     break;
                 case '/admin/quanlynhanvien':
                     this.indexMenu = ['10'];
+                    break;
+                case '/admin/quanlysanpham/add':
+                    this.indexMenu = ['3'];
                     break;
                 default:
                     this.indexMenu = ['1'];

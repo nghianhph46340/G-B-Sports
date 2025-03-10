@@ -52,10 +52,19 @@ const getCTSPBySanPham = async (id) => {
         console.log(error);
     }
 }
+const changeStatusSanPham = async (id) => {
+    try {
+        const { data } = await axiosInstance.put(qlsp + 'chuyenTrangThaiSanPham?id=' + id);
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
     getImageInCTSP,
     searchChiTietSanPham,
-    getCTSPBySanPham
+    getCTSPBySanPham,
+    changeStatusSanPham
 }

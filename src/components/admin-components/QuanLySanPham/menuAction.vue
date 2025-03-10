@@ -1,68 +1,91 @@
 <template>
     <div class="mb-4 d-flex justify-content-between">
-        <div class=" d-flex gap-2">
-            <a-button type="" @click="showDrawer" class="d-flex align-items-center btn-filter">
-                <FilterOutlined class="icon-filler" />Bộ lọc
+        <div class="d-flex gap-2 flex-wrap">
+            <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
+                <a-button type="" @click="showDrawer" class="d-flex align-items-center btn-filter">
+                    <FilterOutlined class="icon-filler" />
+                    <span class="button-text">Bộ lọc</span>
+                </a-button>
+                <a-drawer v-model:open="open" class="custom-class" root-class-name="root-class-name"
+                    :root-style="{ color: 'black' }" title="Bộ lọc sản phẩm" placement="right"
+                    @after-open-change="afterOpenChange" :footer-style="{ textAlign: 'right' }">
+
+                    <p for="name">Danh mục</p>
+                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Danh muc" style="width: 330px"
+                        :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
+                        @change="handleChange"></a-select>
+
+                    <p for="name">Thương hiệu</p>
+                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Thương hiệu"
+                        style="width: 330px" :options="options" :filter-option="filterOption" @focus="handleFocus"
+                        @blur="handleBlur" @change="handleChange"></a-select>
+
+                    <p for="name">Chất liệu</p>
+                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Chất liệu"
+                        style="width: 330px" :options="options" :filter-option="filterOption" @focus="handleFocus"
+                        @blur="handleBlur" @change="handleChange"></a-select>
+
+
+
+                    <p for="name">Màu sắc</p>
+                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Màu sắc" style="width: 330px"
+                        :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
+                        @change="handleChange"></a-select>
+
+                    <p for="name">Kích thước</p>
+                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Kích thước"
+                        style="width: 330px" :options="options" :filter-option="filterOption" @focus="handleFocus"
+                        @blur="handleBlur" @change="handleChange"></a-select>
+
+                    <p>Giá</p>
+                    <a-slider class="mb-2" v-model:value="value2" range :max="999999999" />
+                    <p>Trạng thái</p>
+                    <a-radio-group :checked="value" v-model:value="value" name="radioGroup">
+                        <a-radio value="Còn hàng">Còn hàng</a-radio>
+                        <a-radio value="Hết hàng">Hết hàng</a-radio>
+                    </a-radio-group>
+                    <template #footer>
+                        <a-button style="margin-right: 8px" @click="onClose">Đóng</a-button>
+                        <a-button type="primary" style="background-color: #f33b47" @click="onClose">Lọc</a-button>
+                    </template>
+                </a-drawer>
+
+                <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
+                    style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select>
+                <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
+                    style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select>
+
+                <a-button type="" class="d-flex align-items-center btn-filter">
+                    <ExportOutlined class="icon-filler" />
+                    <span class="button-text">Xuất excel</span>
+                </a-button>
+            </template>
+            <a-button type="" class="d-flex align-items-center btn-filter">
+                <ImportOutlined class="icon-filler" />
+                <span class="button-text">Nhập excel</span>
             </a-button>
-            <a-drawer v-model:open="open" class="custom-class" root-class-name="root-class-name"
-                :root-style="{ color: 'black' }" title="Bộ lọc sản phẩm" placement="right"
-                @after-open-change="afterOpenChange" :footer-style="{ textAlign: 'right' }">
-
-                <p for="name">Danh mục</p>
-                <a-select class="mb-2" v-model:value="value" show-search placeholder="Danh muc" style="width: 330px"
-                    :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
-                    @change="handleChange"></a-select>
-
-                <p for="name">Thương hiệu</p>
-                <a-select class="mb-2" v-model:value="value" show-search placeholder="Thương hiệu" style="width: 330px"
-                    :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
-                    @change="handleChange"></a-select>
-
-                <p for="name">Chất liệu</p>
-                <a-select class="mb-2" v-model:value="value" show-search placeholder="Chất liệu" style="width: 330px"
-                    :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
-                    @change="handleChange"></a-select>
-
-
-
-                <p for="name">Màu sắc</p>
-                <a-select class="mb-2" v-model:value="value" show-search placeholder="Màu sắc" style="width: 330px"
-                    :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
-                    @change="handleChange"></a-select>
-
-                <p for="name">Kích thước</p>
-                <a-select class="mb-2" v-model:value="value" show-search placeholder="Kích thước" style="width: 330px"
-                    :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
-                    @change="handleChange"></a-select>
-
-                <p>Giá</p>
-                <a-slider class="mb-2" v-model:value="value2" range :max="999999999" />
-                <p>Trạng thái</p>
-                <a-radio-group v-model:value="value" name="radioGroup">
-                    <a-radio value="Còn hàng">Còn hàng</a-radio>
-                    <a-radio value="Hết hàng">Hết hàng</a-radio>
-                </a-radio-group>
-                <template #footer>
-                    <a-button style="margin-right: 8px" @click="onClose">Đóng</a-button>
-                    <a-button type="primary" style="background-color: #f33b47" @click="onClose">Lọc</a-button>
-                </template>
-            </a-drawer>
-            <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
-                style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select>
         </div>
-
-        <a-button type="primary" style="background-color: #f33b47" class="d-flex align-items-center">
-            <PlusOutlined />Thêm sản phẩm
-        </a-button>
-
+        <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
+            <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('quanlysanpham/add')"
+                class="d-flex align-items-center">
+                <PlusOutlined />
+                <span class="button-text">Thêm sản phẩm</span>
+            </a-button>
+        </template>
     </div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { FilterOutlined, PlusOutlined } from '@ant-design/icons-vue';
+import { FilterOutlined, PlusOutlined, ExportOutlined, ImportOutlined } from '@ant-design/icons-vue';
+import { useRouter } from 'vue-router';
+import { useGbStore } from '@/stores/gbStore';
+import { useRoute } from 'vue-router';
+const route = useRoute();
+const store = useGbStore();
 const open = ref(false);
 const value = ref('Còn hàng');
 const value2 = ref([0, 999999999]);
+// store.getRoutePresent(route.path);
 const listSort = ref([
     { value: '1', label: 'Sắp xếp theo' },
     { value: '2', label: 'Tên tăng dần' },
@@ -73,7 +96,23 @@ const listSort = ref([
     { value: '7', label: 'Cũ nhất' },
 ]);
 
+const listXemTheo = ref([
+    { value: '0', label: 'Tất cả sản phẩm' },
+    { value: '1', label: '5 sản phẩm' },
+    { value: '2', label: '10 sản phẩm' },
+    { value: '3', label: '15 sản phẩm' },
+    { value: '4', label: '20 sản phẩm' },
+])
+const options = ref([
+    { value: '1', label: 'Sắp xếp theo' },
+    { value: '2', label: 'Tên tăng dần' },
+    { value: '3', label: 'Tên giảm dần' },
+    { value: '4', label: 'Giá tăng dần' },
+    { value: '5', label: 'Giá giảm dần' },
+]);
+const xemTheo = ref('0');
 const luuBien = ref('1');
+// const checkRoutePresent = ref(route.path);
 const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
 };
@@ -94,7 +133,23 @@ const showDrawer = () => {
 const onClose = () => {
     open.value = false;
 };
+//Chuyển router
+const router = useRouter();
+const changeRouter = (routers) => {
+    store.getPath(routers);
+    store.getRoutePresent(route.path);
+    router.push(routers);
+    console.log(store.checkRouter);
+};
+//Lấy router hiện tại
 
+// onMounted(() => {
+//     // store.getRoutePresent(route.path);
+// });
+// watch(() => route.path, (newValue, oldValue) => {
+//     console.log('Route changed from', oldValue, 'to', newValue);
+//     store.getRoutePresent(newValue);
+// });
 </script>
 <style scoped>
 .icon-filler {
@@ -111,6 +166,10 @@ const onClose = () => {
 .btn-filter:active {
     transition: all 0.6s ease-in-out;
     background-color: #f33b47;
+}
+
+.custom-class {
+    z-index: 1000;
 }
 
 /* css sắp xếp */
@@ -190,5 +249,53 @@ const onClose = () => {
         background-color: #f33b47 !important;
         color: white !important;
     }
+}
+
+/* Thêm styles mới cho responsive buttons */
+.button-text {
+    margin-left: 4px;
+}
+
+/* Ẩn text khi màn hình nhỏ hơn 768px */
+@media (max-width: 768px) {
+    .button-text {
+        display: none;
+    }
+
+    .btn-filter,
+    .ant-btn {
+        padding: 4px 8px;
+        min-width: 32px;
+        justify-content: center;
+    }
+
+    /* Điều chỉnh kích thước select boxes */
+    .custom-select {
+        width: 100px !important;
+    }
+}
+
+/* Ẩn text khi màn hình nhỏ hơn 576px */
+@media (max-width: 576px) {
+    .custom-select {
+        width: 80px !important;
+    }
+
+    .d-flex.gap-2 {
+        gap: 0.25rem !important;
+    }
+}
+
+/* Thêm transition cho smooth effect */
+.btn-filter,
+.ant-btn {
+    transition: all 0.3s ease;
+}
+
+/* Đảm bảo icon luôn hiển thị đẹp */
+.icon-filler {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>
