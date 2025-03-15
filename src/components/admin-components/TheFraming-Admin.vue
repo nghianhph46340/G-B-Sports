@@ -86,6 +86,14 @@ import TheAvatarAdmin from './TheAvatar-Admin.vue';
 import TheSearchAdmin from './TheSearch-Admin.vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRoute } from 'vue-router';
+import { Cloudinary } from '@cloudinary/url-gen';
+
+// Create a Cloudinary instance and set your cloud name.
+const cld = new Cloudinary({
+  cloud: {
+    cloudName: 'demo',
+  },
+});
 const router = useRouter();
 const route = useRoute();
 const store = useGbStore();
