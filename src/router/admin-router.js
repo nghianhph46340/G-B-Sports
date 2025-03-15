@@ -38,6 +38,11 @@ const admin = [
                 path: "quanlynhanvien/update",
                 name: "admin-quan-ly-nhan-vien-update",
                 component: () => import('@/views/admin/NhanVien/SuaNhanVien.vue')
+            },
+            {
+                path: "test-upload-image",
+                name: "test-upload-image",
+                component: () => import('@/views/viewTest/testUploadImage.vue')
             }
         ]
     }
