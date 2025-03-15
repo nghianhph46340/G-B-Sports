@@ -11,6 +11,8 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@cloudinary/url-gen": "^1.21.0",
+    "@cloudinary/vue": "^1.13.1",
     "@popperjs/core": "^2.11.8",
     "ant-design-vue": "^4.2.6",
     "axios": "^1.8.2",
