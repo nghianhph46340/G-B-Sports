@@ -18,13 +18,18 @@
                             :style="{ backgroundColor: ctspRecord.trang_thai === 'Còn hàng' ? '#f33b47' : '#ccc' }"
                             size="small" :checked="ctspRecord.trang_thai === 'Còn hàng' ? true : false" />
                     </template>
-
+                    <template v-if="column.key === 'action'">
+                        <a-button type="" style="color: white;" class="d-flex align-items-center btn btn-warning">
+                            <EditOutlined />Sửa
+                        </a-button>
+                    </template>
                 </template>
             </a-table>
         </template>
         <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'trang_thai'">
-                <a-switch :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
+                <a-switch @change="(checked) => changeStatusSanPham(record.id_san_pham, checked)"
+                    :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
                     :checked="record.trang_thai === 'Hoạt động' ? true : false" />
             </template>
             <template v-if="column.key === 'hinh_anh'">
@@ -33,6 +38,11 @@
             <template v-if="column.key === 'gia_ban'">
                 {{ record.gia_ban }}
             </template>
+            <template v-if="column.key === 'action'">
+                <a-button type="" style="color: white;" class="d-flex align-items-center btn btn-warning">
+                    <EditOutlined />Sửa
+                </a-button>
+            </template>
         </template>
 
 
@@ -40,6 +50,7 @@
 </template>
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
+import { EditOutlined } from '@ant-design/icons-vue';
 const handleExpand = async (expanded, record) => {
     console.log("Record được truyền vào:", record); // Kiểm tra record
     if (expanded) {
@@ -55,10 +66,18 @@ const handleExpand = async (expanded, record) => {
         }
     }
 };
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, render } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 const store = useGbStore();
 const columns = [
+    {
+        title: '#',
+        dataIndex: 'stt',
+        key: 'stt',
+        width: '5%',
+        align: 'center',
+        render: (text, record, index) => index + 1
+    },
     {
         title: 'Mã sản phẩm',
         dataIndex: 'ma_san_pham',
@@ -69,13 +88,7 @@ const columns = [
         title: 'Tên sản phẩm',
         dataIndex: 'ten_san_pham',
         key: 'ten_san_pham',
-        width: '15%',
-    },
-    {
-        title: 'Giới tính',
-        dataIndex: 'gioi_tinh',
-        key: 'gioi_tinh',
-        width: '10%',
+        width: '17%',
     },
     {
         title: 'Hình ảnh',
@@ -85,10 +98,23 @@ const columns = [
         width: '10%',
     },
     {
+        title: 'SL',
+        dataIndex: 'tong_so_luong',
+        key: 'tong_so_luong',
+        width: '7%',
+    },
+    {
+        title: 'Giới tính',
+        dataIndex: 'gioi_tinh',
+        key: 'gioi_tinh',
+        width: '10%',
+    },
+
+    {
         title: 'Danh mục/Thương hiệu/Chất liệu',
         dataIndex: 'chi_muc',
         key: 'chi_muc',
-        width: '23%',
+        width: '28%',
     },
     {
         title: 'Trạng thái',
@@ -145,7 +171,6 @@ const columnsCTSP = [
 
 ];
 const data = ref([]);
-const innerData = ref([]);
 const rowSelection = ref({
     checkStrictly: false,
     onChange: (selectedRowKeys, selectedRows) => {
@@ -218,11 +243,31 @@ const expandableConfig = {
         }
     },
 };
+
+const changeStatusSanPham = async (id, checked) => {
+    try {
+        await store.changeStatusSanPham(id);
+        data.value = data.value.map(item => {
+            if (item.id_san_pham === id) {
+                return {
+                    ...item,
+                    trang_thai: checked ? 'Hoạt động' : 'Không hoạt động'
+
+                };
+
+            }
+            return item;
+        })
+    } catch (error) {
+        console.log('Lỗi khi thay đổi trạng thái')
+    }
+
+}
 onMounted(async () => {
     await store.getAllSP();
-    data.value = await Promise.all(store.getAllSanPham.map(async (item) => {
-
+    data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
         return {
+            stt: index + 1,
             key: item.id_san_pham,
             id_san_pham: item.id_san_pham,
             ma_san_pham: item.ma_san_pham,
@@ -231,6 +276,7 @@ onMounted(async () => {
             hinh_anh: item.hinh_anh,
             chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
             trang_thai: item.trang_thai,
+            tong_so_luong: item.tong_so_luong,
         };
     }));
 

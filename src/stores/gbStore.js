@@ -20,13 +20,19 @@ export const useGbStore = defineStore('gbStore', {
             searchChiTietSanPham: [],
             getCTSPBySanPhams: [],
             checkRouter: '',
+            checkRoutePresent: '',
             getImages: [],
             indexMenu: ['1'],
             searchs: '',
             getAllNhanVienArr: [],
             totalPages: 0,
-            currentPage: 0, 
-            totalItems: 0
+            currentPage: 0,
+            totalItems: 0,
+            danhMucList: [],
+            thuongHieuList: [],
+            chatLieuList: [],
+            mauSacList: [],
+            sizeList: [],
         }
     },
     actions: {
@@ -72,9 +78,86 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error("Có lỗi xảy ra");
             }
         },
+        //Lấy danh sách danh mục
+        async getDanhMucList() {
+            const danhMucRespone = await sanPhamService.getDanhMucList();
+            if (danhMucRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.danhMucList = danhMucRespone;
+            }
+        },
+        //Lấy danh sách thương hiệu
+        async getThuongHieuList() {
+            const thuongHieuRespone = await sanPhamService.getThuongHieuList();
+            if (thuongHieuRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.thuongHieuList = thuongHieuRespone;
+            }
+        },
+        //Lấy danh sách chất liệu
+        async getChatLieuList() {
+            const chatLieuRespone = await sanPhamService.getChatLieuList();
+            if (chatLieuRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.chatLieuList = chatLieuRespone;
+            }
+        },
+        //Lấy danh sách màu sắc
+        async getMauSacList() {
+            const mauSacRespone = await sanPhamService.getMauSacList();
+            if (mauSacRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.mauSacList = mauSacRespone;
+            }
+        },
+        //Lấy danh sách size    
+        async getSizeList() {
+            const sizeRespone = await sanPhamService.getSizeList();
+            if (sizeRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.sizeList = sizeRespone;
+            }
+        },
+
+        //Cập nhật trạng thái sản phẩm
+        async changeStatusSanPham(id) {
+            try {
+                // 🔥 Cập nhật ngay lập tức UI trước khi gọi API
+                const sanPham = this.getAllSanPham.find(sanPham => sanPham.id_san_pham === id);
+                if (sanPham) {
+                    sanPham.trang_thai = sanPham.trang_thai === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
+                }
+                // 🚀 Gọi API nhưng không chờ phản hồi để tránh lag
+                sanPhamService.changeStatusSanPham(id).then(response => {
+                    if (response.error) {
+                        toast.error('Có lỗi xảy ra');
+                        sanPham.trang_thai = sanPham.trang_thai === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
+                    } else {
+                        toast.success('Chuyển trạng thái thành công');
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path
+        },
+        getRoutePresent(path) {
+            this.checkRoutePresent = '';
+            this.checkRoutePresent = path
         },
         getIndex(path) {
             this.indexMenu = ['1'];
@@ -87,6 +170,9 @@ export const useGbStore = defineStore('gbStore', {
                     break;
                 case '/admin/quanlynhanvien':
                     this.indexMenu = ['10'];
+                    break;
+                case '/admin/quanlysanpham/add':
+                    this.indexMenu = ['3'];
                     break;
                 default:
                     this.indexMenu = ['1'];
