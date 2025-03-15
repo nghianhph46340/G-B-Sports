@@ -11,30 +11,30 @@
                     @after-open-change="afterOpenChange" :footer-style="{ textAlign: 'right' }">
 
                     <p for="name">Danh mục</p>
-                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Danh muc" style="width: 330px"
-                        :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
-                        @change="handleChange"></a-select>
+                    <a-select class="mb-2" v-model:value="valueDanhMuc" show-search placeholder="Danh mục"
+                        style="width: 330px" :options="danhMucOptions" :filter-option="filterOption"
+                        @focus="handleFocus" @blur="handleBlur" @change="handleChange"></a-select>
 
                     <p for="name">Thương hiệu</p>
-                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Thương hiệu"
-                        style="width: 330px" :options="options" :filter-option="filterOption" @focus="handleFocus"
-                        @blur="handleBlur" @change="handleChange"></a-select>
+                    <a-select class="mb-2" v-model:value="valueThuongHieu" show-search placeholder="Thương hiệu"
+                        style="width: 330px" :options="thuongHieuOptions" :filter-option="filterOption"
+                        @focus="handleFocus" @blur="handleBlur" @change="handleChange"></a-select>
 
                     <p for="name">Chất liệu</p>
-                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Chất liệu"
-                        style="width: 330px" :options="options" :filter-option="filterOption" @focus="handleFocus"
-                        @blur="handleBlur" @change="handleChange"></a-select>
+                    <a-select class="mb-2" v-model:value="valueChatLieu" show-search placeholder="Chất liệu"
+                        style="width: 330px" :options="chatLieuOptions" :filter-option="filterOption"
+                        @focus="handleFocus" @blur="handleBlur" @change="handleChange"></a-select>
 
 
 
                     <p for="name">Màu sắc</p>
-                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Màu sắc" style="width: 330px"
-                        :options="options" :filter-option="filterOption" @focus="handleFocus" @blur="handleBlur"
-                        @change="handleChange"></a-select>
+                    <a-select class="mb-2" v-model:value="valueMauSac" show-search placeholder="Màu sắc"
+                        style="width: 330px" :options="mauSacOptions" :filter-option="filterOption" @focus="handleFocus"
+                        @blur="handleBlur" @change="handleChange"></a-select>
 
                     <p for="name">Kích thước</p>
-                    <a-select class="mb-2" v-model:value="value" show-search placeholder="Kích thước"
-                        style="width: 330px" :options="options" :filter-option="filterOption" @focus="handleFocus"
+                    <a-select class="mb-2" v-model:value="valueSize" show-search placeholder="Kích thước"
+                        style="width: 330px" :options="sizeOptions" :filter-option="filterOption" @focus="handleFocus"
                         @blur="handleBlur" @change="handleChange"></a-select>
 
                     <p>Giá</p>
@@ -75,7 +75,7 @@
     </div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { FilterOutlined, PlusOutlined, ExportOutlined, ImportOutlined } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
@@ -84,8 +84,13 @@ const route = useRoute();
 const store = useGbStore();
 const open = ref(false);
 const value = ref('Còn hàng');
+const valueDanhMuc = ref('Chọn danh mục');
+const valueThuongHieu = ref('Chọn thương hiệu');
+const valueChatLieu = ref('Chọn chất liệu');
+const valueMauSac = ref('Chọn màu sắc');
+const valueSize = ref('Chọn kích thước');
 const value2 = ref([0, 999999999]);
-// store.getRoutePresent(route.path);
+
 const listSort = ref([
     { value: '1', label: 'Sắp xếp theo' },
     { value: '2', label: 'Tên tăng dần' },
@@ -103,16 +108,110 @@ const listXemTheo = ref([
     { value: '3', label: '15 sản phẩm' },
     { value: '4', label: '20 sản phẩm' },
 ])
-const options = ref([
-    { value: '1', label: 'Sắp xếp theo' },
-    { value: '2', label: 'Tên tăng dần' },
-    { value: '3', label: 'Tên giảm dần' },
-    { value: '4', label: 'Giá tăng dần' },
-    { value: '5', label: 'Giá giảm dần' },
-]);
+const danhMucOptions = ref([]);
+const thuongHieuOptions = ref([]);
+const chatLieuOptions = ref([]);
+const mauSacOptions = ref([]);
+const sizeOptions = ref([]);
+const loadingOptions = ref(false);
 const xemTheo = ref('0');
 const luuBien = ref('1');
-// const checkRoutePresent = ref(route.path);
+//Hàm huyển đổi dữ liệu danh mục
+const loadDanhMucOptions = async () => {
+    loadingOptions.value = true;
+    try {
+        await store.getDanhMucList(); // Gọi API lấy danh mục
+
+        // Chuyển đổi dữ liệu từ store sang format options
+        danhMucOptions.value = store.danhMucList.map(item => ({
+            value: item.id_danh_muc,
+            label: item.ten_danh_muc
+        }));
+
+    } catch (error) {
+        console.error('Lỗi khi load danh mục:', error);
+        message.error('Không thể tải danh sách danh mục');
+    } finally {
+        loadingOptions.value = false;
+    }
+};
+//Hàm huyển đổi dữ liệu thương hiệu
+const loadThuongHieuOptions = async () => {
+    loadingOptions.value = true;
+    try {
+        await store.getThuongHieuList(); // Gọi API lấy thương hiệu
+
+        // Chuyển đổi dữ liệu từ store sang format options
+        thuongHieuOptions.value = store.thuongHieuList.map(item => ({
+            value: item.id_thuong_hieu,
+            label: item.ten_thuong_hieu
+        }));
+
+    } catch (error) {
+        console.error('Lỗi khi load thương hiệu:', error);
+        message.error('Không thể tải danh sách thương hiệu');
+    } finally {
+        loadingOptions.value = false;
+    }
+};
+//Hàm huyển đổi dữ liệu chất liệu
+const loadChatLieuOptions = async () => {
+    loadingOptions.value = true;
+    try {
+        await store.getChatLieuList(); // Gọi API lấy chất liệu
+
+        // Chuyển đổi dữ liệu từ store sang format options
+        chatLieuOptions.value = store.chatLieuList.map(item => ({
+            value: item.id_chat_lieu,
+            label: item.ten_chat_lieu
+        }));
+
+    } catch (error) {
+        console.error('Lỗi khi load chất liệu:', error);
+        message.error('Không thể tải danh sách chất liệu');
+    } finally {
+        loadingOptions.value = false;
+    }
+};
+//Hàm huyển đổi dữ liệu màu sắc
+const loadMauSacOptions = async () => {
+    loadingOptions.value = true;
+    try {
+        await store.getMauSacList(); // Gọi API lấy màu sắc
+
+        // Chuyển đổi dữ liệu từ store sang format options
+        mauSacOptions.value = store.mauSacList.map(item => ({
+            value: item.id_mau_sac,
+            label: item.ten_mau_sac
+        }));
+
+    } catch (error) {
+        console.error('Lỗi khi load màu sắc:', error);
+        message.error('Không thể tải danh sách màu sắc');
+    } finally {
+        loadingOptions.value = false;
+    }
+};
+//Hàm huyển đổi dữ liệu size
+const loadSizeOptions = async () => {
+    loadingOptions.value = true;
+    try {
+        await store.getSizeList(); // Gọi API lấy size
+
+        // Chuyển đổi dữ liệu từ store sang format options
+        sizeOptions.value = store.sizeList.map(item => ({
+            value: item.id_kich_thuoc,
+            label: item.gia_tri + ' ' + item.don_vi
+        }));
+
+    } catch (error) {
+        console.error('Lỗi khi load size:', error);
+        message.error('Không thể tải danh sách size');
+    } finally {
+        loadingOptions.value = false;
+    }
+};
+//Hàm lọc dữ liệu
 const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
 };
@@ -142,14 +241,21 @@ const changeRouter = (routers) => {
     console.log(store.checkRouter);
 };
 //Lấy router hiện tại
+// const danhMucList = ref([]);
+// const thuongHieuList = ref([]);
+// const chatLieuList = ref([]);
 
-// onMounted(() => {
-//     // store.getRoutePresent(route.path);
-// });
-// watch(() => route.path, (newValue, oldValue) => {
-//     console.log('Route changed from', oldValue, 'to', newValue);
-//     store.getRoutePresent(newValue);
-// });
+// // Thêm state cho biến thể
+// const mauSacList = ref([]); // Danh sách màu sắc từ API
+// const sizeList = ref([]); // Danh sách size từ API
+
+onMounted(() => {
+    loadDanhMucOptions();
+    loadThuongHieuOptions();
+    loadChatLieuOptions();
+    loadMauSacOptions();
+    loadSizeOptions();
+});
 </script>
 <style scoped>
 .icon-filler {
