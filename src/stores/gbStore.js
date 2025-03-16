@@ -5,6 +5,7 @@ import { toast } from 'vue3-toastify'
 import { sanPhamService } from '@/services/sanPhamService'
 import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
+import HoaDonService from '@/services/hoaDonService'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -28,6 +29,10 @@ export const useGbStore = defineStore('gbStore', {
             totalPages: 0,
             currentPage: 0,
             totalItems: 0,
+            getAllHoaDonArr: [],
+            totalHoaDon: 0,
+            currentHoaDon: 0,
+            totalItemsHoaDon: 0,
             danhMucList: [],
             thuongHieuList: [],
             chatLieuList: [],
@@ -76,6 +81,32 @@ export const useGbStore = defineStore('gbStore', {
             } catch (error) {
                 console.error(error);
                 toast.error("Có lỗi xảy ra");
+            }
+        },
+        async changeTrangThai(id) {
+            try {
+                // 🔥 Cập nhật ngay lập tức UI trước khi gọi API
+                const nhanVien = this.getAllNhanVienArr.find(nhanVien => nhanVien.idNhanVien === id);
+                if (nhanVien) {
+                    nhanVien.trangThai = nhanVien.trangThai === "Đang hoạt động" ? "Đã nghỉ việc" : "Đang hoạt động";
+                }
+
+                //     const chuyenTrangThai = await nhanVienService.changeTrangThai(id);
+                //     if (chuyenTrangThai.error) {
+                //         toast.error('Có lỗi xảy ra');
+                // 🚀 Gọi API nhưng không chờ phản hồi để tránh lag
+                nhanVienService.changeTrangThai(id).then(response => {
+                    if (response.error) {
+                        toast.error('Có lỗi xảy ra');
+                        // 🔄 Nếu lỗi, revert trạng thái lại
+                        nhanVien.trangThai = nhanVien.trangThai === "Đang hoạt động" ? "Đã nghỉ việc" : "Đang hoạt động";
+                    } else {
+                        toast.success('Chuyển trạng thái thành công');
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
             }
         },
         //Lấy danh sách danh mục
@@ -151,6 +182,23 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
+        async getAllHoaDon(page = 0, size = 3){
+            try {
+                const hoaDon = await HoaDonService.getAllHoaDon(page, size);
+                if(hoaDon.error){
+                    toast.error('Không lấy được dữ liệu');
+                    return;
+                }else{
+                    this.getAllHoaDonArr = hoaDon.content || [];
+                    this.totalHoaDon = hoaDon.totalPages || 0;
+                    this.currentHoaDon = page;
+                    this.totalItemsHoaDon = hoaDon.totalElements || 0;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path
@@ -171,6 +219,8 @@ export const useGbStore = defineStore('gbStore', {
                 case '/admin/quanlynhanvien':
                     this.indexMenu = ['10'];
                     break;
+                    case'admin/quanlyhoadon':
+                    this.indexMenu = ['8'];
                 case '/admin/quanlysanpham/add':
                     this.indexMenu = ['3'];
                     break;

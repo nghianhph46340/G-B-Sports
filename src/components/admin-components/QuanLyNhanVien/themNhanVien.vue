@@ -188,6 +188,7 @@ const handleImageChange = (event) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 previewImage.value = e.target.result;
+                console.log("hihi"+previewImage);
             };
             reader.readAsDataURL(file);
         } else {
