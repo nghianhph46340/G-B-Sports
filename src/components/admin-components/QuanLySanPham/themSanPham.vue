@@ -86,7 +86,7 @@
                     </a-button>
                 </div>
 
-                <a-form layout="vertical">
+                <a-form class="form-bien-the" layout="vertical">
                     <div class="row">
                         <div class="col-md-6">
                             <a-form-item label="Màu sắc"
@@ -369,6 +369,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.form-bien-the {
+    z-index: 1200;
+}
+
 .ant-upload-picture-card-wrapper {
     width: 100%;
 }
