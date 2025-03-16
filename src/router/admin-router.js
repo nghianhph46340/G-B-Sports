@@ -33,6 +33,16 @@ const admin = [
                 path: "quanlynhanvien/update",
                 name: "admin-quan-ly-nhan-vien-update",
                 component: () => import('@/views/admin/NhanVien/SuaNhanVien.vue')
+            },
+            {
+                path: "quanlyhoadon",
+                name: "admin-quan-ly-hoa-don",
+                component: () => import('@/views/admin/HoaDon/HoaDon.vue')
+            },
+            {
+                path: "hoadon/hdct/:id",
+                name: "admin-hoa-don-chi-tiet",
+                component: () => import('@/views/admin/HoaDon/HDCT.vue')
             }
         ]
     }
