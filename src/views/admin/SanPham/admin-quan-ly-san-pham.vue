@@ -1,6 +1,7 @@
 <template>
     <!-- <tableAllSanPham></tableAllSanPham> -->
     <tableSanPham></tableSanPham>
+    <router-view></router-view>
 </template>
 
 <script>

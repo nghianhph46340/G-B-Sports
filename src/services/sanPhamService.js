@@ -52,10 +52,64 @@ const getCTSPBySanPham = async (id) => {
         console.log(error);
     }
 }
+const changeStatusSanPham = async (id) => {
+    try {
+        const { data } = await axiosInstance.put(qlsp + 'chuyenTrangThaiSanPham?id=' + id);
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
+const getDanhMucList = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'DanhMuc');
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
+const getThuongHieuList = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'ThuongHieu');
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
+const getChatLieuList = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'ChatLieu');
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
+const getMauSacList = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'MauSac');
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
+const getSizeList = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'Size');
+        return data;
+    } catch (error) {
+        console.log(error);
+    }
+}
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
     getImageInCTSP,
     searchChiTietSanPham,
-    getCTSPBySanPham
+    getCTSPBySanPham,
+    changeStatusSanPham,
+    getDanhMucList,
+    getThuongHieuList,
+    getChatLieuList,
+    getMauSacList,
+    getSizeList
 }
