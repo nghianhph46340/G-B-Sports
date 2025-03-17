@@ -19,7 +19,17 @@ const getNhanVienLocTrangThai = async(page, size, trangThai) => {
         return {error:true};
     }
 }
+const changeTrangThai = async(id) => {
+    try {
+        const data = await axiosInstance.put(`admin/quan-ly-nhan-vien/changeStatus?id=${id}`)
+        return data;
+    } catch (error) {
+        console.error('Lỗi API',error);
+        return {error:true};
+    }
+}
 export const nhanVienService = {
     getAllNhanVien,
-    getNhanVienLocTrangThai
+    getNhanVienLocTrangThai,
+    changeTrangThai
 }

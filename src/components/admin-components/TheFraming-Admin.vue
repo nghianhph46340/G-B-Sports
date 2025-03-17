@@ -30,7 +30,7 @@
                     <a-menu-item key="6">Danh mục</a-menu-item>
                     <a-menu-item key="7">Thuộc tính</a-menu-item>
                 </a-sub-menu>
-                <a-menu-item key="8">
+                <a-menu-item key="8" @click="changeRoute('/admin/quanlyhoadon');">
                     <AccountBookOutlined />
                     <span>Hóa đơn</span>
                 </a-menu-item>

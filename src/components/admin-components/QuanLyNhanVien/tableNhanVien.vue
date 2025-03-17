@@ -38,16 +38,16 @@
 
 
     <div class="table-responsive mt-4">
-      <table class="table table-bordered table-hover">
+      <table class="table table-hover">
         <thead>
-          <tr class="table-secondary">
+          <tr class="">
             <th scope="col">#</th>
-            <th scope="col">Ảnh nhân viên</th>
+            <th scope="col">Ảnh</th>
             <th scope="col">Mã nhân viên</th>
             <th scope="col">Tên nhân viên </th>
             <th scope="col">Giới tính</th>
             <th scope="col">Ngày sinh</th>
-            <th scope="col">Số điện thoại</th>
+            <th scope="col">SĐT</th>
             <th scope="col">Địa chỉ</th>
             <th scope="col">Email</th>
             <th scope="col">Trạng thái</th>
@@ -67,7 +67,7 @@
             <td>{{ nhanVien.diaChiLienHe }}</td>
             <td>{{ nhanVien.email }}</td>
             <td>
-              <a-switch :checked="nhanVien.trangThai == 'Đang hoạt động' ? true : false" :style="{ backgroundColor: nhanVien.trangThai === 'Đang hoạt động' ? '#f33b47' : '#ccc' }"/>
+              <a-switch :checked="nhanVien.trangThai == 'Đang hoạt động' ? true : false" :style="{ backgroundColor: nhanVien.trangThai === 'Đang hoạt động' ? '#f33b47' : '#ccc' }" @click="chuyenTrangThai(nhanVien.idNhanVien)"/>
             </td>
             <td>
               <button class="btn btn-outline-danger btn-sm" @click="router.push('/admin/quanlynhanvien/update')">
@@ -118,6 +118,12 @@ const fetchNhanVien = (page) => {
   store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
   }
 };
+//Chuyểnn trạng thái
+// const checked = ref(false);
+const chuyenTrangThai  = (id) => {
+  store.changeTrangThai(id)
+  console.log(id);
+}
 
 // Mounted hook
 onMounted(() => {
@@ -142,6 +148,9 @@ watch([selectedTrangThai,pageSize], () => {
 });
 </script>
 <style scoped>
+.table{
+  --bs-table-hover-bg: rgb(183 183 183 / 8%);
+}
 .buttonPT {
     background-color: transparent;
     text-align: center;

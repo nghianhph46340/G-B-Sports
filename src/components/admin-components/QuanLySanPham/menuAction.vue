@@ -66,7 +66,7 @@
             </a-button>
         </div>
         <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
-            <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('quanlysanpham/add')"
+            <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
                 class="d-flex align-items-center">
                 <PlusOutlined />
                 <span class="button-text">Thêm sản phẩm</span>
@@ -228,6 +228,7 @@ const afterOpenChange = bool => {
 };
 const showDrawer = () => {
     open.value = true;
+    console.log(open.value);
 };
 const onClose = () => {
     open.value = false;

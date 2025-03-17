@@ -25,6 +25,11 @@ const admin = [
                 component: () => import('@/views/admin/SanPham/admin-quan-ly-san-pham-them.vue')
             },
             {
+                path: "quanlysanpham/update/:id",
+                name: "admin-quan-ly-san-pham-update",
+                component: () => import('@/views/admin/SanPham/admin-quan-ly-san-pham-sua.vue')
+            },
+            {
                 path: "quanlynhanvien",
                 name: "admin-quan-ly-nhan-vien",
                 component: () => import('@/views/admin/NhanVien/QuanLyNhanVien.vue')
@@ -38,6 +43,21 @@ const admin = [
                 path: "quanlynhanvien/update",
                 name: "admin-quan-ly-nhan-vien-update",
                 component: () => import('@/views/admin/NhanVien/SuaNhanVien.vue')
+            },
+            {
+                path: "quanlyhoadon",
+                name: "admin-quan-ly-hoa-don",
+                component: () => import('@/views/admin/HoaDon/HoaDon.vue')
+            },
+            {
+                path: "hoadon/hdct/:id",
+                name: "admin-hoa-don-chi-tiet",
+                component: () => import('@/views/admin/HoaDon/HDCT.vue')
+            },
+            {
+                path: "test-upload-image",
+                name: "test-upload-image",
+                component: () => import('@/views/viewTest/testUploadImage.vue')
             }
         ]
     }
