@@ -3,7 +3,7 @@
         <div class="col-md-6 border-end">
             <h5>Thêm sản phẩm</h5>
             <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol" layout="horizontal"
-                @finish="onFinish">
+                @finish="onFinish" ref="formRef" :rules="rules">
                 <a-form-item label="Mã sản phẩm" name="ma_san_pham"
                     :rules="[{ required: true, message: 'Vui lòng nhập mã sản phẩm!' }]">
                     <a-input v-model:value="formState.ma_san_pham" />
@@ -19,19 +19,35 @@
                         <a-radio :value="false">Nữ</a-radio>
                     </a-radio-group>
                 </a-form-item>
+                <a-form-item label="Giá chung" name="gia_chung">
+                    <div class="d-flex align-items-center gap-2">
+                        <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
+                            :un-checked-children="'Giá riêng'" />
+                        <div v-if="useCommonPrice" class="d-flex gap-2 w-100">
+                            <a-input-number v-model:value="formState.gia_nhap_chung" :min="0"
+                                :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                                :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
+                                placeholder="Giá nhập chung" />
+                            <a-input-number v-model:value="formState.gia_ban_chung" :min="0"
+                                :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                                :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
+                                placeholder="Giá bán chung" />
+                        </div>
+                    </div>
+                </a-form-item>
 
-                <a-form-item label="Danh mục" name="danh_muc_id"
+                <a-form-item label="Danh mục" name="id_danh_muc"
                     :rules="[{ required: true, message: 'Vui lòng chọn danh mục!' }]">
-                    <a-select v-model:value="formState.danh_muc_id" placeholder="Chọn danh mục">
+                    <a-select v-model:value="formState.id_danh_muc" placeholder="Chọn danh mục">
                         <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc" :value="item.id_danh_muc">
                             {{ item.ten_danh_muc }}
                         </a-select-option>
                     </a-select>
                 </a-form-item>
 
-                <a-form-item label="Thương hiệu" name="thuong_hieu_id"
+                <a-form-item label="Thương hiệu" name="id_thuong_hieu"
                     :rules="[{ required: true, message: 'Vui lòng chọn thương hiệu!' }]">
-                    <a-select v-model:value="formState.thuong_hieu_id" placeholder="Chọn thương hiệu">
+                    <a-select v-model:value="formState.id_thuong_hieu" placeholder="Chọn thương hiệu">
                         <a-select-option v-for="item in thuongHieuList" :key="item.id_thuong_hieu"
                             :value="item.id_thuong_hieu">
                             {{ item.ten_thuong_hieu }}
@@ -39,9 +55,9 @@
                     </a-select>
                 </a-form-item>
 
-                <a-form-item label="Chất liệu" name="chat_lieu_id"
+                <a-form-item label="Chất liệu" name="id_chat_lieu"
                     :rules="[{ required: true, message: 'Vui lòng chọn chất liệu!' }]">
-                    <a-select v-model:value="formState.chat_lieu_id" placeholder="Chọn chất liệu">
+                    <a-select v-model:value="formState.id_chat_lieu" placeholder="Chọn chất liệu">
                         <a-select-option v-for="item in chatLieuList" :key="item.id_chat_lieu"
                             :value="item.id_chat_lieu">
                             {{ item.ten_chat_lieu }}
@@ -49,10 +65,14 @@
                     </a-select>
                 </a-form-item>
 
-                <a-form-item label="Hình ảnh" name="hinh_anh"
-                    :rules="[{ required: true, message: 'Vui lòng chọn hình ảnh!' }]">
+                <a-form-item label="Mô tả" name="mo_ta">
+                    <a-textarea v-model:value="formState.mo_ta" :rows="4" placeholder="Nhập mô tả sản phẩm"
+                        :maxLength="500" show-count />
+                </a-form-item>
+
+                <a-form-item label="Hình ảnh" name="hinh_anh">
                     <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1"
-                        @change="handleImageChange">
+                        :before-upload="beforeUpload">
                         <div v-if="fileList.length < 1">
                             <plus-outlined />
                             <div style="margin-top: 8px">Upload</div>
@@ -61,10 +81,10 @@
                 </a-form-item>
 
                 <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
-                    <a-button type="primary" html-type="submit" :loading="loading">
-                        Thêm sản phẩm
+                    <a-button type="primary" html-type="submit" :loading="loading" @click="validateForm">
+                        Xác nhận thông tin
                     </a-button>
-                    <a-button style="margin-left: 10px" @click="resetForm">
+                    <a-button style="margin-left: 10px" @click="resetForm()">
                         Làm mới
                     </a-button>
                 </a-form-item>
@@ -73,84 +93,113 @@
         <div class="col-md-6">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5>Biến thể sản phẩm</h5>
-                <a-button type="primary" @click="addVariant" class="d-flex align-items-center">
+                <a-button v-if="isProductValidated" type="primary" @click="addVariant"
+                    class="d-flex align-items-center">
                     <plus-outlined />Thêm biến thể
                 </a-button>
+                <span v-else class="text-muted">
+                    Vui lòng xác nhận thông tin sản phẩm trước khi thêm biến thể
+                </span>
             </div>
 
-            <div v-for="(variant, index) in variants" :key="index" class="variant-item mb-3 p-3 border rounded">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6>Biến thể #{{ index + 1 }}</h6>
-                    <a-button type="text" danger @click="removeVariant(index)">
-                        <delete-outlined />
-                    </a-button>
+            <template v-if="isProductValidated">
+                <div v-for="(variant, index) in variants" :key="index" class="variant-item mb-3 p-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6>Biến thể #{{ index + 1 }}</h6>
+                        <a-button type="text" danger @click="removeVariant(index)">
+                            <delete-outlined />
+                        </a-button>
+                    </div>
+
+                    <a-form class="form-bien-the" layout="vertical">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a-form-item label="Màu sắc"
+                                    :rules="[{ required: true, message: 'Vui lòng chọn màu sắc!' }]">
+                                    <a-select v-model:value="variant.mau_sac_id" placeholder="Chọn màu sắc">
+                                        <a-select-option v-for="color in mauSacList" :key="color.id_mau_sac"
+                                            :value="color.id_mau_sac">
+                                            {{ color.ma_mau_sac + ' ' + color.ten_mau_sac }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                            </div>
+                            <div class="col-md-6">
+                                <a-form-item label="Kích thước"
+                                    :rules="[{ required: true, message: 'Vui lòng chọn size!' }]">
+                                    <a-select v-model:value="variant.size_id" placeholder="Chọn size">
+                                        <a-select-option v-for="size in sizeList" :key="size.id_kich_thuoc"
+                                            :value="size.id_kich_thuoc">
+                                            {{ size.gia_tri }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <a-form-item label="Số lượng"
+                                    :rules="[{ required: true, message: 'Vui lòng nhập số lượng!' }]">
+                                    <a-input-number v-model:value="variant.so_luong" :min="0" style="width: 100%" />
+                                </a-form-item>
+                            </div>
+                            <div class="col-md-4">
+                                <a-form-item label="Giá nhập"
+                                    :rules="[{ required: true, message: 'Vui lòng nhập giá nhập!' }]">
+                                    <a-input-number v-model:value="variant.gia_nhap" :min="0" :disabled="useCommonPrice"
+                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%" />
+                                </a-form-item>
+                            </div>
+                            <div class="col-md-4">
+                                <a-form-item label="Giá bán"
+                                    :rules="[{ required: true, message: 'Vui lòng nhập giá bán!' }]">
+                                    <a-input-number v-model:value="variant.gia_ban" :min="0" :disabled="useCommonPrice"
+                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%" />
+                                </a-form-item>
+                            </div>
+                        </div>
+
+                        <a-form-item hidden label="Trạng thái">
+                            <a-switch v-model:checked="variant.trang_thai" :checked-children="'Còn hàng'"
+                                :un-checked-children="'Hết hàng'" />
+                        </a-form-item>
+
+                        <a-form-item label="Hình ảnh biến thể"
+                            :rules="[{ required: true, message: 'Vui lòng chọn ít nhất 1 hình ảnh!' }]">
+                            <div class="d-flex align-items-center gap-2">
+                                <a-upload v-model:file-list="variant.fileList" list-type="picture-card" :max-count="3"
+                                    :multiple="true"
+                                    :before-upload="(file) => beforeUpload(file, variant.fileList.length)"
+                                    @change="(info) => handleVariantImageChange(info, index)" @preview="handlePreview">
+                                    <div v-if="variant.fileList.length < 3">
+                                        <plus-outlined />
+                                        <div style="margin-top: 8px">Upload (Tối đa 3)</div>
+                                    </div>
+                                </a-upload>
+                                <span class="text-muted">
+                                    {{ variant.fileList.length }}/3 ảnh
+                                </span>
+                            </div>
+                        </a-form-item>
+                    </a-form>
                 </div>
 
-                <a-form class="form-bien-the" layout="vertical">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <a-form-item label="Màu sắc"
-                                :rules="[{ required: true, message: 'Vui lòng chọn màu sắc!' }]">
-                                <a-select v-model:value="variant.mau_sac_id" placeholder="Chọn màu sắc">
-                                    <a-select-option v-for="color in mauSacList" :key="color.id_mau_sac"
-                                        :value="color.id_mau_sac">
-                                        {{ color.ma_mau_sac + ' ' + color.ten_mau_sac }}
-                                    </a-select-option>
-                                </a-select>
-                            </a-form-item>
-                        </div>
-                        <div class="col-md-6">
-                            <a-form-item label="Kích thước"
-                                :rules="[{ required: true, message: 'Vui lòng chọn size!' }]">
-                                <a-select v-model:value="variant.size_id" placeholder="Chọn size">
-                                    <a-select-option v-for="size in sizeList" :key="size.id_kich_thuoc"
-                                        :value="size.id_kich_thuoc">
-                                        {{ size.gia_tri }}
-                                    </a-select-option>
-                                </a-select>
-                            </a-form-item>
-                        </div>
-                    </div>
+                <div class="mt-3" v-if="variants.length > 0">
+                    <a-button type="primary" html-type="submit" :loading="loading" @click="onFinish">
+                        Lưu tất cả
+                    </a-button>
+                </div>
+            </template>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <a-form-item label="Số lượng"
-                                :rules="[{ required: true, message: 'Vui lòng nhập số lượng!' }]">
-                                <a-input-number v-model:value="variant.so_luong" :min="0" style="width: 100%" />
-                            </a-form-item>
-                        </div>
-                        <div class="col-md-6">
-                            <a-form-item label="Giá bán"
-                                :rules="[{ required: true, message: 'Vui lòng nhập giá bán!' }]">
-                                <a-input-number v-model:value="variant.gia_ban" :min="0"
-                                    :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                    :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%" />
-                            </a-form-item>
-                        </div>
-                    </div>
-
-                    <a-form-item label="Trạng thái">
-                        <a-switch v-model:checked="variant.trang_thai" :checked-children="'Còn hàng'"
-                            :un-checked-children="'Hết hàng'" />
-                    </a-form-item>
-
-                    <a-form-item label="Hình ảnh biến thể"
-                        :rules="[{ required: true, message: 'Vui lòng chọn ít nhất 1 hình ảnh!' }]">
-                        <div class="d-flex align-items-center gap-2">
-                            <a-upload v-model:file-list="variant.fileList" list-type="picture-card" :max-count="3"
-                                :multiple="true" :before-upload="(file) => beforeUpload(file, variant.fileList.length)"
-                                @change="(info) => handleVariantImageChange(info, index)" @preview="handlePreview">
-                                <div v-if="variant.fileList.length < 3">
-                                    <plus-outlined />
-                                    <div style="margin-top: 8px">Upload (Tối đa 3)</div>
-                                </div>
-                            </a-upload>
-                            <span class="text-muted">
-                                {{ variant.fileList.length }}/3 ảnh
-                            </span>
-                        </div>
-                    </a-form-item>
-                </a-form>
+            <div v-else class="text-center p-4 border rounded">
+                <a-empty description="Vui lòng xác nhận thông tin sản phẩm trước khi thêm biến thể">
+                    <template #image>
+                        <ExclamationCircleOutlined style="font-size: 48px; color: #faad14;" />
+                    </template>
+                </a-empty>
             </div>
         </div>
     </div>
@@ -161,12 +210,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import { message } from 'ant-design-vue';
+import { ref, reactive, onMounted, watch } from 'vue';
+import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
+import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
+import { useRouter } from 'vue-router';
 
 const store = useGbStore();
+const router = useRouter();
 const loading = ref(false);
 const fileList = ref([]);
 
@@ -181,15 +232,22 @@ const wrapperCol = {
 };
 
 // Form state
+const useCommonPrice = ref(false);
 const formState = reactive({
-    ten_san_pham: '',
     ma_san_pham: '',
+    ten_san_pham: '',
+    mo_ta: '',
     gioi_tinh: undefined,
     hinh_anh: '',
-    danh_muc_id: undefined,
-    thuong_hieu_id: undefined,
-    chat_lieu_id: undefined,
+    id_danh_muc: undefined,
+    id_thuong_hieu: undefined,
+    id_chat_lieu: undefined,
+    trang_thai: true,
+    gia_nhap_chung: 0,
+    gia_ban_chung: 0
 });
+
+const giaBan = ref(formState.gia_ban);
 
 // Lists for selects
 const danhMucList = ref([]);
@@ -206,36 +264,56 @@ const previewVisible = ref(false);
 const previewImage = ref('');
 const previewTitle = ref('');
 
-// Methods
-const handleImageChange = (info) => {
-    fileList.value = info.fileList;
-    if (info.file.status === 'done') {
-        formState.hinh_anh = info.file.response.url;
-        message.success(`${info.file.name} tải lên thành công`);
-    } else if (info.file.status === 'error') {
-        message.error(`${info.file.name} tải lên thất bại`);
+const formRef = ref(null);
+const isProductValidated = ref(false);
+
+// Định nghĩa rules cho form
+const rules = {
+    ten_san_pham: [
+        { required: true, message: 'Vui lòng nhập tên sản phẩm!' }
+    ],
+    gioi_tinh: [
+        { required: true, message: 'Vui lòng chọn giới tính!' }
+    ],
+    id_danh_muc: [
+        { required: true, message: 'Vui lòng chọn danh mục!' }
+    ],
+    id_thuong_hieu: [
+        { required: true, message: 'Vui lòng chọn thương hiệu!' }
+    ],
+    id_chat_lieu: [
+        { required: true, message: 'Vui lòng chọn chất liệu!' }
+    ]
+};
+
+// Hàm validate form
+const validateForm = async () => {
+    try {
+        // Validate form using formRef
+        await formRef.value.validate();
+        console.log('Form validated successfully');
+        isProductValidated.value = true;
+        message.success('Thông tin sản phẩm hợp lệ, bạn có thể thêm biến thể');
+    } catch (errorInfo) {
+        console.log('Validation failed:', errorInfo);
+        isProductValidated.value = false;
+        message.error('Vui lòng điền đầy đủ thông tin sản phẩm');
     }
 };
 
-const resetForm = () => {
-    Object.keys(formState).forEach(key => {
-        formState[key] = '';
-    });
-    fileList.value = [];
-    variants.value = [];
-    variants.value = variants.value.map(variant => ({
-        ...variant,
-        fileList: [],
-        hinh_anh: []
-    }));
-};
-
+// Thêm state cho biến thể
 const addVariant = () => {
+    if (!isProductValidated.value) {
+        message.warning('Vui lòng xác nhận thông tin sản phẩm trước');
+        return;
+    }
+
     variants.value.push({
-        mau_sac_id: undefined,
-        size_id: undefined,
+        id_mau_sac: undefined,
+        id_kich_thuoc: undefined,
         so_luong: 0,
-        gia_ban: 0,
+        gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 0,
+        gia_ban: useCommonPrice.value ? formState.gia_ban_chung : 0,
         trang_thai: true,
         fileList: [],
         hinh_anh: []
@@ -314,35 +392,84 @@ const getBase64 = (file) => {
     });
 };
 
-const onFinish = async (values) => {
+// Thêm hàm kiểm tra dữ liệu
+const validateFormData = (data) => {
+    if (!data.ten_san_pham) throw new Error('Tên sản phẩm không được để trống');
+    if (data.gioi_tinh === undefined) throw new Error('Vui lòng chọn giới tính');
+    if (!data.id_danh_muc) throw new Error('Vui lòng chọn danh mục');
+    if (!data.id_thuong_hieu) throw new Error('Vui lòng chọn thương hiệu');
+    if (!data.id_chat_lieu) throw new Error('Vui lòng chọn chất liệu');
+    return true;
+};
+
+const onFinish = async () => {
+    if (!isProductValidated.value) {
+        message.error('Vui lòng xác nhận thông tin sản phẩm trước');
+        return;
+    }
+
     loading.value = true;
     try {
-        // Tạo sản phẩm chính
-        const response = await store.createProduct(formState);
-        const productId = response.id_san_pham;
+        console.log('FormState trước khi gửi:', formState);
+        const response = await store.createSanPham(formState);
+        console.log('Response nhận được:', response);
 
-        // Tạo các biến thể CTSP với hình ảnh
-        if (variants.value.length > 0) {
-            const ctspPromises = variants.value.map(variant => {
-                return store.createCTSP({
-                    ...variant,
-                    id_san_pham: productId,
-                    hinh_anh: variant.hinh_anh
-                });
-            });
-
-            await Promise.all(ctspPromises);
+        // Kiểm tra response
+        if (!response || !response.success) {
+            throw new Error(response?.message || 'Không nhận được dữ liệu phản hồi hợp lệ từ server');
         }
 
-        message.success('Thêm sản phẩm và biến thể thành công!');
+        // Lấy ID sản phẩm từ data trả về
+        const productId = response.data.id_san_pham;
+        if (!productId) {
+            throw new Error('Không nhận được ID sản phẩm từ server');
+        }
+
+        // Validate variants
+        if (variants.value.length === 0) {
+            throw new Error('Vui lòng thêm ít nhất một biến thể');
+        }
+
+        // Tạo các biến thể CTSP
+        for (const variant of variants.value) {
+            if (!variant.mau_sac_id || !variant.size_id) {
+                throw new Error('Vui lòng điền đầy đủ thông tin cho tất cả biến thể');
+            }
+
+            await store.createCTSP({
+                ...variant,
+                id_san_pham: productId,
+                hinh_anh: variant.hinh_anh
+            });
+        }
+
+        message.success(response.message || 'Thêm sản phẩm và biến thể thành công!');
         resetForm();
+        router.push('/admin/quanlysanpham');
     } catch (error) {
-        message.error('Có lỗi xảy ra khi thêm sản phẩm!');
-        console.error(error);
+        console.error('Chi tiết lỗi:', error);
+        if (error.response?.data) {
+            // Xử lý lỗi từ server
+            const errorMessage = error.response.data.message || 'Có lỗi xảy ra khi thêm sản phẩm';
+            message.error(errorMessage);
+        } else {
+            // Xử lý lỗi khác
+            message.error(error.message || 'Có lỗi xảy ra khi thêm sản phẩm');
+        }
     } finally {
         loading.value = false;
     }
 };
+
+// Watch cho giá chung
+watch([() => formState.gia_nhap_chung, () => formState.gia_ban_chung, () => useCommonPrice.value], ([newGiaNhap, newGiaBan, newUseCommon]) => {
+    if (newUseCommon) {
+        variants.value.forEach(variant => {
+            variant.gia_nhap = newGiaNhap;
+            variant.gia_ban = newGiaBan;
+        });
+    }
+});
 
 // Fetch initial data
 onMounted(async () => {
@@ -366,6 +493,63 @@ onMounted(async () => {
         console.error(error);
     }
 });
+
+// Khi load dữ liệu có sẵn
+const loadProductData = async (productId) => {
+    try {
+        const product = await store.getProductById(productId);
+
+        // Cập nhật formState
+        Object.assign(formState, {
+            ten_san_pham: product.ten_san_pham,
+            mo_ta: product.mo_ta,
+            gioi_tinh: product.gioi_tinh,
+            hinh_anh: product.hinh_anh,
+            id_danh_muc: product.id_danh_muc,
+            id_thuong_hieu: product.id_thuong_hieu,
+            id_chat_lieu: product.id_chat_lieu,
+            trang_thai: product.trang_thai
+        });
+
+        // Validate form sau khi load dữ liệu
+        await validateForm();
+
+        // ... rest of the loading code
+    } catch (error) {
+        message.error('Có lỗi khi tải thông tin sản phẩm!');
+        console.error(error);
+    }
+};
+
+// Watch changes in formState để debug
+watch(() => formState, (newVal) => {
+    console.log('FormState changed:', newVal);
+}, { deep: true });
+
+const resetForm = () => {
+    Modal.confirm({
+        title: 'Xác nhận làm mới',
+        content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        onOk: () => {
+            // Code reset ở trên
+            Object.assign(formState, {
+                ten_san_pham: '',
+                mo_ta: '',
+                gioi_tinh: undefined,
+                hinh_anh: '',
+                id_danh_muc: undefined,
+                id_thuong_hieu: undefined,
+                id_chat_lieu: undefined,
+                trang_thai: true,
+                gia_nhap_chung: 0,
+                gia_ban_chung: 0
+            });
+            // ... rest of reset code
+        }
+    });
+};
 </script>
 
 <style scoped>
@@ -422,5 +606,14 @@ onMounted(async () => {
     width: 100px;
     height: 100px;
     margin: 0;
+}
+
+.text-muted {
+    font-size: 14px;
+    color: #999;
+}
+
+.ant-empty {
+    margin: 32px 0;
 }
 </style>
