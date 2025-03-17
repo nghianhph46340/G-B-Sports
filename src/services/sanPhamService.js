@@ -10,9 +10,6 @@ const getAllSanPham = async () => {
         console.log(error);
         console.log('Không lấy được danh sách sản phẩm')
     }
-
-
-
 }
 
 const getAllChiTietSanPham = async () => {
@@ -100,6 +97,28 @@ const getSizeList = async () => {
         console.log(error);
     }
 }
+
+const createSanPhams = async (data) => {
+    try {
+        console.log('Data gửi đi:', data);
+        const response = await axiosInstance.post(qlsp + 'saveSanPham', data);
+        console.log('Response từ server:', response);
+        return response.data;
+    } catch (error) {
+        console.error('Chi tiết lỗi:', error);
+        throw error;
+    }
+}
+const createCTSP = async (data) => {
+    try {
+        console.log('Data CTSP gửi đi:', data);
+        const response = await axiosInstance.post(qlsp + 'saveCTSP', data);
+        return response.data;
+    } catch (error) {
+        console.log("Lỗi thêm chi tiết sản phẩm", error);
+        throw error;
+    }
+}
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
@@ -111,5 +130,7 @@ export const sanPhamService = {
     getThuongHieuList,
     getChatLieuList,
     getMauSacList,
-    getSizeList
+    getSizeList,
+    createSanPhams,
+    createCTSP
 }

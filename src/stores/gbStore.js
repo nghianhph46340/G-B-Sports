@@ -1,4 +1,3 @@
-
 import { defineStore } from 'pinia'
 import { check } from 'prettier'
 import { toast } from 'vue3-toastify'
@@ -182,13 +181,13 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
-        async getAllHoaDon(page = 0, size = 3){
+        async getAllHoaDon(page = 0, size = 3) {
             try {
                 const hoaDon = await HoaDonService.getAllHoaDon(page, size);
-                if(hoaDon.error){
+                if (hoaDon.error) {
                     toast.error('Không lấy được dữ liệu');
                     return;
-                }else{
+                } else {
                     this.getAllHoaDonArr = hoaDon.content || [];
                     this.totalHoaDon = hoaDon.totalPages || 0;
                     this.currentHoaDon = page;
@@ -219,7 +218,7 @@ export const useGbStore = defineStore('gbStore', {
                 case '/admin/quanlynhanvien':
                     this.indexMenu = ['10'];
                     break;
-                    case'admin/quanlyhoadon':
+                case 'admin/quanlyhoadon':
                     this.indexMenu = ['8'];
                 case '/admin/quanlysanpham/add':
                     this.indexMenu = ['3'];
@@ -278,6 +277,30 @@ export const useGbStore = defineStore('gbStore', {
                 }
             } else {
                 toast.error("Bị lấy dữ liệu nhiều lần")
+            }
+        },
+        //Thêm sản phẩm
+        async createSanPham(sanPhamData) {
+            try {
+                console.log('Data gửi đi:', sanPhamData);
+                const response = await sanPhamService.createSanPhams(sanPhamData);
+                console.log('Response từ service:', response);
+                return response;
+            } catch (error) {
+                console.error('Lỗi trong createSanPham:', error);
+                throw error;
+            }
+        },
+        //Thêm chi tiết sản phẩm
+        async createCTSP(CTSPData) {
+            try {
+                console.log('Dữ liệu CTSP gửi đi:', CTSPData)
+                const response = await sanPhamService.createCTSP(CTSPData);
+                console.log('Response từ service thêm chi tiết sản phẩm:', response);
+                return response;
+            } catch (error) {
+                console.error('Lỗi trong createCTSP:', error);
+                throw error;
             }
         },
         //Lấy danh sách chi tiết sản phẩm
