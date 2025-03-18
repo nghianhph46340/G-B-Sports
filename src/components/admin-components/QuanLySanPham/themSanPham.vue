@@ -339,6 +339,9 @@ const rules = {
                 if (useCommonPrice.value && (!value || value < 1000)) {
                     return Promise.reject('Giá bán phải lớn hơn 1000!');
                 }
+                if (useCommonPrice.value && (!value || value > 999999999)) {
+                    return Promise.reject('Giá bán phải nhỏ hơn 999.999.999!');
+                }
                 return Promise.resolve();
             }
         }
@@ -352,6 +355,12 @@ const rules = {
                     }
                     if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                         return Promise.reject('Giá bán phải lớn hơn 1000!');
+                    }
+                    if (!formState.gia_nhap_chung || formState.gia_nhap_chung > 999999999) {
+                        return Promise.reject('Giá nhập phải nhỏ hơn 999.999.999')
+                    }
+                    if (!formState.gia_ban_chung || formState.gia_ban_chung > 999999999) {
+                        return Promise.reject('Giá bán phải nhỏ hơn 999.999.999')
                     }
                     // Kiểm tra giá nhập phải nhỏ hơn giá bán ít nhất 10%
                     const minGiaBan = formState.gia_nhap_chung * 1.1; // Giá bán tối thiểu = giá nhập + 10%
