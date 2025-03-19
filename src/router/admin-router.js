@@ -40,7 +40,7 @@ const admin = [
                 component: () => import('@/views/admin/NhanVien/ThemNhanVien.vue')
             },
             {
-                path: "quanlynhanvien/update",
+                path: "quanlynhanvien/update/:id",
                 name: "admin-quan-ly-nhan-vien-update",
                 component: () => import('@/views/admin/NhanVien/SuaNhanVien.vue')
             },

@@ -11,8 +11,12 @@
             class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand">
             <template #expandedRowRender="{ record }">
                 {{ record.id_san_pham }}
-                <a-table :columns="columnsCTSP" :row-selection="rowSelection"
-                    :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small">
+                <a-table :columns="columnsCTSP" :row-selection="{
+                    selectedRowKeys: rowSelection.selectedRowKeys,
+                    onChange: (selectedRowKeys) => {
+                        rowSelection.selectedRowKeys = selectedRowKeys;
+                    }
+                }" :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small">
                     <template #bodyCell="{ column, record: ctspRecord }">
                         <template v-if="column.key === 'trang_thai'">
                             <a-switch
@@ -215,6 +219,27 @@ const handleExpand = async (expanded, record) => {
                 return;
             }
             await getCTSPForProduct(record);
+
+            // Nếu sản phẩm cha đã được chọn, tự động chọn tất cả CTSP
+            if (rowSelection.value.selectedRowKeys.includes(record.key)) {
+                const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
+                const childKeys = childItems.map(item => item.key);
+                const currentKeys = [...rowSelection.value.selectedRowKeys];
+
+                // Thêm các key chưa có trong danh sách
+                let hasNewKeys = false;
+                childKeys.forEach(key => {
+                    if (!currentKeys.includes(key)) {
+                        currentKeys.push(key);
+                        hasNewKeys = true;
+                    }
+                });
+
+                // Cập nhật selectedRowKeys nếu có thay đổi
+                if (hasNewKeys) {
+                    rowSelection.value.selectedRowKeys = currentKeys;
+                }
+            }
         } catch (error) {
             console.error("Lỗi khi mở rộng:", error);
         }
@@ -325,11 +350,51 @@ const columnsCTSP = [
 const data = ref([]);
 const rowSelection = ref({
     checkStrictly: false,
+    selectedRowKeys: [],
+    selectedRows: [],
     onChange: (selectedRowKeys, selectedRows) => {
         console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+        rowSelection.value.selectedRowKeys = selectedRowKeys;
+        rowSelection.value.selectedRows = selectedRows;
     },
-    onSelect: (record, selected, selectedRows) => {
+    onSelect: (record, selected, selectedRows, nativeEvent) => {
         console.log(record, selected, selectedRows);
+
+        // Nếu đang chọn một sản phẩm cha
+        if (record.id_san_pham && selected) {
+            // Lấy các chi tiết sản phẩm cho sản phẩm này
+            const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
+
+            // Thêm tất cả key của con vào selectedRowKeys
+            const childKeys = childItems.map(item => item.key);
+            const currentKeys = [...rowSelection.value.selectedRowKeys];
+
+            // Thêm các key chưa có trong danh sách
+            childKeys.forEach(key => {
+                if (!currentKeys.includes(key)) {
+                    currentKeys.push(key);
+                }
+            });
+
+            // Cập nhật selectedRowKeys
+            rowSelection.value.selectedRowKeys = currentKeys;
+        }
+
+        // Nếu bỏ chọn một sản phẩm cha
+        if (record.id_san_pham && !selected) {
+            // Lấy các chi tiết sản phẩm cho sản phẩm này
+            const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
+
+            // Xóa tất cả key của con khỏi selectedRowKeys
+            const childKeys = childItems.map(item => item.key);
+            let currentKeys = [...rowSelection.value.selectedRowKeys];
+
+            // Lọc bỏ các key của con
+            currentKeys = currentKeys.filter(key => !childKeys.includes(key));
+
+            // Cập nhật selectedRowKeys
+            rowSelection.value.selectedRowKeys = currentKeys;
+        }
     },
     onSelectAll: (selected, selectedRows, changeRows) => {
         console.log(selected, selectedRows, changeRows);

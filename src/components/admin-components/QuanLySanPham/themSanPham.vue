@@ -6,7 +6,7 @@
                 :rules="rules">
                 <a-form-item label="Mã sản phẩm" name="ma_san_pham"
                     :rules="[{ required: true, message: 'Vui lòng nhập mã sản phẩm!' }]">
-                    <a-input v-model:value="formState.ma_san_pham" disabled />
+                    <a-input v-model:value="formState.ma_san_pham" readonly disabled />
                 </a-form-item>
                 <a-form-item label="Tên sản phẩm" name="ten_san_pham"
                     :rules="[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]">

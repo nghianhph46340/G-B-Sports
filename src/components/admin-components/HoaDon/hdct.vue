@@ -1,8 +1,10 @@
 <template>
     <div class="container-fluid">
-        <span class="text-center pb-2">Thông tin chi tiết đơn hàng: </span>
-        <hr>
 
+            <span class="text-center pb-2">Thông tin chi tiết đơn hàng: </span>
+        
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <i class="fa-solid fa-file-alt"></i> <!-- Icon giao hàng -->
     </div>
 </template>
 
