@@ -37,9 +37,14 @@ export const useGbStore = defineStore('gbStore', {
             chatLieuList: [],
             mauSacList: [],
             sizeList: [],
+            nhanVienArr: [],
         }
     },
     actions: {
+        async layDanhSachNhanVien(){
+            const nhanVienArr = await nhanVienService.layDanhSachNhanVien();
+             this.nhanVienArr = nhanVienArr;
+        },
         async getAllNhanVien(page = 0, size = 5) {
             try {
                 const nhanVien = await nhanVienService.getAllNhanVien(page, size);
@@ -103,6 +108,38 @@ export const useGbStore = defineStore('gbStore', {
                         toast.success('Chuyển trạng thái thành công');
                     }
                 });
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        async themNhanVien(nhanVienMoi){
+            console.log('Dữ liệu truyền vào',nhanVienMoi);
+            try {
+                const themNhanVienres = await nhanVienService.themNhanViens(nhanVienMoi);
+                if(themNhanVienres.error){
+                    toast.error('Có lỗi xảy ra'); 
+                    return;
+                }
+                return themNhanVienres;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        async getNhanVienById(id){
+            const nhanVienById = await nhanVienService.getNhanVienById(id);
+            return nhanVienById;
+        },
+        async suaNhanVien(nhanVienUpdate){
+            console.log('Dữ liệu truyền vào',nhanVienUpdate);
+            try {
+                const suaNhanVienRes = await nhanVienService.suaNhanViens(nhanVienUpdate);
+                if(suaNhanVienRes.error){
+                    toast.error('Có lỗi xảy ra');
+                    return;
+                }
+                return suaNhanVienRes;
             } catch (error) {
                 console.error(error);
                 toast.error('Có lỗi xảy ra');
