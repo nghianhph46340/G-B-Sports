@@ -156,6 +156,25 @@ const getCurrentDateTime = () => {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+const importSanPhamFromExcel = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await axiosInstance.post(qlsp + 'listImport', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+
+
+
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
@@ -172,5 +191,6 @@ export const sanPhamService = {
     createSanPhams,
     createCTSP,
     getCurrentDate,
-    getCurrentDateTime
+    getCurrentDateTime,
+    importSanPhamFromExcel
 }

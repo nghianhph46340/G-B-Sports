@@ -198,6 +198,16 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
+        async importExcel(file) {
+            const importExcelRespone = await sanPhamService.importSanPhamFromExcel(file);
+            if (importExcelRespone.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                toast.success("Import dữ liệu thành công");
+            }
+            return importExcelRespone;
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path
