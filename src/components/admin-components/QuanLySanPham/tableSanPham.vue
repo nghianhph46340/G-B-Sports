@@ -16,8 +16,8 @@
                     <template #bodyCell="{ column, record: ctspRecord }">
                         <template v-if="column.key === 'trang_thai'">
                             <a-switch
-                                :style="{ backgroundColor: ctspRecord.trang_thai === 'Còn hàng' ? '#f33b47' : '#ccc' }"
-                                size="small" :checked="ctspRecord.trang_thai === 'Còn hàng' ? true : false" />
+                                :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
+                                size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false" />
                         </template>
                         <template v-if="column.key === 'action'">
                             <a-button @click="showDrawer" type="" style="color: white;"

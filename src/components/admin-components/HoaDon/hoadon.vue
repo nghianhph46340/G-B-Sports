@@ -55,7 +55,7 @@
                         <td>{{ hoaDon.hinh_thuc_thanh_toan }}</td>
                         <td>{{ hoaDon.phuong_thuc_nhan_hang }}</td>
                         <td>
-                            <button class="btn d-flex align-items-center shadow-sm" style="" @click="router.push(`/admin/hoadon/hdct/${hoaDon.id_hoa_don}`)">
+                            <button class="btn d-flex align-items-center shadow-sm" style="" @click="router.push(`/admin/hoadon/hdct/${hoaDon.ma_hoa_don}`)">
                                 <i class="bi bi-eye" style="color: #f33b47;" ></i>
                             </button>
                         </td>

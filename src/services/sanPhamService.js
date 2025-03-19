@@ -57,6 +57,21 @@ const changeStatusSanPham = async (id) => {
         console.log(error);
     }
 }
+
+// Hàm cập nhật trạng thái cho tất cả chi tiết sản phẩm theo sản phẩm chính
+const updateCTSPStatusBySanPham = async (id, status) => {
+    try {
+        const { data } = await axiosInstance.put(qlsp + 'updateCTSPStatusBySanPham', {
+            id_san_pham: id,
+            trang_thai: status
+        });
+        return data;
+    } catch (error) {
+        console.log('Lỗi khi cập nhật trạng thái CTSP:', error);
+        throw error;
+    }
+}
+
 const getDanhMucList = async () => {
     try {
         const { data } = await axiosInstance.get(qlsp + 'DanhMuc');
@@ -119,6 +134,28 @@ const createCTSP = async (data) => {
         throw error;
     }
 }
+
+// Hàm lấy ngày hiện tại theo định dạng yyyy-MM-dd
+const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Hàm lấy ngày giờ hiện tại đầy đủ
+const getCurrentDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
@@ -126,11 +163,14 @@ export const sanPhamService = {
     searchChiTietSanPham,
     getCTSPBySanPham,
     changeStatusSanPham,
+    updateCTSPStatusBySanPham,
     getDanhMucList,
     getThuongHieuList,
     getChatLieuList,
     getMauSacList,
     getSizeList,
     createSanPhams,
-    createCTSP
+    createCTSP,
+    getCurrentDate,
+    getCurrentDateTime
 }

@@ -46,7 +46,7 @@
                 </a-sub-menu>
                 <a-menu-item key="12">
                     <LaptopOutlined />
-                    <span>Cửa hàng</span>
+                    <span>Ưu đãi</span>
                 </a-menu-item>
                 <a-menu-item key="13">
                     <LogoutOutlined />
