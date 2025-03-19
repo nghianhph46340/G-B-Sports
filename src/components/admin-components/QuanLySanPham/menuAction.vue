@@ -60,10 +60,28 @@
                     <span class="button-text">Xuất excel</span>
                 </a-button>
             </template>
-            <a-button type="" class="d-flex align-items-center btn-filter">
+            <a-button type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
                 <ImportOutlined class="icon-filler" />
                 <span class="button-text">Nhập excel</span>
             </a-button>
+            <!-- Modal nhập excel -->
+            <a-modal v-model:open="openModalImportExcel" title="Nhập excel">
+                <a-upload :file-list="fileList" :remove="handleRemove" :before-upload="beforeUpload" :max-count="1"
+                    accept=".xlsx,.xls" @change="handleFileChange">
+                    <a-button>
+                        <upload-outlined />
+                        Chọn file Excel
+                    </a-button>
+                </a-upload>
+                <p v-if="selectedFile">File đã chọn: {{ selectedFile.name }}</p>
+                <template #footer>
+                    <a-button key="back" @click="openModalImportExcel = false">Hủy</a-button>
+                    <a-button key="submit" type="primary" :loading="uploadLoading" :disabled="!selectedFile"
+                        @click="handleImportExcel">
+                        Import
+                    </a-button>
+                </template>
+            </a-modal>
         </div>
         <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
             <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
@@ -76,10 +94,12 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue';
-import { FilterOutlined, PlusOutlined, ExportOutlined, ImportOutlined } from '@ant-design/icons-vue';
+import { FilterOutlined, PlusOutlined, ExportOutlined, ImportOutlined, UploadOutlined } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
 import { useRoute } from 'vue-router';
+import { message } from 'ant-design-vue';
+import { Upload } from 'ant-design-vue';
 const route = useRoute();
 const store = useGbStore();
 const open = ref(false);
@@ -116,6 +136,11 @@ const sizeOptions = ref([]);
 const loadingOptions = ref(false);
 const xemTheo = ref('0');
 const luuBien = ref('1');
+const openModalImportExcel = ref(false);
+const fileList = ref([]);
+const uploadLoading = ref(false);
+const selectedFile = ref(null);
+
 //Hàm huyển đổi dữ liệu danh mục
 const loadDanhMucOptions = async () => {
     loadingOptions.value = true;
@@ -257,6 +282,85 @@ onMounted(() => {
     loadMauSacOptions();
     loadSizeOptions();
 });
+
+// Hàm kiểm tra file trước khi upload
+const beforeUpload = (file) => {
+    const fileIsExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.type === 'application/vnd.ms-excel';
+
+    if (!fileIsExcel) {
+        message.error('Chỉ chấp nhận file Excel!');
+        return Upload.LIST_IGNORE;
+    }
+
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+        message.error('File phải nhỏ hơn 2MB!');
+        return Upload.LIST_IGNORE;
+    }
+
+    // Lưu file vào biến selectedFile
+    selectedFile.value = file;
+
+    // Trả về false để ngăn upload tự động, chúng ta sẽ upload thủ công khi nhấn nút Import
+    return false;
+};
+
+const handleFileChange = (info) => {
+    // Cập nhật danh sách file trong UI
+    fileList.value = [...info.fileList].slice(-1);
+
+    // Lấy file mới nhất
+    const file = info.file;
+
+    if (file.status === 'removed') {
+        selectedFile.value = null;
+    } else {
+        selectedFile.value = file;
+    }
+};
+
+// Hàm xử lý import Excel
+const handleImportExcel = async () => {
+    if (!selectedFile.value) {
+        message.error('Vui lòng chọn file Excel!');
+        return;
+    }
+
+    uploadLoading.value = true;
+
+    try {
+        const file = selectedFile.value;
+        console.log('File được upload:', file);
+
+        // Thực hiện đọc file và xử lý
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Gọi API hoặc store method để import
+        // Bỏ comment dòng dưới và thay thế bằng phương thức import của bạn
+        // await store.importExcel(formData);
+
+        // Giả lập xử lý thành công cho mục đích demo
+        setTimeout(() => {
+            message.success('Import dữ liệu thành công!');
+            openModalImportExcel.value = false;
+            selectedFile.value = null;
+            fileList.value = [];
+            uploadLoading.value = false;
+        }, 1000);
+
+    } catch (error) {
+        console.error('Lỗi khi import Excel:', error);
+        message.error('Đã xảy ra lỗi khi import dữ liệu!');
+        uploadLoading.value = false;
+    }
+};
+
+const handleRemove = (file) => {
+    // Handle file removal
+    console.log('Removing file:', file);
+};
 </script>
 <style scoped>
 .icon-filler {
