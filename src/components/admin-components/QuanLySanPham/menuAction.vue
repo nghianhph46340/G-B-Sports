@@ -100,6 +100,8 @@ import { useGbStore } from '@/stores/gbStore';
 import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { Upload } from 'ant-design-vue';
+
+
 const route = useRoute();
 const store = useGbStore();
 const open = ref(false);
@@ -333,26 +335,21 @@ const handleImportExcel = async () => {
         const file = selectedFile.value;
         console.log('File được upload:', file);
 
-        // Thực hiện đọc file và xử lý
-        const formData = new FormData();
-        formData.append('file', file);
+        // Gọi API import Excel
+        const result = await store.importExcel(file);
+        console.log(result);
+        message.success('Import dữ liệu thành công!');
+        openModalImportExcel.value = false;
+        selectedFile.value = null;
+        fileList.value = [];
 
-        // Gọi API hoặc store method để import
-        // Bỏ comment dòng dưới và thay thế bằng phương thức import của bạn
-        // await store.importExcel(formData);
-
-        // Giả lập xử lý thành công cho mục đích demo
-        setTimeout(() => {
-            message.success('Import dữ liệu thành công!');
-            openModalImportExcel.value = false;
-            selectedFile.value = null;
-            fileList.value = [];
-            uploadLoading.value = false;
-        }, 1000);
+        // Tải lại danh sách sản phẩm nếu cần
+        // await store.getAllSP();
 
     } catch (error) {
         console.error('Lỗi khi import Excel:', error);
         message.error('Đã xảy ra lỗi khi import dữ liệu!');
+    } finally {
         uploadLoading.value = false;
     }
 };
