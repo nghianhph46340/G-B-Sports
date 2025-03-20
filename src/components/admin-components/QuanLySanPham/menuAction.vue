@@ -1,7 +1,7 @@
 <template>
     <div class="mb-4 d-flex justify-content-between">
         <div class="d-flex gap-2 flex-wrap">
-            <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
+            <template v-if="!store.checkRouter.includes('/quanlysanpham/add')">
                 <a-button type="" @click="showDrawer" class="d-flex align-items-center btn-filter">
                     <FilterOutlined class="icon-filler" />
                     <span class="button-text">Bộ lọc</span>
@@ -82,6 +82,71 @@
                     </a-button>
                 </template>
             </a-modal>
+            <!-- Modal hiển thị dữ liệu import -->
+            <a-modal v-model:open="importExcelModal" title="Dữ liệu import" width="90%" :style="{ top: '20px' }">
+                <div class="table-container">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Giới tính</th>
+                                <th>Giá nhập</th>
+                                <th>Giá bán</th>
+                                <th>Số lượng</th>
+                                <th>Danh mục</th>
+                                <th>Thương hiệu</th>
+                                <th>Chất liệu</th>
+                                <th>Màu sắc</th>
+                                <th>Kích thước</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(item, index) in importExcelData" :key="index">
+                                <td>{{ index + 1 }}</td>
+                                <td
+                                    :style="{ backgroundColor: item.sanPham.ten_san_pham === null || item.sanPham.ten_san_pham === '' ? '#ff6b6b' : '' }">
+                                    {{
+                                        item.sanPham.ten_san_pham
+                                    }}</td>
+                                <td
+                                    :style="{ backgroundColor: item.sanPham.gioi_tinh === null || item.sanPham.gioi_tinh === '' ? '#ff6b6b' : '' }">
+                                    {{ item.sanPham.gioi_tinh ? "Nam" : "Nữ" }}</td>
+                                <td :style="{ backgroundColor: item.gia_nhap === 0 ? '#ff6b6b' : '' }">{{ item.gia_nhap
+                                }}</td>
+                                <td :style="{ backgroundColor: item.gia_ban === 0 ? '#ff6b6b' : '' }">{{ item.gia_ban }}
+                                </td>
+                                <td
+                                    :style="{ backgroundColor: item.so_luong === 0 || item.so_luong === null ? '#ff6b6b' : '' }">
+                                    {{
+                                        item.so_luong
+                                    }}</td>
+                                <td
+                                    :style="{ backgroundColor: item.sanPham.danhMuc.ten_danh_muc === null || item.sanPham.danhMuc.ten_danh_muc === '' ? '#ff6b6b' : '' }">
+                                    {{ item.sanPham.danhMuc.ten_danh_muc }}</td>
+                                <td
+                                    :style="{ backgroundColor: item.sanPham.thuongHieu.ten_thuong_hieu === null || item.sanPham.thuongHieu.ten_thuong_hieu === '' ? '#ff6b6b' : '' }">
+                                    {{ item.sanPham.thuongHieu.ten_thuong_hieu }}</td>
+                                <td
+                                    :style="{ backgroundColor: item.sanPham.chatLieu.ten_chat_lieu === null || item.sanPham.chatLieu.ten_chat_lieu === '' ? '#ff6b6b' : '' }">
+                                    {{ item.sanPham.chatLieu.ten_chat_lieu }}</td>
+                                <td
+                                    :style="{ backgroundColor: item.mauSac.ma_mau_sac === null || item.mauSac.ma_mau_sac === '' ? '#ff6b6b' : '' }">
+                                    {{ item.mauSac.ma_mau_sac + ' ' + item.mauSac.ten_mau_sac }}</td>
+                                <td
+                                    :style="{ backgroundColor: item.kichThuoc.gia_tri === null || item.kichThuoc.gia_tri === '' ? '#ff6b6b' : '' }">
+                                    {{ item.kichThuoc.gia_tri + ' ' + item.kichThuoc.don_vi }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <template #footer>
+                    <a-button key="back" @click="importExcelModal = false">Hủy</a-button>
+                    <a-button key="submit" type="primary" :loading="uploadLoading" @click="saveExcelImport">
+                        Save
+                    </a-button>
+                </template>
+            </a-modal>
         </div>
         <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
             <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
@@ -100,6 +165,8 @@ import { useGbStore } from '@/stores/gbStore';
 import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { Upload } from 'ant-design-vue';
+
+
 const route = useRoute();
 const store = useGbStore();
 const open = ref(false);
@@ -140,7 +207,8 @@ const openModalImportExcel = ref(false);
 const fileList = ref([]);
 const uploadLoading = ref(false);
 const selectedFile = ref(null);
-
+const importExcelModal = ref(false);
+const importExcelData = ref([]);
 //Hàm huyển đổi dữ liệu danh mục
 const loadDanhMucOptions = async () => {
     loadingOptions.value = true;
@@ -333,29 +401,53 @@ const handleImportExcel = async () => {
         const file = selectedFile.value;
         console.log('File được upload:', file);
 
-        // Thực hiện đọc file và xử lý
-        const formData = new FormData();
-        formData.append('file', file);
+        // Gọi API import Excel
+        const result = await store.importExcel(file);
 
-        // Gọi API hoặc store method để import
-        // Bỏ comment dòng dưới và thay thế bằng phương thức import của bạn
-        // await store.importExcel(formData);
-
-        // Giả lập xử lý thành công cho mục đích demo
-        setTimeout(() => {
-            message.success('Import dữ liệu thành công!');
-            openModalImportExcel.value = false;
-            selectedFile.value = null;
-            fileList.value = [];
-            uploadLoading.value = false;
-        }, 1000);
+        console.log(result);
+        message.success('Import dữ liệu thành công!');
+        openModalImportExcel.value = false;
+        selectedFile.value = null;
+        fileList.value = [];
+        importExcelModal.value = true;
+        importExcelData.value = result;
+        // Tải lại danh sách sản phẩm nếu cần
+        // await store.getAllSP();
 
     } catch (error) {
         console.error('Lỗi khi import Excel:', error);
         message.error('Đã xảy ra lỗi khi import dữ liệu!');
+    } finally {
         uploadLoading.value = false;
     }
 };
+const saveExcelImport = async () => {
+    uploadLoading.value = true;
+    try {
+        // Trong try/catch để bắt lỗi
+        if (!store.saveExcelImport) {
+            console.error('Store không có hàm saveExcelImport');
+            message.error('Lỗi hệ thống: Không thể lưu dữ liệu!');
+            return;
+        }
+        const result = await store.saveExcelImport(importExcelData.value);
+        console.log('Kết quả trả về:', result);
+
+        if (result) {
+            message.success('Lưu dữ liệu thành công!');
+            importExcelModal.value = false;
+
+            // Tải lại danh sách sản phẩm nếu cần
+            await store.getAllSP();
+            router.push('/admin/quanlysanpham');
+        }
+    } catch (error) {
+        console.error('Lỗi khi lưu dữ liệu:', error);
+        message.error('Đã xảy ra lỗi khi lưu dữ liệu!');
+    } finally {
+        uploadLoading.value = false;
+    }
+}
 
 const handleRemove = (file) => {
     // Handle file removal
@@ -508,5 +600,36 @@ const handleRemove = (file) => {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.table-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 8px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    background-color: #f5f5f5;
+    z-index: 1;
+}
+
+/* Thêm đường kẻ cho bảng */
+.table-bordered th,
+.table-bordered td {
+    border: 1px solid #dee2e6;
 }
 </style>

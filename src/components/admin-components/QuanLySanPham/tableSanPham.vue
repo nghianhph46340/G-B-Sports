@@ -8,15 +8,14 @@
     <div>
         <menuAction />
         <a-table :columns="columns" :row-selection="rowSelection" :data-source="data"
-            class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand">
+            class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
+            :row-key="record => record.id_san_pham">
             <template #expandedRowRender="{ record }">
-                {{ record.id_san_pham }}
                 <a-table :columns="columnsCTSP" :row-selection="{
-                    selectedRowKeys: rowSelection.selectedRowKeys,
-                    onChange: (selectedRowKeys) => {
-                        rowSelection.selectedRowKeys = selectedRowKeys;
-                    }
-                }" :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small">
+                    selectedRowKeys: selectedCTSPKeys,
+                    onChange: (keys, rows) => handleCTSPSelection(keys, rows, record.id_san_pham)
+                }" :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small"
+                    :row-key="record => record.id_chi_tiet_san_pham">
                     <template #bodyCell="{ column, record: ctspRecord }">
                         <template v-if="column.key === 'trang_thai'">
                             <a-switch
@@ -210,41 +209,14 @@ const showDrawer = () => {
     open.value = true;
 }
 const handleExpand = async (expanded, record) => {
-    console.log("Record được truyền vào:", record); // Kiểm tra record
     if (expanded) {
-        try {
-            // Đảm bảo record.id_san_pham có giá trị
-            if (!record.id_san_pham) {
-                console.error("id_san_pham không tồn tại trong record:", record);
-                return;
-            }
-            await getCTSPForProduct(record);
-
-            // Nếu sản phẩm cha đã được chọn, tự động chọn tất cả CTSP
-            if (rowSelection.value.selectedRowKeys.includes(record.key)) {
-                const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
-                const childKeys = childItems.map(item => item.key);
-                const currentKeys = [...rowSelection.value.selectedRowKeys];
-
-                // Thêm các key chưa có trong danh sách
-                let hasNewKeys = false;
-                childKeys.forEach(key => {
-                    if (!currentKeys.includes(key)) {
-                        currentKeys.push(key);
-                        hasNewKeys = true;
-                    }
-                });
-
-                // Cập nhật selectedRowKeys nếu có thay đổi
-                if (hasNewKeys) {
-                    rowSelection.value.selectedRowKeys = currentKeys;
-                }
-            }
-        } catch (error) {
-            console.error("Lỗi khi mở rộng:", error);
-        }
+        await getCTSPForProduct(record);
     }
 };
+
+const formState = ref({});
+const fileList = ref([]);
+const loading = ref(false);
 
 const columns = [
     {
@@ -270,7 +242,6 @@ const columns = [
     {
         title: 'Hình ảnh',
         dataIndex: 'hinh_anh',
-        width: '10%',
         key: 'hinh_anh',
         width: '10%',
     },
@@ -280,12 +251,12 @@ const columns = [
         key: 'tong_so_luong',
         width: '7%',
     },
-    {
-        title: 'Giới tính',
-        dataIndex: 'gioi_tinh',
-        key: 'gioi_tinh',
-        width: '10%',
-    },
+    // {
+    //     title: 'Giới tính',
+    //     dataIndex: 'gioi_tinh',
+    //     key: 'gioi_tinh',
+    //     width: '10%',
+    // },
 
     {
         title: 'Danh mục/Thương hiệu/Chất liệu',
@@ -310,11 +281,11 @@ const columns = [
 
 ];
 const columnsCTSP = [
-    {
-        title: 'Tên sản phẩm',
-        dataIndex: 'ten_san_pham',
-        key: 'ten_san_pham',
-    },
+    // {
+    //     title: 'Tên sản phẩm',
+    //     dataIndex: 'ten_san_pham',
+    //     key: 'ten_san_pham',
+    // },
     {
         title: 'Màu sắc',
         dataIndex: 'mau_sac',
@@ -348,57 +319,35 @@ const columnsCTSP = [
 
 ];
 const data = ref([]);
+const selectedCTSPKeys = ref([]);
 const rowSelection = ref({
-    checkStrictly: false,
     selectedRowKeys: [],
-    selectedRows: [],
     onChange: (selectedRowKeys, selectedRows) => {
-        console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
         rowSelection.value.selectedRowKeys = selectedRowKeys;
-        rowSelection.value.selectedRows = selectedRows;
-    },
-    onSelect: (record, selected, selectedRows, nativeEvent) => {
-        console.log(record, selected, selectedRows);
 
-        // Nếu đang chọn một sản phẩm cha
-        if (record.id_san_pham && selected) {
-            // Lấy các chi tiết sản phẩm cho sản phẩm này
-            const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
+        // Lấy danh sách các sản phẩm cha đã bị bỏ chọn
+        const deselectedParents = data.value
+            .filter(item => !selectedRowKeys.includes(item.id_san_pham))
+            .map(item => item.id_san_pham);
 
-            // Thêm tất cả key của con vào selectedRowKeys
-            const childKeys = childItems.map(item => item.key);
-            const currentKeys = [...rowSelection.value.selectedRowKeys];
+        // Xóa các CTSP của các sản phẩm cha đã bị bỏ chọn
+        deselectedParents.forEach(parentId => {
+            const childItems = productCTSPMap.value.get(parentId) || [];
+            const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
+            selectedCTSPKeys.value = selectedCTSPKeys.value.filter(key => !childKeys.includes(key));
+        });
 
-            // Thêm các key chưa có trong danh sách
-            childKeys.forEach(key => {
-                if (!currentKeys.includes(key)) {
-                    currentKeys.push(key);
-                }
-            });
-
-            // Cập nhật selectedRowKeys
-            rowSelection.value.selectedRowKeys = currentKeys;
-        }
-
-        // Nếu bỏ chọn một sản phẩm cha
-        if (record.id_san_pham && !selected) {
-            // Lấy các chi tiết sản phẩm cho sản phẩm này
-            const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
-
-            // Xóa tất cả key của con khỏi selectedRowKeys
-            const childKeys = childItems.map(item => item.key);
-            let currentKeys = [...rowSelection.value.selectedRowKeys];
-
-            // Lọc bỏ các key của con
-            currentKeys = currentKeys.filter(key => !childKeys.includes(key));
-
-            // Cập nhật selectedRowKeys
-            rowSelection.value.selectedRowKeys = currentKeys;
-        }
-    },
-    onSelectAll: (selected, selectedRows, changeRows) => {
-        console.log(selected, selectedRows, changeRows);
-    },
+        // Thêm các CTSP mới cho các sản phẩm cha được chọn
+        selectedRowKeys.forEach(async (key) => {
+            const record = data.value.find(item => item.id_san_pham === key);
+            if (record) {
+                await getCTSPForProduct(record);
+                const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
+                const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
+                selectedCTSPKeys.value = [...new Set([...selectedCTSPKeys.value, ...childKeys])];
+            }
+        });
+    }
 });
 
 // Hàm format dữ liệu CTSP
@@ -418,11 +367,11 @@ const formatCTSPData = (ctspList) => {
 const productCTSPMap = ref(new Map());
 const getCTSPForProduct = async (record) => {
     if (!productCTSPMap.value.has(record.id_san_pham)) {
-        // Nếu chưa có data CTSP cho sản phẩm này, gọi API để lấy
         await store.getCTSPBySanPham(record.id_san_pham);
         const ctspList = store.getCTSPBySanPhams.map(ctsp => ({
             key: ctsp.id_chi_tiet_san_pham,
             id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
+            id_san_pham: record.id_san_pham,
             ten_san_pham: ctsp.ten_san_pham,
             hinh_anh: ctsp.hinh_anh,
             gia_ban: ctsp.gia_ban,
@@ -434,14 +383,6 @@ const getCTSPForProduct = async (record) => {
         productCTSPMap.value.set(record.id_san_pham, ctspList);
     }
     return productCTSPMap.value.get(record.id_san_pham) || [];
-    // try {
-    //     console.log("Gọi API với id:", record.id_san_pham); // Kiểm tra id trước khi gọi API
-    //     await store.getCTSPBySanPham(record.id_san_pham);
-    //     return store.getCTSPBySanPhams || [];
-    // } catch (error) {
-    //     console.error("Lỗi trong getCTSPForProduct:", error);
-    //     return [];
-    // }
 };
 const expandableConfig = {
     expandIcon: () => null,
@@ -488,6 +429,24 @@ const handleOk = e => {
     console.log(e);
     open.value = false;
 };
+
+// Hàm xử lý selection cho CTSP
+const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
+    selectedCTSPKeys.value = selectedKeys;
+
+    // Cập nhật selection của sản phẩm cha
+    const childItems = productCTSPMap.value.get(parentId) || [];
+    const allChildKeys = childItems.map(item => item.id_chi_tiet_san_pham);
+    const allChildrenSelected = allChildKeys.every(key => selectedKeys.includes(key));
+
+    const currentParentKeys = rowSelection.value.selectedRowKeys;
+    if (allChildrenSelected && !currentParentKeys.includes(parentId)) {
+        rowSelection.value.selectedRowKeys = [...currentParentKeys, parentId];
+    } else if (!allChildrenSelected && currentParentKeys.includes(parentId)) {
+        rowSelection.value.selectedRowKeys = currentParentKeys.filter(key => key !== parentId);
+    }
+};
+
 onMounted(async () => {
     await store.getAllSP();
     data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
@@ -497,7 +456,6 @@ onMounted(async () => {
             id_san_pham: item.id_san_pham,
             ma_san_pham: item.ma_san_pham,
             ten_san_pham: item.ten_san_pham,
-            gioi_tinh: item.gioi_tinh ? "Nam" : "Nữ",
             hinh_anh: item.hinh_anh,
             chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
             trang_thai: item.trang_thai,
@@ -538,13 +496,4 @@ onMounted(async () => {
 .custom-class {
     z-index: 1000;
 }
-
-/* Style cho phần mở rộng */
-/* :deep(.ant-table-expanded-row) {
-    background: #fafafa;
-}
-
-:deep(.ant-table-expanded-row > td) {
-    padding: 16px 24px;
-} */
 </style>

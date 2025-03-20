@@ -156,6 +156,50 @@ const getCurrentDateTime = () => {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+const importSanPhamFromExcel = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await axiosInstance.post(qlsp + 'listImport', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+const saveExcelImports = async (data) => {
+    try {
+        const response = await axiosInstance.post(qlsp + 'save', data, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lưu dữ liệu Excel:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lưu dữ liệu Excel'
+        };
+    }
+}
+const getSanPhamById = async (id) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'sanPhamDetail?id=' + id);
+        // Lấy dữ liệu từ response.data vì đây là một object đơn lẻ
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm'
+        };
+    }
+}
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
@@ -172,5 +216,8 @@ export const sanPhamService = {
     createSanPhams,
     createCTSP,
     getCurrentDate,
-    getCurrentDateTime
+    getCurrentDateTime,
+    importSanPhamFromExcel,
+    saveExcelImports,
+    getSanPhamById
 }
