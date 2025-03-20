@@ -38,12 +38,13 @@ export const useGbStore = defineStore('gbStore', {
             mauSacList: [],
             sizeList: [],
             nhanVienArr: [],
+            sanPhamById: {},
         }
     },
     actions: {
-        async layDanhSachNhanVien(){
+        async layDanhSachNhanVien() {
             const nhanVienArr = await nhanVienService.layDanhSachNhanVien();
-             this.nhanVienArr = nhanVienArr;
+            this.nhanVienArr = nhanVienArr;
         },
         async getAllNhanVien(page = 0, size = 5) {
             try {
@@ -113,12 +114,12 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
-        async themNhanVien(nhanVienMoi){
-            console.log('Dữ liệu truyền vào',nhanVienMoi);
+        async themNhanVien(nhanVienMoi) {
+            console.log('Dữ liệu truyền vào', nhanVienMoi);
             try {
                 const themNhanVienres = await nhanVienService.themNhanViens(nhanVienMoi);
-                if(themNhanVienres.error){
-                    toast.error('Có lỗi xảy ra'); 
+                if (themNhanVienres.error) {
+                    toast.error('Có lỗi xảy ra');
                     return;
                 }
                 return themNhanVienres;
@@ -127,15 +128,15 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
-        async getNhanVienById(id){
+        async getNhanVienById(id) {
             const nhanVienById = await nhanVienService.getNhanVienById(id);
             return nhanVienById;
         },
-        async suaNhanVien(nhanVienUpdate){
-            console.log('Dữ liệu truyền vào',nhanVienUpdate);
+        async suaNhanVien(nhanVienUpdate) {
+            console.log('Dữ liệu truyền vào', nhanVienUpdate);
             try {
                 const suaNhanVienRes = await nhanVienService.suaNhanViens(nhanVienUpdate);
-                if(suaNhanVienRes.error){
+                if (suaNhanVienRes.error) {
                     toast.error('Có lỗi xảy ra');
                     return;
                 }
@@ -143,6 +144,16 @@ export const useGbStore = defineStore('gbStore', {
             } catch (error) {
                 console.error(error);
                 toast.error('Có lỗi xảy ra');
+            }
+        },
+        //Lấy sản phẩm theo id
+        async getSanPhamById(id) {
+            const sanPhamByIds = await sanPhamService.getSanPhamById(id);
+            if (sanPhamByIds.error) {
+                toast.error("Không lấy được dữ liệu")
+                return;
+            } else {
+                this.sanPhamById = sanPhamByIds;
             }
         },
         //Lấy danh sách danh mục
@@ -244,6 +255,16 @@ export const useGbStore = defineStore('gbStore', {
                 toast.success("Import dữ liệu thành công");
             }
             return importExcelRespone;
+        },
+        async saveExcelImport(data) {
+            const saveExcelImportRespone = await sanPhamService.saveExcelImports(data);
+            if (saveExcelImportRespone.error) {
+                toast.error("Không thể lưu dữ liệu")
+                return;
+            } else {
+                toast.success("Lưu dữ liệu thành công");
+            }
+            return saveExcelImportRespone;
         },
         getPath(path) {
             this.checkRouter = '';

@@ -171,10 +171,35 @@ const importSanPhamFromExcel = async (file) => {
         throw error;
     }
 }
-
-
-
-
+const saveExcelImports = async (data) => {
+    try {
+        const response = await axiosInstance.post(qlsp + 'save', data, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lưu dữ liệu Excel:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lưu dữ liệu Excel'
+        };
+    }
+}
+const getSanPhamById = async (id) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'sanPhamDetail?id=' + id);
+        // Lấy dữ liệu từ response.data vì đây là một object đơn lẻ
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm'
+        };
+    }
+}
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
@@ -192,5 +217,7 @@ export const sanPhamService = {
     createCTSP,
     getCurrentDate,
     getCurrentDateTime,
-    importSanPhamFromExcel
+    importSanPhamFromExcel,
+    saveExcelImports,
+    getSanPhamById
 }

@@ -12,13 +12,13 @@
                     :rules="[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]">
                     <a-input v-model:value="formState.ten_san_pham" />
                 </a-form-item>
-                <a-form-item label="Giới tính" name="gioi_tinh"
+                <!-- <a-form-item label="Giới tính" name="gioi_tinh"
                     :rules="[{ required: true, message: 'Vui lòng chọn giới tính!' }]">
                     <a-radio-group v-model:value="formState.gioi_tinh">
                         <a-radio :value="true">Nam</a-radio>
                         <a-radio :value="false">Nữ</a-radio>
                     </a-radio-group>
-                </a-form-item>
+                </a-form-item> -->
                 <a-form-item label="Giá chung" name="gia_chung">
                     <div class="d-flex align-items-center gap-2">
                         <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
@@ -274,7 +274,7 @@ const formState = reactive({
     ma_san_pham: '',
     ten_san_pham: '',
     mo_ta: '',
-    gioi_tinh: undefined,
+    // gioi_tinh: undefined,
     hinh_anh: '',
     id_danh_muc: undefined,
     id_thuong_hieu: undefined,
@@ -285,8 +285,6 @@ const formState = reactive({
     ngay_tao: new Date().toISOString(),
     ngay_cap_nhat: new Date().toISOString()
 });
-
-const giaBan = ref(formState.gia_ban);
 
 // Lists for selects
 const danhMucList = ref([]);
@@ -310,9 +308,6 @@ const isProductValidated = ref(false);
 const rules = {
     ten_san_pham: [
         { required: true, message: 'Vui lòng nhập tên sản phẩm!' }
-    ],
-    gioi_tinh: [
-        { required: true, message: 'Vui lòng chọn giới tính!' }
     ],
     id_danh_muc: [
         { required: true, message: 'Vui lòng chọn danh mục!' }
@@ -488,7 +483,7 @@ const getBase64 = (file) => {
 // Thêm hàm kiểm tra dữ liệu
 const validateFormData = (data) => {
     if (!data.ten_san_pham) throw new Error('Tên sản phẩm không được để trống');
-    if (data.gioi_tinh === undefined) throw new Error('Vui lòng chọn giới tính');
+    // if (data.gioi_tinh === undefined) throw new Error('Vui lòng chọn giới tính');
     if (!data.id_danh_muc) throw new Error('Vui lòng chọn danh mục');
     if (!data.id_thuong_hieu) throw new Error('Vui lòng chọn thương hiệu');
     if (!data.id_chat_lieu) throw new Error('Vui lòng chọn chất liệu');
