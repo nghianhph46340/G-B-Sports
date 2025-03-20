@@ -255,7 +255,7 @@ const wrapperCol = {
 // Form state
 const useCommonPrice = ref(false);
 const formState = reactive({
-    id_san_pham: '',
+    id_san_pham: route.params.id,
     ma_san_pham: '',
     ten_san_pham: '',
     mo_ta: '',
@@ -627,37 +627,146 @@ watch([() => formState.gia_nhap_chung, () => formState.gia_ban_chung, () => useC
 
 onMounted(async () => {
     try {
-        // Lấy danh sách sản phẩm để tạo mã tự động
+        // Lấy thông tin sản phẩm theo ID
         await store.getSanPhamById(route.params.id);
+
+        // Kiểm tra xem có dữ liệu sản phẩm không
+        if (!store.sanPhamById || !store.sanPhamById.id_san_pham) {
+            throw new Error('Không tìm thấy thông tin sản phẩm');
+        }
+
+        console.log('Dữ liệu sản phẩm:', store.sanPhamById);
+
+        // Lấy dữ liệu danh mục, thương hiệu, chất liệu trước khi cập nhật form
+        await store.getDanhMucList();
+        await store.getThuongHieuList();
+        await store.getChatLieuList();
+
+        // Lấy danh sách màu sắc và size
+        await store.getMauSacList();
+        await store.getSizeList();
+
+        console.log('Danh mục:', store.danhMucList);
+        console.log('Thương hiệu:', store.thuongHieuList);
+        console.log('Chất liệu:', store.chatLieuList);
+        console.log('Màu sắc:', store.mauSacList);
+        console.log('Size:', store.sizeList);
+
+        danhMucList.value = store.danhMucList;
+        thuongHieuList.value = store.thuongHieuList;
+        chatLieuList.value = store.chatLieuList;
+        mauSacList.value = store.mauSacList;
+        sizeList.value = store.sizeList;
+        console.log('Màu sắc:', mauSacList.value);
+        console.log('Size:', sizeList.value);
+
+
+        // Cập nhật formState với dữ liệu sản phẩm
         formState.id_san_pham = store.sanPhamById.id_san_pham;
         formState.ma_san_pham = store.sanPhamById.ma_san_pham;
         formState.ten_san_pham = store.sanPhamById.ten_san_pham;
         formState.mo_ta = store.sanPhamById.mo_ta;
         formState.hinh_anh = store.sanPhamById.hinh_anh;
-        formState.id_danh_muc = store.sanPhamById.danhMuc.id_danh_muc;
-        formState.id_thuong_hieu = store.sanPhamById.thuongHieu.id_thuong_hieu;
-        formState.id_chat_lieu = store.sanPhamById.chatLieu.id_chat_lieu;
+
+        // Kiểm tra dữ liệu danh mục, thương hiệu, chất liệu
+        if (store.sanPhamById.danhMuc) {
+            formState.id_danh_muc = store.sanPhamById.danhMuc.id_danh_muc;
+        }
+
+        if (store.sanPhamById.thuongHieu) {
+            formState.id_thuong_hieu = store.sanPhamById.thuongHieu.id_thuong_hieu;
+        }
+
+        if (store.sanPhamById.chatLieu) {
+            formState.id_chat_lieu = store.sanPhamById.chatLieu.id_chat_lieu;
+        }
+
         formState.trang_thai = store.sanPhamById.trang_thai;
+
+        // Nếu có hình ảnh sản phẩm, cập nhật fileList
+        if (store.sanPhamById.hinh_anh) {
+            fileList.value = [{
+                uid: '-1',
+                name: 'product-image.jpg',
+                status: 'done',
+                url: store.sanPhamById.hinh_anh
+            }];
+        }
+
+        // Lấy danh sách các biến thể của sản phẩm
         await store.getCTSPBySanPham(store.sanPhamById.id_san_pham);
-        variants.value = store.getCTSPBySanPhams;
-        console.log(variants.value);
-        // Thay thế bằng các actions thực tế từ store của bạn
-        await store.getDanhMucList();
-        await store.getThuongHieuList();
-        await store.getChatLieuList();
+        console.log('Chi tiết sản phẩm:', store.getCTSPBySanPhams);
 
-        danhMucList.value = store.danhMucList;
-        thuongHieuList.value = store.thuongHieuList;
-        chatLieuList.value = store.chatLieuList;
+        // Xử lý dữ liệu biến thể
+        if (store.getCTSPBySanPhams && store.getCTSPBySanPhams.length > 0) {
+            variants.value = store.getCTSPBySanPhams.map(ctsp => {
+                console.log('Đang xử lý biến thể:', ctsp);
 
-        // Thêm các API calls để lấy danh sách màu sắc và size
-        await store.getMauSacList();
-        await store.getSizeList();
-        mauSacList.value = store.mauSacList;
-        sizeList.value = store.sizeList;
+                // Kiểm tra và log thông tin về màu sắc và kích thước
+                const mauSac = mauSacList.value.find(ms => ms.id_mau_sac === ctsp.id_mau_sac);
+                const kichThuoc = sizeList.value.find(size => size.id_kich_thuoc === ctsp.id_kich_thuoc);
+
+                console.log('Màu sắc tìm thấy:', mauSac);
+                console.log('Kích thước tìm thấy:', kichThuoc);
+
+                // Chuyển đổi URL hình ảnh thành định dạng fileList cho a-upload
+                let variantFileList = [];
+
+                if (ctsp.hinh_anh) {
+                    console.log('Hình ảnh biến thể gốc:', ctsp.hinh_anh);
+
+                    // Nếu hinh_anh là chuỗi, chuyển thành mảng có một phần tử
+                    const hinhAnhArray = typeof ctsp.hinh_anh === 'string'
+                        ? [ctsp.hinh_anh]
+                        : Array.isArray(ctsp.hinh_anh)
+                            ? ctsp.hinh_anh
+                            : [];
+
+                    console.log('Mảng hình ảnh sau khi xử lý:', hinhAnhArray);
+
+                    variantFileList = hinhAnhArray.map((url, index) => {
+                        const fileItem = {
+                            uid: `-${index}`,
+                            name: `image-${index}.jpg`,
+                            status: 'done',
+                            url: url
+                        };
+                        console.log('File item được tạo:', fileItem);
+                        return fileItem;
+                    });
+                }
+
+                console.log('FileList cuối cùng:', variantFileList);
+
+                // Tạo đối tượng biến thể
+                return {
+                    id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
+                    id_mau_sac: ctsp.id_mau_sac,
+                    id_kich_thuoc: ctsp.id_kich_thuoc,
+                    so_luong: ctsp.so_luong || 1,
+                    gia_nhap: ctsp.gia_nhap || 1000,
+                    gia_ban: ctsp.gia_ban || 1100,
+                    trang_thai: ctsp.trang_thai || 'Hoạt động',
+                    fileList: variantFileList,
+                    hinh_anh: typeof ctsp.hinh_anh === 'string'
+                        ? [ctsp.hinh_anh]
+                        : Array.isArray(ctsp.hinh_anh)
+                            ? ctsp.hinh_anh
+                            : []
+                };
+            });
+
+            console.log('Variants sau khi xử lý:', variants.value);
+
+            // Đánh dấu form đã được validate để có thể chỉnh sửa biến thể
+            isProductValidated.value = true;
+
+            // Đảm bảo validate form sau khi tải dữ liệu
+            await validateForm();
+        }
     } catch (error) {
-        message.error('Có lỗi khi tải dữ liệu!');
-        console.error(error);
+        message.error('Có lỗi khi tải dữ liệu: ' + error.message);
+        console.error('Chi tiết lỗi:', error);
     }
 });
 
