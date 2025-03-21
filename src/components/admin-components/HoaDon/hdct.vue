@@ -98,8 +98,9 @@
                             </table>
                             <div class="total-section">
                                 <p>Tổng tạm: {{ formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam) }} VNĐ</p>
-                                <p>Giảm giá: {{ formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) - (store.hoaDonDetail.tong_tien_sau_giam || 0)) }} VNĐ</p>
-                                <p>Phí vận chuyển: {{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
+                                <!-- <p>Giảm giá: {{ formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) - (store.hoaDonDetail.tong_tien_sau_giam || 0)) }} VNĐ</p> -->
+                                <p>Giảm giá: - 0 VNĐ</p>
+                                <p>Phí vận chuyển: +{{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
                                 <p>Tổng cuối: {{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</p>
                             </div>
                         </div>
@@ -311,21 +312,48 @@ const getStatusClass = (status) => {
 };
 
 const getStatusDate = (status) => {
+    // Lấy trạng thái hiện tại của đơn hàng
+    const currentStatus = store.hoaDonDetail?.trang_thai;
+    if (!currentStatus) return '';
+    // Định nghĩa thứ tự trạng thái
+    const statusOrder = {
+        'Chờ xác nhận': 1,
+        'Đã xác nhận': 2,
+        'Đã cập nhật': 3,
+        'Đang giao': 4,
+        'Đã nhận hàng': 5,
+        'Hoàn thành': 6,
+        'Đã hủy': -1 // Trạng thái hủy không thuộc luồng chính
+    };
+    // Lấy thứ tự của trạng thái hiện tại
+    const currentStep = statusOrder[currentStatus] || 0;
+    // Lấy thứ tự của trạng thái đang xét
+    const statusIndex = store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng'
+        ? storePickupStatusSteps.findIndex(s => s.name === status)
+        : defaultStatusSteps.findIndex(s => s.name === status);
+    const thisStep = statusIndex + 1;
+    // Nếu trạng thái hiện tại chưa đạt đến trạng thái đang xét, không hiển thị thời gian
+    if (currentStep < thisStep && currentStatus !== 'Đã hủy') {
+        return '';
+    }
+    // Trường hợp 1: Nếu là "Nhận tại cửa hàng" và trạng thái là "Chờ xác nhận"
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng' && status === 'Chờ xác nhận') {
         return formatDate(store.hoaDonDetail.ngay_tao);
     }
+    // Trường hợp 2: Nếu là "Giao hàng" và trạng thái là "Đơn hàng đã đặt"
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && status === 'Đơn hàng đã đặt') {
         return formatDate(store.hoaDonDetail.ngay_tao);
     }
+    // Trường hợp 3: Lấy backendStatus tương ứng với trạng thái
     const backendStatus = (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng' 
         ? storePickupStatusSteps.find(s => s.name === status)?.backendStatus 
         : defaultStatusSteps.find(s => s.name === status)?.backendStatus);
-    
+    // Trường hợp 4: Nếu trạng thái là "Đã nhận hàng" và phương thức là "Giao hàng"
     if (status === 'Đã nhận hàng' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng') {
         const history = store.trangThaiHistory.find(h => h.trang_thai === 'Hoàn thành');
-        return history?.ngay_chuyen_formatted || formatDate(store.hoaDonDetail.ngay_tao);
+        return history?.ngay_chuyen_formatted || ''; // Không trả về ngày tạo nếu chưa có lịch sử
     }
-
+    // Trường hợp 5: Tìm trong lịch sử trạng thái
     const history = store.trangThaiHistory.find(h => h.trang_thai === backendStatus);
     return history?.ngay_chuyen_formatted || '';
 };
