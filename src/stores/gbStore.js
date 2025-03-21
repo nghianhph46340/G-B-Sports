@@ -4,7 +4,7 @@ import { toast } from 'vue3-toastify'
 import { sanPhamService } from '@/services/sanPhamService'
 import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
-import HoaDonService from '@/services/hoaDonService'
+import { hoaDonService } from '@/services/hoaDonService'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -32,6 +32,9 @@ export const useGbStore = defineStore('gbStore', {
             totalHoaDon: 0,
             currentHoaDon: 0,
             totalItemsHoaDon: 0,
+            hoaDonDetail: {},         // Chi tiết hóa đơn hiện tại
+            chiTietHoaDons: [],       // Danh sách chi tiết sản phẩm trong hóa đơn
+            trangThaiHistory: [],
             danhMucList: [],
             thuongHieuList: [],
             chatLieuList: [],
@@ -181,18 +184,116 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
-        async getAllHoaDon(page = 0, size = 3) {
+        async getAllHoaDon(page = 0, size = 5) {
             try {
-                const hoaDon = await HoaDonService.getAllHoaDon(page, size);
+                const hoaDon = await hoaDonService.getAllHoaDon(page, size);
                 if (hoaDon.error) {
                     toast.error('Không lấy được dữ liệu');
                     return;
-                } else {
-                    this.getAllHoaDonArr = hoaDon.content || [];
-                    this.totalHoaDon = hoaDon.totalPages || 0;
-                    this.currentHoaDon = page;
-                    this.totalItemsHoaDon = hoaDon.totalElements || 0;
                 }
+                this.getAllHoaDonArr = hoaDon.content || [];
+                this.totalHoaDon = hoaDon.totalPages || 0;
+                this.currentHoaDon = page;
+                this.totalItemsHoaDon = hoaDon.totalElements || 0;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        async filterByTrangThai(trangThai, page = 0, size = 5) {
+            try {
+                const response = await hoaDonService.filterByTrangThai(trangThai, page, size);
+                if (response.error) {
+                    toast.error('Không lọc được dữ liệu');
+                    return;
+                }
+                this.getAllHoaDonArr = response.content || [];
+                this.totalHoaDon = response.totalPages || 0;
+                this.currentHoaDon = page;
+                this.totalItemsHoaDon = response.totalElements || 0;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        async filterByDate(tuNgay, denNgay, page = 0, size = 5) {
+            try {
+                console.log('Từ ngày: ' + tuNgay + 'Đến ngày: ' + denNgay)
+                const response = await hoaDonService.filterByDate(tuNgay, denNgay, page, size);
+                console.log('Response từ getDate:', response);
+                if (response.error) {
+                    toast.error('Không lọc được dữ liệu');
+                    return;
+                }
+                this.getAllHoaDonArr = response.content || [];
+                this.totalHoaDon = response.totalPages || 0;
+                this.currentHoaDon = page;
+                this.totalItemsHoaDon = response.totalElements || 0;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        async searchHoaDon(keyword, page = 0, size = 5) {
+            try {
+                const response = await hoaDonService.searchHoaDon(keyword, page, size);
+                if (response.error) {
+                    toast.error('Không tìm kiếm được dữ liệu');
+                    return;
+                }
+                this.getAllHoaDonArr = response.content || [];
+                this.totalHoaDon = response.totalPages || 0;
+                this.currentHoaDon = page;
+                this.totalItemsHoaDon = response.totalElements || 0;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        // Thêm action mới để lấy chi tiết hóa đơn
+        async getHoaDonDetail(maHoaDon) {
+            try {
+                console.log('maHoaDon:', maHoaDon);
+                const response = await hoaDonService.getCTHD(maHoaDon);
+                console.log('Response từ getCTHD:', response);
+                if (response.error) {
+                    toast.error('Không lấy được chi tiết hóa đơn');
+                    return;
+                } else {
+                    this.hoaDonDetail = response.hoaDon || {};
+                    this.chiTietHoaDons = response.chiTietHoaDons || [];
+                    this.trangThaiHistory = response.trangThaiHistory || [];
+                }
+            } catch (error) {
+                console.error('Lỗi trong getHoaDonDetail:', error);
+                toast.error('Có lỗi xảy ra khi lấy chi tiết hóa đơn');
+            }
+        },
+        // Thêm action để thay đổi trạng thái hóa đơn
+        async changeTrangThaiHoaDon(maHoaDon, newTrangThai) {
+            try {
+                const response = await hoaDonService.changeTrangThai(maHoaDon, newTrangThai);
+                if (response.error) {
+                    toast.error('Cập nhật trạng thái thất bại');
+                    return;
+                }
+                toast.success('Cập nhật trạng thái thành công');
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        // Thêm action để hủy hóa đơn
+        async cancelHoaDon(maHoaDon) {
+            try {
+                const response = await hoaDonService.cancelHoaDon(maHoaDon);
+                if (response.error) {
+                    toast.error('Hủy hóa đơn thất bại');
+                    return;
+                }
+                toast.success('Hủy hóa đơn thành công');
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi hủy
             } catch (error) {
                 console.error(error);
                 toast.error('Có lỗi xảy ra');
