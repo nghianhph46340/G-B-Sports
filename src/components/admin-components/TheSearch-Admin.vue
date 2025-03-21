@@ -2,8 +2,8 @@
     <div class="container-fluid" style="width: 85%;">
         <form class="d-flex align-items-center justify-content-start" role="search" @submit.prevent="handleSearch">
             <SearchOutlined class="icon-search" @click="handleSearch" />
-            <input class="form-control me-2" v-model="search" type="search" placeholder="Bạn muốn tìm gì?"
-                aria-label="Search" @input="debounceSearch">
+            <input class="form-control me-2" v-model="searchInput" type="search" placeholder="Bạn muốn tìm gì?"
+                aria-label="Search">
         </form>
     </div>
 </template>
@@ -14,49 +14,34 @@ import { useGbStore } from '@/stores/gbStore';
 import { SearchOutlined } from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
 
-
 const store = useGbStore();
 const route = useRoute();
-const search = computed({
-    get: () => store.searchs,
-    set: (value) => store.searchs = value
-});
-
-// Biến để lưu timeout ID cho debounce
-let searchTimeout = null;
-
-// Hàm debounce cho tìm kiếm
-const debounceSearch = () => {
-    // Xóa timeout cũ nếu có
-    if (searchTimeout) {
-        clearTimeout(searchTimeout);
-    }
-
-    // Tạo timeout mới
-    searchTimeout = setTimeout(() => {
-        if (search.value && search.value.trim() !== '') {
-            handleSearch();
-        }
-    }, 500); // Đợi 500ms sau khi người dùng ngừng gõ
-};
+const searchInput = ref('');
 
 // Hàm xử lý tìm kiếm
 const handleSearch = async () => {
-    if (!search.value || search.value.trim() === '') {
+    if (!searchInput.value || searchInput.value.trim() === '') {
+        // Nếu ô tìm kiếm trống, xóa kết quả tìm kiếm
+        store.searchs = '';
+        store.searchSanPham = [];
+        store.searchChiTietSanPham = [];
+        store.searchNhanVien = [];
         return;
     }
 
-    console.log('Đang tìm kiếm với từ khóa:', search.value);
+    console.log('Đang tìm kiếm với từ khóa:', searchInput.value);
+
+    // Cập nhật giá trị tìm kiếm vào store
+    store.searchs = searchInput.value;
 
     try {
-        // Tìm kiếm cả sản phẩm và chi tiết sản phẩm
+        // Tìm kiếm dựa trên route hiện tại
         if (route.name === 'admin-quan-ly-san-pham') {
-            await store.searchSP(search.value);
-            // await store.searchCTSP(search.value);
+            await store.searchSP(searchInput.value);
             console.log('Kết quả tìm kiếm sản phẩm:', store.searchSanPham);
         }
         if (route.name === 'admin-quan-ly-nhan-vien') {
-            await store.searchNhanVien(search.value, 0, 5);
+            await store.searchNhanVien(searchInput.value, 0, 5);
             console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
         }
     } catch (error) {

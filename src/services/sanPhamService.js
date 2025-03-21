@@ -214,6 +214,28 @@ const searchSanPham = async (search) => {
     }
 }
 
+// const locSanPhamAndCTSP = async (danhMuc, thuongHieu, chatLieu, mauSac, size, giaDau, giaCuoi, trangThai) => {
+//     try {
+//         const response = await axiosInstance.get(qlsp + 'locSanPhamAndCTSP', {
+//             params: {
+//                 danhMuc: danhMuc,
+//                 thuongHieu: thuongHieu,
+//                 chatLieu: chatLieu,
+//                 mauSac: mauSac,
+//                 size: size,
+//                 giaDau: giaDau,
+//                 giaCuoi: giaCuoi,
+//                 trangThai: trangThai
+//             }
+//         });
+//         return response.data;
+//     } catch (error) {
+//         console.log(error);
+//         console.log('Không lấy được danh sách sản phẩm theo từ khóa');
+//         return { error: true, data: [] };
+//     }
+// }
+
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
