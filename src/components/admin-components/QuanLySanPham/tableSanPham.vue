@@ -7,7 +7,7 @@
         class="components-table-demo-nested" /> -->
     <div>
         <menuAction />
-        <a-table :columns="columns" :row-selection="rowSelection" :data-source="data"
+        <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
             class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
             :row-key="record => record.id_san_pham">
             <template #expandedRowRender="{ record }">
@@ -95,7 +95,7 @@
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
 import { EditOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import { onMounted, ref, render } from 'vue';
+import { onMounted, ref, render, computed, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
@@ -447,6 +447,39 @@ const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
     }
 };
 
+// Computed property để quyết định hiển thị dữ liệu tìm kiếm hay tất cả sản phẩm
+const displayData = computed(() => {
+    // Nếu có từ khóa tìm kiếm và có kết quả tìm kiếm, hiển thị kết quả tìm kiếm
+    if (store.searchs && store.searchs.trim() !== '' && store.searchSanPham && store.searchSanPham.length > 0) {
+        console.log('Hiển thị kết quả tìm kiếm:', store.searchSanPham);
+        return store.searchSanPham.map((item, index) => ({
+            stt: index + 1,
+            key: item.id_san_pham,
+            id_san_pham: item.id_san_pham,
+            ma_san_pham: item.ma_san_pham,
+            ten_san_pham: item.ten_san_pham,
+            hinh_anh: item.hinh_anh,
+            chi_muc: (item.danhMuc.ten_danh_muc || '') + "/" + (item.thuongHieu.ten_thuong_hieu || '') + "/" + (item.chatLieu.ten_chat_lieu || ''),
+            trang_thai: item.trang_thai,
+            tong_so_luong: item.tong_so_luong,
+        }));
+    }
+    if (store.searchs) {
+        return [];
+    }
+    // Nếu không có từ khóa tìm kiếm hoặc không có kết quả tìm kiếm, hiển thị tất cả sản phẩm
+    return data.value;
+
+});
+
+// Watch để theo dõi thay đổi từ khóa tìm kiếm
+watch(() => store.searchs, (newValue, oldValue) => {
+    if (!newValue || newValue.trim() === '') {
+        // Nếu từ khóa tìm kiếm trống, tải lại tất cả sản phẩm
+        store.getAllSP();
+    }
+}, { immediate: true });
+
 onMounted(async () => {
     await store.getAllSP();
     data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
@@ -462,7 +495,6 @@ onMounted(async () => {
             tong_so_luong: item.tong_so_luong,
         };
     }));
-
 });
 </script>
 <style scoped>
