@@ -7,17 +7,20 @@
         class="components-table-demo-nested" /> -->
     <div>
         <menuAction />
-        <a-table :columns="columns" :row-selection="rowSelection" :data-source="data"
-            class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand">
+        <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
+            class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
+            :row-key="record => record.id_san_pham">
             <template #expandedRowRender="{ record }">
-                {{ record.id_san_pham }}
-                <a-table :columns="columnsCTSP" :row-selection="rowSelection"
-                    :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small">
+                <a-table :columns="columnsCTSP" :row-selection="{
+                    selectedRowKeys: selectedCTSPKeys,
+                    onChange: (keys, rows) => handleCTSPSelection(keys, rows, record.id_san_pham)
+                }" :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small"
+                    :row-key="record => record.id_chi_tiet_san_pham">
                     <template #bodyCell="{ column, record: ctspRecord }">
                         <template v-if="column.key === 'trang_thai'">
                             <a-switch
-                                :style="{ backgroundColor: ctspRecord.trang_thai === 'Còn hàng' ? '#f33b47' : '#ccc' }"
-                                size="small" :checked="ctspRecord.trang_thai === 'Còn hàng' ? true : false" />
+                                :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
+                                size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false" />
                         </template>
                         <template v-if="column.key === 'action'">
                             <a-button @click="showDrawer" type="" style="color: white;"
@@ -92,7 +95,7 @@
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
 import { EditOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import { onMounted, ref, render } from 'vue';
+import { onMounted, ref, render, computed, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
@@ -206,20 +209,14 @@ const showDrawer = () => {
     open.value = true;
 }
 const handleExpand = async (expanded, record) => {
-    console.log("Record được truyền vào:", record); // Kiểm tra record
     if (expanded) {
-        try {
-            // Đảm bảo record.id_san_pham có giá trị
-            if (!record.id_san_pham) {
-                console.error("id_san_pham không tồn tại trong record:", record);
-                return;
-            }
-            await getCTSPForProduct(record);
-        } catch (error) {
-            console.error("Lỗi khi mở rộng:", error);
-        }
+        await getCTSPForProduct(record);
     }
 };
+
+const formState = ref({});
+const fileList = ref([]);
+const loading = ref(false);
 
 const columns = [
     {
@@ -245,7 +242,6 @@ const columns = [
     {
         title: 'Hình ảnh',
         dataIndex: 'hinh_anh',
-        width: '10%',
         key: 'hinh_anh',
         width: '10%',
     },
@@ -255,12 +251,12 @@ const columns = [
         key: 'tong_so_luong',
         width: '7%',
     },
-    {
-        title: 'Giới tính',
-        dataIndex: 'gioi_tinh',
-        key: 'gioi_tinh',
-        width: '10%',
-    },
+    // {
+    //     title: 'Giới tính',
+    //     dataIndex: 'gioi_tinh',
+    //     key: 'gioi_tinh',
+    //     width: '10%',
+    // },
 
     {
         title: 'Danh mục/Thương hiệu/Chất liệu',
@@ -285,11 +281,11 @@ const columns = [
 
 ];
 const columnsCTSP = [
-    {
-        title: 'Tên sản phẩm',
-        dataIndex: 'ten_san_pham',
-        key: 'ten_san_pham',
-    },
+    // {
+    //     title: 'Tên sản phẩm',
+    //     dataIndex: 'ten_san_pham',
+    //     key: 'ten_san_pham',
+    // },
     {
         title: 'Màu sắc',
         dataIndex: 'mau_sac',
@@ -323,17 +319,35 @@ const columnsCTSP = [
 
 ];
 const data = ref([]);
+const selectedCTSPKeys = ref([]);
 const rowSelection = ref({
-    checkStrictly: false,
+    selectedRowKeys: [],
     onChange: (selectedRowKeys, selectedRows) => {
-        console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-    },
-    onSelect: (record, selected, selectedRows) => {
-        console.log(record, selected, selectedRows);
-    },
-    onSelectAll: (selected, selectedRows, changeRows) => {
-        console.log(selected, selectedRows, changeRows);
-    },
+        rowSelection.value.selectedRowKeys = selectedRowKeys;
+
+        // Lấy danh sách các sản phẩm cha đã bị bỏ chọn
+        const deselectedParents = data.value
+            .filter(item => !selectedRowKeys.includes(item.id_san_pham))
+            .map(item => item.id_san_pham);
+
+        // Xóa các CTSP của các sản phẩm cha đã bị bỏ chọn
+        deselectedParents.forEach(parentId => {
+            const childItems = productCTSPMap.value.get(parentId) || [];
+            const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
+            selectedCTSPKeys.value = selectedCTSPKeys.value.filter(key => !childKeys.includes(key));
+        });
+
+        // Thêm các CTSP mới cho các sản phẩm cha được chọn
+        selectedRowKeys.forEach(async (key) => {
+            const record = data.value.find(item => item.id_san_pham === key);
+            if (record) {
+                await getCTSPForProduct(record);
+                const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
+                const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
+                selectedCTSPKeys.value = [...new Set([...selectedCTSPKeys.value, ...childKeys])];
+            }
+        });
+    }
 });
 
 // Hàm format dữ liệu CTSP
@@ -353,11 +367,11 @@ const formatCTSPData = (ctspList) => {
 const productCTSPMap = ref(new Map());
 const getCTSPForProduct = async (record) => {
     if (!productCTSPMap.value.has(record.id_san_pham)) {
-        // Nếu chưa có data CTSP cho sản phẩm này, gọi API để lấy
         await store.getCTSPBySanPham(record.id_san_pham);
         const ctspList = store.getCTSPBySanPhams.map(ctsp => ({
             key: ctsp.id_chi_tiet_san_pham,
             id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
+            id_san_pham: record.id_san_pham,
             ten_san_pham: ctsp.ten_san_pham,
             hinh_anh: ctsp.hinh_anh,
             gia_ban: ctsp.gia_ban,
@@ -369,14 +383,6 @@ const getCTSPForProduct = async (record) => {
         productCTSPMap.value.set(record.id_san_pham, ctspList);
     }
     return productCTSPMap.value.get(record.id_san_pham) || [];
-    // try {
-    //     console.log("Gọi API với id:", record.id_san_pham); // Kiểm tra id trước khi gọi API
-    //     await store.getCTSPBySanPham(record.id_san_pham);
-    //     return store.getCTSPBySanPhams || [];
-    // } catch (error) {
-    //     console.error("Lỗi trong getCTSPForProduct:", error);
-    //     return [];
-    // }
 };
 const expandableConfig = {
     expandIcon: () => null,
@@ -423,6 +429,57 @@ const handleOk = e => {
     console.log(e);
     open.value = false;
 };
+
+// Hàm xử lý selection cho CTSP
+const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
+    selectedCTSPKeys.value = selectedKeys;
+
+    // Cập nhật selection của sản phẩm cha
+    const childItems = productCTSPMap.value.get(parentId) || [];
+    const allChildKeys = childItems.map(item => item.id_chi_tiet_san_pham);
+    const allChildrenSelected = allChildKeys.every(key => selectedKeys.includes(key));
+
+    const currentParentKeys = rowSelection.value.selectedRowKeys;
+    if (allChildrenSelected && !currentParentKeys.includes(parentId)) {
+        rowSelection.value.selectedRowKeys = [...currentParentKeys, parentId];
+    } else if (!allChildrenSelected && currentParentKeys.includes(parentId)) {
+        rowSelection.value.selectedRowKeys = currentParentKeys.filter(key => key !== parentId);
+    }
+};
+
+// Computed property để quyết định hiển thị dữ liệu tìm kiếm hay tất cả sản phẩm
+const displayData = computed(() => {
+    // Nếu có từ khóa tìm kiếm và có kết quả tìm kiếm, hiển thị kết quả tìm kiếm
+    if (store.searchs && store.searchs.trim() !== '' && store.searchSanPham && store.searchSanPham.length > 0) {
+        console.log('Hiển thị kết quả tìm kiếm:', store.searchSanPham);
+        return store.searchSanPham.map((item, index) => ({
+            stt: index + 1,
+            key: item.id_san_pham,
+            id_san_pham: item.id_san_pham,
+            ma_san_pham: item.ma_san_pham,
+            ten_san_pham: item.ten_san_pham,
+            hinh_anh: item.hinh_anh,
+            chi_muc: (item.danhMuc.ten_danh_muc || '') + "/" + (item.thuongHieu.ten_thuong_hieu || '') + "/" + (item.chatLieu.ten_chat_lieu || ''),
+            trang_thai: item.trang_thai,
+            tong_so_luong: item.tong_so_luong,
+        }));
+    }
+    if (store.searchs) {
+        return [];
+    }
+    // Nếu không có từ khóa tìm kiếm hoặc không có kết quả tìm kiếm, hiển thị tất cả sản phẩm
+    return data.value;
+
+});
+
+// Watch để theo dõi thay đổi từ khóa tìm kiếm
+watch(() => store.searchs, (newValue, oldValue) => {
+    if (!newValue || newValue.trim() === '') {
+        // Nếu từ khóa tìm kiếm trống, tải lại tất cả sản phẩm
+        store.getAllSP();
+    }
+}, { immediate: true });
+
 onMounted(async () => {
     await store.getAllSP();
     data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
@@ -432,14 +489,12 @@ onMounted(async () => {
             id_san_pham: item.id_san_pham,
             ma_san_pham: item.ma_san_pham,
             ten_san_pham: item.ten_san_pham,
-            gioi_tinh: item.gioi_tinh ? "Nam" : "Nữ",
             hinh_anh: item.hinh_anh,
             chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
             trang_thai: item.trang_thai,
             tong_so_luong: item.tong_so_luong,
         };
     }));
-
 });
 </script>
 <style scoped>
@@ -473,13 +528,4 @@ onMounted(async () => {
 .custom-class {
     z-index: 1000;
 }
-
-/* Style cho phần mở rộng */
-/* :deep(.ant-table-expanded-row) {
-    background: #fafafa;
-}
-
-:deep(.ant-table-expanded-row > td) {
-    padding: 16px 24px;
-} */
 </style>

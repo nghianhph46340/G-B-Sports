@@ -54,7 +54,7 @@ const uploadImage = async () => {
                 'Content-Type': 'multipart/form-data'
             }
         });
-        console.log('Response:', response); // Debug response
+        console.log('Response:', response.data); // Debug response
         if (response.data) {
             imageUrl.value = response.data; // URL từ Cloudinary
             message.success('Upload ảnh thành công!');

@@ -23,12 +23,13 @@ const getAllChiTietSanPham = async () => {
 }
 const searchChiTietSanPham = async (search) => {
     try {
-        const { data } = await axiosInstance.get(qlsp + 'searchCTSP?keywork=' + search);
-        console.log('Datasearch', data);
-        return data;
+        const response = await axiosInstance.get(qlsp + 'searchCTSP?keyword=' + search);
+        console.log('Datasearch CTSP:', response.data);
+        return response.data;
     } catch (error) {
         console.log(error);
         console.log('Không lấy được danh sách chi tiết sản phẩm');
+        return { error: true, data: [] };
     }
 }
 
@@ -57,6 +58,21 @@ const changeStatusSanPham = async (id) => {
         console.log(error);
     }
 }
+
+// Hàm cập nhật trạng thái cho tất cả chi tiết sản phẩm theo sản phẩm chính
+const updateCTSPStatusBySanPham = async (id, status) => {
+    try {
+        const { data } = await axiosInstance.put(qlsp + 'updateCTSPStatusBySanPham', {
+            id_san_pham: id,
+            trang_thai: status
+        });
+        return data;
+    } catch (error) {
+        console.log('Lỗi khi cập nhật trạng thái CTSP:', error);
+        throw error;
+    }
+}
+
 const getDanhMucList = async () => {
     try {
         const { data } = await axiosInstance.get(qlsp + 'DanhMuc');
@@ -119,18 +135,126 @@ const createCTSP = async (data) => {
         throw error;
     }
 }
+
+// Hàm lấy ngày hiện tại theo định dạng yyyy-MM-dd
+const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Hàm lấy ngày giờ hiện tại đầy đủ
+const getCurrentDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+const importSanPhamFromExcel = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await axiosInstance.post(qlsp + 'listImport', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+const saveExcelImports = async (data) => {
+    try {
+        const response = await axiosInstance.post(qlsp + 'save', data, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lưu dữ liệu Excel:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lưu dữ liệu Excel'
+        };
+    }
+}
+const getSanPhamById = async (id) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'sanPhamDetail?id=' + id);
+        // Lấy dữ liệu từ response.data vì đây là một object đơn lẻ
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm'
+        };
+    }
+}
+
+const searchSanPham = async (search) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'timKiemSanPham?search=' + search);
+        console.log('Data search sản phẩm:', response.data);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        console.log('Không lấy được danh sách sản phẩm theo từ khóa');
+        return { error: true, data: [] };
+    }
+}
+
+// const locSanPhamAndCTSP = async (danhMuc, thuongHieu, chatLieu, mauSac, size, giaDau, giaCuoi, trangThai) => {
+//     try {
+//         const response = await axiosInstance.get(qlsp + 'locSanPhamAndCTSP', {
+//             params: {
+//                 danhMuc: danhMuc,
+//                 thuongHieu: thuongHieu,
+//                 chatLieu: chatLieu,
+//                 mauSac: mauSac,
+//                 size: size,
+//                 giaDau: giaDau,
+//                 giaCuoi: giaCuoi,
+//                 trangThai: trangThai
+//             }
+//         });
+//         return response.data;
+//     } catch (error) {
+//         console.log(error);
+//         console.log('Không lấy được danh sách sản phẩm theo từ khóa');
+//         return { error: true, data: [] };
+//     }
+// }
+
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
     getImageInCTSP,
     searchChiTietSanPham,
+    searchSanPham,
     getCTSPBySanPham,
     changeStatusSanPham,
+    updateCTSPStatusBySanPham,
     getDanhMucList,
     getThuongHieuList,
     getChatLieuList,
     getMauSacList,
     getSizeList,
     createSanPhams,
-    createCTSP
+    createCTSP,
+    getCurrentDate,
+    getCurrentDateTime,
+    importSanPhamFromExcel,
+    saveExcelImports,
+    getSanPhamById
 }
