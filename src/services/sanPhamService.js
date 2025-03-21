@@ -23,12 +23,13 @@ const getAllChiTietSanPham = async () => {
 }
 const searchChiTietSanPham = async (search) => {
     try {
-        const { data } = await axiosInstance.get(qlsp + 'searchCTSP?keywork=' + search);
-        console.log('Datasearch', data);
-        return data;
+        const response = await axiosInstance.get(qlsp + 'searchCTSP?keyword=' + search);
+        console.log('Datasearch CTSP:', response.data);
+        return response.data;
     } catch (error) {
         console.log(error);
         console.log('Không lấy được danh sách chi tiết sản phẩm');
+        return { error: true, data: [] };
     }
 }
 
@@ -200,11 +201,25 @@ const getSanPhamById = async (id) => {
         };
     }
 }
+
+const searchSanPham = async (search) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'timKiemSanPham?search=' + search);
+        console.log('Data search sản phẩm:', response.data);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        console.log('Không lấy được danh sách sản phẩm theo từ khóa');
+        return { error: true, data: [] };
+    }
+}
+
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
     getImageInCTSP,
     searchChiTietSanPham,
+    searchSanPham,
     getCTSPBySanPham,
     changeStatusSanPham,
     updateCTSPStatusBySanPham,
