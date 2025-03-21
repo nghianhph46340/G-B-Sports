@@ -65,6 +65,16 @@ const getNhanVienById = async(id) => {
         return {error:true};
     }
 }
+const searchNhanVien = async(keyword, page, size) => {
+    try {
+        const response = await axiosInstance.get(`admin/quan-ly-nhan-vien/search?keyword=${keyword}&page=${page}&size=${size}`);
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi API',error);
+        return {error:true};
+    }
+}
+
 export const nhanVienService = {
     getAllNhanVien,
     getNhanVienLocTrangThai,
@@ -72,5 +82,6 @@ export const nhanVienService = {
     themNhanViens,
     suaNhanViens,
     layDanhSachNhanVien,
-    getNhanVienById
+    getNhanVienById,
+    searchNhanVien
 }
