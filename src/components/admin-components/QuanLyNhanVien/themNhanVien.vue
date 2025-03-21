@@ -588,6 +588,7 @@ const themNhanVien = async () => {
                 console.log(themNhanVien.error);
             } else {
                 toast.success('Thêm nhân viên thành công');
+                router.push('/admin/quanlynhanvien');
             }
         } catch (error) {
             console.error(error);

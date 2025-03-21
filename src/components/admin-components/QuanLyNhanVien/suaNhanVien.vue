@@ -151,6 +151,7 @@ import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
 import { useRoute } from 'vue-router';
 import { Modal } from 'ant-design-vue';
+import router from '@/router';
 //--------------------------------------
 // Khai báo biến cho ảnh
 const store = useGbStore();
@@ -587,13 +588,14 @@ const suaNhanVien = async () => {
                     roles: formData.taiKhoan.roles
                 }
             };
-            console.log('Dữ liệu truyền vào mới them nhan vien', nhanVienUpdate);
+            console.log('Dữ liệu truyền vào mới sửa nhan vien', nhanVienUpdate);
             const suaNhanViens = await store.suaNhanVien(nhanVienUpdate);
             if (suaNhanViens.error) {
                 toast.error('Có lỗi xảy ra');
                 console.log(suaNhanViens.error);
             } else {
                 toast.success('Sửa nhân viên thành công');
+                router.push('/admin/quanlynhanvien');
             }
         } catch (error) {
             console.error(error);

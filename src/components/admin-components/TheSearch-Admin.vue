@@ -17,14 +17,13 @@ import { useRoute } from 'vue-router';
 const store = useGbStore();
 const route = useRoute();
 const searchInput = ref('');
-
 // Hàm xử lý tìm kiếm
 const handleSearch = async () => {
     if (!searchInput.value || searchInput.value.trim() === '') {
         // Nếu ô tìm kiếm trống, xóa kết quả tìm kiếm
         store.searchs = '';
         store.searchSanPham = [];
-        store.searchChiTietSanPham = [];
+        store.searchChiSanPham = [];
         store.searchNhanVien = [];
         return;
     }
@@ -40,7 +39,7 @@ const handleSearch = async () => {
             await store.searchSP(searchInput.value);
             console.log('Kết quả tìm kiếm sản phẩm:', store.searchSanPham);
         }
-        if (route.name === 'admin-quan-ly-nhan-vien') {
+        if (route.name === 'admin-quan-ly-nhien') {
             await store.searchNhanVien(searchInput.value, 0, 5);
             console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
         }

@@ -58,6 +58,11 @@ const admin = [
                 path: "test-upload-image",
                 name: "test-upload-image",
                 component: () => import('@/views/viewTest/testUploadImage.vue')
+            },
+            {
+                path: "quanlyvoucher",
+                name: "admin-quan-ly-voucher",
+                component: () => import('@/views/admin/Voucher/voucher.vue')
             }
         ]
     }
