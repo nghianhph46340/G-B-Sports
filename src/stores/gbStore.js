@@ -39,6 +39,7 @@ export const useGbStore = defineStore('gbStore', {
             mauSacList: [],
             sizeList: [],
             nhanVienArr: [],
+            nhanVienSearch: [],
             sanPhamById: {},
         }
     },
@@ -149,6 +150,28 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
+        //Search nhân viên
+        async searchNhanVien(keyword, page = 0, size = 5) {
+            try {
+                const searchNhanVienRes = await nhanVienService.searchNhanVien(keyword, page, size);
+                if (searchNhanVienRes.error) {
+                    toast.error('Có lỗi xảy ra');
+                    this.nhanVienSearch = [];
+                    this.totalPages = 0;
+                    this.currentPage = 0;
+                    this.totalItems = 0;
+                } else {
+                    this.nhanVienSearch = searchNhanVienRes.content || [];
+                    this.totalPages = searchNhanVienRes.totalPages || 0;
+                    this.currentPage = page;
+                    this.totalItems = searchNhanVienRes.totalElements || 0;
+                }
+              
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        
         //Lấy sản phẩm theo id
         async getSanPhamById(id) {
             const sanPhamByIds = await sanPhamService.getSanPhamById(id);

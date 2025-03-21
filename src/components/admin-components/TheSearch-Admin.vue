@@ -56,8 +56,8 @@ const handleSearch = async () => {
             console.log('Kết quả tìm kiếm sản phẩm:', store.searchSanPham);
         }
         if (route.name === 'admin-quan-ly-nhan-vien') {
-            await store.searchNV(search.value);
-            console.log('Kết quả tìm kiếm nhân viên:', store.searchNhanVien);
+            await store.searchNhanVien(search.value, 0, 5);
+            console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
         }
     } catch (error) {
         console.error('Lỗi khi tìm kiếm:', error);

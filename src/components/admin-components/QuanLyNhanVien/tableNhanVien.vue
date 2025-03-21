@@ -56,7 +56,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(nhanVien, index) in store.getAllNhanVienArr" :key="nhanVien.idNhanVien">
+          <tr v-for="(nhanVien, index) in dataNhanVien" :key="nhanVien.idNhanVien">
             <td>{{ index + 1 }}</td>
             <td>
               <a-image :width="75"
@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 // Khởi tạo router và store
@@ -109,15 +109,17 @@ const selectedTrangThai = ref('');
 //   }
 // };
 const fetchData = (page = 0) => {
-  if (page < 0 || page >= store.totalPages) return;
+    if (page < 0) return;
+    
+    store.currentPage = page;
 
-  store.currentPage = page; // Cập nhật trang hiện tại
-
-  if (selectedTrangThai.value) {
-    store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
-  } else {
-    store.getAllNhanVien(page, pageSize.value);
-  }
+    if (store.searchs && store.searchs.trim() !== '') {
+        store.searchNhanVien(store.searchs, page, pageSize.value);
+    } else if (selectedTrangThai.value) {
+        store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+    } else {
+        store.getAllNhanVien(page, pageSize.value);
+    }
 };
 //Lọc theo trạng thái
 // Hàm gọi API lấy dữ liệu nhân viên theo trạng thái
@@ -133,21 +135,47 @@ const chuyenTrangThai = (id) => {
   console.log(id);
 }
 
+//Search nhân viên
+const dataNhanVien = computed(() => {
+if (store.searchs && store.searchs.trim() !== '' && store.nhanVienSearch && store.nhanVienSearch.length > 0) {
+        console.log('Hiển thị kết quả tìm kiếm:', store.nhanVienSearch);
+        return store.nhanVienSearch.map((item, index) => ({
+            stt: index + 1,
+            key: item.idNhanVien,
+            anhNhanVien: item.anhNhanVien,
+            idNhanVien: item.idNhanVien,
+            maNhanVien: item.maNhanVien,
+            tenNhanVien: item.tenNhanVien,
+            gioiTinh: item.gioiTinh ? "Nam" : "Nữ",
+            ngaySinh: item.ngaySinh,
+            soDienThoai: item.soDienThoai,
+            diaChiLienHe: item.diaChiLienHe,
+            email: item.email,
+            trangThai: item.trangThai,
+        }));
+    }
+    if (store.searchs) {
+        return [];
+    }
+    // Nếu không có từ khóa tìm kiếm hoặc không có kết quả tìm kiếm, hiển thị tất cả sản phẩm
+    return store.getAllNhanVienArr;
+});
+watch(() => store.searchs, (newValue) => {
+    if (!newValue || newValue.trim() === '') {
+        store.getAllNhanVien(0, pageSize.value);
+    } else {
+        store.searchNhanVien(newValue, 0, pageSize.value);
+    }
+});
 // Mounted hook
 onMounted(() => {
   store.getAllNhanVien(0, pageSize.value);
   fetchNhanVien();
 
 });
-watch(pageSize, (newSize) => {
-  //   store.currentPage = 0; // Reset về trang đầu tiên
-
-  // if (selectedTrangThai.value) {
-  //   store.getNhanVienLocTrangThai(0, newSize, selectedTrangThai.value);
-  // } else {
-  //   store.getAllNhanVien(0, newSize);
-  // }
-  fetchData(0);
+watch(pageSize, () => {
+    store.currentPage = 0;  // Reset về trang đầu khi đổi số lượng
+    fetchData(0);
 });
 
 // Theo dõi thay đổi của selectedStatus để lọc danh sách theo trạng thái
