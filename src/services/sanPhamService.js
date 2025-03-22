@@ -11,7 +11,15 @@ const getAllSanPham = async () => {
         console.log('Không lấy được danh sách sản phẩm')
     }
 }
-
+const getAllSanPhamNgaySua = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'sanPhamTheoNgaySua');
+        return data;
+    } catch (error) {
+        console.log(error);
+        console.log('Không lấy được danh sách sản phẩm')
+    }
+}
 const getAllChiTietSanPham = async () => {
     try {
         const { data } = await axiosInstance.get(qlsp + 'getAllCTSP');
@@ -256,5 +264,6 @@ export const sanPhamService = {
     getCurrentDateTime,
     importSanPhamFromExcel,
     saveExcelImports,
-    getSanPhamById
+    getSanPhamById,
+    getAllSanPhamNgaySua
 }

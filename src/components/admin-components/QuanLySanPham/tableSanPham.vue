@@ -7,6 +7,8 @@
         class="components-table-demo-nested" /> -->
     <div>
         <menuAction />
+        <h4 class="ms-3">Danh sách sản phẩm</h4>
+        <hr>
         <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
             class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
             :row-key="record => record.id_san_pham">
@@ -476,12 +478,12 @@ const displayData = computed(() => {
 watch(() => store.searchs, (newValue, oldValue) => {
     if (!newValue || newValue.trim() === '') {
         // Nếu từ khóa tìm kiếm trống, tải lại tất cả sản phẩm
-        store.getAllSP();
+        store.getAllSanPhamNgaySua();
     }
 }, { immediate: true });
 
 onMounted(async () => {
-    await store.getAllSP();
+    await store.getAllSanPhamNgaySua();
     data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
         return {
             stt: index + 1,
@@ -493,6 +495,7 @@ onMounted(async () => {
             chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
             trang_thai: item.trang_thai,
             tong_so_luong: item.tong_so_luong,
+            ngay_sua_moi: item.ngay_sua_moi
         };
     }));
 });

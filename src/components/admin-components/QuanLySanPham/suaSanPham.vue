@@ -120,7 +120,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <a-form-item label="Số lượng" :rules="[{ required: true, message: 'Vui lòng nhập số lượng!' },
                                 {
                                     validator: (_, value) => {
@@ -133,28 +133,8 @@
                                     <a-input-number v-model:value="variant.so_luong" :min="1" style="width: 100%" />
                                 </a-form-item>
                             </div>
-                            <div class="col-md-4">
-                                <a-form-item label="Giá nhập" :rules="[{ required: true, message: 'Vui lòng nhập giá nhập!' },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value || value < 1000) {
-                                            return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                                        }
-                                        return Promise.resolve();
-                                    }
-                                }]">
-                                    <a-input-number v-model:value="variant.gia_nhap" :min="1000"
-                                        :disabled="useCommonPrice"
-                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
-                                        @change="(value) => handleVariantPriceChange(value, variant, 'gia_nhap')" @blur="(e) => {
-                                            if (!e.target.value || e.target.value < 1000) {
-                                                variant.gia_nhap = 1000;
-                                            }
-                                        }" />
-                                </a-form-item>
-                            </div>
-                            <div class="col-md-4">
+                            
+                            <div class="col-md-6">
                                 <a-form-item label="Giá bán" :rules="[{ required: true, message: 'Vui lòng nhập giá bán!' },
                                 {
                                     validator: (_, value) => {
@@ -302,16 +282,6 @@ const rules = {
     id_chat_lieu: [
         { required: true, message: 'Vui lòng chọn chất liệu!' }
     ],
-    gia_nhap_chung: [
-        {
-            validator: (_, value) => {
-                if (useCommonPrice.value && (!value || value < 1000)) {
-                    return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                }
-                return Promise.resolve();
-            }
-        }
-    ],
     gia_ban_chung: [
         {
             validator: (_, value) => {
@@ -329,23 +299,15 @@ const rules = {
         {
             validator: (_, value) => {
                 if (useCommonPrice.value) {
-                    if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
-                        return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                    }
+            
                     if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                         return Promise.reject('Giá bán phải lớn hơn 1000!');
                     }
-                    if (!formState.gia_nhap_chung || formState.gia_nhap_chung > 999999999) {
-                        return Promise.reject('Giá nhập phải nhỏ hơn 999.999.999')
-                    }
+                 
                     if (!formState.gia_ban_chung || formState.gia_ban_chung > 999999999) {
                         return Promise.reject('Giá bán phải nhỏ hơn 999.999.999')
                     }
                     // Kiểm tra giá nhập phải nhỏ hơn giá bán ít nhất 10%
-                    const minGiaBan = formState.gia_nhap_chung * 1.1; // Giá bán tối thiểu = giá nhập + 10%
-                    if (formState.gia_ban_chung < minGiaBan) {
-                        return Promise.reject(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                    }
                 }
                 return Promise.resolve();
             }
@@ -384,11 +346,12 @@ const addVariant = async () => {
         id_mau_sac: undefined,
         id_kich_thuoc: undefined,
         so_luong: 1,
-        gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 1000,
         gia_ban: useCommonPrice.value ? formState.gia_ban_chung : 1100,
         trang_thai: 'Hoạt động',
         fileList: [],
-        hinh_anh: []
+        hinh_anh: [],
+        ngay_sua: new Date().toISOString(),
+        ngay_tao: new Date().toISOString()
     });
 };
 
@@ -465,52 +428,6 @@ const getBase64 = (file) => {
 };
 
 // Thêm hàm kiểm tra dữ liệu
-const validateFormData = (data) => {
-    if (!data.ten_san_pham) throw new Error('Tên sản phẩm không được để trống');
-    // if (data.gioi_tinh === undefined) throw new Error('Vui lòng chọn giới tính');
-    if (!data.id_danh_muc) throw new Error('Vui lòng chọn danh mục');
-    if (!data.id_thuong_hieu) throw new Error('Vui lòng chọn thương hiệu');
-    if (!data.id_chat_lieu) throw new Error('Vui lòng chọn chất liệu');
-
-    // Kiểm tra giá chung
-    if (useCommonPrice.value) {
-        if (!data.gia_nhap_chung || data.gia_nhap_chung < 1000) {
-            throw new Error('Giá nhập phải lớn hơn 1000!');
-        }
-        if (!data.gia_ban_chung || data.gia_ban_chung < 1000) {
-            throw new Error('Giá bán phải lớn hơn 1000!');
-        }
-        // Kiểm tra giá nhập phải nhỏ hơn giá bán ít nhất 10%
-        const minGiaBan = data.gia_nhap_chung * 1.1;
-        if (data.gia_ban_chung < minGiaBan) {
-            throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        }
-    }
-
-    // Kiểm tra số lượng và giá trong các biến thể
-    if (variants.value.length > 0) {
-        variants.value.forEach((variant, index) => {
-            if (!variant.so_luong || variant.so_luong < 1) {
-                throw new Error(`Số lượng của biến thể #${index + 1} phải lớn hơn 0!`);
-            }
-            if (!useCommonPrice.value) {
-                if (!variant.gia_nhap || variant.gia_nhap < 1000) {
-                    throw new Error(`Giá nhập của biến thể #${index + 1} phải lớn hơn 1000!`);
-                }
-                if (!variant.gia_ban || variant.gia_ban < 1000) {
-                    throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn 1000!`);
-                }
-                const minGiaBan = variant.gia_nhap * 1.1;
-                if (variant.gia_ban < minGiaBan) {
-                    throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                }
-            }
-        });
-    }
-
-    return true;
-};
-
 const onFinish = async () => {
     if (!isProductValidated.value) {
         message.error('Vui lòng xác nhận thông tin sản phẩm trước');
@@ -531,30 +448,17 @@ const onFinish = async () => {
             }
             // Validate giá của biến thể
             if (!useCommonPrice.value) {
-                if (!variant.gia_nhap || variant.gia_nhap < 1000) {
-                    throw new Error(`Giá nhập của biến thể phải lớn hơn 1000!`);
-                }
                 if (!variant.gia_ban || variant.gia_ban < 1000) {
                     throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
-                }
-                const minGiaBan = variant.gia_nhap * 1.1;
-                if (variant.gia_ban < minGiaBan) {
-                    throw new Error(`Giá bán của biến thể phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
                 }
             }
         }
 
         // Validate giá chung
         if (useCommonPrice.value) {
-            if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
-                throw new Error('Giá nhập phải lớn hơn 1000!');
-            }
+          
             if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                 throw new Error('Giá bán phải lớn hơn 1000!');
-            }
-            const minGiaBan = formState.gia_nhap_chung * 1.1;
-            if (formState.gia_ban_chung < minGiaBan) {
-                throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
             }
         }
 
@@ -744,7 +648,6 @@ onMounted(async () => {
                     id_mau_sac: ctsp.id_mau_sac,
                     id_kich_thuoc: ctsp.id_kich_thuoc,
                     so_luong: ctsp.so_luong || 1,
-                    gia_nhap: ctsp.gia_nhap || 1000,
                     gia_ban: ctsp.gia_ban || 1100,
                     trang_thai: ctsp.trang_thai || 'Hoạt động',
                     fileList: variantFileList,
@@ -752,7 +655,9 @@ onMounted(async () => {
                         ? [ctsp.hinh_anh]
                         : Array.isArray(ctsp.hinh_anh)
                             ? ctsp.hinh_anh
-                            : []
+                            : [],
+                    ngay_tao: ctsp.ngay_tao,
+                    ngay_sua: ctsp.ngay_sua
                 };
             });
 
