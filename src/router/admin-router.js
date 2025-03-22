@@ -50,7 +50,7 @@ const admin = [
                 component: () => import('@/views/admin/HoaDon/HoaDon.vue')
             },
             {
-                path: "hoadon/hdct/:id",
+                path: "hoadon/hdct/:maHoaDon",
                 name: "admin-hoa-don-chi-tiet",
                 component: () => import('@/views/admin/HoaDon/HDCT.vue')
             },
