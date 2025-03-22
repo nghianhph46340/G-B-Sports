@@ -404,7 +404,7 @@ const handleImportExcel = async () => {
         // Gọi API import Excel
         const result = await store.importExcel(file);
 
-        console.log(result);
+        console.table(result);
         message.success('Import dữ liệu thành công!');
         openModalImportExcel.value = false;
         selectedFile.value = null;
@@ -438,7 +438,7 @@ const saveExcelImport = async () => {
             importExcelModal.value = false;
 
             // Tải lại danh sách sản phẩm nếu cần
-            await store.getAllSP();
+            await store.getAllSanPhamNgaySua();
             router.push('/admin/quanlysanpham');
         }
     } catch (error) {

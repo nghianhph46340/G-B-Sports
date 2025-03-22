@@ -438,7 +438,7 @@ const addVariantType = () => {
         id_mau_sac: undefined,
         selectedSizes: [],
         so_luong: useCommonPrice.value ? 1 : 0,
-        gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 0,
+        // gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 0,
         gia_ban: useCommonPrice.value ? formState.gia_ban_chung : 0,
         fileList: [],
         hinh_anh: []
@@ -470,6 +470,24 @@ const updateAvailableColors = () => {
         .map(vt => vt.id_mau_sac);
 
     availableColors.value = mauSacList.value.filter(color => !usedColorIds.includes(color.id_mau_sac));
+};
+
+//uploadẢnh
+const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isJpgOrPng) {
+        message.error('Bạn chỉ có thể tải lên file JPG/PNG!');
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+        message.error('Hình ảnh phải nhỏ hơn 2MB!');
+    }
+    return isJpgOrPng && isLt2M;
+};
+
+// Thêm hàm handleCancel để đóng modal preview
+const handleCancel = () => {
+    previewVisible.value = false;
 };
 
 // Cập nhật kích thước có sẵn khi thay đổi màu sắc
@@ -520,7 +538,7 @@ const updateVariantsFromType = (typeIndex) => {
             mau_sac_name: colorInfo.ma_mau_sac + ' ' + colorInfo.ten_mau_sac,
             kich_thuoc_name: sizeInfo.gia_tri,
             so_luong: type.so_luong,
-            gia_nhap: type.gia_nhap,
+            // gia_nhap: type.gia_nhap,
             gia_ban: type.gia_ban,
             fileList: [...type.fileList],
             hinh_anh: [...type.hinh_anh]
@@ -607,6 +625,17 @@ watch([() => formState.gia_nhap_chung, () => formState.gia_ban_chung, () => useC
         }
     }
 );
+watch(() => variants.value, (newVal) => {
+    console.log('Chi tiết sản phẩm đã thay đổi:', newVal);
+    console.table(newVal);
+}, { deep: true });
+
+// Thêm watch để in ra mảng dạng biến thể
+watch(() => variantTypes.value, (newVal) => {
+    console.log('Dạng biến thể đã thay đổi:', newVal);
+    console.table(newVal);
+}, { deep: true });
+
 
 // Khởi tạo danh sách màu có sẵn khi component được mount
 onMounted(() => {
@@ -619,7 +648,7 @@ onMounted(() => {
 onMounted(async () => {
     try {
         // Lấy danh sách sản phẩm để tạo mã tự động
-        await store.getAllSP();
+        await store.getAllSanPhamNgaySua();
 
         // Tạo mã sản phẩm tự động
         formState.ma_san_pham = generateProductCode(store.getAllSanPham);
@@ -660,7 +689,7 @@ const generateProductCode = (products) => {
     const nextNumber = maxNumber + 1;
 
     // Format số với 3 chữ số (ví dụ: 001, 002, ...)
-    return `SP0${String(nextNumber).padStart(3, '0')}`;
+    return `SP0${String(nextNumber).padStart(2, '0')}`;
 };
 
 // Thêm hàm kiểm tra dữ liệu
@@ -673,17 +702,9 @@ const validateFormData = (data) => {
 
     // Kiểm tra giá chung
     if (useCommonPrice.value) {
-        // if (!data.gia_nhap_chung || data.gia_nhap_chung < 1000) {
-        //     throw new Error('Giá nhập phải lớn hơn 1000!');
-        // }
         if (!data.gia_ban_chung || data.gia_ban_chung < 1000) {
             throw new Error('Giá bán phải lớn hơn 1000!');
         }
-        // Kiểm tra giá nhập phải nhỏ hơn giá bán ít nhất 10%
-        // const minGiaBan = data.gia_nhap_chung * 1.1;
-        // if (data.gia_ban_chung < minGiaBan) {
-        //     throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        // }
     }
 
     // Kiểm tra số lượng và giá trong các biến thể
@@ -693,16 +714,9 @@ const validateFormData = (data) => {
                 throw new Error(`Số lượng của biến thể #${index + 1} phải lớn hơn 0!`);
             }
             if (!useCommonPrice.value) {
-                // if (!variant.gia_nhap || variant.gia_nhap < 1000) {
-                //     throw new Error(`Giá nhập của biến thể #${index + 1} phải lớn hơn 1000!`);
-                // }
                 if (!variant.gia_ban || variant.gia_ban < 1000) {
                     throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn 1000!`);
                 }
-                // const minGiaBan = variant.gia_nhap * 1.1;
-                // if (variant.gia_ban < minGiaBan) {
-                //     throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                // }
             }
         });
     }
@@ -730,31 +744,17 @@ const onFinish = async () => {
             }
             // Validate giá của biến thể
             if (!useCommonPrice.value) {
-                // if (!variant.gia_nhap || variant.gia_nhap < 1000) {
-                //     throw new Error(`Giá nhập của biến thể phải lớn hơn 1000!`);
-                // }
                 if (!variant.gia_ban || variant.gia_ban < 1000) {
                     throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
                 }
-                // const minGiaBan = variant.gia_nhap * 1.1;
-                // if (variant.gia_ban < minGiaBan) {
-                //     throw new Error(`Giá bán của biến thể phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                // }
             }
         }
 
         // Validate giá chung
         if (useCommonPrice.value) {
-            // if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
-            //     throw new Error('Giá nhập phải lớn hơn 1000!');
-            // }
             if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                 throw new Error('Giá bán phải lớn hơn 1000!');
             }
-            // const minGiaBan = formState.gia_nhap_chung * 1.1;
-            // if (formState.gia_ban_chung < minGiaBan) {
-            //     throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-            // }
         }
 
         console.log('FormState trước khi gửi:', formState);
@@ -773,14 +773,24 @@ const onFinish = async () => {
         }
 
         // Tạo các biến thể CTSP
-        for (const variant of variants.value) {
+        // for (const variant of variants.value) {
+        //     await store.createCTSP({
+        //         ...variant,
+        //         id_san_pham: productId,
+        //         hinh_anh: variant.hinh_anh
+        //     });
+        // }
+        await Promise.all(variants.value.map(async (variant) => {
             await store.createCTSP({
                 ...variant,
                 id_san_pham: productId,
-                hinh_anh: variant.hinh_anh
+                trang_thai: 'Hoạt động',
+                ngay_tao: new Date().toISOString(),
+                ngay_sua: new Date().toISOString(),
+                // hinh_anh: variant.hinh_anh
             });
-        }
 
+        }));
         message.success(response.message || 'Thêm sản phẩm và biến thể thành công!');
         router.push('/admin/quanlysanpham');
     } catch (error) {

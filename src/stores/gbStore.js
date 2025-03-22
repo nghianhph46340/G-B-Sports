@@ -169,12 +169,12 @@ export const useGbStore = defineStore('gbStore', {
                     this.currentPage = page;
                     this.totalItems = searchNhanVienRes.totalElements || 0;
                 }
-              
+
             } catch (error) {
                 console.error(error);
             }
         },
-        
+
         //Lấy sản phẩm theo id
         async getSanPhamById(id) {
             const sanPhamByIds = await sanPhamService.getSanPhamById(id);
@@ -394,7 +394,16 @@ export const useGbStore = defineStore('gbStore', {
             }
             return saveExcelImportRespone;
         },
-
+        async getAllSanPhamNgaySua() {
+            const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua();
+            console.log(sanPhamNgaySua);
+            if (sanPhamNgaySua.error) {
+                toast.error("Không lấy được dữ liệu");
+                return;
+            } else {
+                this.getAllSanPham = sanPhamNgaySua;
+            }
+        },
         getPath(path) {
             this.checkRouter = '';
             this.checkRouter = path
