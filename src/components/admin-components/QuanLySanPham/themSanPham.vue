@@ -24,11 +24,11 @@
                         <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
                             :un-checked-children="'Giá riêng'" @change="handlePriceChange" />
                         <div v-if="useCommonPrice" class="d-flex gap-2 w-100">
-                            <a-input-number v-model:value="formState.gia_nhap_chung" :min="0"
+                            <!-- <a-input-number v-model:value="formState.gia_nhap_chung" :min="0"
                                 :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                                 :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
-                                placeholder="Giá nhập chung" @change="handlePriceChange" />
-                            <a-input-number v-model:value="formState.gia_ban_chung" :min="0"
+                                placeholder="Giá nhập chung" @change="handlePriceChange" /> -->
+                            <a-input-number v-model:value="formState.gia_ban_chung" :min="1000" :max="1000000000"
                                 :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                                 :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
                                 placeholder="Giá bán chung" @change="handlePriceChange" />
@@ -93,9 +93,9 @@
         <div class="col-md-6">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5>Biến thể sản phẩm</h5>
-                <a-button v-if="isProductValidated" type="primary" @click="addVariant"
+                <a-button v-if="isProductValidated" type="primary" @click="addVariantType"
                     class="d-flex align-items-center">
-                    <plus-outlined />Thêm biến thể
+                    <plus-outlined />Thêm dạng biến thể
                 </a-button>
                 <span v-else class="text-muted">
                     Vui lòng xác nhận thông tin sản phẩm trước khi thêm biến thể
@@ -103,21 +103,23 @@
             </div>
 
             <template v-if="isProductValidated">
-                <div v-for="(variant, index) in variants" :key="index" class="variant-item mb-3 p-3 border rounded">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6>Biến thể #{{ index + 1 }}</h6>
-                        <a-button type="text" danger @click="removeVariant(index)">
+                <div v-for="(variantType, typeIndex) in variantTypes" :key="typeIndex"
+                    class="variant-type-item mb-4 p-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Dạng biến thể #{{ typeIndex + 1 }}</h6>
+                        <a-button type="text" danger @click="removeVariantType(typeIndex)">
                             <delete-outlined />
                         </a-button>
                     </div>
 
                     <a-form class="form-bien-the" layout="vertical">
-                        <div class="row">
+                        <div class="row mb-3">
                             <div class="col-md-6">
                                 <a-form-item label="Màu sắc"
                                     :rules="[{ required: true, message: 'Vui lòng chọn màu sắc!' }]">
-                                    <a-select v-model:value="variant.id_mau_sac" placeholder="Chọn màu sắc">
-                                        <a-select-option v-for="color in mauSacList" :key="color.id_mau_sac"
+                                    <a-select v-model:value="variantType.id_mau_sac" placeholder="Chọn màu sắc"
+                                        @change="() => updateAvailableSizes(typeIndex)">
+                                        <a-select-option v-for="color in availableColors" :key="color.id_mau_sac"
                                             :value="color.id_mau_sac">
                                             {{ color.ma_mau_sac + ' ' + color.ten_mau_sac }}
                                         </a-select-option>
@@ -126,8 +128,10 @@
                             </div>
                             <div class="col-md-6">
                                 <a-form-item label="Kích thước"
-                                    :rules="[{ required: true, message: 'Vui lòng chọn size!' }]">
-                                    <a-select v-model:value="variant.id_kich_thuoc" placeholder="Chọn size">
+                                    :rules="[{ required: true, message: 'Vui lòng chọn ít nhất một kích thước!' }]">
+                                    <a-select v-model:value="variantType.selectedSizes" mode="multiple"
+                                        placeholder="Chọn kích thước"
+                                        @change="(values) => handleSizeChange(values, typeIndex)">
                                         <a-select-option v-for="size in sizeList" :key="size.id_kich_thuoc"
                                             :value="size.id_kich_thuoc">
                                             {{ size.gia_tri }}
@@ -138,90 +142,93 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4">
-                                <a-form-item label="Số lượng" :rules="[{ required: true, message: 'Vui lòng nhập số lượng!' },
-                                {
-                                    validator: (_, value) => {
-                                        if (value < 1) {
-                                            return Promise.reject('Số lượng phải lớn hơn 0!');
+                            <div class="col-md-6">
+                                <a-form-item label="Số lượng" :rules="[
+                                    { required: true, message: 'Vui lòng nhập số lượng!' },
+                                    {
+                                        validator: (_, value) => {
+                                            if (value < 1) {
+                                                return Promise.reject('Số lượng phải lớn hơn 0!');
+                                            }
+                                            return Promise.resolve();
                                         }
-                                        return Promise.resolve();
                                     }
-                                }]">
-                                    <a-input-number v-model:value="variant.so_luong" :min="1" style="width: 100%" />
+                                ]">
+                                    <a-input-number v-model:value="variantType.so_luong" :min="1" style="width: 100%"
+                                        @change="() => updateVariantsFromType(typeIndex)" />
                                 </a-form-item>
                             </div>
-                            <div class="col-md-4">
-                                <a-form-item label="Giá nhập" :rules="[{ required: true, message: 'Vui lòng nhập giá nhập!' },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value || value < 1000) {
-                                            return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                                        }
-                                        return Promise.resolve();
-                                    }
-                                }]">
-                                    <a-input-number v-model:value="variant.gia_nhap" :min="1000"
-                                        :disabled="useCommonPrice"
-                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
-                                        @change="(value) => handleVariantPriceChange(value, variant, 'gia_nhap')" @blur="(e) => {
-                                            if (!e.target.value || e.target.value < 1000) {
-                                                variant.gia_nhap = 1000;
+                            <!-- <div class="col-md-4">
+                                <a-form-item label="Giá nhập" :rules="[
+                                    { required: true, message: 'Vui lòng nhập giá nhập!' },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value || value < 1000) {
+                                                return Promise.reject('Giá nhập phải lớn hơn 1000!');
                                             }
-                                        }" />
+                                            return Promise.resolve();
+                                        }
+                                    }
+                                ]">
+                                    <a-input-number v-model:value="variantType.gia_nhap" :min="1000"
+                                        :disabled="useCommonPrice" style="width: 100%"
+                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')"
+                                        @change="() => updateVariantsFromType(typeIndex)" />
                                 </a-form-item>
-                            </div>
-                            <div class="col-md-4">
-                                <a-form-item label="Giá bán" :rules="[{ required: true, message: 'Vui lòng nhập giá bán!' },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value || value < 1000) {
-                                            return Promise.reject('Giá bán phải lớn hơn 1000!');
-                                        }
-                                        const minGiaBan = variant.gia_nhap * 1.1;
-                                        if (value < minGiaBan) {
-                                            return Promise.reject(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                                        }
-                                        return Promise.resolve();
-                                    }
-                                }]">
-                                    <a-input-number v-model:value="variant.gia_ban" :min="1000"
-                                        :disabled="useCommonPrice"
-                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
-                                        @change="(value) => handleVariantPriceChange(value, variant, 'gia_ban')" @blur="(e) => {
-                                            if (!e.target.value || e.target.value < 1000) {
-                                                variant.gia_ban = 1000;
+                            </div> -->
+                            <div class="col-md-6">
+                                <a-form-item label="Giá bán" :rules="[
+                                    { required: true, message: 'Vui lòng nhập giá bán!' },
+                                    {
+                                        validator: (_, value) => {
+                                            if (!value || value < 1000) {
+                                                return Promise.reject('Giá bán phải lớn hơn 1000!');
                                             }
-                                        }" />
+                                            return Promise.resolve();
+                                        }
+                                    }
+                                ]">
+                                    <a-input-number v-model:value="variantType.gia_ban" :min="1000"
+                                        :disabled="useCommonPrice" style="width: 100%"
+                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')"
+                                        @change="() => updateVariantsFromType(typeIndex)" />
                                 </a-form-item>
                             </div>
                         </div>
 
-                        <a-form-item hidden label="Trạng thái">
-                            <a-switch v-model:checked="variant.trang_thai" :checked-children="'Hoạt động'"
-                                :un-checked-children="'Không hoạt động'" />
-                        </a-form-item>
-
                         <a-form-item label="Hình ảnh biến thể"
                             :rules="[{ required: true, message: 'Vui lòng chọn ít nhất 1 hình ảnh!' }]">
                             <div class="d-flex align-items-center gap-2">
-                                <a-upload v-model:file-list="variant.fileList" list-type="picture-card" :max-count="3"
-                                    :multiple="true"
-                                    :before-upload="(file) => beforeUpload(file, variant.fileList.length)"
-                                    @change="(info) => handleVariantImageChange(info, index)" @preview="handlePreview">
-                                    <div v-if="variant.fileList.length < 3">
+                                <a-upload v-model:file-list="variantType.fileList" list-type="picture-card"
+                                    :max-count="3" :multiple="true"
+                                    :before-upload="(file) => beforeUpload(file, variantType.fileList.length)"
+                                    @change="(info) => handleVariantTypeImageChange(info, typeIndex)">
+                                    <div v-if="variantType.fileList.length < 3">
                                         <plus-outlined />
-                                        <div style="margin-top: 8px">Upload (Tối đa 3)</div>
+                                        <div style="margin-top: 8px">Upload</div>
                                     </div>
                                 </a-upload>
-                                <span class="text-muted">
-                                    {{ variant.fileList.length }}/3 ảnh
-                                </span>
                             </div>
                         </a-form-item>
                     </a-form>
+
+                    <!-- Hiển thị danh sách biến thể đã tạo từ dạng biến thể này -->
+                    <div v-if="variantType.selectedSizes && variantType.selectedSizes.length > 0" class="mt-3">
+                        <h6 class="mb-2">Biến thể đã tạo:</h6>
+                        <a-table :dataSource="getVariantsFromType(typeIndex)" :columns="variantColumns" size="small"
+                            :pagination="false" :rowKey="record => record.id_mau_sac + '-' + record.id_kich_thuoc">
+                            <template #bodyCell="{ column, record }">
+                                <template v-if="column.key === 'action'">
+                                    <a-button type="text" danger
+                                        @click="removeVariantByKeys(record.id_mau_sac, record.id_kich_thuoc)">
+                                        <delete-outlined />
+                                    </a-button>
+                                </template>
+                            </template>
+                        </a-table>
+                    </div>
                 </div>
 
                 <div class="mt-3" v-if="variants.length > 0">
@@ -296,6 +303,47 @@ const variants = ref([]);
 const mauSacList = ref([]); // Danh sách màu sắc từ API
 const sizeList = ref([]); // Danh sách size từ API
 
+// Thêm state cho dạng biến thể
+const variantTypes = ref([]);
+const availableColors = ref([]);
+const variantColumns = ref([
+    {
+        title: 'Màu sắc',
+        dataIndex: 'mau_sac_name',
+        key: 'mau_sac_name',
+    },
+    {
+        title: 'Kích thước',
+        dataIndex: 'kich_thuoc_name',
+        key: 'kich_thuoc_name',
+    },
+    {
+        title: 'Số lượng',
+        dataIndex: 'so_luong',
+        key: 'so_luong',
+    },
+    // {
+    //     title: 'Giá nhập',
+    //     dataIndex: 'gia_nhap',
+    //     key: 'gia_nhap',
+    //     customRender: ({ text }) => {
+    //         return text.toLocaleString('vi-VN') + ' đ';
+    //     }
+    // },
+    {
+        title: 'Giá bán',
+        dataIndex: 'gia_ban',
+        key: 'gia_ban',
+        customRender: ({ text }) => {
+            return text.toLocaleString('vi-VN') + ' đ';
+        }
+    },
+    {
+        title: 'Thao tác',
+        key: 'action',
+    }
+]);
+
 // Thêm state cho preview ảnh
 const previewVisible = ref(false);
 const previewImage = ref('');
@@ -318,16 +366,16 @@ const rules = {
     id_chat_lieu: [
         { required: true, message: 'Vui lòng chọn chất liệu!' }
     ],
-    gia_nhap_chung: [
-        {
-            validator: (_, value) => {
-                if (useCommonPrice.value && (!value || value < 1000)) {
-                    return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                }
-                return Promise.resolve();
-            }
-        }
-    ],
+    // gia_nhap_chung: [
+    //     {
+    //         validator: (_, value) => {
+    //             if (useCommonPrice.value && (!value || value < 1000)) {
+    //                 return Promise.reject('Giá nhập phải lớn hơn 1000!');
+    //             }
+    //             return Promise.resolve();
+    //         }
+    //     }
+    // ],
     gia_ban_chung: [
         {
             validator: (_, value) => {
@@ -345,23 +393,23 @@ const rules = {
         {
             validator: (_, value) => {
                 if (useCommonPrice.value) {
-                    if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
-                        return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                    }
+                    // if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
+                    //     return Promise.reject('Giá nhập phải lớn hơn 1000!');
+                    // }
                     if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                         return Promise.reject('Giá bán phải lớn hơn 1000!');
                     }
-                    if (!formState.gia_nhap_chung || formState.gia_nhap_chung > 999999999) {
-                        return Promise.reject('Giá nhập phải nhỏ hơn 999.999.999')
-                    }
+                    // if (!formState.gia_nhap_chung || formState.gia_nhap_chung > 999999999) {
+                    //     return Promise.reject('Giá nhập phải nhỏ hơn 999.999.999')
+                    // }
                     if (!formState.gia_ban_chung || formState.gia_ban_chung > 999999999) {
                         return Promise.reject('Giá bán phải nhỏ hơn 999.999.999')
                     }
                     // Kiểm tra giá nhập phải nhỏ hơn giá bán ít nhất 10%
-                    const minGiaBan = formState.gia_nhap_chung * 1.1; // Giá bán tối thiểu = giá nhập + 10%
-                    if (formState.gia_ban_chung < minGiaBan) {
-                        return Promise.reject(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                    }
+                    // const minGiaBan = formState.gia_nhap_chung * 1.1; // Giá bán tối thiểu = giá nhập + 10%
+                    // if (formState.gia_ban_chung < minGiaBan) {
+                    //     return Promise.reject(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+                    // }
                 }
                 return Promise.resolve();
             }
@@ -384,70 +432,147 @@ const validateForm = async () => {
     }
 };
 
-// Thêm state cho biến thể
-const addVariant = async () => {
-    // Validate lại form trước khi thêm biến thể
-    try {
-        await formRef.value.validate();
-        isProductValidated.value = true;
-    } catch (errorInfo) {
-        isProductValidated.value = false;
-        message.error('Vui lòng điền đầy đủ thông tin sản phẩm');
-        return;
-    }
-
-    variants.value.push({
+// Thêm dạng biến thể mới (theo màu sắc)
+const addVariantType = () => {
+    variantTypes.value.push({
         id_mau_sac: undefined,
-        id_kich_thuoc: undefined,
-        so_luong: 1,
-        gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 1000,
-        gia_ban: useCommonPrice.value ? formState.gia_ban_chung : 1100,
-        trang_thai: 'Hoạt động',
+        selectedSizes: [],
+        so_luong: useCommonPrice.value ? 1 : 0,
+        gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 0,
+        gia_ban: useCommonPrice.value ? formState.gia_ban_chung : 0,
         fileList: [],
         hinh_anh: []
     });
+    updateAvailableColors();
 };
 
-const removeVariant = (index) => {
-    variants.value.splice(index, 1);
+// Xóa dạng biến thể
+const removeVariantType = (index) => {
+    // Xóa các biến thể con liên quan đến dạng biến thể này
+    const typeToRemove = variantTypes.value[index];
+    if (typeToRemove.id_mau_sac) {
+        variants.value = variants.value.filter(v => v.id_mau_sac !== typeToRemove.id_mau_sac);
+    }
+
+    // Xóa dạng biến thể
+    variantTypes.value.splice(index, 1);
+
+    // Cập nhật lại danh sách màu có sẵn
+    updateAvailableColors();
 };
 
-const beforeUpload = (file, currentFileCount) => {
-    // Kiểm tra số lượng file hiện tại
-    if (currentFileCount >= 3) {
-        message.error('Chỉ được upload tối đa 3 ảnh!');
-        return false;
-    }
+// Cập nhật danh sách màu có sẵn (loại bỏ các màu đã được chọn)
+const updateAvailableColors = () => {
+    if (!mauSacList.value) return;
 
-    // Kiểm tra định dạng file
-    const isImage = file.type.startsWith('image/');
-    if (!isImage) {
-        message.error('Chỉ được upload file ảnh!');
-        return false;
-    }
+    const usedColorIds = variantTypes.value
+        .filter(vt => vt.id_mau_sac)
+        .map(vt => vt.id_mau_sac);
 
-    // Kiểm tra kích thước file (ví dụ: tối đa 2MB)
-    const isLt2M = file.size / 1024 / 1024 < 2;
-    if (!isLt2M) {
-        message.error('Ảnh phải nhỏ hơn 2MB!');
-        return false;
-    }
-
-    return true;
+    availableColors.value = mauSacList.value.filter(color => !usedColorIds.includes(color.id_mau_sac));
 };
 
-const handleVariantImageChange = async (info, variantIndex) => {
+// Cập nhật kích thước có sẵn khi thay đổi màu sắc
+const updateAvailableSizes = (typeIndex) => {
+    // Xóa các biến thể cũ của dạng biến thể này
+    const currentType = variantTypes.value[typeIndex];
+    if (currentType.id_mau_sac) {
+        variants.value = variants.value.filter(v => v.id_mau_sac !== currentType.id_mau_sac);
+    }
+
+    // Reset danh sách kích thước đã chọn
+    currentType.selectedSizes = [];
+
+    // Cập nhật lại biến thể từ dạng biến thể
+    updateVariantsFromType(typeIndex);
+};
+
+// Xử lý khi thay đổi kích thước
+const handleSizeChange = (selectedSizes, typeIndex) => {
+    variantTypes.value[typeIndex].selectedSizes = selectedSizes;
+    updateVariantsFromType(typeIndex);
+};
+
+// Cập nhật danh sách biến thể từ dạng biến thể
+const updateVariantsFromType = (typeIndex) => {
+    const type = variantTypes.value[typeIndex];
+
+    // Xóa các biến thể cũ của dạng biến thể này
+    variants.value = variants.value.filter(v => v.id_mau_sac !== type.id_mau_sac);
+
+    // Nếu chưa chọn màu hoặc chưa chọn kích thước nào thì không tạo biến thể
+    if (!type.id_mau_sac || !type.selectedSizes || type.selectedSizes.length === 0) {
+        return;
+    }
+
+    // Tìm thông tin màu sắc
+    const colorInfo = mauSacList.value.find(c => c.id_mau_sac === type.id_mau_sac);
+    if (!colorInfo) return;
+
+    // Tạo biến thể mới cho mỗi kích thước đã chọn
+    type.selectedSizes.forEach(sizeId => {
+        const sizeInfo = sizeList.value.find(s => s.id_kich_thuoc === sizeId);
+        if (!sizeInfo) return;
+
+        variants.value.push({
+            id_mau_sac: type.id_mau_sac,
+            id_kich_thuoc: sizeId,
+            mau_sac_name: colorInfo.ma_mau_sac + ' ' + colorInfo.ten_mau_sac,
+            kich_thuoc_name: sizeInfo.gia_tri,
+            so_luong: type.so_luong,
+            gia_nhap: type.gia_nhap,
+            gia_ban: type.gia_ban,
+            fileList: [...type.fileList],
+            hinh_anh: [...type.hinh_anh]
+        });
+    });
+};
+
+// Lấy danh sách biến thể từ một dạng biến thể
+const getVariantsFromType = (typeIndex) => {
+    const type = variantTypes.value[typeIndex];
+    if (!type.id_mau_sac) return [];
+
+    return variants.value.filter(v => v.id_mau_sac === type.id_mau_sac);
+};
+
+// Xóa một biến thể cụ thể bằng id màu sắc và id kích thước
+const removeVariantByKeys = (colorId, sizeId) => {
+    // Tìm index của biến thể cần xóa
+    const index = variants.value.findIndex(
+        v => v.id_mau_sac === colorId && v.id_kich_thuoc === sizeId
+    );
+
+    if (index !== -1) {
+        // Xóa biến thể
+        variants.value.splice(index, 1);
+
+        // Cập nhật lại danh sách kích thước đã chọn trong dạng biến thể
+        const typeIndex = variantTypes.value.findIndex(vt => vt.id_mau_sac === colorId);
+        if (typeIndex !== -1) {
+            variantTypes.value[typeIndex].selectedSizes = variantTypes.value[typeIndex].selectedSizes.filter(
+                id => id !== sizeId
+            );
+        }
+    }
+};
+
+// Xử lý khi upload hình ảnh cho dạng biến thể
+const handleVariantTypeImageChange = async (info, typeIndex) => {
     const { fileList } = info;
 
     // Giới hạn số lượng file
     const limitedFileList = fileList.slice(0, 3);
 
-    // Cập nhật fileList cho biến thể
-    variants.value[variantIndex].fileList = limitedFileList;
+    // Cập nhật fileList cho dạng biến thể
+    variantTypes.value[typeIndex].fileList = limitedFileList;
 
     // Xử lý các file đã upload thành công
     const successFiles = limitedFileList.filter(file => file.status === 'done');
-    variants.value[variantIndex].hinh_anh = successFiles.map(file => file.response.url);
+    variantTypes.value[typeIndex].hinh_anh = successFiles.map(file => file.response.url);
+
+    // Cập nhật hình ảnh cho tất cả biến thể thuộc dạng biến thể này
+    updateVariantsFromType(typeIndex);
 
     // Thông báo kết quả
     const lastFile = info.file;
@@ -458,26 +583,84 @@ const handleVariantImageChange = async (info, variantIndex) => {
     }
 };
 
-const handlePreview = async (file) => {
-    if (!file.url && !file.preview) {
-        file.preview = await getBase64(file.originFileObj);
-    }
-    previewImage.value = file.url || file.preview;
-    previewVisible.value = true;
-    previewTitle.value = file.name || file.url.substring(file.url.lastIndexOf('/') + 1);
-};
-
-const handleCancel = () => {
-    previewVisible.value = false;
-};
-
-const getBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+// Cập nhật hàm resetForm để hỗ trợ dạng biến thể
+const resetForm = () => {
+    Object.keys(formState).forEach(key => {
+        formState[key] = '';
     });
+    fileList.value = [];
+    variants.value = [];
+    variantTypes.value = [];
+    isProductValidated.value = false;
+};
+
+// Cập nhật watch cho giá chung
+watch([() => formState.gia_nhap_chung, () => formState.gia_ban_chung, () => useCommonPrice.value],
+    async ([newGiaNhap, newGiaBan, newUseCommon]) => {
+        if (newUseCommon) {
+            // Cập nhật giá cho tất cả dạng biến thể
+            variantTypes.value.forEach((type, index) => {
+                type.gia_nhap = newGiaNhap;
+                type.gia_ban = newGiaBan;
+                updateVariantsFromType(index);
+            });
+        }
+    }
+);
+
+// Khởi tạo danh sách màu có sẵn khi component được mount
+onMounted(() => {
+    watch(() => mauSacList.value, () => {
+        updateAvailableColors();
+    }, { immediate: true });
+});
+
+// Fetch initial data
+onMounted(async () => {
+    try {
+        // Lấy danh sách sản phẩm để tạo mã tự động
+        await store.getAllSP();
+
+        // Tạo mã sản phẩm tự động
+        formState.ma_san_pham = generateProductCode(store.getAllSanPham);
+
+        // Thay thế bằng các actions thực tế từ store của bạn
+        await store.getDanhMucList();
+        await store.getThuongHieuList();
+        await store.getChatLieuList();
+
+        danhMucList.value = store.danhMucList;
+        thuongHieuList.value = store.thuongHieuList;
+        chatLieuList.value = store.chatLieuList;
+
+        // Thêm các API calls để lấy danh sách màu sắc và size
+        await store.getMauSacList();
+        await store.getSizeList();
+        mauSacList.value = store.mauSacList;
+        sizeList.value = store.sizeList;
+    } catch (error) {
+        message.error('Có lỗi khi tải dữ liệu!');
+        console.error(error);
+    }
+});
+
+// Hàm tạo mã sản phẩm tự động
+const generateProductCode = (products) => {
+    if (!products || products.length === 0) {
+        return 'SP001';
+    }
+
+    // Lọc ra các mã sản phẩm bắt đầu bằng 'SP' và lấy số lớn nhất
+    const productCodes = products
+        .map(p => p.ma_san_pham)
+        .filter(code => code.startsWith('SP0'))
+        .map(code => parseInt(code.substring(2)) || 0);
+
+    const maxNumber = Math.max(...productCodes);
+    const nextNumber = maxNumber + 1;
+
+    // Format số với 3 chữ số (ví dụ: 001, 002, ...)
+    return `SP0${String(nextNumber).padStart(3, '0')}`;
 };
 
 // Thêm hàm kiểm tra dữ liệu
@@ -490,17 +673,17 @@ const validateFormData = (data) => {
 
     // Kiểm tra giá chung
     if (useCommonPrice.value) {
-        if (!data.gia_nhap_chung || data.gia_nhap_chung < 1000) {
-            throw new Error('Giá nhập phải lớn hơn 1000!');
-        }
+        // if (!data.gia_nhap_chung || data.gia_nhap_chung < 1000) {
+        //     throw new Error('Giá nhập phải lớn hơn 1000!');
+        // }
         if (!data.gia_ban_chung || data.gia_ban_chung < 1000) {
             throw new Error('Giá bán phải lớn hơn 1000!');
         }
         // Kiểm tra giá nhập phải nhỏ hơn giá bán ít nhất 10%
-        const minGiaBan = data.gia_nhap_chung * 1.1;
-        if (data.gia_ban_chung < minGiaBan) {
-            throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        }
+        // const minGiaBan = data.gia_nhap_chung * 1.1;
+        // if (data.gia_ban_chung < minGiaBan) {
+        //     throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+        // }
     }
 
     // Kiểm tra số lượng và giá trong các biến thể
@@ -510,16 +693,16 @@ const validateFormData = (data) => {
                 throw new Error(`Số lượng của biến thể #${index + 1} phải lớn hơn 0!`);
             }
             if (!useCommonPrice.value) {
-                if (!variant.gia_nhap || variant.gia_nhap < 1000) {
-                    throw new Error(`Giá nhập của biến thể #${index + 1} phải lớn hơn 1000!`);
-                }
+                // if (!variant.gia_nhap || variant.gia_nhap < 1000) {
+                //     throw new Error(`Giá nhập của biến thể #${index + 1} phải lớn hơn 1000!`);
+                // }
                 if (!variant.gia_ban || variant.gia_ban < 1000) {
                     throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn 1000!`);
                 }
-                const minGiaBan = variant.gia_nhap * 1.1;
-                if (variant.gia_ban < minGiaBan) {
-                    throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                }
+                // const minGiaBan = variant.gia_nhap * 1.1;
+                // if (variant.gia_ban < minGiaBan) {
+                //     throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+                // }
             }
         });
     }
@@ -547,31 +730,31 @@ const onFinish = async () => {
             }
             // Validate giá của biến thể
             if (!useCommonPrice.value) {
-                if (!variant.gia_nhap || variant.gia_nhap < 1000) {
-                    throw new Error(`Giá nhập của biến thể phải lớn hơn 1000!`);
-                }
+                // if (!variant.gia_nhap || variant.gia_nhap < 1000) {
+                //     throw new Error(`Giá nhập của biến thể phải lớn hơn 1000!`);
+                // }
                 if (!variant.gia_ban || variant.gia_ban < 1000) {
                     throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
                 }
-                const minGiaBan = variant.gia_nhap * 1.1;
-                if (variant.gia_ban < minGiaBan) {
-                    throw new Error(`Giá bán của biến thể phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                }
+                // const minGiaBan = variant.gia_nhap * 1.1;
+                // if (variant.gia_ban < minGiaBan) {
+                //     throw new Error(`Giá bán của biến thể phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+                // }
             }
         }
 
         // Validate giá chung
         if (useCommonPrice.value) {
-            if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
-                throw new Error('Giá nhập phải lớn hơn 1000!');
-            }
+            // if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
+            //     throw new Error('Giá nhập phải lớn hơn 1000!');
+            // }
             if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                 throw new Error('Giá bán phải lớn hơn 1000!');
             }
-            const minGiaBan = formState.gia_nhap_chung * 1.1;
-            if (formState.gia_ban_chung < minGiaBan) {
-                throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-            }
+            // const minGiaBan = formState.gia_nhap_chung * 1.1;
+            // if (formState.gia_ban_chung < minGiaBan) {
+            //     throw new Error(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+            // }
         }
 
         console.log('FormState trước khi gửi:', formState);
@@ -626,138 +809,24 @@ const handlePriceChange = async () => {
     }
 };
 
-// Cập nhật watch cho giá chung
-watch([() => formState.gia_nhap_chung, () => formState.gia_ban_chung, () => useCommonPrice.value],
-    async ([newGiaNhap, newGiaBan, newUseCommon]) => {
-        if (newUseCommon) {
-            variants.value.forEach(variant => {
-                variant.gia_nhap = newGiaNhap;
-                variant.gia_ban = newGiaBan;
-            });
-            // Validate khi giá thay đổi
-            await handlePriceChange();
-        }
-    }
-);
-
-// Hàm tạo mã sản phẩm tự động
-const generateProductCode = (products) => {
-    if (!products || products.length === 0) {
-        return 'SP001';
-    }
-
-    // Lọc ra các mã sản phẩm bắt đầu bằng 'SP' và lấy số lớn nhất
-    const productCodes = products
-        .map(p => p.ma_san_pham)
-        .filter(code => code.startsWith('SP0'))
-        .map(code => parseInt(code.substring(2)) || 0);
-
-    const maxNumber = Math.max(...productCodes);
-    const nextNumber = maxNumber + 1;
-
-    // Format số với 3 chữ số (ví dụ: 001, 002, ...)
-    return `SP0${String(nextNumber).padStart(3, '0')}`;
-};
-
-// Fetch initial data
-onMounted(async () => {
-    try {
-        // Lấy danh sách sản phẩm để tạo mã tự động
-        await store.getAllSP();
-
-        // Tạo mã sản phẩm tự động
-        formState.ma_san_pham = generateProductCode(store.getAllSanPham);
-
-        // Thay thế bằng các actions thực tế từ store của bạn
-        await store.getDanhMucList();
-        await store.getThuongHieuList();
-        await store.getChatLieuList();
-
-        danhMucList.value = store.danhMucList;
-        thuongHieuList.value = store.thuongHieuList;
-        chatLieuList.value = store.chatLieuList;
-
-        // Thêm các API calls để lấy danh sách màu sắc và size
-        await store.getMauSacList();
-        await store.getSizeList();
-        mauSacList.value = store.mauSacList;
-        sizeList.value = store.sizeList;
-    } catch (error) {
-        message.error('Có lỗi khi tải dữ liệu!');
-        console.error(error);
-    }
-});
-
-// Khi load dữ liệu có sẵn
-const loadProductData = async (productId) => {
-    try {
-        const product = await store.getProductById(productId);
-
-        // Cập nhật formState
-        Object.assign(formState, {
-            ten_san_pham: product.ten_san_pham,
-            mo_ta: product.mo_ta,
-            gioi_tinh: product.gioi_tinh,
-            hinh_anh: product.hinh_anh,
-            id_danh_muc: product.id_danh_muc,
-            id_thuong_hieu: product.id_thuong_hieu,
-            id_chat_lieu: product.id_chat_lieu,
-            trang_thai: product.trang_thai
-        });
-
-        // Validate form sau khi load dữ liệu
-        await validateForm();
-
-        // ... rest of the loading code
-    } catch (error) {
-        message.error('Có lỗi khi tải thông tin sản phẩm!');
-        console.error(error);
-    }
-};
-
 // Watch changes in formState để debug
 watch(() => formState, (newVal) => {
     console.log('FormState changed:', newVal);
 }, { deep: true });
 
-const resetForm = () => {
-    Modal.confirm({
-        title: 'Xác nhận làm mới',
-        content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
-        okText: 'Đồng ý',
-        cancelText: 'Hủy',
-        onOk: () => {
-            // Code reset ở trên
-            Object.assign(formState, {
-                ten_san_pham: '',
-                mo_ta: '',
-                gioi_tinh: undefined,
-                hinh_anh: '',
-                id_danh_muc: undefined,
-                id_thuong_hieu: undefined,
-                id_chat_lieu: undefined,
-                trang_thai: 'Hoạt động',
-                gia_nhap_chung: 0,
-                gia_ban_chung: 0
-            });
-            // ... rest of reset code
-        }
-    });
-};
-
 // Thêm hàm xử lý khi giá biến thể thay đổi
 const handleVariantPriceChange = (value, variant, field) => {
     if (field === 'gia_nhap') {
         // Khi giá nhập thay đổi, kiểm tra lại giá bán
-        if (value < 1000) {
-            message.error('Giá nhập phải lớn hơn 1000!');
-            variant.gia_nhap = 1000; // Reset về giá trị tối thiểu
-            return;
-        }
-        const minGiaBan = value * 1.1;
-        if (variant.gia_ban < minGiaBan) {
-            message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        }
+        // if (value < 1000) {
+        //     message.error('Giá nhập phải lớn hơn 1000!');
+        //     variant.gia_nhap = 1000; // Reset về giá trị tối thiểu
+        //     return;
+        // }
+        // const minGiaBan = value * 1.1;
+        // if (variant.gia_ban < minGiaBan) {
+        //     message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+        // }
     } else if (field === 'gia_ban') {
         // Khi giá bán thay đổi, kiểm tra xem có đủ 10% không
         if (value < 1000) {
@@ -765,10 +834,10 @@ const handleVariantPriceChange = (value, variant, field) => {
             variant.gia_ban = 1000; // Reset về giá trị tối thiểu
             return;
         }
-        const minGiaBan = variant.gia_nhap * 1.1;
-        if (value < minGiaBan) {
-            message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        }
+        // const minGiaBan = variant.gia_nhap * 1.1;
+        // if (value < minGiaBan) {
+        //     message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+        // }
     }
 };
 
@@ -805,12 +874,12 @@ watch(() => formState, async (newVal) => {
     height: 100px;
 }
 
-.variant-item {
+.variant-type-item {
     background-color: #fafafa;
     transition: all 0.3s ease;
 }
 
-.variant-item:hover {
+.variant-type-item:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
 }
 
