@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import tableVoucher from "@/components/admin-components/QuanLyVoucher/tableVoucher.vue";
+import tableVoucher from "@/components/admin-components/Voucher/tableVoucher.vue";
 export default {
     components: {
         tableVoucher
@@ -13,6 +13,4 @@ export default {
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

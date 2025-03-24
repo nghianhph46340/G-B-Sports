@@ -1,7 +1,6 @@
 <template>
     <div>
-<h1>Huyyt</h1>
-        <h1>Đây là voucher</h1>
+        <h1>Đây là khuyến mãi</h1>
     </div>
 </template>
 

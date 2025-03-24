@@ -228,11 +228,8 @@
                                     </a-button>
                                 </template>
                                 <template v-if="column.key === 'hinh_anh'">
-                                    <a-upload 
-                                        v-model:file-list="record.fileList" 
-                                        list-type="picture-card"
-                                        :max-count="3" 
-                                        :multiple="true"
+                                    <a-upload v-model:file-list="record.fileList" list-type="picture-card"
+                                        :max-count="3" :multiple="true"
                                         :before-upload="(file) => beforeUpload(file, record.fileList ? record.fileList.length : 0)"
                                         :customRequest="handleCustomRequest"
                                         @change="(info) => handleVariantImageChange(info, record)">
@@ -913,7 +910,7 @@ const handleVariantImageChange = (info, variant) => {
         loading.value = true;
         return;
     }
-    
+
     if (info.file.status === 'done') {
         loading.value = false;
         // Giới hạn số lượng file
@@ -922,12 +919,12 @@ const handleVariantImageChange = (info, variant) => {
         variant.fileList = limitedFileList;
         console.log('Variant image updated:', variant);
     }
-    
+
     if (info.file.status === 'error') {
         loading.value = false;
         message.error(`${info.file.name} tải lên thất bại.`);
     }
-    
+
     // Nếu xóa ảnh
     if (info.file.status === 'removed') {
         variant.fileList = [...info.fileList];
