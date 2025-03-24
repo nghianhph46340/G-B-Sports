@@ -51,8 +51,8 @@
                             <span>Ưu đãi</span>
                         </span>
                     </template>
-                    <a-menu-item key="12">Voucher</a-menu-item>
-                    <a-menu-item key="13">Khuyến mãi</a-menu-item>
+                    <a-menu-item key="12" @click="changeRoute('/admin/quanlyvoucher');">Voucher</a-menu-item>
+                    <a-menu-item key="13" @click="changeRoute('/admin/quanlykhuyenmai');">Khuyến mãi</a-menu-item>
                 </a-sub-menu>
                 <a-menu-item key="14">
                     <LogoutOutlined />
