@@ -719,8 +719,39 @@ watch(() => formState, async (newVal) => {
 }, { deep: true });
 
 // Hàm xử lý upload ảnh
-const handleImageChange = ({ fileList: newFileList }) => {
-    fileList.value = newFileList;
+const handleImageChange = async (info) => {
+    console.log('handleImageChange được gọi với:', info);
+
+    // Cập nhật fileList
+    fileList.value = info.fileList;
+
+    // Xử lý khi ảnh bị xóa (status = 'removed')
+    if (info.file.status === 'removed') {
+        console.log('Ảnh bị xóa:', info.file);
+
+        // Nếu ảnh đã được upload lên cloud (có url)
+        if (info.file.url) {
+            try {
+                // Trích xuất publicId từ URL
+                const urlParts = info.file.url.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
+
+                console.log('Public ID cần xóa:', publicId);
+
+                // Gọi API xóa ảnh
+                await axiosInstance.delete("testDeleteImage?publicId=" + publicId);
+
+                // Xóa URL ảnh khỏi formState
+                formState.hinh_anh = '';
+
+                message.success('Đã xóa ảnh thành công');
+            } catch (error) {
+                console.error('Lỗi khi xóa ảnh:', error);
+                message.error('Không thể xóa ảnh: ' + error.message);
+            }
+        }
+    }
 };
 
 // Preview ảnh
