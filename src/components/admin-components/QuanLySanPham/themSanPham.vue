@@ -72,7 +72,7 @@
 
                 <a-form-item label="Hình ảnh" name="hinh_anh">
                     <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1"
-                        :before-upload="beforeUpload">
+                        :before-upload="beforeUpload" :customRequest="handleCustomRequest">
                         <div v-if="fileList.length < 1">
                             <plus-outlined />
                             <div style="margin-top: 8px">Upload</div>
@@ -204,6 +204,7 @@
                                 <a-upload v-model:file-list="variantType.fileList" list-type="picture-card"
                                     :max-count="3" :multiple="true"
                                     :before-upload="(file) => beforeUpload(file, variantType.fileList.length)"
+                                    :customRequest="handleCustomRequest"
                                     @change="(info) => handleVariantTypeImageChange(info, typeIndex)">
                                     <div v-if="variantType.fileList.length < 3">
                                         <plus-outlined />
@@ -225,6 +226,21 @@
                                         @click="removeVariantByKeys(record.id_mau_sac, record.id_kich_thuoc)">
                                         <delete-outlined />
                                     </a-button>
+                                </template>
+                                <template v-if="column.key === 'hinh_anh'">
+                                    <a-upload 
+                                        v-model:file-list="record.fileList" 
+                                        list-type="picture-card"
+                                        :max-count="3" 
+                                        :multiple="true"
+                                        :before-upload="(file) => beforeUpload(file, record.fileList ? record.fileList.length : 0)"
+                                        :customRequest="handleCustomRequest"
+                                        @change="(info) => handleVariantImageChange(info, record)">
+                                        <div v-if="!record.fileList || record.fileList.length < 3">
+                                            <plus-outlined />
+                                            <div style="margin-top: 8px">Upload</div>
+                                        </div>
+                                    </a-upload>
                                 </template>
                             </template>
                         </a-table>
@@ -259,6 +275,7 @@ import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-de
 import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
+import axiosInstance from '@/config/axiosConfig';
 
 const store = useGbStore();
 const router = useRouter();
@@ -337,6 +354,10 @@ const variantColumns = ref([
         customRender: ({ text }) => {
             return text.toLocaleString('vi-VN') + ' đ';
         }
+    },
+    {
+        title: 'Hình ảnh',
+        key: 'hinh_anh',
     },
     {
         title: 'Thao tác',
@@ -490,6 +511,44 @@ const handleCancel = () => {
     previewVisible.value = false;
 };
 
+//upload ảnh
+const uploadImage = async (file) => {
+    if (!file) {
+        console.warn('No file provided for upload');
+        return null;
+    }
+
+    console.log('Uploading file:', file);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        // Sửa endpoint để phù hợp với API của bạn
+        const response = await axiosInstance.post('testImage', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        console.log('Upload image response:', response.data);
+        if (response.data) {
+            return response.data;
+        }
+        return null;
+    } catch (error) {
+        console.error('Upload error details:', error);
+        message.error('Có lỗi khi upload ảnh: ' + (error.response?.data || error.message));
+        return null; // Trả về null thay vì throw error
+    }
+};
+
+const handleCustomRequest = (options) => {
+    if (options && typeof options.onSuccess === 'function') {
+        setTimeout(() => {
+            options.onSuccess('ok');
+        }, 0);
+    }
+};
+
 // Cập nhật kích thước có sẵn khi thay đổi màu sắc
 const updateAvailableSizes = (typeIndex) => {
     // Xóa các biến thể cũ của dạng biến thể này
@@ -585,20 +644,12 @@ const handleVariantTypeImageChange = async (info, typeIndex) => {
     // Cập nhật fileList cho dạng biến thể
     variantTypes.value[typeIndex].fileList = limitedFileList;
 
-    // Xử lý các file đã upload thành công
-    const successFiles = limitedFileList.filter(file => file.status === 'done');
-    variantTypes.value[typeIndex].hinh_anh = successFiles.map(file => file.response.url);
+    // Với customRequest, không cần xử lý response.url ở đây
+    // Việc upload sẽ được thực hiện trong onFinish
+    console.log('Variant type image files updated:', limitedFileList);
 
-    // Cập nhật hình ảnh cho tất cả biến thể thuộc dạng biến thể này
+    // Cập nhật biến thể
     updateVariantsFromType(typeIndex);
-
-    // Thông báo kết quả
-    const lastFile = info.file;
-    if (lastFile.status === 'done') {
-        message.success(`${lastFile.name} đã được tải lên thành công`);
-    } else if (lastFile.status === 'error') {
-        message.error(`${lastFile.name} tải lên thất bại`);
-    }
 };
 
 // Cập nhật hàm resetForm để hỗ trợ dạng biến thể
@@ -757,6 +808,16 @@ const onFinish = async () => {
             }
         }
 
+        // Upload hình ảnh sản phẩm
+        let imageUrl = null;
+        if (fileList.value.length > 0) {
+            const file = fileList.value[0].originFileObj;
+            imageUrl = await uploadImage(file);
+            if (imageUrl) {
+                formState.hinh_anh = imageUrl;
+            }
+        }
+
         console.log('FormState trước khi gửi:', formState);
         const response = await store.createSanPham(formState);
         console.log('Response nhận được:', response);
@@ -773,21 +834,43 @@ const onFinish = async () => {
         }
 
         // Tạo các biến thể CTSP
-        // for (const variant of variants.value) {
-        //     await store.createCTSP({
-        //         ...variant,
-        //         id_san_pham: productId,
-        //         hinh_anh: variant.hinh_anh
-        //     });
-        // }
         await Promise.all(variants.value.map(async (variant) => {
+            // Upload ảnh cho từng biến thể nếu có
+            const variantImages = [];
+
+            if (variant.fileList && variant.fileList.length > 0) {
+                // Xử lý tất cả các ảnh trong fileList
+                for (let i = 0; i < variant.fileList.length; i++) {
+                    const fileItem = variant.fileList[i];
+                    if (fileItem && fileItem.originFileObj) {
+                        console.log('Variant file to upload:', fileItem.originFileObj);
+                        const variantImageUrl = await uploadImage(fileItem.originFileObj);
+                        if (variantImageUrl) {
+                            variantImages.push(variantImageUrl);
+                        }
+                    } else {
+                        console.warn('originFileObj không tồn tại trong file item', fileItem);
+                    }
+                }
+            }
+
+            // Nếu không có ảnh biến thể, sử dụng ảnh sản phẩm chính
+            if (variantImages.length === 0 && imageUrl) {
+                variantImages.push(imageUrl);
+            }
+
+            console.log('Variant data before create:', {
+                ...variant,
+                id_san_pham: productId,
+                hinh_anh: variantImages
+            });
             await store.createCTSP({
                 ...variant,
                 id_san_pham: productId,
                 trang_thai: 'Hoạt động',
                 ngay_tao: new Date().toISOString(),
                 ngay_sua: new Date().toISOString(),
-                // hinh_anh: variant.hinh_anh
+                hinh_anh: variantImages
             });
 
         }));
@@ -823,6 +906,33 @@ const handlePriceChange = async () => {
 watch(() => formState, (newVal) => {
     console.log('FormState changed:', newVal);
 }, { deep: true });
+
+// Xử lý khi upload hình ảnh cho từng biến thể cụ thể
+const handleVariantImageChange = (info, variant) => {
+    if (info.file.status === 'uploading') {
+        loading.value = true;
+        return;
+    }
+    
+    if (info.file.status === 'done') {
+        loading.value = false;
+        // Giới hạn số lượng file
+        const limitedFileList = info.fileList.slice(0, 3);
+        // Cập nhật fileList cho biến thể cụ thể
+        variant.fileList = limitedFileList;
+        console.log('Variant image updated:', variant);
+    }
+    
+    if (info.file.status === 'error') {
+        loading.value = false;
+        message.error(`${info.file.name} tải lên thất bại.`);
+    }
+    
+    // Nếu xóa ảnh
+    if (info.file.status === 'removed') {
+        variant.fileList = [...info.fileList];
+    }
+};
 
 // Thêm hàm xử lý khi giá biến thể thay đổi
 const handleVariantPriceChange = (value, variant, field) => {
