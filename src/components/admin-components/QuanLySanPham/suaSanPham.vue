@@ -133,7 +133,7 @@
                                     <a-input-number v-model:value="variant.so_luong" :min="1" style="width: 100%" />
                                 </a-form-item>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <a-form-item label="Giá bán" :rules="[{ required: true, message: 'Vui lòng nhập giá bán!' },
                                 {
@@ -215,6 +215,7 @@ import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
+import axiosInstance from '@/config/axiosConfig';
 
 const store = useGbStore();
 const router = useRouter();
@@ -299,11 +300,11 @@ const rules = {
         {
             validator: (_, value) => {
                 if (useCommonPrice.value) {
-            
+
                     if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                         return Promise.reject('Giá bán phải lớn hơn 1000!');
                     }
-                 
+
                     if (!formState.gia_ban_chung || formState.gia_ban_chung > 999999999) {
                         return Promise.reject('Giá bán phải nhỏ hơn 999.999.999')
                     }
@@ -456,7 +457,7 @@ const onFinish = async () => {
 
         // Validate giá chung
         if (useCommonPrice.value) {
-          
+
             if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                 throw new Error('Giá bán phải lớn hơn 1000!');
             }
