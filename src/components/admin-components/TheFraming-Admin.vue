@@ -193,11 +193,11 @@ onMounted(() => {
     margin-left: 1rem;
 }
 
-.sider {
-    /* background-color: #484848; */
-    /* border-radius: 10px; */
-    /* box-shadow: 0 50px 50px rgba(0, 0, 0, 0.6); */
-}
+/* .sider { */
+/* background-color: #484848; */
+/* border-radius: 10px; */
+/* box-shadow: 0 50px 50px rgba(0, 0, 0, 0.6); */
+/* } */
 
 .header-admin {
     /* box-shadow: 0 0 50px rgba(0, 0, 0, 0.6); */
