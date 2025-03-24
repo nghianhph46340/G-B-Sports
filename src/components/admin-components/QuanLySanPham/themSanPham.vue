@@ -8,8 +8,10 @@
                     :rules="[{ required: true, message: 'Vui lòng nhập mã sản phẩm!' }]">
                     <a-input v-model:value="formState.ma_san_pham" readonly disabled />
                 </a-form-item>
-                <a-form-item label="Tên sản phẩm" name="ten_san_pham"
-                    :rules="[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]">
+                <a-form-item label="Tên sản phẩm" name="ten_san_pham" :rules="[
+                    { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
+                    { validator: validateProductName }
+                ]">
                     <a-input v-model:value="formState.ten_san_pham" />
                 </a-form-item>
                 <!-- <a-form-item label="Giới tính" name="gioi_tinh"
@@ -158,25 +160,6 @@
                                         @change="() => updateVariantsFromType(typeIndex)" />
                                 </a-form-item>
                             </div>
-                            <!-- <div class="col-md-4">
-                                <a-form-item label="Giá nhập" :rules="[
-                                    { required: true, message: 'Vui lòng nhập giá nhập!' },
-                                    {
-                                        validator: (_, value) => {
-                                            if (!value || value < 1000) {
-                                                return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                                            }
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                ]">
-                                    <a-input-number v-model:value="variantType.gia_nhap" :min="1000"
-                                        :disabled="useCommonPrice" style="width: 100%"
-                                        :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')"
-                                        @change="() => updateVariantsFromType(typeIndex)" />
-                                </a-form-item>
-                            </div> -->
                             <div class="col-md-6">
                                 <a-form-item label="Giá bán" :rules="[
                                     { required: true, message: 'Vui lòng nhập giá bán!' },
@@ -203,10 +186,10 @@
                             <div class="d-flex align-items-center gap-2">
                                 <a-upload v-model:file-list="variantType.fileList" list-type="picture-card"
                                     :max-count="3" :multiple="true"
-                                    :before-upload="(file) => beforeUpload(file, variantType.fileList.length)"
+                                    :before-upload="(file) => beforeUpload(file, variantType.fileList ? variantType.fileList.length : 0)"
                                     :customRequest="handleCustomRequest"
                                     @change="(info) => handleVariantTypeImageChange(info, typeIndex)">
-                                    <div v-if="variantType.fileList.length < 3">
+                                    <div v-if="!variantType.fileList || variantType.fileList.length < 3">
                                         <plus-outlined />
                                         <div style="margin-top: 8px">Upload</div>
                                     </div>
@@ -226,18 +209,6 @@
                                         @click="removeVariantByKeys(record.id_mau_sac, record.id_kich_thuoc)">
                                         <delete-outlined />
                                     </a-button>
-                                </template>
-                                <template v-if="column.key === 'hinh_anh'">
-                                    <a-upload v-model:file-list="record.fileList" list-type="picture-card"
-                                        :max-count="3" :multiple="true"
-                                        :before-upload="(file) => beforeUpload(file, record.fileList ? record.fileList.length : 0)"
-                                        :customRequest="handleCustomRequest"
-                                        @change="(info) => handleVariantImageChange(info, record)">
-                                        <div v-if="!record.fileList || record.fileList.length < 3">
-                                            <plus-outlined />
-                                            <div style="margin-top: 8px">Upload</div>
-                                        </div>
-                                    </a-upload>
                                 </template>
                             </template>
                         </a-table>
@@ -336,14 +307,6 @@ const variantColumns = ref([
         dataIndex: 'so_luong',
         key: 'so_luong',
     },
-    // {
-    //     title: 'Giá nhập',
-    //     dataIndex: 'gia_nhap',
-    //     key: 'gia_nhap',
-    //     customRender: ({ text }) => {
-    //         return text.toLocaleString('vi-VN') + ' đ';
-    //     }
-    // },
     {
         title: 'Giá bán',
         dataIndex: 'gia_ban',
@@ -351,10 +314,6 @@ const variantColumns = ref([
         customRender: ({ text }) => {
             return text.toLocaleString('vi-VN') + ' đ';
         }
-    },
-    {
-        title: 'Hình ảnh',
-        key: 'hinh_anh',
     },
     {
         title: 'Thao tác',
@@ -384,16 +343,6 @@ const rules = {
     id_chat_lieu: [
         { required: true, message: 'Vui lòng chọn chất liệu!' }
     ],
-    // gia_nhap_chung: [
-    //     {
-    //         validator: (_, value) => {
-    //             if (useCommonPrice.value && (!value || value < 1000)) {
-    //                 return Promise.reject('Giá nhập phải lớn hơn 1000!');
-    //             }
-    //             return Promise.resolve();
-    //         }
-    //     }
-    // ],
     gia_ban_chung: [
         {
             validator: (_, value) => {
@@ -435,6 +384,19 @@ const rules = {
     ]
 };
 
+// Hàm validate tên sản phẩm không được trùng
+const validateProductName = async (_, value) => {
+    if (!value) return Promise.reject('Tên sản phẩm không được để trống');
+
+    // Kiểm tra tên sản phẩm đã tồn tại trong danh sách sản phẩm
+    const existingProduct = store.getAllSanPham.find(p => p.ten_san_pham === value);
+    if (existingProduct) {
+        return Promise.reject('Tên sản phẩm đã tồn tại trong danh sách sản phẩm');
+    }
+
+    return Promise.resolve();
+};
+
 // Hàm validate form
 const validateForm = async () => {
     try {
@@ -453,13 +415,12 @@ const validateForm = async () => {
 // Thêm dạng biến thể mới (theo màu sắc)
 const addVariantType = () => {
     variantTypes.value.push({
-        id_mau_sac: undefined,
+        id_mau_sac: null,
         selectedSizes: [],
         so_luong: useCommonPrice.value ? 1 : 0,
         // gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 0,
         gia_ban: useCommonPrice.value ? formState.gia_ban_chung : 0,
         fileList: [],
-        hinh_anh: []
     });
     updateAvailableColors();
 };
@@ -588,17 +549,34 @@ const updateVariantsFromType = (typeIndex) => {
         const sizeInfo = sizeList.value.find(s => s.id_kich_thuoc === sizeId);
         if (!sizeInfo) return;
 
-        variants.value.push({
-            id_mau_sac: type.id_mau_sac,
-            id_kich_thuoc: sizeId,
-            mau_sac_name: colorInfo.ma_mau_sac + ' ' + colorInfo.ten_mau_sac,
-            kich_thuoc_name: sizeInfo.gia_tri,
-            so_luong: type.so_luong,
-            // gia_nhap: type.gia_nhap,
-            gia_ban: type.gia_ban,
-            fileList: [...type.fileList],
-            hinh_anh: [...type.hinh_anh]
-        });
+        // Kiểm tra xem biến thể đã tồn tại chưa
+        const existingVariantIndex = variants.value.findIndex(
+            v => v.id_mau_sac === type.id_mau_sac && v.id_kich_thuoc === sizeId
+        );
+
+        if (existingVariantIndex >= 0) {
+            // Cập nhật biến thể hiện có
+            variants.value[existingVariantIndex].so_luong = type.so_luong;
+            // variants.value[existingVariantIndex].gia_nhap = type.gia_nhap;
+            variants.value[existingVariantIndex].gia_ban = type.gia_ban;
+            // Cập nhật fileList nếu có
+            if (type.fileList && type.fileList.length > 0) {
+                variants.value[existingVariantIndex].fileList = [...type.fileList];
+            }
+        } else {
+            // Tạo biến thể mới
+            variants.value.push({
+                id_mau_sac: type.id_mau_sac,
+                id_kich_thuoc: sizeId,
+                mau_sac_name: colorInfo.ma_mau_sac + ' ' + colorInfo.ten_mau_sac,
+                kich_thuoc_name: sizeInfo.gia_tri,
+                so_luong: type.so_luong,
+                // gia_nhap: type.gia_nhap,
+                gia_ban: type.gia_ban,
+                fileList: type.fileList ? [...type.fileList] : [],
+                hinh_anh: []
+            });
+        }
     });
 };
 
@@ -632,21 +610,45 @@ const removeVariantByKeys = (colorId, sizeId) => {
 };
 
 // Xử lý khi upload hình ảnh cho dạng biến thể
-const handleVariantTypeImageChange = async (info, typeIndex) => {
-    const { fileList } = info;
+const handleVariantTypeImageChange = (info, typeIndex) => {
+    if (info.file.status === 'uploading') {
+        loading.value = true;
+        return;
+    }
 
-    // Giới hạn số lượng file
-    const limitedFileList = fileList.slice(0, 3);
+    if (info.file.status === 'done') {
+        loading.value = false;
+        // Giới hạn số lượng file
+        const limitedFileList = info.fileList.slice(0, 3);
+        // Cập nhật fileList cho dạng biến thể
+        variantTypes.value[typeIndex].fileList = limitedFileList;
+        console.log('Variant type image files updated:', limitedFileList);
 
-    // Cập nhật fileList cho dạng biến thể
-    variantTypes.value[typeIndex].fileList = limitedFileList;
+        // Cập nhật biến thể - Gán fileList cho tất cả các biến thể thuộc dạng biến thể này
+        const variants = getVariantsFromType(typeIndex);
+        variants.forEach(variant => {
+            variant.fileList = [...limitedFileList];
+        });
 
-    // Với customRequest, không cần xử lý response.url ở đây
-    // Việc upload sẽ được thực hiện trong onFinish
-    console.log('Variant type image files updated:', limitedFileList);
+        // Cập nhật biến thể
+        updateVariantsFromType(typeIndex);
+    }
 
-    // Cập nhật biến thể
-    updateVariantsFromType(typeIndex);
+    if (info.file.status === 'error') {
+        loading.value = false;
+        message.error(`${info.file.name} tải lên thất bại.`);
+    }
+
+    // Nếu xóa ảnh
+    if (info.file.status === 'removed') {
+        variantTypes.value[typeIndex].fileList = [...info.fileList];
+
+        // Cập nhật biến thể - Gán fileList cho tất cả các biến thể thuộc dạng biến thể này
+        const variants = getVariantsFromType(typeIndex);
+        variants.forEach(variant => {
+            variant.fileList = [...info.fileList];
+        });
+    }
 };
 
 // Cập nhật hàm resetForm để hỗ trợ dạng biến thể
@@ -835,10 +837,16 @@ const onFinish = async () => {
             // Upload ảnh cho từng biến thể nếu có
             const variantImages = [];
 
-            if (variant.fileList && variant.fileList.length > 0) {
-                // Xử lý tất cả các ảnh trong fileList
-                for (let i = 0; i < variant.fileList.length; i++) {
-                    const fileItem = variant.fileList[i];
+            // Xử lý tất cả các ảnh trong fileList của dạng biến thể
+            const variantTypeIndex = variantTypes.value.findIndex(type =>
+                type.id_mau_sac === variant.id_mau_sac &&
+                type.selectedSizes.includes(variant.id_kich_thuoc)
+            );
+
+            if (variantTypeIndex !== -1 && variantTypes.value[variantTypeIndex].fileList && variantTypes.value[variantTypeIndex].fileList.length > 0) {
+                // Sử dụng ảnh từ dạng biến thể
+                for (let i = 0; i < variantTypes.value[variantTypeIndex].fileList.length; i++) {
+                    const fileItem = variantTypes.value[variantTypeIndex].fileList[i];
                     if (fileItem && fileItem.originFileObj) {
                         console.log('Variant file to upload:', fileItem.originFileObj);
                         const variantImageUrl = await uploadImage(fileItem.originFileObj);
