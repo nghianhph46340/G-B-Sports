@@ -1,5 +1,5 @@
 <template>
-    <div class="container mt-3">
+    <div class="mt-3">
         <div class="scoll d-flex align-items-center">
             <marquee class="d-flex align-items-center" width="100%" height="100%"
                 style="background-color: rgb(130, 181, 202); height: 50px; color: white; font-size: 18px; "
@@ -10,7 +10,7 @@
                 rất
                 nhiều sản phẩm</marquee>
         </div>
-        <a-carousel arrows autoplay>
+        <a-carousel arrows autoplay class="carousel">
 
             <template #prevArrow>
                 <div class="custom-slick-arrow" style="left: 10px; z-index: 1">
@@ -24,8 +24,8 @@
             </template>
             <div class="borderImage">
                 <img src="../images/banner/Banner-PC-3.png" alt="">
-            </div class="borderImage">
-            <div>
+            </div>
+            <div class="borderImage">
                 <img src="../images/banner/Banner-PC-4.png" alt="">
             </div>
             <div class="borderImage">
@@ -48,15 +48,20 @@ export default {
 <style scoped>
 .borderImage {
     overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
 
-.borderImage>img {
+.borderImage>img,
+div>img {
     object-fit: cover;
+    width: 100%;
+    height: 100%;
 }
 
 :deep(.slick-slide) {
     text-align: center;
-    height: 350px;
+    height: 450px;
     line-height: 160px;
     background: #364d79;
     overflow: hidden;

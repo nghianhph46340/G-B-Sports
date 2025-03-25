@@ -1,7 +1,7 @@
 <template>
     <div class="" style="max-height: 280px;">
         <div class="modal fade searchModal" id="staticBackdrop" tabindex="-1" role="dialog"
-            :style="{ display: store.id === 2 ? 'block' : 'none' }" :class="{ show: store.id }">
+            :style="{ display: store.id === 4 ? 'block' : 'none' }" :class="{ show: store.id }">
             <div class="container-fluid" @mouseleave="store.hideModalSideBar(0)">
                 <div class="modal-content bg-light text-dark row d-flex justify-content-evenly m-0">
                     <div class="row sports-categories justify-content-center">
@@ -10,101 +10,99 @@
                             <div class="category-section">
                                 <div class="modal-header d-flex justify-content-between ps-0 pe-0">
                                     <div class="">
-                                        <span class="category-title">Áo thể thao nam</span>
+                                        <span class="category-title">Phụ kiện tập luyện</span>
                                     </div>
                                     <div class="">
                                         <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
-                                    <p class="product-item"><a href="" class="nav-link">Áo thun</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Áo polo</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Áo ba lỗ</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Áo dài tay</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Áo hoodie thể thao</a></p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- End Menu -->
-
-                        <!-- Menu -->
-                        <div class="col-md-2 px-1">
-                            <div class="category-section">
-                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
-                                    <div class="">
-                                        <span class="category-title">Quần thể thao nam</span>
-                                    </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
-                                    </div>
-                                </div>
-                                <div class="modal-body p-0 m-0 mt-2">
-                                    <p class="product-item"><a href="" class="nav-link">Quần short</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Quần jogger</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Quần legging (compression)</a>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- End Menu -->
-
-                        <!-- Menu -->
-                        <div class="col-md-2 px-1">
-                            <div class="category-section">
-                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
-                                    <div class="">
-                                        <span class="category-title">Đồ tập gym nam</span>
-                                    </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
-                                    </div>
-                                </div>
-                                <div class="modal-body p-0 m-0 mt-2">
-                                    <p class="product-item"><a href="" class="nav-link">Tank top</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Quần gym</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Quần bó cơ (compression)</a></p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- End Menu -->
-
-                        <!-- Menu -->
-                        <div class="col-md-2 px-1">
-                            <div class="category-section">
-                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
-                                    <div class="">
-                                        <span class="category-title">Đồ thi đấu nam</span>
-                                    </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
-                                    </div>
-                                </div>
-                                <div class="modal-body p-0 m-0 mt-2">
-                                    <p class="product-item"><a href="" class="nav-link">Áo đấu bóng đá</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Áo đấu bóng rổ</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Áo đấu cầu lông</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Áo đấu tennis</a></p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- End Menu -->
-
-                        <!-- Menu -->
-                        <div class="col-md-2 px-1">
-                            <div class="category-section">
-                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
-                                    <div class="">
-                                        <span class="category-title">Phụ kiện thể thao</span>
-                                    </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
-                                    </div>
-                                </div>
-                                <div class="modal-body p-0 m-0 mt-2">
-                                    <p class="product-item"><a href="" class="nav-link">Găng tay</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Băng cổ tay</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Băng quấn cổ tay</a></p>
                                     <p class="product-item"><a href="" class="nav-link">Băng trán</a></p>
-                                    <p class="product-item"><a href="" class="nav-link">Tất thể thao</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Găng tay tập gym</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Dây nhảy</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Băng bảo vệ đầu gối</a></p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Menu -->
+
+                        <!-- Menu -->
+                        <div class="col-md-2 px-1">
+                            <div class="category-section">
+                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
+                                    <div class="">
+                                        <span class="category-title">Phụ kiện bảo vệ</span>
+                                    </div>
+                                    <div class="">
+                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    </div>
+                                </div>
+                                <div class="modal-body p-0 m-0 mt-2">
+                                    <p class="product-item"><a href="" class="nav-link">Mũ bảo hiểm</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Bọc gối</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Bọc khuỷu tay</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Bọc ống chân</a></p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Menu -->
+
+                        <!-- Menu -->
+                        <div class="col-md-2 px-1">
+                            <div class="category-section">
+                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
+                                    <div class="">
+                                        <span class="category-title">Thời trang thể thao</span>
+                                    </div>
+                                    <div class="">
+                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    </div>
+                                </div>
+                                <div class="modal-body p-0 m-0 mt-2">
+                                    <p class="product-item"><a href="" class="nav-link">Nón lưỡi trai</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Kính mát thể thao</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Túi đeo chéo thể thao</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Đồng hồ thể thao</a></p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Menu -->
+
+                        <!-- Menu -->
+                        <div class="col-md-2 px-1">
+                            <div class="category-section">
+                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
+                                    <div class="">
+                                        <span class="category-title">Đo lường & sức khỏe</span>
+                                    </div>
+                                    <div class="">
+                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    </div>
+                                </div>
+                                <div class="modal-body p-0 m-0 mt-2">
+                                    <p class="product-item"><a href="" class="nav-link">Đồng hồ thông minh</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Vòng đeo tay fitness</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Máy đo nhịp tim</a></p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Menu -->
+
+                        <!-- Menu -->
+                        <div class="col-md-2 px-1">
+                            <div class="category-section">
+                                <div class="modal-header d-flex justify-content-between ps-0 pe-0">
+                                    <div class="">
+                                        <span class="category-title">Dụng cụ mang nước</span>
+                                    </div>
+                                    <div class="">
+                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    </div>
+                                </div>
+                                <div class="modal-body p-0 m-0 mt-2">
+                                    <p class="product-item"><a href="" class="nav-link">Bình nước thể thao</a></p>
+                                    <p class="product-item"><a href="" class="nav-link">Túi nước chạy bộ</a></p>
                                 </div>
                             </div>
                         </div>
@@ -124,7 +122,7 @@ const store = useGbStore();
 
 // Thêm hàm xử lý sự kiện scroll
 const handleScroll = () => {
-    if (store.id === 2) {
+    if (store.id === 4) {
         store.hideModalSideBar(0);
     }
 };
