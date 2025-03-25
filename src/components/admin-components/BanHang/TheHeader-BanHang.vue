@@ -51,6 +51,18 @@
             </a-tooltip>
         </div>
     </div>
+
+    <div class="text-center">
+        <div class="row">
+            <div class="col-8">
+                <tableSPHD/>
+            </div>
+            <div class="col-4">
+
+            </div>
+        </div>
+    </div>
+
 </template>
 
 <script setup>
@@ -63,6 +75,7 @@ import {
     PlusOutlined,
     CloseOutlined
 } from '@ant-design/icons-vue'
+import tableSPHD from './tableSPHD.vue'
 
 // Mocked product data
 const productOptions = ref([
