@@ -5,7 +5,7 @@
                 <h2 class="section-title">Môn thể thao phổ biến</h2>
                 <div class="section-divider"></div>
             </div>
-
+            <img hidden :src="bongDaImage" alt="">
             <div class="sports-slider-container">
                 <div class="sports-slider d-flex justify-content-around" ref="sliderRef">
                     <div v-for="(sport, index) in displaySports" :key="index" class="sport-item ">
@@ -23,57 +23,66 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
 
+// Import local images
+import bongDaImage from '../../images/popularSports/BR LITE  900 SET PRO SS24.webp';
+import boiLoiImage from '../../images/popularSports/NABAIJI CN SWIMSHORT 100 LONG CITY TURQ.webp';
+import chayBoImage from '../../images/popularSports/QUECHUA CHAUSSURES CHAUDES SH500 MID H NOIR.webp';
+import bongRoImage from '../../images/popularSports/DOMYOS CN STRINGER 900 M-C23A GR.avif';
+import dapXeImage from '../../images/popularSports/KIPRUN DEBARDEUR RUN 500 H COMFORT GREEN K23A SS25.avif';
+import yogaImage from '../../images/popularSports/QUECHUA JACKET MH150 MEN GREY GREY.avif';
+import tennisImage from '../../images/popularSports/VAN RYSEL RACER 2 SS JERSEY SUBLI M  PINKGRADIENT.avif';
+
 // Dữ liệu các môn thể thao phổ biến
 const sportsData = ref([
     {
         id: 1,
         name: 'Bóng đá',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: bongDaImage
     },
     {
         id: 2,
         name: 'Bóng rổ',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: bongRoImage
     },
     {
         id: 3,
         name: 'Cầu lông',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: tennisImage // Sử dụng hình ảnh thay thế
     },
     {
         id: 4,
         name: 'Tennis',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: tennisImage
     },
     {
         id: 5,
         name: 'Bơi lội',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: boiLoiImage
     },
     {
         id: 6,
         name: 'Chạy bộ',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: chayBoImage
     },
     {
         id: 7,
         name: 'Đạp xe',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: dapXeImage
     },
     {
         id: 8,
         name: 'Yoga',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: yogaImage
     },
     {
         id: 9,
         name: 'Võ thuật',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: bongRoImage // Sử dụng hình ảnh thay thế
     },
     {
         id: 10,
         name: 'Golf',
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg'
+        image: chayBoImage // Sử dụng hình ảnh thay thế
     }
 ]);
 
