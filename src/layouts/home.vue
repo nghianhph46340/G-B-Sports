@@ -3,7 +3,9 @@
     <TheHeader />
     <TheSidebar />
     <!-- <TheHeaderSearchModal /> -->
-    <router-view></router-view>
+    <div class="main-content">
+        <router-view></router-view>
+    </div>
     <TheFooter />
 
 </template>
@@ -23,3 +25,12 @@ export default {
     }
 }
 </script>
+
+<style>
+.main-content {
+    padding-top: 9rem;
+    /* Chiều cao của header (5rem) + sidebar (~4rem) */
+    min-height: calc(100vh - 9rem - 340px);
+    /* 100vh - header+sidebar - footer */
+}
+</style>

@@ -1,5 +1,5 @@
 <template class="sticky-top w-100">
-    <div class="">
+    <div class="sidebar-fixed">
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid">
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
@@ -60,6 +60,16 @@ const store = useGbStore()
 </script>
 
 <style scoped>
+.sidebar-fixed {
+    position: fixed;
+    top: 5rem; /* Chiều cao của header */
+    left: 0;
+    right: 0;
+    z-index: 1020;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
 .nav-item>a {
     position: relative;
     /* Đặt vị trí tương đối để pseudo-element hoạt động */
