@@ -46,6 +46,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 .hot-collections {
+    font-family: 'Montserrat', sans-serif;
     background-color: #f8f9fa;
 }
 

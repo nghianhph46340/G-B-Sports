@@ -62,7 +62,8 @@ const store = useGbStore()
 <style scoped>
 .sidebar-fixed {
     position: fixed;
-    top: 5rem; /* Chiều cao của header */
+    top: 5rem;
+    /* Chiều cao của header */
     left: 0;
     right: 0;
     z-index: 1020;
