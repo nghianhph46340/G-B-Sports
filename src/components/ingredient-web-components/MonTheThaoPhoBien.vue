@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
 .sports-slider-container {
     overflow: hidden;
     position: relative;
-    margin: 1.5rem 0;
+    /* margin: 1.5rem 0; */
 }
 
 .sports-slider {
