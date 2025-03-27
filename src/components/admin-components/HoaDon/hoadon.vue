@@ -35,9 +35,10 @@
                         <th scope="col">Mã hoá đơn</th>
                         <th scope="col">Khách hàng</th>
                         <th scope="col">Tổng tiền(VNĐ)</th>
-                        <th scope="col">Trạng thái</th>
                         <th scope="col">Phương thức thanh toán</th>
-                        <th scope="col">Hình thức giao hàng</th>
+                        <th scope="col">Trạng thái thanh toán</th>
+                        <th scope="col">Hình thức nhận hàng</th>
+                        <th scope="col">Loại hóa đơn</th>
                         <th scope="col">Thao tác</th>
                     </tr>
                 </thead>
@@ -51,9 +52,10 @@
                             {{ hoaDon.dia_chi }}
                         </td>
                         <td>{{ formatCurrency(hoaDon.tong_tien_sau_giam) }}</td>
-                        <td>{{ hoaDon.trang_thai }}</td>
                         <td>{{ hoaDon.hinh_thuc_thanh_toan }}</td>
+                        <td>{{ hoaDon.trang_thai_thanh_toan }}</td>
                         <td>{{ hoaDon.phuong_thuc_nhan_hang }}</td>
+                        <td>{{ hoaDon.loai_hoa_don }}</td>
                         <td>
                             <button class="btn d-flex align-items-center shadow-sm"
                                 @click="router.push(`/admin/hoadon/hdct/${hoaDon.ma_hoa_don}`)">

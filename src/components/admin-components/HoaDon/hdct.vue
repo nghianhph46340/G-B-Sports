@@ -1,4 +1,5 @@
 <template>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <div class="container-fluid main-content">
         <div v-if="loading" class="text-center">
             <p>Đang tải dữ liệu...</p>
@@ -6,15 +7,17 @@
         <div v-else-if="store.hoaDonDetail">
             <div class="order-header">
                 <div class="row">
-                    <div class="col">
-                        <h2>Thông tin chi tiết đơn hàng #{{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</h2>
+                    <div class="col-md-7">
+                        <h2>Thông tin chi tiết đơn hàng {{ store.hoaDonDetail.loai_hoa_don }} #{{
+                            store.hoaDonDetail.ma_hoa_don || 'N/A' }}</h2>
                     </div>
                     <div class="col">
-                        <button class="btn btn-primary float-end" @click="$router.push('/admin/quanlyhoadon')">Quay lại</button>
+                        <button class="btn btn-primary float-end" @click="$router.push('/admin/quanlyhoadon')">Quay
+                            lại</button>
                     </div>
                 </div>
                 <hr>
-
+                <h4 style="text-align: center;">Lịch sử trạng thái</h4><br>
                 <div class="status-icons">
                     <div class="col" v-for="status in computedStatusSteps" :key="status.name">
                         <div class="status-icon" :class="getStatusClass(status.name)">
@@ -28,16 +31,14 @@
 
                 <div class="order-status">
                     <form @submit.prevent="changeStatus">
-                        <button type="submit" class="btn btn-success" 
-                                :disabled="isCompletedOrCancelled"
-                                :class="{ 'disabled': isCompletedOrCancelled }">
+                        <button type="submit" class="btn btn-success" :disabled="isCompletedOrCancelled"
+                            :class="{ 'disabled': isCompletedOrCancelled }">
                             {{ nextStatusText }}
                         </button>
                     </form>
                     <form @submit.prevent="cancelOrder">
-                        <button type="submit" class="btn btn-danger"
-                                :disabled="cannotCancel"
-                                :class="{ 'disabled': cannotCancel }">
+                        <button type="submit" class="btn btn-danger" :disabled="cannotCancel"
+                            :class="{ 'disabled': cannotCancel }">
                             Hủy đơn
                         </button>
                     </form>
@@ -51,13 +52,15 @@
                         <div class="row">
                             <div class="col">
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
-                                <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
-                                <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định' }}</p>
+                                <p>Trạng thái: {{ store.hoaDonDetail.trang_thai_thanh_toan || 'N/A' }}</p>
+                                <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
+                                    }}</p>
                             </div>
                             <div class="col">
                                 <p>Ngày tạo: {{ formatDate(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
-                                <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định' }}</p>
+                                <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
+                                    }}</p>
                             </div>
                         </div>
                     </div>
@@ -67,10 +70,8 @@
                     <div class="col-md-8">
                         <div class="info-box">
                             <h5>Thông tin sản phẩm</h5>
-                            <button class="btn btn-primary" 
-                                    :disabled="cannotEdit"
-                                    :class="{ 'disabled': cannotEdit }"
-                                    @click="addProduct">
+                            <button class="btn btn-primary" :disabled="cannotEdit" :class="{ 'disabled': cannotEdit }"
+                                @click="addProduct">
                                 Thêm sản phẩm
                             </button>
                             <table class="table-custom">
@@ -85,9 +86,11 @@
                                 <tbody>
                                     <tr v-for="(item, index) in store.chiTietHoaDons" :key="index">
                                         <td>
-                                            <img :src="item.hinh_anh || '/images/default.jpg'" alt="Product" class="product-image">
+                                            <img :src="item.hinh_anh || '/images/default.jpg'" alt="Product"
+                                                class="product-image">
                                             {{ item.ten_san_pham || 'N/A' }} <br>
-                                            Mã: {{ item.ma_san_pham || 'N/A' }}, Kích thước: {{ item.kich_thuoc || 'N/A' }}, 
+                                            Mã: {{ item.ma_san_pham || 'N/A' }}, Kích thước: {{ item.kich_thuoc || 'N/A'
+                                            }},
                                             Màu: {{ item.ten_mau_sac || 'N/A' }}
                                         </td>
                                         <td>{{ formatCurrency(item.don_gia) }} VNĐ</td>
@@ -109,33 +112,69 @@
                     <div class="col-md-4">
                         <div class="info-box">
                             <h5>Thông tin khách hàng</h5>
-                            <button class="btn btn-primary" 
-                                    :disabled="cannotEdit"
-                                    :class="{ 'disabled': cannotEdit }"
-                                    @click="editCustomerInfo">
-                                Sửa
-                            </button>
-                            <p>Tên: {{ store.hoaDonDetail.ho_ten || 'Chưa xác định' }}</p>
-                            <p>Email: {{ store.hoaDonDetail.email || 'Chưa xác định' }}</p>
-                            <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
-                            <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
+                            <!-- Nút Sửa hoặc Lưu/Hủy -->
+                            <div v-if="!isEditingCustomer">
+                                <button class="btn btn-primary" :disabled="cannotEdit"
+                                    :class="{ 'disabled': cannotEdit }" @click="startEditingCustomer">
+                                    Sửa
+                                </button>
+                            </div>
+                            <div v-else>
+                                <!-- <a-button type="text" @click="saveCustomerInfo">Lưu</a-button>
+                                <a-button type="text" @click="cancelEditingCustomer">Hủy</a-button> -->
+                                <button class="btn btn-success" @click="saveCustomerInfo">Lưu</button>
+                                <button class="btn btn-secondary" @click="cancelEditingCustomer">Hủy</button>
+                            </div>
+
+                            <!-- Hiển thị thông tin tĩnh hoặc form nhập liệu -->
+                            <div v-if="!isEditingCustomer">
+                                <p>Tên: {{ store.hoaDonDetail.ho_ten || 'Chưa xác định' }}</p>
+                                <p>Email: {{ store.hoaDonDetail.email || 'Chưa xác định' }}</p>
+                                <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
+                                <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
+                            </div>
+                            <div v-else>
+                                <form @submit.prevent="saveCustomerInfo">
+                                    <div class="mb-3">
+                                        <label for="hoTen" class="form-label">Tên:</label>
+                                        <input type="text" class="form-control" id="hoTen"
+                                            v-model="editedCustomer.hoTen" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email:</label>
+                                        <input type="email" class="form-control" id="email"
+                                            v-model="editedCustomer.email" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="sdtNguoiNhan" class="form-label">Phone:</label>
+                                        <input type="text" class="form-control" id="sdtNguoiNhan"
+                                            v-model="editedCustomer.sdtNguoiNhan" required />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="diaChi" class="form-label">Địa chỉ:</label>
+                                        <input type="text" class="form-control" id="diaChi"
+                                            v-model="editedCustomer.diaChi" required />
+                                    </div>
+                                </form>
+                            </div>
                         </div>
+                        <!-- Phần Ghi chú giữ nguyên -->
                         <div class="info-box">
                             <h5>Ghi chú</h5>
-                            <button class="btn btn-primary" 
-                                    :disabled="cannotEdit"
-                                    :class="{ 'disabled': cannotEdit }"
-                                    @click="editNote">
+                            <button class="btn btn-primary" :disabled="cannotEdit" :class="{ 'disabled': cannotEdit }"
+                                @click="editNote">
                                 Sửa
                             </button>
-                            <textarea class="form-control" rows="2" readonly>{{ store.hoaDonDetail.ghi_chu || 'Không có ghi chú' }}</textarea>
+                            <textarea class="form-control" rows="2"
+                                readonly>{{ store.hoaDonDetail.ghi_chu || 'Không có ghi chú' }}</textarea>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="notification">
-                {{ store.hoaDonDetail.trang_thai?.toUpperCase() || 'ĐANG XỬ LÝ' }} ĐƠN HÀNG {{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ
+                {{ store.hoaDonDetail.trang_thai?.toUpperCase() || 'ĐANG XỬ LÝ' }} ĐƠN HÀNG {{
+                    formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ
             </div>
         </div>
         <div v-else class="text-center">
@@ -345,8 +384,8 @@ const getStatusDate = (status) => {
         return formatDate(store.hoaDonDetail.ngay_tao);
     }
     // Trường hợp 3: Lấy backendStatus tương ứng với trạng thái
-    const backendStatus = (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng' 
-        ? storePickupStatusSteps.find(s => s.name === status)?.backendStatus 
+    const backendStatus = (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng'
+        ? storePickupStatusSteps.find(s => s.name === status)?.backendStatus
         : defaultStatusSteps.find(s => s.name === status)?.backendStatus);
     // Trường hợp 4: Nếu trạng thái là "Đã nhận hàng" và phương thức là "Giao hàng"
     if (status === 'Đã nhận hàng' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng') {
@@ -380,11 +419,42 @@ const addProduct = () => {
     }
 };
 
-const editCustomerInfo = () => {
-    if (confirm('Bạn có muốn chỉnh sửa thông tin khách hàng không?')) {
-        // Logic chỉnh sửa thông tin khách hàng sẽ được thêm sau
-        console.log('Chỉnh sửa thông tin khách hàng');
+// Trạng thái chỉnh sửa thông tin khách hàng
+const isEditingCustomer = ref(false);
+const editedCustomer = ref({
+    hoTen: '',
+    email: '',
+    sdtNguoiNhan: '',
+    diaChi: ''
+});
+
+// Bắt đầu chỉnh sửa thông tin khách hàng
+const startEditingCustomer = () => {
+    // Lưu dữ liệu ban đầu vào editedCustomer
+    editedCustomer.value = {
+        hoTen: store.hoaDonDetail.ho_ten || '',
+        email: store.hoaDonDetail.email || '',
+        sdtNguoiNhan: store.hoaDonDetail.sdt_nguoi_nhan || '',
+        diaChi: store.hoaDonDetail.dia_chi || ''
+    };
+    isEditingCustomer.value = true;
+};
+
+// Lưu thông tin khách hàng
+const saveCustomerInfo = () => {
+    if (confirm('Bạn có đồng ý sửa thông tin khách hàng không?')) {
+        store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, editedCustomer.value);
+        isEditingCustomer.value = false; // Thoát chế độ chỉnh sửa
     }
+};
+
+// Hủy chỉnh sửa
+const cancelEditingCustomer = () => {
+    isEditingCustomer.value = false; // Thoát chế độ chỉnh sửa mà không lưu
+};
+
+const editCustomerInfo = () => {
+    startEditingCustomer();
 };
 
 const editNote = () => {
@@ -479,7 +549,8 @@ onMounted(async () => {
     margin-top: 10px;
 }
 
-.table-custom th, .table-custom td {
+.table-custom th,
+.table-custom td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
@@ -524,5 +595,35 @@ textarea.form-control[readonly] {
 
 .text-success {
     color: #28a745;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.btn-success {
+    margin-right: 55px;
+    padding: 5px 15px;
+}
+
+.btn-secondary {
+    margin-right: 5px;
+    padding: 5px 15px;
 }
 </style>

@@ -65,7 +65,7 @@ const getCTHD = async (maHoaDon) => {
 // Thay đổi trạng thái hóa đơn
 const changeTrangThai = async (maHoaDon, newTrangThai) => {
     try {
-        const { data } = await axiosInstance.post(qlhd + 'chuyen-trang-thai', null, {
+        const { data } = await axiosInstance.post(qlhd + 'chuyen_trang_thai', null, {
             params: { maHoaDon, newTrangThai }
         });
         return data;
@@ -78,12 +78,29 @@ const changeTrangThai = async (maHoaDon, newTrangThai) => {
 // Hủy hóa đơn
 const cancelHoaDon = async (maHoaDon) => {
     try {
-        const { data } = await axiosInstance.post(qlhd + 'cancel-order', null, {
+        const { data } = await axiosInstance.post(qlhd + 'cancel_order', null, {
             params: { maHoaDon }
         });
         return data;
     } catch (error) {
         console.error('Lỗi API hủy hóa đơn:', error);
+        return { error: true };
+    }
+};
+
+// Cập nhật thông tin khách hàng trong hóa đơn
+const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'update_ttkh', {
+            maHoaDon,
+            hoTen: ttkh.hoTen,
+            email: ttkh.email,
+            sdtNguoiNhan: ttkh.sdtNguoiNhan,
+            diaChi: ttkh.diaChi
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật thông tin khách hàng:', error);
         return { error: true };
     }
 };
@@ -95,5 +112,6 @@ export const hoaDonService = {
     searchHoaDon,
     getCTHD,
     changeTrangThai,
-    cancelHoaDon
+    cancelHoaDon,
+    updateTTKH_in_HD
 };

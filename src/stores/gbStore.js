@@ -373,6 +373,20 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
+        async updateCustomerInfo(maHoaDon, ttkh) {
+            try {
+                const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, ttkh);
+                if (response.error) {
+                    toast.error('Cập nhật thông tin khách hàng thất bại');
+                    return;
+                }
+                toast.success('Cập nhật thông tin khách hàng thành công');
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra khi cập nhật thông tin khách hàng');
+            }
+        },
         //Import excel
         async importExcel(file) {
             const importExcelRespone = await sanPhamService.importSanPhamFromExcel(file);
