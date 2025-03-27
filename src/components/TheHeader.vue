@@ -1,5 +1,5 @@
-<template class="sticky-top w-100">
-    <div class="header-container" @mouseout="store.hideModalSideBar(0)">
+<template>
+    <div class="header-container fixed-top" @mouseout="store.hideModalSideBar(0)">
         <div class="row">
             <div class="col-12 headers d-flex align-items-center">
                 <div class="logo-section col-sm-3 d-flex justify-content-center align-items-center">
@@ -13,7 +13,7 @@
                 <div class="search-section col-sm-6">
                     <div class="search-container d-flex align-items-center">
                         <Search class="search-icon ms-3" />
-                        <input type="text" @click="store.showModal(true)" class="search-input form-control" 
+                        <input type="text" @click="store.showModal(true)" class="search-input form-control"
                             :placeholder="!store.changeLanguage.timKiem ? 'Bạn đang muốn tìm kiếm gì?' : store.changeLanguage.timKiem">
                     </div>
                     <TheHeaderSearchModal />
@@ -21,28 +21,33 @@
                 <div class="nav-icons col-sm-3 d-flex justify-content-evenly align-items-center">
                     <div class="nav-item text-center" @mouseenter="animateIcon('user')">
                         <div class="icon-container">
-                            <User class="nav-icon" :class="{'icon-animated': animatedIcon === 'user'}" />
+                            <User class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'user' }" />
                         </div>
-                        <span class="nav-text">{{ !store.changeLanguage.nguoiDung ? 'Đăng nhập' : store.changeLanguage.nguoiDung }}</span>
+                        <span class="nav-text">{{ !store.changeLanguage.nguoiDung ? 'Đăng nhập' :
+                            store.changeLanguage.nguoiDung }}</span>
                     </div>
                     <div class="nav-item text-center" @mouseenter="animateIcon('store')">
                         <div class="icon-container">
-                            <Store class="nav-icon" :class="{'icon-animated': animatedIcon === 'store'}" />
+                            <Store class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'store' }" />
                         </div>
-                        <span class="nav-text">{{ !store.changeLanguage.cuaHang ? 'Cửa hàng' : store.changeLanguage.cuaHang }}</span>
+                        <span class="nav-text">{{ !store.changeLanguage.cuaHang ? 'Cửa hàng' :
+                            store.changeLanguage.cuaHang }}</span>
                     </div>
                     <div class="nav-item text-center" @mouseenter="animateIcon('support')">
                         <div class="icon-container">
-                            <MessageCircleQuestion class="nav-icon" :class="{'icon-animated': animatedIcon === 'support'}" />
+                            <MessageCircleQuestion class="nav-icon"
+                                :class="{ 'icon-animated': animatedIcon === 'support' }" />
                         </div>
-                        <span class="nav-text">{{ !store.changeLanguage.hoTro ? 'Hỗ trợ' : store.changeLanguage.hoTro }}</span>
+                        <span class="nav-text">{{ !store.changeLanguage.hoTro ? 'Hỗ trợ' : store.changeLanguage.hoTro
+                            }}</span>
                     </div>
                     <div class="nav-item text-center" @mouseenter="animateIcon('cart')">
                         <div class="icon-container">
-                            <ShoppingCart class="nav-icon" :class="{'icon-animated': animatedIcon === 'cart'}" />
+                            <ShoppingCart class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'cart' }" />
                             <span v-if="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
                         </div>
-                        <span class="nav-text">{{ !store.changeLanguage.gioHang ? 'Giỏ hàng' : store.changeLanguage.gioHang }}</span>
+                        <span class="nav-text">{{ !store.changeLanguage.gioHang ? 'Giỏ hàng' :
+                            store.changeLanguage.gioHang }}</span>
                     </div>
                 </div>
             </div>
@@ -79,6 +84,8 @@ const animateIcon = (iconName) => {
     padding: 0 2rem;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
     background: linear-gradient(to right, #ffffff, #f8f9fa);
+    z-index: 1030;
+    width: 100%;
 }
 
 .headers {
@@ -203,9 +210,11 @@ const animateIcon = (iconName) => {
     0% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.2);
     }
+
     100% {
         transform: scale(1);
     }
@@ -241,9 +250,12 @@ const animateIcon = (iconName) => {
 }
 
 @keyframes bounce {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-3px);
     }

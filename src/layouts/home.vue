@@ -1,10 +1,14 @@
 <template>
-    <TheNoitification />
-    <TheHeader />
-    <TheSidebar />
-    <!-- <TheHeaderSearchModal /> -->
-    <router-view></router-view>
-    <TheFooter />
+    <div class="trangChu">
+        <TheNoitification />
+        <TheHeader />
+        <TheSidebar />
+        <!-- <TheHeaderSearchModal /> -->
+        <div class="main-content">
+            <router-view></router-view>
+        </div>
+        <TheFooter />
+    </div>
 
 </template>
 <script>
@@ -23,3 +27,18 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+.trangChu {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.main-content {
+    padding-top: 9rem;
+    /* Chiều cao của header (5rem) + sidebar (~4rem) */
+    min-height: calc(100vh - 9rem - 340px);
+    /* 100vh - header+sidebar - footer */
+}
+</style>
