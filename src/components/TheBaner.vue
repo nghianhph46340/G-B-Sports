@@ -84,6 +84,30 @@ div>img {
     overflow: hidden;
 }
 
+@media (max-width: 1200px) {
+    :deep(.slick-slide) {
+        height: 400px;
+    }
+}
+
+@media (max-width: 992px) {
+    :deep(.slick-slide) {
+        height: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    :deep(.slick-slide) {
+        height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    :deep(.slick-slide) {
+        height: 250px;
+    }
+}
+
 :deep(.slick-arrow.custom-slick-arrow) {
     width: 40px;
     height: 40px;

@@ -2,7 +2,7 @@
     <div class="best-selling-products">
         <div class="container p-0">
             <div class="section-header">
-                <h4 class="section-title">Sản phẩm bán chạy</h4>
+                <h4 class="section-title">Quần thể thao bán chạy</h4>
                 <div class="section-divider"></div>
             </div>
 
@@ -41,9 +41,9 @@
                                     <div class="product-price-row">
                                         <span class="product-price">{{ product.price }}</span>
                                         <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
-                                        }}</span>
+                                            }}</span>
                                         <span class="product-discount" v-if="product.discount">{{ product.discount
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <h6 class="product-name">{{ product.name }}</h6>
                                     <div class="product-meta">
@@ -224,7 +224,6 @@ const activeProduct = ref(null);
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 .best-selling-products {
-    padding: 1rem 0;
     font-family: 'Montserrat', sans-serif;
     background-color: #f8f9fa;
 }
@@ -232,7 +231,7 @@ const activeProduct = ref(null);
 .container {
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0 15px;
+
 }
 
 .section-header {

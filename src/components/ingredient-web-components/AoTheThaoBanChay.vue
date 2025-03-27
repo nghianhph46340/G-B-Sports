@@ -1,6 +1,6 @@
 <template>
     <div class="best-selling-products">
-        <div class="container">
+        <div class="container p-0">
             <div class="section-header">
                 <h4 class="section-title">Áo thể thao bán chạy</h4>
                 <div class="section-divider"></div>
@@ -41,9 +41,9 @@
                                     <div class="product-price-row">
                                         <span class="product-price">{{ product.price }}</span>
                                         <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
-                                            }}</span>
+                                        }}</span>
                                         <span class="product-discount" v-if="product.discount">{{ product.discount
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <h6 class="product-name">{{ product.name }}</h6>
                                     <div class="product-meta">

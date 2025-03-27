@@ -2,10 +2,13 @@
     <div class="web">
         <TheBaner />
         <BoSuuTapHot />
+        <DanhMucSanPham />
         <SanPhamBanChay />
         <MonTheThaoPhoBien />
         <SanPhamMoiChoTatCa />
         <AoTheThaoBanChay />
+        <QuanTheThaoBanChay />
+        <GiayVaPhuKienBanChay />
     </div>
 </template>
 
@@ -16,14 +19,23 @@ import MonTheThaoPhoBien from '@/components/ingredient-web-components/MonTheThao
 import BoSuuTapHot from '@/components/ingredient-web-components/BoSuuTapHot.vue';
 import SanPhamMoiChoTatCa from '@/components/ingredient-web-components/SanPhamMoiChoTatCa.vue';
 import AoTheThaoBanChay from '@/components/ingredient-web-components/AoTheThaoBanChay.vue';
+import QuanTheThaoBanChay from '@/components/ingredient-web-components/QuanTheThaoBanChay.vue';
+import GiayVaPhuKienBanChay from '@/components/ingredient-web-components/GiayVaPhuKienBanChay.vue';
+import DanhMucSanPham from '@/components/ingredient-web-components/DanhMucSanPham.vue';
+
+
+
 export default {
     components: {
         TheBaner,
         AoTheThaoBanChay,
+        QuanTheThaoBanChay,
+        GiayVaPhuKienBanChay,
         SanPhamBanChay,
         MonTheThaoPhoBien,
         BoSuuTapHot,
-        SanPhamMoiChoTatCa
+        SanPhamMoiChoTatCa,
+        DanhMucSanPham
     }
 }
 </script>

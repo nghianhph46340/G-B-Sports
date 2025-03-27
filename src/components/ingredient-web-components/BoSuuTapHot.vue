@@ -1,5 +1,5 @@
 <template>
-    <div class="hot-collections">
+    <div class="hot-collections mt-3">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Bộ sưu tập hot</h2>
