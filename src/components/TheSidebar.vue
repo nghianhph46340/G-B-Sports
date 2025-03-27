@@ -1,5 +1,5 @@
-<template>
-    <div class="container">
+<template class="sticky-top w-100">
+    <div class="">
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid">
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
@@ -45,6 +45,7 @@
         <TheSidebarChill1 />
         <TheSidebarChill2 />
         <TheSidebarChill3 />
+        <TheSidebarChill4 />
     </div>
 </template>
 
@@ -54,6 +55,7 @@ import { useGbStore } from '../stores/gbStore';
 import TheSidebarChill1 from './TheSidebarChill1.vue';
 import TheSidebarChill2 from './TheSidebarChill2.vue';
 import TheSidebarChill3 from './TheSidebarChill3.vue';
+import TheSidebarChill4 from './TheSidebarChill4.vue';
 const store = useGbStore()
 </script>
 
