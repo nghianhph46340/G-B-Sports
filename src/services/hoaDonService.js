@@ -105,6 +105,20 @@ const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
     }
 };
 
+// Cập nhật ghi chú
+const updateNote = async (maHoaDon, ghiChu) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'update_note', {
+            maHoaDon,
+            ghiChu
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật ghi chú:', error);
+        return { error: true };
+    }
+};
+
 export const hoaDonService = {
     getAllHoaDon,
     filterByTrangThai,
@@ -113,5 +127,6 @@ export const hoaDonService = {
     getCTHD,
     changeTrangThai,
     cancelHoaDon,
-    updateTTKH_in_HD
+    updateTTKH_in_HD,
+    updateNote
 };

@@ -387,6 +387,21 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra khi cập nhật thông tin khách hàng');
             }
         },
+        // cập nhật ghi chú
+        async updateNote(maHoaDon, ghiChu) {
+            try {
+                const response = await hoaDonService.updateNote(maHoaDon, ghiChu);
+                if (response.error) {
+                    toast.error('Cập nhật ghi chú thất bại');
+                    return;
+                }
+                toast.success('Cập nhật ghi chú thành công');
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra khi cập nhật ghi chú');
+            }
+        },
         //Import excel
         async importExcel(file) {
             const importExcelRespone = await sanPhamService.importSanPhamFromExcel(file);

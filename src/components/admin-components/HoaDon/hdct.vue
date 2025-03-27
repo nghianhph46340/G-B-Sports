@@ -158,15 +158,34 @@
                                 </form>
                             </div>
                         </div>
-                        <!-- Phần Ghi chú giữ nguyên -->
+                        <!-- Phần Ghi chú -->
                         <div class="info-box">
                             <h5>Ghi chú</h5>
-                            <button class="btn btn-primary" :disabled="cannotEdit" :class="{ 'disabled': cannotEdit }"
-                                @click="editNote">
-                                Sửa
-                            </button>
-                            <textarea class="form-control" rows="2"
-                                readonly>{{ store.hoaDonDetail.ghi_chu || 'Không có ghi chú' }}</textarea>
+                            <!-- Nút Sửa hoặc Lưu/Hủy -->
+                            <div v-if="!isEditingNote">
+                                <button class="btn btn-primary" :disabled="cannotEdit"
+                                    :class="{ 'disabled': cannotEdit }" @click="startEditingNote">
+                                    Sửa
+                                </button>
+                            </div>
+                            <div v-else class="edit-buttons">
+                                <button class="btn btn-success" @click="saveNote">Lưu</button>
+                                <button class="btn btn-secondary" @click="cancelEditingNote">Hủy</button>
+                            </div>
+
+                            <!-- Hiển thị ghi chú tĩnh hoặc form nhập liệu -->
+                            <div v-if="!isEditingNote">
+                                <textarea class="form-control" rows="2"
+                                    readonly>{{ store.hoaDonDetail.ghi_chu || 'Không có ghi chú' }}</textarea>
+                            </div>
+                            <div v-else>
+                                <form @submit.prevent="saveNote">
+                                    <div class="mb-3">
+                                        <textarea class="form-control" rows="2" v-model="editedNote"
+                                            placeholder="Nhập ghi chú..."></textarea>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -456,12 +475,32 @@ const cancelEditingCustomer = () => {
 const editCustomerInfo = () => {
     startEditingCustomer();
 };
+// Trạng thái chỉnh sửa ghi chú
+const isEditingNote = ref(false);
+const editedNote = ref('');
 
-const editNote = () => {
-    if (confirm('Bạn có muốn chỉnh sửa ghi chú cho đơn hàng này không?')) {
-        // Logic chỉnh sửa ghi chú sẽ được thêm sau
-        console.log('Chỉnh sửa ghi chú');
+// Bắt đầu chỉnh sửa ghi chú
+const startEditingNote = () => {
+    editedNote.value = store.hoaDonDetail.ghi_chu || '';
+    isEditingNote.value = true;
+};
+
+// Lưu ghi chú
+const saveNote = () => {
+    if (confirm('Bạn có đồng ý sửa ghi chú không?')) {
+        store.updateNote(store.hoaDonDetail.ma_hoa_don, editedNote.value);
+        isEditingNote.value = false;
     }
+};
+
+// Hủy chỉnh sửa ghi chú
+const cancelEditingNote = () => {
+    isEditingNote.value = false;
+};
+
+// Các hàm khác giữ nguyên...
+const editNote = () => {
+    startEditingNote();
 };
 
 onMounted(async () => {
@@ -525,6 +564,7 @@ onMounted(async () => {
     border-radius: 5px;
     padding: 15px;
     margin-bottom: 20px;
+    /* margin-right: 10px; */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: relative;
 }
