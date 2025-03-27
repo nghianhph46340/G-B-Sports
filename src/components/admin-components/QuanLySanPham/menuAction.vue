@@ -387,7 +387,29 @@ const handleFileChange = (info) => {
         selectedFile.value = file;
     }
 };
+const handleRemove = (file) => {
+    fileList.value = [];
+    selectedFile.value = null;
+    return true;
+};
 
+// Thêm hàm xử lý sự kiện blur
+const handleBlur = () => {
+    console.log('Blur event triggered');
+    // Thêm logic xử lý blur nếu cần
+};
+
+// Thêm hàm xử lý sự kiện change
+const handleChange = (value) => {
+    console.log('Change event triggered with value:', value);
+    // Thêm logic xử lý change nếu cần
+};
+
+// Thêm hàm xử lý sự kiện focus nếu cần
+const handleFocus = () => {
+    console.log('Focus event triggered');
+    // Thêm logic xử lý focus nếu cần
+};
 // Hàm xử lý import Excel
 const handleImportExcel = async () => {
     if (!selectedFile.value) {
@@ -404,7 +426,7 @@ const handleImportExcel = async () => {
         // Gọi API import Excel
         const result = await store.importExcel(file);
 
-        console.log(result);
+        console.table(result);
         message.success('Import dữ liệu thành công!');
         openModalImportExcel.value = false;
         selectedFile.value = null;
@@ -438,7 +460,7 @@ const saveExcelImport = async () => {
             importExcelModal.value = false;
 
             // Tải lại danh sách sản phẩm nếu cần
-            await store.getAllSP();
+            await store.getAllSanPhamNgaySua();
             router.push('/admin/quanlysanpham');
         }
     } catch (error) {
@@ -449,10 +471,10 @@ const saveExcelImport = async () => {
     }
 }
 
-const handleRemove = (file) => {
-    // Handle file removal
-    console.log('Removing file:', file);
-};
+// const handleRemove = (file) => {
+//     // Handle file removal
+//     console.log('Removing file:', file);
+// };
 </script>
 <style scoped>
 .icon-filler {

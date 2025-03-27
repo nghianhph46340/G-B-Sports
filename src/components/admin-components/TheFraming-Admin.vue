@@ -2,7 +2,7 @@
     <a-layout class="" style="min-height: 100vh">
         <a-layout-sider class="sider " v-model:collapsed="collapsed" :trigger="null" collapsible theme="light">
             <div class="logo p-3 " style="text-align: center;">
-                <img class="w-75 " src="../../images/logo/logo2.png" alt="Logo" />
+                <img class="w-50 " src="../../images/logo/logo2.png" alt="Logo" />
             </div>
 
             <a-menu class="" v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
@@ -26,8 +26,8 @@
                         sản
                         phẩm</a-menu-item>
                     <a-menu-item key="4">Sản phẩm</a-menu-item>
-                    <a-menu-item key="5">Thương hiệu</a-menu-item>
-                    <a-menu-item key="6">Danh mục</a-menu-item>
+                    <a-menu-item key="5">Biến thể sản phẩm</a-menu-item>
+                    <!-- <a-menu-item key="6">Thuộc tính</a-menu-item> -->
                     <a-menu-item key="7">Thuộc tính</a-menu-item>
                 </a-sub-menu>
                 <a-menu-item key="8" @click="changeRoute('/admin/quanlyhoadon');">
@@ -44,11 +44,17 @@
                     <a-menu-item key="10" @click="changeRoute('/admin/quanlynhanvien');">Nhân viên</a-menu-item>
                     <a-menu-item key="11">Khách hàng</a-menu-item>
                 </a-sub-menu>
-                <a-menu-item key="12">
-                    <LaptopOutlined />
-                    <span>Ưu đãi</span>
-                </a-menu-item>
-                <a-menu-item key="13">
+                <a-sub-menu key="sub3">
+                    <template #title>
+                        <span>
+                            <ReconciliationOutlined />
+                            <span>Ưu đãi</span>
+                        </span>
+                    </template>
+                    <a-menu-item key="12" @click="changeRoute('/admin/quanlyvoucher');">Voucher</a-menu-item>
+                    <a-menu-item key="13" @click="changeRoute('/admin/quanlykhuyenmai');">Khuyến mãi</a-menu-item>
+                </a-sub-menu>
+                <a-menu-item key="14">
                     <LogoutOutlined />
                     <span>Đăng xuất</span>
                 </a-menu-item>
@@ -187,11 +193,11 @@ onMounted(() => {
     margin-left: 1rem;
 }
 
-.sider {
-    /* background-color: #484848; */
-    /* border-radius: 10px; */
-    /* box-shadow: 0 50px 50px rgba(0, 0, 0, 0.6); */
-}
+/* .sider { */
+/* background-color: #484848; */
+/* border-radius: 10px; */
+/* box-shadow: 0 50px 50px rgba(0, 0, 0, 0.6); */
+/* } */
 
 .header-admin {
     /* box-shadow: 0 0 50px rgba(0, 0, 0, 0.6); */
@@ -207,7 +213,7 @@ onMounted(() => {
 }
 
 .logo {
-    border-bottom: 1px solid rgba(207, 207, 207, 0.6);
+    /* border-bottom: 1px solid rgba(207, 207, 207, 0.6); */
     filter: drop-shadow(0 0 5px rgba(0, 0, 0, 1));
 }
 </style>
