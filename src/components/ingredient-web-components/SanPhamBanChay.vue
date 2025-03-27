@@ -1,5 +1,5 @@
 <template>
-    <div class="best-selling-products">
+    <div class="san-pham-ban-chay" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container p-0">
             <div class="section-header">
                 <h4 class="section-title">Sản phẩm bán chạy</h4>
@@ -41,9 +41,9 @@
                                     <div class="product-price-row">
                                         <span class="product-price">{{ product.price }}</span>
                                         <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
-                                        }}</span>
+                                            }}</span>
                                         <span class="product-discount" v-if="product.discount">{{ product.discount
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <h6 class="product-name">{{ product.name }}</h6>
                                     <div class="product-meta">
@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import {
     EyeOutlined,
     ShoppingCartOutlined,
@@ -72,10 +72,27 @@ import {
     LeftOutlined,
     RightOutlined
 } from '@ant-design/icons-vue';
+import { useIntersectionObserver } from '@vueuse/core';
 
 // Tham chiếu đến carousel
 const carousel = ref(null);
+const sectionRef = ref(null);
 const showArrows = ref(false);
+const isVisible = ref(false);
+
+// Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
+onMounted(() => {
+    const { stop } = useIntersectionObserver(
+        sectionRef,
+        ([{ isIntersecting }]) => {
+            if (isIntersecting) {
+                isVisible.value = true;
+                stop(); // Dừng quan sát sau khi đã hiển thị
+            }
+        },
+        { threshold: 0.2 } // Hiển thị khi ít nhất 20% phần tử xuất hiện trong viewport
+    );
+});
 
 // Hàm điều khiển carousel
 const nextSlide = () => {
@@ -218,15 +235,22 @@ const productSlides = computed(() => {
 });
 
 const activeProduct = ref(null);
+
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-.best-selling-products {
-    padding: 1rem 0;
-    font-family: 'Montserrat', sans-serif;
-    background-color: #f8f9fa;
+.san-pham-ban-chay {
+    padding: 2rem 0;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.san-pham-ban-chay.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .container {
@@ -269,11 +293,35 @@ const activeProduct = ref(null);
     transition: all 0.3s ease;
     border-radius: 8px;
     margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
 }
 
 .product-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.visible .product-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.visible .product-card:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.visible .product-card:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.visible .product-card:nth-child(3) {
+    transition-delay: 0.3s;
+}
+
+.visible .product-card:nth-child(4) {
+    transition-delay: 0.4s;
 }
 
 .product-image-container {

@@ -1,5 +1,5 @@
 <template>
-    <div class="mt-3">
+    <div class="banner-container mt-3" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="marquee-container">
             <div class="marquee-content">
                 <marquee class="marquee-text" behavior="scroll" direction="left">
@@ -46,13 +46,41 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { LeftCircleOutlined, RightCircleOutlined } from '@ant-design/icons-vue';
+import { useIntersectionObserver } from '@vueuse/core';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const showArrows = ref(false);
+const sectionRef = ref(null);
+const isVisible = ref(false);
 const carousel = ref(null);
+
+// Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
+onMounted(() => {
+    const { stop } = useIntersectionObserver(
+        sectionRef,
+        ([{ isIntersecting }]) => {
+            if (isIntersecting) {
+                isVisible.value = true;
+                stop(); // Dừng quan sát sau khi đã hiển thị
+            }
+        },
+        { threshold: 0.2 } // Hiển thị khi ít nhất 20% phần tử xuất hiện trong viewport
+    );
+});
 </script>
 
 <style scoped>
+.banner-container {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.banner-container.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .marquee-container {
     position: relative;
     overflow: hidden;
@@ -230,6 +258,15 @@ const carousel = ref(null);
 
 .carousel {
     width: 100%;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease;
+    transition-delay: 0.3s;
+}
+
+.visible .carousel {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .borderImage {
