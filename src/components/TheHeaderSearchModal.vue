@@ -113,7 +113,7 @@ const trendingSearches = ref([
     'Túi đựng giày',
     'Băng đô thể thao'
 ]);
-
+//fake giao diện sản phẩm gợi ý
 const suggestedProducts = ref([
     {
         image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
