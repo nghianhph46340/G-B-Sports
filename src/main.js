@@ -12,7 +12,7 @@ import 'ant-design-vue/dist/reset.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'vue3-toastify/dist/index.css';
 import 'bootstrap';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+// import '@fortawesome/fontawesome-free/css/all.min.css';
 
 
 
