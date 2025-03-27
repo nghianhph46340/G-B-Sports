@@ -1,5 +1,5 @@
 <template>
-    <div class="best-selling-products">
+    <div class="best-selling-products" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container p-0">
             <div class="section-header">
                 <h4 class="section-title">Giày và phụ kiện bán chạy</h4>
@@ -64,7 +64,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useIntersectionObserver } from '@vueuse/core';
 import {
     EyeOutlined,
     ShoppingCartOutlined,
@@ -75,7 +76,23 @@ import {
 
 // Tham chiếu đến carousel
 const carousel = ref(null);
+const sectionRef = ref(null);
+const isVisible = ref(false);
 const showArrows = ref(false);
+
+// Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
+onMounted(() => {
+    const { stop } = useIntersectionObserver(
+        sectionRef,
+        ([{ isIntersecting }]) => {
+            if (isIntersecting) {
+                isVisible.value = true;
+                stop(); // Dừng quan sát sau khi đã hiển thị
+            }
+        },
+        { threshold: 0.2 } // Hiển thị khi ít nhất 20% phần tử xuất hiện trong viewport
+    );
+});
 
 // Hàm điều khiển carousel
 const nextSlide = () => {
@@ -224,8 +241,17 @@ const activeProduct = ref(null);
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 .best-selling-products {
+    padding: 2rem 0;
     font-family: 'Montserrat', sans-serif;
     background-color: #f8f9fa;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.best-selling-products.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .container {
@@ -262,12 +288,36 @@ const activeProduct = ref(null);
 }
 
 .product-card {
-    flex: 0 0 20%;
-    max-width: 20%;
-    padding: 15px;
+    position: relative;
+    background-color: #fff;
+    padding: 0.5rem;
     transition: all 0.3s ease;
     border-radius: 8px;
     margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.visible .product-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.visible .product-card:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.visible .product-card:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.visible .product-card:nth-child(3) {
+    transition-delay: 0.3s;
+}
+
+.visible .product-card:nth-child(4) {
+    transition-delay: 0.4s;
 }
 
 .product-card:hover {
