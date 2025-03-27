@@ -8,6 +8,8 @@
             </a-select>
         </div>
 
+        
+
         <!-- Invoice Tabs -->
         <div class="invoice-tabs">
             <div class="tabs-container">
@@ -50,15 +52,95 @@
                 </a-button>
             </a-tooltip>
         </div>
-    </div>
 
-    <div class="text-center">
-        <div class="row">
-            <div class="col-8">
-                <tableSPHD/>
+    </div>
+    <div class="text">
+        <div class="row ">
+            <div class="col-8 text-center">
+                <tableSPHD />
+                <tableSanPhamChiTiet/>
             </div>
             <div class="col-4">
-
+                <form>
+                    <div class="mb-3">
+                        <label for="maHoaDon" class="form-label">Mã hoá đơn</label>
+                        <input disabled type="text" class="form-control" id="maHoaDon">
+                    </div>
+                    <div class="mb-3">
+                        <label for="idNhanVien" class="form-label">Tên nhân viên</label>
+                        <select name="idNhanVien" id="idNhanVien" class="form-select">
+                            <option value="">Chọn nhân viên</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="idKhachHang" class="form-label">Tên khách hàng</label>
+                        <select name="idKhachHang" id="idKhachHang" class="form-select">
+                            <option value="">Chọn khách hàng</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phuongThucNhanHang" class="form-label" style="padding-right: 15px;">Phương thức nhận
+                            hàng</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="phuongThucNhanHang" id="nhanTaiCuahang"
+                                value="Nhận tại cửa hàng" v-model="phuongThucNhanHang">
+                            <label class="form-check-label" for="nhanTaiCuahang">Nhận tại cửa hàng</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="phuongThucNhanHang" id="giaoHang"
+                                value="Giao hàng" v-model="phuongThucNhanHang">
+                            <label class="form-check-label" for="giaoHang">Giao hàng</label>
+                        </div>
+                        <input v-if="phuongThucNhanHang === 'Giao hàng'" name="phiVanChuyen" type="text"
+                            class="form-control" id="phiVanChuyen">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tongTienTruocGiam" class="form-label">Tổng tiền trước giảm</label>
+                        <input type="text" class="form-control" id="tongTienTruocGiam">
+                    </div>
+                    <div class="mb-3">
+                        <label for="idVoucher" class="form-label">Tên voucher</label>
+                        <select name="idVoucher" id="idVoucher" class="form-select">
+                            <option value="">Chọn voucher</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tongTienSauGiam" class="form-label">Tổng tiền sau giảm</label>
+                        <input type="text" class="form-control" id="tongTienSauGiam">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="hinhThucThanhToan" class="form-label" style="padding-right: 15px;">Hình thức thanh toán</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="hinhThucThanhToan" id="tienMat"
+                                value="Tiền mặt" v-model="hinhThucThanhToan">
+                            <label class="form-check-label" for="tienMat">Tiền mặt</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="hinhThucThanhToan" id="chuyenKhoan"
+                                value="Chuyển khoản" v-model="hinhThucThanhToan">
+                            <label class="form-check-label" for="chuyenKhoan">Chuyển khoản</label>
+                        </div>
+                        <div v-if="hinhThucThanhToan === 'Tiền mặt'">
+                            <label for="tienKhachDua" class="form-labels">Tiền khách đưa</label>
+                            <input name="tienKhachDua" type="text"
+                            class="form-control" id="tienKhachDua">
+                            <label for="tienDu" class="form-labels">Tiền dư</label>
+                            <input name="tienDu" type="text"
+                            class="form-control" id="tienDu">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div>
+                            <a-switch v-model:checked="inHoaDon" checked-children="In hoá đơn"
+                                un-checked-children="Không in hoá đơn" />
+                        </div>
+                        <p class="text-muted mt-2" hidden>
+                            {{ inHoaDon ? 'IN HOÁ ĐƠN' : 'KHÔNG in hoá đơn' }}
+                        </p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Thanh toán</button>
+                </form>
             </div>
         </div>
     </div>
@@ -66,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
     SearchOutlined,
     FileSearchOutlined,
@@ -76,6 +158,11 @@ import {
     CloseOutlined
 } from '@ant-design/icons-vue'
 import tableSPHD from './tableSPHD.vue'
+import { useGbStore } from '@/stores/gbStore'
+import tableSanPhamChiTiet from './tableSanPhamChiTiet.vue'
+
+const store = useGbStore()
+
 
 // Mocked product data
 const productOptions = ref([
@@ -85,6 +172,12 @@ const productOptions = ref([
     { value: '4', label: 'Áo khoác gió' },
     { value: '5', label: 'Balo thể thao' },
 ])
+
+const inHoaDon = ref(false);
+
+const hinhThucThanhToan = ref('Tiền mặt')
+
+const phuongThucNhanHang = ref('Nhận tại cửa hàng')
 
 const selectedProduct = ref(undefined)
 

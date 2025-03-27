@@ -1,37 +1,37 @@
 <template class="sticky-top w-100">
-    <div class="">
+    <div class="sidebar-fixed">
         <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid">
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll"
                     aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse d-flex justify-content-center" id="navbarScroll">
-                    <ul class="navbar-nav my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 70px;">
-                        <li class="nav-item me-5">
+                <div class="collapse navbar-collapse" id="navbarScroll">
+                    <ul class="navbar-nav mx-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 70px;">
+                        <li class="nav-item me-lg-5">
                             <a class="nav-link" @mouseenter="store.showModalSideBar(1)" aria-current="page" href="#">Môn
                                 thể thao
                                 <ChevronDown />
 
                             </a>
                         </li>
-                        <li class="nav-item me-5">
+                        <li class="nav-item me-lg-5">
                             <a class="nav-link" @mouseenter="store.showModalSideBar(2)" aria-current="page" href="#">Nam
                                 <ChevronDown />
                             </a>
                         </li>
-                        <li class="nav-item me-5">
+                        <li class="nav-item me-lg-5">
                             <a class="nav-link" @mouseenter="store.showModalSideBar(3)" aria-current="page" href="#">Nữ
                                 <ChevronDown />
                             </a>
                         </li>
-                        <li class="nav-item me-5">
+                        <li class="nav-item me-lg-5">
                             <a class="nav-link" @mouseenter="store.showModalSideBar(4)" aria-current="page" href="#">Phụ
                                 kiện
                                 <ChevronDown />
                             </a>
                         </li>
-                        <li class="nav-item me-5">
+                        <li class="nav-item me-lg-5">
                             <a class="nav-link" @mouseenter="store.showModalSideBar(5)" aria-current="page"
                                 href="#">Siêu sale sập sàn
                                 <ChevronDown />
@@ -60,6 +60,17 @@ const store = useGbStore()
 </script>
 
 <style scoped>
+.sidebar-fixed {
+    position: fixed;
+    top: 5rem;
+    /* Chiều cao của header */
+    left: 0;
+    right: 0;
+    z-index: 1020;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
 .nav-item>a {
     position: relative;
     /* Đặt vị trí tương đối để pseudo-element hoạt động */
@@ -92,5 +103,30 @@ const store = useGbStore()
 .nav-item>a:hover::before {
     width: 100%;
     /* Khi hover, border mở rộng toàn bộ chiều rộng */
+}
+
+/* CSS cho responsive */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .navbar-nav {
+        width: 100%;
+    }
+    
+    .nav-item {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Đảm bảo các menu con không hiển thị khi sidebar đã collapse */
+@media (max-width: 991.98px) {
+    .sidebar-fixed > nav {
+        z-index: 1030;
+    }
 }
 </style>

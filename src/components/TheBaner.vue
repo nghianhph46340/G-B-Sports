@@ -10,42 +10,59 @@
                 rất
                 nhiều sản phẩm</marquee>
         </div>
-        <a-carousel arrows autoplay class="carousel">
-
-            <template #prevArrow>
-                <div class="custom-slick-arrow" style="left: 10px; z-index: 1">
-                    <left-circle-outlined />
+        <div class="carousel-wrapper" @mouseenter="showArrows = true" @mouseleave="showArrows = false">
+            <a-carousel arrows autoplay class="carousel" ref="carousel">
+                <template #prevArrow>
+                    <div class="custom-slick-arrow" :class="{ 'visible': showArrows }" style="left: 10px; z-index: 1">
+                        <left-circle-outlined />
+                    </div>
+                </template>
+                <template #nextArrow>
+                    <div class="custom-slick-arrow" :class="{ 'visible': showArrows }" style="right: 10px">
+                        <right-circle-outlined />
+                    </div>
+                </template>
+                <div class="borderImage">
+                    <img src="../images/banner/Banner-PC-3.png" alt="">
                 </div>
-            </template>
-            <template #nextArrow>
-                <div class="custom-slick-arrow" style="right: 10px">
-                    <right-circle-outlined />
+                <div class="borderImage">
+                    <img src="../images/banner/Banner-PC-4.png" alt="">
                 </div>
-            </template>
-            <div class="borderImage">
-                <img src="../images/banner/Banner-PC-3.png" alt="">
-            </div>
-            <div class="borderImage">
-                <img src="../images/banner/Banner-PC-4.png" alt="">
-            </div>
-            <div class="borderImage">
-                <img src="../images/banner/Banner-PC-5.png" alt="">
-            </div>
-        </a-carousel>
+                <div class="borderImage">
+                    <img src="../images/banner/Banner-PC-5.png" alt="">
+                </div>
+            </a-carousel>
+        </div>
     </div>
 </template>
 
 <script>
 import { LeftCircleOutlined, RightCircleOutlined } from "@ant-design/icons-vue";
+import { ref } from 'vue';
+
 export default {
     components: {
         LeftCircleOutlined,
         RightCircleOutlined,
     },
+    setup() {
+        const carousel = ref(null);
+        const showArrows = ref(false);
+
+        return {
+            carousel,
+            showArrows
+        };
+    }
 };
 </script>
 
 <style scoped>
+.carousel-wrapper {
+    position: relative;
+    width: 100%;
+}
+
 .borderImage {
     overflow: hidden;
     width: 100%;
@@ -67,15 +84,41 @@ div>img {
     overflow: hidden;
 }
 
+@media (max-width: 1200px) {
+    :deep(.slick-slide) {
+        height: 400px;
+    }
+}
+
+@media (max-width: 992px) {
+    :deep(.slick-slide) {
+        height: 350px;
+    }
+}
+
+@media (max-width: 768px) {
+    :deep(.slick-slide) {
+        height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    :deep(.slick-slide) {
+        height: 250px;
+    }
+}
+
 :deep(.slick-arrow.custom-slick-arrow) {
-    width: 25px;
-    height: 25px;
-    font-size: 25px;
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
     color: #fff;
-    background-color: rgba(31, 45, 61, 0.11);
-    transition: ease all 0.3s;
-    opacity: 0.3;
-    z-index: 1;
+    background-color: rgba(31, 45, 61, 0.3);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 10;
 }
 
 :deep(.slick-arrow.custom-slick-arrow:before) {
@@ -84,7 +127,12 @@ div>img {
 
 :deep(.slick-arrow.custom-slick-arrow:hover) {
     color: #fff;
-    opacity: 0.5;
+    background-color: rgba(31, 45, 61, 0.5);
+}
+
+:deep(.slick-arrow.custom-slick-arrow.visible) {
+    opacity: 0.8;
+    visibility: visible;
 }
 
 :deep(.slick-slide h3) {
