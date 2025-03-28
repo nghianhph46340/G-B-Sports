@@ -58,19 +58,16 @@
         <div class="row ">
             <div class="col-8 text-center">
                 <tableSPHD />
-                <tableSanPhamChiTiet/>
             </div>
             <div class="col-4">
                 <form>
                     <div class="mb-3">
-                        <label for="maHoaDon" class="form-label">Mã hoá đơn</label>
-                        <input disabled type="text" class="form-control" id="maHoaDon">
+                        <label for="maHoaDon" class="form-label">Mã hoá đơn: {{ hd.id_hoa_don }}</label>
+                        
                     </div>
                     <div class="mb-3">
-                        <label for="idNhanVien" class="form-label">Tên nhân viên</label>
-                        <select name="idNhanVien" id="idNhanVien" class="form-select">
-                            <option value="">Chọn nhân viên</option>
-                        </select>
+                        <label for="idNhanVien" class="form-label">Tên nhân viên: {{ hd.id_nhan_vien }}</label>
+                        
                     </div>
                     <div class="mb-3">
                         <label for="idKhachHang" class="form-label">Tên khách hàng</label>
@@ -148,7 +145,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import {
     SearchOutlined,
     FileSearchOutlined,
@@ -162,7 +159,27 @@ import { useGbStore } from '@/stores/gbStore'
 import tableSanPhamChiTiet from './tableSanPhamChiTiet.vue'
 
 const store = useGbStore()
-
+const listhd = ref([])
+const hd = reactive({
+    id_hoa_don: 0,
+    ma_hoa_don: "",
+    id_nhan_vien: 0,
+    id_khach_hang: 0,
+    ngay_tao: new Date,
+    ngay_sua: new Date,
+    trang_thai: "",
+    id_voucher: 0,
+    sdt_nguoi_nhan: "",
+    dia_chi: "",
+    email: "",
+    tong_tien_truoc_giam: 0,
+    phi_van_chuyen: 0,
+    ho_ten: "",
+    tong_tien_sau_giam: 0,
+    hinh_thuc_thanh_toan: "",
+    phuong_thuc_nhan_hang: "",
+    loai_hoa_don: ""
+})
 
 // Mocked product data
 const productOptions = ref([

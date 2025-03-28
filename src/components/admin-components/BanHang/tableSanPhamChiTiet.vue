@@ -31,8 +31,6 @@ onMounted(() => {
 
 const store = useGbStore()
 
-
-// Định dạng giá tiền
 </script>
 
 <style scoped>
