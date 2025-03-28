@@ -42,7 +42,7 @@
                         </span>
                     </template>
                     <a-menu-item key="10" @click="changeRoute('/admin/quanlynhanvien');">Nhân viên</a-menu-item>
-                    <a-menu-item key="11">Khách hàng</a-menu-item>
+                    <a-menu-item key="11" @click="changeRoute('/admin/quanlykhachhang');">Khách hàng</a-menu-item>
                 </a-sub-menu>
                 <a-sub-menu key="sub3">
                     <template #title>
