@@ -24,6 +24,8 @@ const clearSearchResults = () => {
     store.searchSanPham = [];
     store.searchChiSanPham = [];
     store.nhanVienSearch = [];
+    // store.khachHangSearch = [];
+    store.getAllKhachHangArr = [];
     searchInput.value = '';
 };
 
@@ -46,6 +48,9 @@ watch(searchInput, (newValue) => {
         }
         else if (route.name === 'admin-quan-ly-nhan-vien') {
             store.getAllNhanVien(0, 5);
+        }
+        else if (route.name === 'admin-quan-ly-khach-hang') {
+            store.getAllKhachHang(0, 3, null, null);
         }
         // Thêm các route khác nếu cần
     }
@@ -73,6 +78,10 @@ const handleSearch = async () => {
         else if (route.name === 'admin-quan-ly-nhan-vien') {
             await store.searchNhanVien(searchInput.value, 0, 5);
             console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
+        }
+        else if(route.name === 'admin-quan-ly-khach-hang') {
+            await store.getAllKhachHang( 0, 3, searchInput.value, null);
+            console.log('Kết quả tìm kiếm khách hàng:', store.khachHangSearch);
         }
         // Thêm các route khác nếu cần
         else {
