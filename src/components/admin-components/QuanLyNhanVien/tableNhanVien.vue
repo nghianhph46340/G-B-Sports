@@ -85,11 +85,13 @@
       </table>
     </div>
 
-    <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
+    <div class="d-flex justify-content-center align-items-center mt-3">
+      <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
       :disabled="store.currentPage === 0">Previous</button>
     <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages }}</span>
     <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
       :disabled="store.currentPage >= store.totalPages - 1">Next</button>
+    </div>
   </div>
 </template>
 

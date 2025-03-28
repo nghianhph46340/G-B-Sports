@@ -5,6 +5,7 @@ import { sanPhamService } from '@/services/sanPhamService'
 import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
 import { hoaDonService } from '@/services/hoaDonService'
+import { khachHangService } from '@/services/khachHangService'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -44,6 +45,10 @@ export const useGbStore = defineStore('gbStore', {
             nhanVienArr: [],
             nhanVienSearch: [],
             sanPhamById: {},
+            getAllKhachHangArr: [],
+            totalKhachHang: 0,
+            currentKhachHang: 0,
+            totalItemsKhachHang: 0,
         }
     },
     actions: {
@@ -403,6 +408,39 @@ export const useGbStore = defineStore('gbStore', {
             } else {
                 this.getAllSanPham = sanPhamNgaySua;
             }
+        },
+        //Lấy danh sách khách hàng
+        async getAllKhachHang(page = 0, size = 3, keyword = null, trangThai = null) {
+            const khachHang = await khachHangService.getAllKhachHang(page, size, keyword, trangThai);
+            if (khachHang.error) {
+                toast.error("Không lấy được dữ liệu");
+                return;
+            }
+            if (!khachHang.danhSachKhachHang || khachHang.danhSachKhachHang.length === 0) {
+                this.getAllKhachHangArr = [];
+                this.diaChiMap = {};
+                this.totalKhachHang = 0;
+                this.currentKhachHang = 0;
+                this.totalItemsKhachHang = 0;
+
+                // Hiển thị thông báo tùy thuộc vào điều kiện lọc
+                
+                if (trangThai && keyword) {
+                    toast.info(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`);
+                } else if (trangThai) {
+                    toast.info(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}"`);
+                } else if (keyword) {
+                    toast.info(`Không tìm thấy khách hàng nào với từ khóa "${keyword}"`);
+                }
+                return;
+            }
+
+            // Nếu có dữ liệu thì gán như bình thường
+            this.getAllKhachHangArr = khachHang.danhSachKhachHang;
+            this.diaChiMap = khachHang.diaChiMap || {};
+            this.totalKhachHang = khachHang.totalPages || 0;
+            this.currentKhachHang = page;
+            this.totalItemsKhachHang = khachHang.totalElements || 0;
         },
         getPath(path) {
             this.checkRouter = '';

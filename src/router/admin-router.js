@@ -68,6 +68,11 @@ const admin = [
                 path: "quanlykhuyenmai",
                 name: "admin-quan-ly-khuyen-mai",
                 component: () => import('@/views/admin/KhuyenMai/khuyenMai.vue')
+            },
+            {
+                path: "quanlykhachhang",
+                name: "admin-quan-ly-khach-hang",
+                component: () => import('@/views/admin/KhachHang/quanLyKhachHang.vue')
             }
         ]
     }
