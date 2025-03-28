@@ -7,7 +7,7 @@ const getAllKhachHang = async(page = 0, size = 3, keyword = null, trangThai = nu
         
         // Thêm params tùy chọn nếu có
         if (keyword) {
-            url += `&keyword=${encodeURIComponent(keyword.trim())}`;
+            url += `&keyword=${encodeURIComponent(keyword)}`;
         }
         if (trangThai) {
             url += `&trangThai=${encodeURIComponent(trangThai)}`;

@@ -168,7 +168,11 @@ export const useGbStore = defineStore('gbStore', {
                     this.totalPages = 0;
                     this.currentPage = 0;
                     this.totalItems = 0;
-                } else {
+                }
+                else if (searchNhanVienRes.content.length === 0) {
+                    toast.error('Không tìm thấy nhân viên nào');
+                } 
+                else {
                     this.nhanVienSearch = searchNhanVienRes.content || [];
                     this.totalPages = searchNhanVienRes.totalPages || 0;
                     this.currentPage = page;
@@ -426,11 +430,11 @@ export const useGbStore = defineStore('gbStore', {
                 // Hiển thị thông báo tùy thuộc vào điều kiện lọc
                 
                 if (trangThai && keyword) {
-                    toast.info(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`);
+                    toast.error(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`);
                 } else if (trangThai) {
-                    toast.info(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}"`);
+                    toast.error(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}"`);
                 } else if (keyword) {
-                    toast.info(`Không tìm thấy khách hàng nào với từ khóa "${keyword}"`);
+                    toast.error(`Không tìm thấy khách hàng nào với từ khóa "${keyword}"`);
                 }
                 return;
             }
