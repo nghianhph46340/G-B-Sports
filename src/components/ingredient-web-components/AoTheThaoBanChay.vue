@@ -73,14 +73,23 @@ import {
     LeftOutlined,
     RightOutlined
 } from '@ant-design/icons-vue';
+import { useGbStore } from '@/stores/gbStore';
 
 // Tham chiếu đến carousel
+const store = useGbStore();
 const carousel = ref(null);
 const sectionRef = ref(null);
 const isVisible = ref(false);
 const showArrows = ref(false);
 
+
+const aoTheThaoBanChay = ref([]);
 // Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
+onMounted(async () => {
+    await store.getAllSP();
+    aoTheThaoBanChay.value = store.getAllSanPham.filter(product => product.ten_san_pham.includes('Áo'));
+    console.log(aoTheThaoBanChay.value);
+});
 onMounted(() => {
     const { stop } = useIntersectionObserver(
         sectionRef,

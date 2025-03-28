@@ -33,3 +33,15 @@ npm run build
 ```sh
 npm run lint
 ```
+
+### Run
+
+```sh
+# qrcode.vue
+npm install qrcode.vue
+# xlsx - map
+npm install xlsx file-saver jspdf jspdf-autotable chart.js
+# fontawesome
+npm install --save @fortawesome/fontawesome-free
+#vue-core
+npm install @vueuse/core
