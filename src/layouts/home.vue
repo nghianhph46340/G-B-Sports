@@ -36,7 +36,7 @@ export default {
 }
 
 .main-content {
-    padding-top: 9rem;
+    padding-top: 7.8rem;
     /* Chiều cao của header (5rem) + sidebar (~4rem) */
     min-height: calc(100vh - 9rem - 340px);
     /* 100vh - header+sidebar - footer */
