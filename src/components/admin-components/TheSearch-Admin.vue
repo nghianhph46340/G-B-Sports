@@ -70,7 +70,7 @@ const handleSearch = async () => {
             await store.searchSP(searchInput.value);
             console.log('Kết quả tìm kiếm sản phẩm:', store.searchSanPham);
         }
-        else if (route.name === 'admin-quan-ly-nhien') {
+        else if (route.name === 'admin-quan-ly-nhan-vien') {
             await store.searchNhanVien(searchInput.value, 0, 5);
             console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
         }
