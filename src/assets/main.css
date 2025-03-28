@@ -32,4 +32,17 @@ a,
     grid-template-columns: 1fr 1fr;
     padding: 0 2rem;
   }
+}
+
+/* CSS toàn cục cho hiệu ứng cuộn mượt */
+/* html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-y: scroll; 
+}
+
+* {
+  scroll-margin-top: 70px; 
 } */
