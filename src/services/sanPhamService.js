@@ -221,28 +221,18 @@ const searchSanPham = async (search) => {
         return { error: true, data: [] };
     }
 }
-
-// const locSanPhamAndCTSP = async (danhMuc, thuongHieu, chatLieu, mauSac, size, giaDau, giaCuoi, trangThai) => {
-//     try {
-//         const response = await axiosInstance.get(qlsp + 'locSanPhamAndCTSP', {
-//             params: {
-//                 danhMuc: danhMuc,
-//                 thuongHieu: thuongHieu,
-//                 chatLieu: chatLieu,
-//                 mauSac: mauSac,
-//                 size: size,
-//                 giaDau: giaDau,
-//                 giaCuoi: giaCuoi,
-//                 trangThai: trangThai
-//             }
-//         });
-//         return response.data;
-//     } catch (error) {
-//         console.log(error);
-//         console.log('Không lấy được danh sách sản phẩm theo từ khóa');
-//         return { error: true, data: [] };
-//     }
-// }
+const getSanPhamBySanPham = async (tenSanPham) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'getSanPhamByTenSanPham?tenSanPham=' + tenSanPham);
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm'
+        };
+    }
+}
 
 export const sanPhamService = {
     getAllSanPham,
@@ -265,5 +255,6 @@ export const sanPhamService = {
     importSanPhamFromExcel,
     saveExcelImports,
     getSanPhamById,
-    getAllSanPhamNgaySua
+    getAllSanPhamNgaySua,
+    getSanPhamBySanPham
 }

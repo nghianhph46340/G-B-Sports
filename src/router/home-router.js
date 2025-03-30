@@ -10,6 +10,11 @@ const home = [
                 path: "home",
                 name: "home-sell",
                 component: () => import('../views/web/index.vue')
+            },
+            {
+                path: "sanphamdetail/:id",
+                name: "sanPhamDetail-BanHang",
+                component: () => import('../views/web/sanPhamDetail-BanHang.vue')
             }
         ]
     }

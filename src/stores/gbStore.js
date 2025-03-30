@@ -49,6 +49,7 @@ export const useGbStore = defineStore('gbStore', {
             totalKhachHang: 0,
             currentKhachHang: 0,
             totalItemsKhachHang: 0,
+            listSanPhamBanHang: [],
         }
     },
     actions: {
@@ -171,7 +172,7 @@ export const useGbStore = defineStore('gbStore', {
                 }
                 else if (searchNhanVienRes.content.length === 0) {
                     toast.error('Không tìm thấy nhân viên nào');
-                } 
+                }
                 else {
                     this.nhanVienSearch = searchNhanVienRes.content || [];
                     this.totalPages = searchNhanVienRes.totalPages || 0;
@@ -183,7 +184,22 @@ export const useGbStore = defineStore('gbStore', {
                 console.error(error);
             }
         },
-
+        ////////////-----------------Sản phẩm-------------------////////////
+        //Lấy danh sách sản phẩm theo sản phẩm
+        async getSanPhamBySP(tenSanPham) {
+            try {
+                const sanPham = await sanPhamService.getSanPhamBySanPham(tenSanPham);
+                if (sanPham.error) {
+                    toast.error("Không lấy được dữ liệu")
+                    return;
+                } else {
+                    this.listSanPhamBanHang = sanPham;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
         //Lấy sản phẩm theo id
         async getSanPhamById(id) {
             const sanPhamByIds = await sanPhamService.getSanPhamById(id);
@@ -428,7 +444,7 @@ export const useGbStore = defineStore('gbStore', {
                 this.totalItemsKhachHang = 0;
 
                 // Hiển thị thông báo tùy thuộc vào điều kiện lọc
-                
+
                 if (trangThai && keyword) {
                     toast.error(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`);
                 } else if (trangThai) {
