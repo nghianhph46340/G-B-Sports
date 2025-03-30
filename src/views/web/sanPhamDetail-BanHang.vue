@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import DetailSanPham from '@/components/ingredient-web-components/detail-sanPham.vue';
+import DetailSanPham from '@/components/ingredient-web-components/Detail-SanPham.vue';
 export default {
     components: {
         DetailSanPham
