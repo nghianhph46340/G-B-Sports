@@ -13,7 +13,7 @@
                                         <span class="category-title">Phụ kiện tập luyện</span>
                                     </div>
                                     <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;" class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -35,7 +35,7 @@
                                         <span class="category-title">Phụ kiện bảo vệ</span>
                                     </div>
                                     <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;" class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -56,7 +56,7 @@
                                         <span class="category-title">Thời trang thể thao</span>
                                     </div>
                                     <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;" class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -77,7 +77,7 @@
                                         <span class="category-title">Đo lường & sức khỏe</span>
                                     </div>
                                     <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;" class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -97,7 +97,7 @@
                                         <span class="category-title">Dụng cụ mang nước</span>
                                     </div>
                                     <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;" class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
