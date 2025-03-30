@@ -19,7 +19,7 @@
                     <TheHeaderSearchModal />
                 </div>
                 <div class="nav-icons col-sm-3 d-flex justify-content-evenly align-items-center">
-                    <div class="nav-item text-center" @mouseenter="animateIcon('user')">
+                    <div @click="chuyenTrang('/login-register/login')" class="nav-item text-center" @mouseenter="animateIcon('user')">
                         <div class="icon-container">
                             <User class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'user' }" />
                         </div>
@@ -64,11 +64,14 @@ import { ShoppingCart } from 'lucide-vue-next';
 import { useGbStore } from '@/stores/gbStore';
 import TheHeaderSearchModal from './TheHeaderSearchModal.vue';
 import { ref } from 'vue';
-
+import { useRouter } from 'vue-router';
 const store = useGbStore();
 const animatedIcon = ref(null);
 const cartItemCount = ref(0); // Giả sử số lượng sản phẩm trong giỏ hàng
-
+const router = useRouter();
+const chuyenTrang = (path) => {
+    router.push(path);
+}
 const animateIcon = (iconName) => {
     animatedIcon.value = iconName;
     setTimeout(() => {
