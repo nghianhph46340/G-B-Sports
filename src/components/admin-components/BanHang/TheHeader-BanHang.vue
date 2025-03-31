@@ -2,37 +2,20 @@
     <div class="header-container">
         <!-- Search Combo Box -->
         <div class="search-section">
-            <a-select show-search v-model:value="selectedProduct" placeholder="Tìm kiếm sản phẩm"
+            <a-select show-search placeholder="Tìm kiếm sản phẩm"
                 :options="productOptions" :filter-option="filterOption" style="width: 250px" @search="handleSearch">
                 <template #suffixIcon><search-outlined /></template>
             </a-select>
         </div>
 
-        
+
 
         <!-- Invoice Tabs -->
-        <div class="invoice-tabs">
-            <div class="tabs-container">
-                <a-tabs v-model:activeKey="activeInvoice" type="card">
-                    <a-tab-pane v-for="invoice in invoices" :key="invoice.id">
-                        <template #tab>
-                            <div class="custom-tab">
-                                <span>{{ invoice.name }}</span>
-                                <close-outlined v-if="invoices.length > 1" class="close-icon"
-                                    @click.stop="deleteInvoice(invoice.id)" />
-                            </div>
-                        </template>
-                    </a-tab-pane>
-                </a-tabs>
-                <a-tooltip title="Thêm hóa đơn mới">
-                    <a-button type="primary" shape="circle"
-                        class="add-invoice-btn d-flex align-items-center justify-content-center" @click="addInvoice"
-                        :disabled="invoices.length >= 5">
-                        <template #icon><plus-outlined /></template>
-                    </a-button>
-                </a-tooltip>
-            </div>
-        </div>
+        <a-tabs v-model:activeKey="activeKey" type="editable-card" @edit="onEdit">
+            <a-tab-pane v-for="pane in panes" :key="pane.key" :tab="pane.title" :closable="pane.closable">
+                {{ pane.content }}
+            </a-tab-pane>
+        </a-tabs>
 
         <!-- Action Buttons -->
         <div class="action-buttons">
@@ -63,11 +46,11 @@
                 <form>
                     <div class="mb-3">
                         <label for="maHoaDon" class="form-label">Mã hoá đơn: {{ hd.id_hoa_don }}</label>
-                        
+
                     </div>
                     <div class="mb-3">
                         <label for="idNhanVien" class="form-label">Tên nhân viên: {{ hd.id_nhan_vien }}</label>
-                        
+
                     </div>
                     <div class="mb-3">
                         <label for="idKhachHang" class="form-label">Tên khách hàng</label>
@@ -105,9 +88,10 @@
                         <label for="tongTienSauGiam" class="form-label">Tổng tiền sau giảm</label>
                         <input type="text" class="form-control" id="tongTienSauGiam">
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="hinhThucThanhToan" class="form-label" style="padding-right: 15px;">Hình thức thanh toán</label>
+                        <label for="hinhThucThanhToan" class="form-label" style="padding-right: 15px;">Hình thức thanh
+                            toán</label>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="hinhThucThanhToan" id="tienMat"
                                 value="Tiền mặt" v-model="hinhThucThanhToan">
@@ -120,11 +104,9 @@
                         </div>
                         <div v-if="hinhThucThanhToan === 'Tiền mặt'">
                             <label for="tienKhachDua" class="form-labels">Tiền khách đưa</label>
-                            <input name="tienKhachDua" type="text"
-                            class="form-control" id="tienKhachDua">
+                            <input name="tienKhachDua" type="text" class="form-control" id="tienKhachDua">
                             <label for="tienDu" class="form-labels">Tiền dư</label>
-                            <input name="tienDu" type="text"
-                            class="form-control" id="tienDu">
+                            <input name="tienDu" type="text" class="form-control" id="tienDu">
                         </div>
                     </div>
                     <div class="mb-3">
@@ -150,23 +132,26 @@ import {
     SearchOutlined,
     FileSearchOutlined,
     RollbackOutlined,
-    BarChartOutlined,
-    PlusOutlined,
-    CloseOutlined
+    BarChartOutlined
 } from '@ant-design/icons-vue'
 import tableSPHD from './tableSPHD.vue'
 import { useGbStore } from '@/stores/gbStore'
-import tableSanPhamChiTiet from './tableSanPhamChiTiet.vue'
-
 const store = useGbStore()
+onMounted(() => {
+    store.getListHoaDon();
+})
+
+
+const listhdct = ref([])
 const listhd = ref([])
+const idhd = ref(0)
 const hd = reactive({
     id_hoa_don: 0,
     ma_hoa_don: "",
     id_nhan_vien: 0,
     id_khach_hang: 0,
     ngay_tao: new Date,
-    ngay_sua: new Date,
+    ngay_sua: "",
     trang_thai: "",
     id_voucher: 0,
     sdt_nguoi_nhan: "",
@@ -178,7 +163,20 @@ const hd = reactive({
     tong_tien_sau_giam: 0,
     hinh_thuc_thanh_toan: "",
     phuong_thuc_nhan_hang: "",
-    loai_hoa_don: ""
+    loai_hoa_don: "offline",
+    dia_chi: "",
+    email: "",
+    hinh_thuc_thanh_toan: "",
+    ho_ten: "",
+
+})
+const sphdct = reactive({
+    id_hoa_don_chi_tiet: 0,
+    hd: hd,
+    id_chi_tiet_san_pham: 0,
+    so_luong: 0,
+    gia_ban: 0,
+    tong_tien: 0
 })
 
 // Mocked product data
@@ -196,8 +194,6 @@ const hinhThucThanhToan = ref('Tiền mặt')
 
 const phuongThucNhanHang = ref('Nhận tại cửa hàng')
 
-const selectedProduct = ref(undefined)
-
 // Filter function for search
 const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
@@ -208,41 +204,82 @@ const handleSearch = (value) => {
     console.log('Searching:', value)
     // Implement actual search logic here
 }
+const generateInvoiceCode = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const listAllHoaDon = store.getListHoaDonAll
+    let result;
+    let isUnique = false;
+    // 
+    // Lặp cho đến khi tìm được mã không trùng
+    while (!isUnique) {
+        result = 'HD';
 
-// Invoice management
-const invoices = ref([
-    { id: '1', name: 'Đơn 1' }
-])
-const activeInvoice = ref('1')
+        // Tạo 6 ký tự ngẫu nhiên
+        for (let i = 0; i < 6; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
 
-// Function to add new invoice
-const addInvoice = () => {
-    const newId = String(invoices.value.length + 1)
-    invoices.value.push({
-        id: newId,
-        name: `Đơn ${newId}`
-    })
-    activeInvoice.value = newId
-}
+        // Kiểm tra xem mã đã tồn tại chưa (không phân biệt hoa thường)
+        const exists = listAllHoaDon.some(hoaDon =>
+            hoaDon.ma_hoa_don.toLowerCase() === result.toLowerCase()
+        );
 
-// Function to delete specific invoice
-const deleteInvoice = (invoiceId) => {
-    if (invoices.value.length <= 1) {
-        return // At least one invoice should exist
+        // Nếu mã là duy nhất, thoát vòng lặp
+        if (!exists) {
+            isUnique = true;
+        }
     }
 
-    const currentIndex = invoices.value.findIndex(inv => inv.id === invoiceId)
-    const isActive = invoiceId === activeInvoice.value
-
-    // Remove the invoice
-    invoices.value.splice(currentIndex, 1)
-
-    // If we deleted the active invoice, set a new active invoice
-    if (isActive && invoices.value.length > 0) {
-        const newIndex = Math.min(currentIndex, invoices.value.length - 1)
-        activeInvoice.value = invoices.value[newIndex].id
+    return result;
+};
+const mhd = generateInvoiceCode();
+console.log(mhd)
+sphdct.id_hoa_don_chi_tiet = 1
+hd.id_hoa_don = 1
+hd.ma_hoa_don = mhd
+const panes = ref([
+    {
+        title: 'Đơn 1',
+        content: 'Content of Tab 1',
+        key: '1',
+        closable: false,
+        sphdct: sphdct
+    },
+]);
+console.log(panes.value)
+const activeKey = ref(panes.value[0].key);
+const newTabIndex = ref(0);
+const add = () => {
+    activeKey.value = `newTab${++newTabIndex.value}`;
+    panes.value.push({
+        title: 'Đơn ' + (newTabIndex.value + 1),
+        content: 'Content of new Tab',
+        key: activeKey.value,
+    });
+};
+const remove = targetKey => {
+    let lastIndex = 0;
+    panes.value.forEach((pane, i) => {
+        if (pane.key === targetKey) {
+            lastIndex = i - 1;
+        }
+    });
+    panes.value = panes.value.filter(pane => pane.key !== targetKey);
+    if (panes.value.length && activeKey.value === targetKey) {
+        if (lastIndex >= 0) {
+            activeKey.value = panes.value[lastIndex].key;
+        } else {
+            activeKey.value = panes.value[0].key;
+        }
     }
-}
+};
+const onEdit = (targetKey, action) => {
+    if (action === 'add') {
+        add();
+    } else {
+        remove(targetKey);
+    }
+};
 </script>
 
 <style scoped>

@@ -26,6 +26,7 @@ export const useGbStore = defineStore('gbStore', {
             indexMenu: ['1'],
             searchs: '',
             getAllNhanVienArr: [],
+            getListHoaDonAll: [],
             totalPages: 0,
             currentPage: 0,
             totalItems: 0,
@@ -269,6 +270,19 @@ export const useGbStore = defineStore('gbStore', {
                 this.totalHoaDon = hoaDon.totalPages || 0;
                 this.currentHoaDon = page;
                 this.totalItemsHoaDon = hoaDon.totalElements || 0;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
+        async getListHoaDon() {
+            try {
+                const listHD = await hoaDonService.getListHoaDon();
+                if (listHD.error) {
+                    toast.error('Không lấy được dữ liệu');
+                    return;
+                }
+                this.getListHoaDonAll = listHD;
             } catch (error) {
                 console.error(error);
                 toast.error('Có lỗi xảy ra');

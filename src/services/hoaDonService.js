@@ -13,6 +13,16 @@ const getAllHoaDon = async (page = 0, size = 5) => {
     }
 };
 
+const getListHoaDon = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlhd + `all-hoa-don`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API lấy list hóa đơn:', error);
+        return { error: true };
+    }
+};
+
 // Lọc hóa đơn theo trạng thái
 const filterByTrangThai = async (trangThai, page = 0, size = 5) => {
     try {
@@ -90,6 +100,7 @@ const cancelHoaDon = async (maHoaDon) => {
 
 export const hoaDonService = {
     getAllHoaDon,
+    getListHoaDon,
     filterByTrangThai,
     filterByDate,
     searchHoaDon,
