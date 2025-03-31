@@ -43,9 +43,9 @@
                                     <div class="product-price-row">
                                         <span class="product-price">{{ product.price }}</span>
                                         <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
-                                            }}</span>
+                                        }}</span>
                                         <span class="product-discount" v-if="product.discount">{{ product.discount
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <h6 class="product-name">{{ product.name }}</h6>
                                     <div class="product-meta">
