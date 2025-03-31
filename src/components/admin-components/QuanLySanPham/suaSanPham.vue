@@ -8,8 +8,10 @@
                     :rules="[{ required: true, message: 'Vui lòng nhập mã sản phẩm!' }]">
                     <a-input v-model:value="formState.ma_san_pham" readonly disabled />
                 </a-form-item>
-                <a-form-item label="Tên sản phẩm" name="ten_san_pham"
-                    :rules="[{ required: true, message: 'Vui lòng nhập tên sản phẩm!' }]">
+                <a-form-item label="Tên sản phẩm" name="ten_san_pham" :rules="[
+                    { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
+                    { validator: validateProductName }
+                ]">
                     <a-input v-model:value="formState.ten_san_pham" />
                 </a-form-item>
 
@@ -172,6 +174,7 @@
                                 <a-upload v-model:file-list="variant.fileList" list-type="picture-card" :max-count="3"
                                     :multiple="true"
                                     :before-upload="(file) => beforeUpload(file, variant.fileList.length)"
+                                    :customRequest="handleCustomRequest"
                                     @change="(info) => handleVariantImageChange(info, index)" @preview="handlePreview">
                                     <div v-if="variant.fileList.length < 3">
                                         <plus-outlined />
@@ -316,6 +319,25 @@ const rules = {
     ]
 };
 
+// Hàm validate tên sản phẩm không được trùng (trừ sản phẩm hiện tại)
+const validateProductName = async (_, value) => {
+    if (!value) return Promise.reject('Tên sản phẩm không được để trống');
+
+    // Lấy ID sản phẩm hiện tại từ route
+    const currentProductId = route.params.id;
+
+    // Kiểm tra tên sản phẩm đã tồn tại trong danh sách sản phẩm (trừ sản phẩm hiện tại)
+    const existingProduct = store.getAllSanPham.find(p =>
+        p.ten_san_pham === value && p.id_san_pham.toString() !== currentProductId
+    );
+
+    if (existingProduct) {
+        return Promise.reject('Tên sản phẩm đã tồn tại trong danh sách sản phẩm');
+    }
+
+    return Promise.resolve();
+};
+
 // Hàm validate form
 const validateForm = async () => {
     try {
@@ -393,16 +415,49 @@ const handleVariantImageChange = async (info, variantIndex) => {
     // Cập nhật fileList cho biến thể
     variants.value[variantIndex].fileList = limitedFileList;
 
-    // Xử lý các file đã upload thành công
-    const successFiles = limitedFileList.filter(file => file.status === 'done');
-    variants.value[variantIndex].hinh_anh = successFiles.map(file => file.response.url);
+    // Xử lý khi có file được xóa
+    if (info.file.status === 'removed') {
+        const removedFile = info.file;
+        console.log('File bị xóa:', removedFile);
 
-    // Thông báo kết quả
-    const lastFile = info.file;
-    if (lastFile.status === 'done') {
-        message.success(`${lastFile.name} đã được tải lên thành công`);
-    } else if (lastFile.status === 'error') {
-        message.error(`${lastFile.name} tải lên thất bại`);
+        // Nếu file có URL (đã được tải lên cloud trước đó)
+        if (removedFile.url) {
+            try {
+                // Lấy tên file từ URL
+                const urlParts = removedFile.url.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
+
+                console.log('Public ID cần xóa:', publicId);
+
+                // Gọi API xóa ảnh
+                await axiosInstance.delete("testDeleteImage?publicId=" + publicId);
+
+                // Cập nhật mảng hinh_anh của biến thể
+                variants.value[variantIndex].hinh_anh = variants.value[variantIndex].hinh_anh.filter(
+                    url => url !== removedFile.url
+                );
+
+                message.success(`Đã xóa ảnh khỏi cloud storage`);
+            } catch (error) {
+                console.error('Lỗi khi xóa ảnh:', error);
+                message.error('Không thể xóa ảnh: ' + (error.response?.data || error.message));
+            }
+        }
+    }
+
+    // Xử lý các file đã upload thành công
+    if (info.file.status === 'done') {
+        // Thông báo kết quả
+        message.success(`${info.file.name} đã được tải lên thành công`);
+
+        // Nếu là file mới và có originFileObj, chuẩn bị cho việc upload
+        if (info.file.originFileObj) {
+            // Đánh dấu file này cần được upload khi lưu
+            info.file.needUpload = true;
+        }
+    } else if (info.file.status === 'error') {
+        message.error(`${info.file.name} tải lên thất bại`);
     }
 };
 
@@ -457,50 +512,147 @@ const onFinish = async () => {
 
         // Validate giá chung
         if (useCommonPrice.value) {
-
             if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                 throw new Error('Giá bán phải lớn hơn 1000!');
             }
         }
-
-        console.log('FormState trước khi gửi:', formState);
-        const response = await store.createSanPham(formState);
-        console.log('Response nhận được:', response);
-
-        // Kiểm tra response
-        if (!response || !response.success) {
-            throw new Error(response?.message || 'Không nhận được dữ liệu phản hồi hợp lệ từ server');
+        let imageUrl = null;
+        if (fileList.value.length > 0) {
+            const file = fileList.value[0].originFileObj;
+            imageUrl = await uploadImage(file);
+            if (imageUrl) {
+                formState.hinh_anh = imageUrl;
+            }
         }
-
-        // Lấy ID sản phẩm từ data trả về
-        const productId = response.data.id_san_pham;
-        if (!productId) {
-            throw new Error('Không nhận được ID sản phẩm từ server');
-        }
-
-        // Tạo các biến thể CTSP
+        // Upload ảnh mới cho từng biến thể nếu có
         for (const variant of variants.value) {
-            await store.createCTSP({
-                ...variant,
-                id_san_pham: productId,
-                hinh_anh: variant.hinh_anh
-            });
+            if (variant.fileList && variant.fileList.length > 0) {
+                // Tìm các file mới cần upload
+                const newFiles = variant.fileList.filter(file => file.originFileObj && file.needUpload);
+
+                // Upload các file mới
+                for (const file of newFiles) {
+                    try {
+                        // Giả định có hàm uploadImage trong store hoặc utility
+                        const imageUrl = await uploadImage(file.originFileObj);
+                        if (imageUrl) {
+                            console.log('Đã upload ảnh mới, URL trả về:', imageUrl);
+
+                            // Đảm bảo hinh_anh là một mảng
+                            if (!Array.isArray(variant.hinh_anh)) {
+                                variant.hinh_anh = [];
+                            }
+
+                            // Thêm URL mới vào mảng hinh_anh
+                            variant.hinh_anh.push(imageUrl);
+
+                            // Cập nhật file.url để hiển thị ảnh
+                            file.url = imageUrl;
+                            file.status = 'done';
+
+                            console.log('Mảng hinh_anh sau khi thêm:', variant.hinh_anh);
+                        }
+                    } catch (error) {
+                        console.error('Lỗi khi upload ảnh:', error);
+                        message.error(`Không thể upload ảnh ${file.name}`);
+                    }
+                }
+            }
         }
 
-        message.success(response.message || 'Thêm sản phẩm và biến thể thành công!');
-        router.push('/admin/quanlysanpham');
+        // Cập nhật sản phẩm
+        console.log('FormState trước khi gửi:', formState);
+        formState.id_san_pham = route.params.id;
+
+        try {
+            // Sử dụng axiosInstance để gọi trực tiếp API cập nhật sản phẩm
+            const response = await store.createSanPham(formState);
+            console.log('Response nhận được:', response);
+
+            if (!response || !response.success) {
+                throw new Error(response?.message || 'Không nhận được dữ liệu phản hồi hợp lệ từ server');
+            }
+
+            // Cập nhật các biến thể CTSP
+            for (const variant of variants.value) {
+                // Đảm bảo variant có id_san_pham
+                variant.id_san_pham = formState.id_san_pham;
+
+                // Gọi API lưu chi tiết sản phẩm
+                await store.createCTSP({
+                    ...variant,
+                    hinh_anh: variant.hinh_anh
+                });
+            }
+
+            message.success(response.data.message || 'Cập nhật sản phẩm và biến thể thành công!');
+            router.push('/admin/quanlysanpham');
+        } catch (error) {
+            console.error('Chi tiết lỗi:', error);
+            if (error.response?.data) {
+                // Xử lý lỗi từ server
+                const errorMessage = error.response.data.message || 'Có lỗi xảy ra khi cập nhật sản phẩm';
+                message.error(errorMessage);
+            } else {
+                // Xử lý lỗi khác
+                message.error(error.message || 'Có lỗi xảy ra khi cập nhật sản phẩm');
+            }
+        } finally {
+            loading.value = false;
+        }
     } catch (error) {
         console.error('Chi tiết lỗi:', error);
         if (error.response?.data) {
             // Xử lý lỗi từ server
-            const errorMessage = error.response.data.message || 'Có lỗi xảy ra khi thêm sản phẩm';
+            const errorMessage = error.response.data.message || 'Có lỗi xảy ra khi cập nhật sản phẩm';
             message.error(errorMessage);
         } else {
             // Xử lý lỗi khác
-            message.error(error.message || 'Có lỗi xảy ra khi thêm sản phẩm');
+            message.error(error.message || 'Có lỗi xảy ra khi cập nhật sản phẩm');
         }
     } finally {
         loading.value = false;
+    }
+};
+
+// Hàm upload ảnh lên server
+const uploadImage = async (file) => {
+    if (!file) {
+        console.warn('No file provided for upload');
+        return null;
+    }
+
+    console.log('Uploading file:', file);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        // Sử dụng endpoint API giống như trong themSanPham.vue
+        const response = await axiosInstance.post('testImage', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        console.log('Upload image response:', response.data);
+
+        // Kiểm tra response và trả về URL
+        if (response.data) {
+            // Nếu response.data là string (URL trực tiếp)
+            if (typeof response.data === 'string') {
+                return response.data;
+            }
+            // Nếu response.data là object có thuộc tính url
+            else if (response.data.url) {
+                return response.data.url;
+            }
+            // Trường hợp khác, trả về toàn bộ response.data
+            return response.data;
+        }
+        return null;
+    } catch (error) {
+        console.error('Lỗi khi upload ảnh:', error);
+        message.error('Không thể upload ảnh: ' + error.message);
+        return null;
     }
 };
 
@@ -529,6 +681,87 @@ watch([() => formState.gia_nhap_chung, () => formState.gia_ban_chung, () => useC
     }
 );
 
+// Hàm xử lý khi giá biến thể thay đổi
+const handleVariantPriceChange = (value, variant, field) => {
+    if (field === 'gia_nhap') {
+        // Khi giá nhập thay đổi, kiểm tra lại giá bán
+        if (value < 1000) {
+            message.error('Giá nhập phải lớn hơn 1000!');
+            variant.gia_nhap = 1000; // Reset về giá trị tối thiểu
+            return;
+        }
+        const minGiaBan = value * 1.1;
+        if (variant.gia_ban < minGiaBan) {
+            message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+        }
+    } else if (field === 'gia_ban') {
+        // Khi giá bán thay đổi, kiểm tra xem có đủ 10% không
+        if (value < 1000) {
+            message.error('Giá bán phải lớn hơn 1000!');
+            variant.gia_ban = 1000; // Reset về giá trị tối thiểu
+            return;
+        }
+        const minGiaBan = variant.gia_nhap * 1.1;
+        if (value < minGiaBan) {
+            message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
+        }
+    }
+};
+
+// Thêm watch cho formState để kiểm tra validation
+watch(() => formState, async (newVal) => {
+    try {
+        await formRef.value.validate();
+        isProductValidated.value = true;
+    } catch (error) {
+        isProductValidated.value = false;
+    }
+}, { deep: true });
+
+// Hàm xử lý upload ảnh
+const handleImageChange = async (info) => {
+    console.log('handleImageChange được gọi với:', info);
+
+    // Cập nhật fileList
+    fileList.value = info.fileList;
+
+    // Xử lý khi ảnh bị xóa (status = 'removed')
+    if (info.file.status === 'removed') {
+        console.log('Ảnh bị xóa:', info.file);
+
+        // Nếu ảnh đã được upload lên cloud (có url)
+        if (info.file.url) {
+            try {
+                // Trích xuất publicId từ URL
+                const urlParts = info.file.url.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
+
+                console.log('Public ID cần xóa:', publicId);
+
+                // Gọi API xóa ảnh
+                await axiosInstance.delete("testDeleteImage?publicId=" + publicId);
+
+                // Xóa URL ảnh khỏi formState
+                formState.hinh_anh = '';
+
+                message.success('Đã xóa ảnh thành công');
+            } catch (error) {
+                console.error('Lỗi khi xóa ảnh:', error);
+                message.error('Không thể xóa ảnh: ' + error.message);
+            }
+        }
+    }
+};
+
+// Preview ảnh
+const handleCustomRequest = (options) => {
+    if (options && typeof options.onSuccess === 'function') {
+        setTimeout(() => {
+            options.onSuccess('ok');
+        }, 0);
+    }
+};
 
 onMounted(async () => {
     try {
@@ -679,18 +912,47 @@ onMounted(async () => {
 // Khi load dữ liệu có sẵn
 const loadProductData = async (productId) => {
     try {
-        const product = await store.getProductById(productId);
+        // Lấy thông tin sản phẩm theo ID
+        await store.getProductById(productId);
 
-        // Cập nhật formState
+        // Kiểm tra xem có dữ liệu sản phẩm không
+        if (!store.productById || !store.productById.id_san_pham) {
+            throw new Error('Không tìm thấy thông tin sản phẩm');
+        }
+
+        console.log('Dữ liệu sản phẩm:', store.productById);
+
+        // Lấy dữ liệu danh mục, thương hiệu, chất liệu trước khi cập nhật form
+        await store.getDanhMucList();
+        await store.getThuongHieuList();
+        await store.getChatLieuList();
+
+        // Lấy danh sách màu sắc và size
+        await store.getMauSacList();
+        await store.getSizeList();
+
+        console.log('Danh mục:', store.danhMucList);
+        console.log('Thương hiệu:', store.thuongHieuList);
+        console.log('Chất liệu:', store.chatLieuList);
+        console.log('Màu sắc:', store.mauSacList);
+        console.log('Size:', store.sizeList);
+
+        danhMucList.value = store.danhMucList;
+        thuongHieuList.value = store.thuongHieuList;
+        chatLieuList.value = store.chatLieuList;
+        mauSacList.value = store.mauSacList;
+        sizeList.value = store.sizeList;
+
+        // Cập nhật formState với dữ liệu sản phẩm
         Object.assign(formState, {
-            ten_san_pham: product.ten_san_pham,
-            mo_ta: product.mo_ta,
-            gioi_tinh: product.gioi_tinh,
-            hinh_anh: product.hinh_anh,
-            id_danh_muc: product.id_danh_muc,
-            id_thuong_hieu: product.id_thuong_hieu,
-            id_chat_lieu: product.id_chat_lieu,
-            trang_thai: product.trang_thai
+            ten_san_pham: store.productById.ten_san_pham,
+            mo_ta: store.productById.mo_ta,
+            gioi_tinh: store.productById.gioi_tinh,
+            hinh_anh: store.productById.hinh_anh,
+            id_danh_muc: store.productById.id_danh_muc,
+            id_thuong_hieu: store.productById.id_thuong_hieu,
+            id_chat_lieu: store.productById.id_chat_lieu,
+            trang_thai: store.productById.trang_thai
         });
 
         // Validate form sau khi load dữ liệu
@@ -731,48 +993,6 @@ const resetForm = () => {
             // ... rest of reset code
         }
     });
-};
-
-// Thêm hàm xử lý khi giá biến thể thay đổi
-const handleVariantPriceChange = (value, variant, field) => {
-    if (field === 'gia_nhap') {
-        // Khi giá nhập thay đổi, kiểm tra lại giá bán
-        if (value < 1000) {
-            message.error('Giá nhập phải lớn hơn 1000!');
-            variant.gia_nhap = 1000; // Reset về giá trị tối thiểu
-            return;
-        }
-        const minGiaBan = value * 1.1;
-        if (variant.gia_ban < minGiaBan) {
-            message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        }
-    } else if (field === 'gia_ban') {
-        // Khi giá bán thay đổi, kiểm tra xem có đủ 10% không
-        if (value < 1000) {
-            message.error('Giá bán phải lớn hơn 1000!');
-            variant.gia_ban = 1000; // Reset về giá trị tối thiểu
-            return;
-        }
-        const minGiaBan = variant.gia_nhap * 1.1;
-        if (value < minGiaBan) {
-            message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        }
-    }
-};
-
-// Thêm watch cho formState để kiểm tra validation
-watch(() => formState, async (newVal) => {
-    try {
-        await formRef.value.validate();
-        isProductValidated.value = true;
-    } catch (error) {
-        isProductValidated.value = false;
-    }
-}, { deep: true });
-
-// Hàm xử lý upload ảnh
-const handleImageChange = ({ fileList: newFileList }) => {
-    fileList.value = newFileList;
 };
 </script>
 

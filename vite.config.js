@@ -6,6 +6,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    include: [
+      'xlsx',
+      'file-saver',
+      'jspdf',
+      'jspdf-autotable'
+    ]
+  },
   plugins: [
     vue(),
     vueDevTools(),

@@ -90,7 +90,12 @@ const admin = [
                 path: '/admin/quanlykhuyenmai/update/:id',
                 name: 'admin-quan-ly-khuyen-mai-update',
                 component: () => import('@/views/admin/KhuyenMai/updateKhuyenMai.vue'),
-              }
+              },
+              {
+                path: "quanlykhachhang",
+                name: "admin-quan-ly-khach-hang",
+                component: () => import('@/views/admin/KhachHang/quanLyKhachHang.vue')
+            }
         ]
     }
 ];
