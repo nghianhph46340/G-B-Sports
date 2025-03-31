@@ -14,6 +14,12 @@ const home = [
                 name: "sanPhamDetail-BanHang",
                 component: () => import('../views/web/sanPhamDetail-BanHang.vue'),
                 meta: { scrollToTop: true }
+            },
+            {
+                path: "thanhtoan-banhang",
+                name: "thanhtoan-banhang",
+                component: () => import('../views/web/thanhToan-BanHang.vue'),
+                meta: { scrollToTop: true }
             }
         ]
     }

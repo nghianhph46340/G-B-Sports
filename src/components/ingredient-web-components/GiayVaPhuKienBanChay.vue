@@ -43,9 +43,9 @@
                                     <div class="product-price-row">
                                         <span class="product-price">{{ product.price }}</span>
                                         <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
-                                        }}</span>
+                                            }}</span>
                                         <span class="product-discount" v-if="product.discount">{{ product.discount
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <h6 class="product-name">{{ product.name }}</h6>
                                     <div class="product-meta">
@@ -152,7 +152,7 @@ const productSlides = computed(() => {
         // Lấy thêm sản phẩm từ đầu danh sách
         const extraProducts = products.slice(0, extraNeeded).map(product => ({
             ...product,
-            id: product.id + 1000 // Thêm id mới để tránh trùng lặp
+            id: product.id // Thêm id mới để tránh trùng lặp
         }));
         products.push(...extraProducts);
     }
