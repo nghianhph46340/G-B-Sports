@@ -65,10 +65,32 @@ const admin = [
                 component: () => import('@/views/admin/Voucher/voucher.vue')
             },
             {
+                path: 'quanlyvoucher/add',
+                name: 'admin-quan-ly-voucher-add',
+                component: () => import('@/views/admin/Voucher/addVoucher.vue'),
+              },
+              // Thêm route cho sửa voucher
+              {
+                path: 'quanlyvoucher/update/:id',
+                name: 'admin-quan-ly-voucher-update',
+                component: () => import('@/views/admin/Voucher/updateVoucher.vue'),
+              },
+            
+            {
                 path: "quanlykhuyenmai",
                 name: "admin-quan-ly-khuyen-mai",
                 component: () => import('@/views/admin/KhuyenMai/khuyenMai.vue')
-            }
+            },
+            {
+                path: '/admin/quanlykhuyenmai/add',
+                name: 'admin-quan-ly-khuyen-mai-add',
+                component: () => import('@/views/admin/KhuyenMai/addKhuyenMai.vue'),
+              },
+              {
+                path: '/admin/quanlykhuyenmai/update/:id',
+                name: 'admin-quan-ly-khuyen-mai-update',
+                component: () => import('@/views/admin/KhuyenMai/updateKhuyenMai.vue'),
+              }
         ]
     }
 ];
