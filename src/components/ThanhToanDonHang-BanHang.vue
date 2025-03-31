@@ -207,7 +207,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
