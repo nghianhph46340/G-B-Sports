@@ -5,6 +5,7 @@ import { sanPhamService } from '@/services/sanPhamService'
 import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
 import { hoaDonService } from '@/services/hoaDonService'
+import { khachHangService } from '@/services/khachHangService'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -45,6 +46,11 @@ export const useGbStore = defineStore('gbStore', {
             nhanVienArr: [],
             nhanVienSearch: [],
             sanPhamById: {},
+            getAllKhachHangArr: [],
+            totalKhachHang: 0,
+            currentKhachHang: 0,
+            totalItemsKhachHang: 0,
+            listSanPhamBanHang: [],
         }
     },
     actions: {
@@ -164,7 +170,11 @@ export const useGbStore = defineStore('gbStore', {
                     this.totalPages = 0;
                     this.currentPage = 0;
                     this.totalItems = 0;
-                } else {
+                }
+                else if (searchNhanVienRes.content.length === 0) {
+                    toast.error('Không tìm thấy nhân viên nào');
+                }
+                else {
                     this.nhanVienSearch = searchNhanVienRes.content || [];
                     this.totalPages = searchNhanVienRes.totalPages || 0;
                     this.currentPage = page;
@@ -175,7 +185,22 @@ export const useGbStore = defineStore('gbStore', {
                 console.error(error);
             }
         },
-
+        ////////////-----------------Sản phẩm-------------------////////////
+        //Lấy danh sách sản phẩm theo sản phẩm
+        async getSanPhamBySP(tenSanPham) {
+            try {
+                const sanPham = await sanPhamService.getSanPhamBySanPham(tenSanPham);
+                if (sanPham.error) {
+                    toast.error("Không lấy được dữ liệu")
+                    return;
+                } else {
+                    this.listSanPhamBanHang = sanPham;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+            }
+        },
         //Lấy sản phẩm theo id
         async getSanPhamById(id) {
             const sanPhamByIds = await sanPhamService.getSanPhamById(id);
@@ -417,6 +442,39 @@ export const useGbStore = defineStore('gbStore', {
             } else {
                 this.getAllSanPham = sanPhamNgaySua;
             }
+        },
+        //Lấy danh sách khách hàng
+        async getAllKhachHang(page = 0, size = 3, keyword = null, trangThai = null) {
+            const khachHang = await khachHangService.getAllKhachHang(page, size, keyword, trangThai);
+            if (khachHang.error) {
+                toast.error("Không lấy được dữ liệu");
+                return;
+            }
+            if (!khachHang.danhSachKhachHang || khachHang.danhSachKhachHang.length === 0) {
+                this.getAllKhachHangArr = [];
+                this.diaChiMap = {};
+                this.totalKhachHang = 0;
+                this.currentKhachHang = 0;
+                this.totalItemsKhachHang = 0;
+
+                // Hiển thị thông báo tùy thuộc vào điều kiện lọc
+
+                if (trangThai && keyword) {
+                    toast.error(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`);
+                } else if (trangThai) {
+                    toast.error(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}"`);
+                } else if (keyword) {
+                    toast.error(`Không tìm thấy khách hàng nào với từ khóa "${keyword}"`);
+                }
+                return;
+            }
+
+            // Nếu có dữ liệu thì gán như bình thường
+            this.getAllKhachHangArr = khachHang.danhSachKhachHang;
+            this.diaChiMap = khachHang.diaChiMap || {};
+            this.totalKhachHang = khachHang.totalPages || 0;
+            this.currentKhachHang = page;
+            this.totalItemsKhachHang = khachHang.totalElements || 0;
         },
         getPath(path) {
             this.checkRouter = '';

@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { SearchOutlined } from '@ant-design/icons-vue';
 import { useRoute } from 'vue-router';
@@ -17,14 +17,50 @@ import { useRoute } from 'vue-router';
 const store = useGbStore();
 const route = useRoute();
 const searchInput = ref('');
+
+// Hàm xóa kết quả tìm kiếm
+const clearSearchResults = () => {
+    store.searchs = '';
+    store.searchSanPham = [];
+    store.searchChiSanPham = [];
+    store.nhanVienSearch = [];
+    // store.khachHangSearch = [];
+    store.getAllKhachHangArr = [];
+    searchInput.value = '';
+};
+
+// Theo dõi sự thay đổi của route và xóa kết quả tìm kiếm khi route thay đổi
+watch(() => route.name, (newRouteName, oldRouteName) => {
+    if (newRouteName !== oldRouteName) {
+        clearSearchResults();
+    }
+}, { immediate: true });
+
+// Theo dõi sự thay đổi của ô tìm kiếm
+watch(searchInput, (newValue) => {
+    // Nếu ô tìm kiếm trống, tự động load lại tất cả dữ liệu
+    if (!newValue || newValue.trim() === '') {
+        clearSearchResults();
+
+        // Load lại dữ liệu dựa trên route hiện tại
+        if (route.name === 'admin-quan-ly-san-pham') {
+            store.getAllSP();
+        }
+        else if (route.name === 'admin-quan-ly-nhan-vien') {
+            store.getAllNhanVien(0, 5);
+        }
+        else if (route.name === 'admin-quan-ly-khach-hang') {
+            store.getAllKhachHang(0, 3, null, null);
+        }
+        // Thêm các route khác nếu cần
+    }
+});
+
 // Hàm xử lý tìm kiếm
 const handleSearch = async () => {
     if (!searchInput.value || searchInput.value.trim() === '') {
         // Nếu ô tìm kiếm trống, xóa kết quả tìm kiếm
-        store.searchs = '';
-        store.searchSanPham = [];
-        store.searchChiSanPham = [];
-        store.searchNhanVien = [];
+        clearSearchResults();
         return;
     }
 
@@ -39,9 +75,17 @@ const handleSearch = async () => {
             await store.searchSP(searchInput.value);
             console.log('Kết quả tìm kiếm sản phẩm:', store.searchSanPham);
         }
-        if (route.name === 'admin-quan-ly-nhien') {
+        else if (route.name === 'admin-quan-ly-nhan-vien') {
             await store.searchNhanVien(searchInput.value, 0, 5);
             console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
+        }
+        else if(route.name === 'admin-quan-ly-khach-hang') {
+            await store.getAllKhachHang( 0, 3, searchInput.value, null);
+            console.log('Kết quả tìm kiếm khách hàng:', store.khachHangSearch);
+        }
+        // Thêm các route khác nếu cần
+        else {
+            console.log('Chức năng tìm kiếm chưa được hỗ trợ cho route này:', route.name);
         }
     } catch (error) {
         console.error('Lỗi khi tìm kiếm:', error);

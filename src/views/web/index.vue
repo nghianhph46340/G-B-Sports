@@ -1,5 +1,6 @@
 <template>
     <div class="web p-0 m-0">
+        <TheNoitification />
         <TheBaner />
         <BoSuuTapHot />
         <DanhMucSanPham />
@@ -10,6 +11,7 @@
         <QuanTheThaoBanChay />
         <GiayVaPhuKienBanChay />
         <ThuongHieuSanPham />
+
     </div>
 </template>
 
@@ -24,7 +26,7 @@ import QuanTheThaoBanChay from '@/components/ingredient-web-components/QuanTheTh
 import GiayVaPhuKienBanChay from '@/components/ingredient-web-components/GiayVaPhuKienBanChay.vue';
 import DanhMucSanPham from '@/components/ingredient-web-components/DanhMucSanPham.vue';
 import ThuongHieuSanPham from '@/components/ingredient-web-components/ThuongHieuSanPham.vue';
-
+import TheNoitification from '@/components/TheNoitification.vue';
 
 
 export default {
@@ -38,7 +40,8 @@ export default {
         BoSuuTapHot,
         SanPhamMoiChoTatCa,
         DanhMucSanPham,
-        ThuongHieuSanPham
+        ThuongHieuSanPham,
+        TheNoitification
     }
 }
 </script>

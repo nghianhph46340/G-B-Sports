@@ -2,7 +2,7 @@
     <div class="banner-container mt-3" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="marquee-container">
             <div class="marquee-content">
-                <marquee class="marquee-text" behavior="scroll" direction="left">
+                <div class="marquee-text">
                     <span class="marquee-item marquee-item-star"><i class="fas fa-star"></i> Chào mừng đến với gian hàng
                         của chúng tôi</span>
                     <span class="marquee-separator"><i class="fas fa-circle"></i></span>
@@ -14,7 +14,7 @@
                     <span class="marquee-separator"><i class="fas fa-circle"></i></span>
                     <span class="marquee-item marquee-item-gift"><i class="fas fa-gift"></i> Nhận ngay quà tặng khi mua
                         2 sản phẩm trở lên</span>
-                </marquee>
+                </div>
             </div>
         </div>
         <div class="carousel-wrapper" @mouseenter="showArrows = true" @mouseleave="showArrows = false">
@@ -110,6 +110,7 @@ onMounted(() => {
     height: 100%;
     display: flex;
     align-items: center;
+    animation: marquee 10s linear infinite;
 }
 
 .marquee-text {
@@ -187,6 +188,16 @@ onMounted(() => {
     font-size: 6px;
     color: rgba(255, 255, 255, 0.8);
     filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
 }
 
 @keyframes pulse {

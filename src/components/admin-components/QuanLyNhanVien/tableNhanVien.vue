@@ -37,59 +37,66 @@
       </div>
     </div>
 
+    <div v-if="dataNhanVien.length === 0" class="text-center py-4">
+      <a-empty :image="simpleImage" />
+    </div>
+    <div v-else>
+      <div class="table-responsive mt-4">
+        <table class="table table-hover">
+          <thead>
+            <tr class="">
+              <th scope="col">#</th>
+              <th scope="col">Ảnh</th>
+              <th scope="col">Mã nhân viên</th>
+              <th scope="col">Tên nhân viên </th>
+              <th scope="col">Giới tính</th>
+              <th scope="col">Ngày sinh</th>
+              <th scope="col">SĐT</th>
+              <th scope="col">Địa chỉ</th>
+              <th scope="col">Email</th>
+              <th scope="col">Trạng thái</th>
+              <th scope="col">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(nhanVien, index) in dataNhanVien" :key="nhanVien.idNhanVien">
+              <td>{{ index + 1 }}</td>
+              <td>
+                <a-image :width="75" :src="nhanVien.anhNhanVien" />
 
-    <div class="table-responsive mt-4">
-      <table class="table table-hover">
-        <thead>
-          <tr class="">
-            <th scope="col">#</th>
-            <th scope="col">Ảnh</th>
-            <th scope="col">Mã nhân viên</th>
-            <th scope="col">Tên nhân viên </th>
-            <th scope="col">Giới tính</th>
-            <th scope="col">Ngày sinh</th>
-            <th scope="col">SĐT</th>
-            <th scope="col">Địa chỉ</th>
-            <th scope="col">Email</th>
-            <th scope="col">Trạng thái</th>
-            <th scope="col">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(nhanVien, index) in dataNhanVien" :key="nhanVien.idNhanVien">
-            <td>{{ index + 1 }}</td>
-            <td>
-              <a-image :width="75"
-                :src="nhanVien.anhNhanVien" />
+              </td>
+              <td>{{ nhanVien.maNhanVien }}</td>
+              <td>{{ nhanVien.tenNhanVien }}</td>
+              <td>{{ nhanVien.gioiTinh ? "Nam" : "Nữ" }}</td>
+              <td>{{ nhanVien.ngaySinh }}</td>
+              <td>{{ nhanVien.soDienThoai }}</td>
+              <td>{{ nhanVien.diaChiLienHe }}</td>
+              <td>{{ nhanVien.email }}</td>
+              <td>
+                <a-switch :checked="nhanVien.trangThai == 'Đang hoạt động' ? true : false"
+                  :style="{ backgroundColor: nhanVien.trangThai === 'Đang hoạt động' ? '#f33b47' : '#ccc' }"
+                  @click="chuyenTrangThai(nhanVien.idNhanVien)" />
+              </td>
+              <td>
+                <button class="btn btn-outline-danger btn-sm"
+                  @click="router.push(`/admin/quanlynhanvien/update/${nhanVien.idNhanVien}`)">
+                  <i class="fas fa-edit me-1"></i>Sửa
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-            </td>
-            <td>{{ nhanVien.maNhanVien }}</td>
-            <td>{{ nhanVien.tenNhanVien }}</td>
-            <td>{{ nhanVien.gioiTinh ? "Nam" : "Nữ" }}</td>
-            <td>{{ nhanVien.ngaySinh }}</td>
-            <td>{{ nhanVien.soDienThoai }}</td>
-            <td>{{ nhanVien.diaChiLienHe }}</td>
-            <td>{{ nhanVien.email }}</td>
-            <td>
-              <a-switch :checked="nhanVien.trangThai == 'Đang hoạt động' ? true : false"
-                :style="{ backgroundColor: nhanVien.trangThai === 'Đang hoạt động' ? '#f33b47' : '#ccc' }"
-                @click="chuyenTrangThai(nhanVien.idNhanVien)" />
-            </td>
-            <td>
-              <button class="btn btn-outline-danger btn-sm" @click="router.push(`/admin/quanlynhanvien/update/${nhanVien.idNhanVien}`)">
-                <i class="fas fa-edit me-1"></i>Sửa
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="d-flex justify-content-center align-items-center mt-3">
+        <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
+          :disabled="store.currentPage === 0">Previous</button>
+        <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages }}</span>
+        <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
+          :disabled="store.currentPage >= store.totalPages - 1">Next</button>
+      </div>
     </div>
 
-    <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
-      :disabled="store.currentPage === 0">Previous</button>
-    <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages }}</span>
-    <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
-      :disabled="store.currentPage >= store.totalPages - 1">Next</button>
   </div>
 </template>
 
@@ -98,6 +105,8 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 // Khởi tạo router và store
+import { Empty } from 'ant-design-vue';
+const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const router = useRouter();
 const store = useGbStore();
 const pageSize = ref(5);
@@ -109,17 +118,17 @@ const selectedTrangThai = ref('');
 //   }
 // };
 const fetchData = (page = 0) => {
-    if (page < 0) return;
-    
-    store.currentPage = page;
+  if (page < 0) return;
 
-    if (store.searchs && store.searchs.trim() !== '') {
-        store.searchNhanVien(store.searchs, page, pageSize.value);
-    } else if (selectedTrangThai.value) {
-        store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
-    } else {
-        store.getAllNhanVien(page, pageSize.value);
-    }
+  store.currentPage = page;
+
+  if (store.searchs && store.searchs.trim() !== '') {
+    store.searchNhanVien(store.searchs, page, pageSize.value);
+  } else if (selectedTrangThai.value) {
+    store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+  } else {
+    store.getAllNhanVien(page, pageSize.value);
+  }
 };
 //Lọc theo trạng thái
 // Hàm gọi API lấy dữ liệu nhân viên theo trạng thái
@@ -137,36 +146,36 @@ const chuyenTrangThai = (id) => {
 
 //Search nhân viên
 const dataNhanVien = computed(() => {
-if (store.searchs && store.searchs.trim() !== '' && store.nhanVienSearch && store.nhanVienSearch.length > 0) {
-        console.log('Hiển thị kết quả tìm kiếm:', store.nhanVienSearch);
-        return store.nhanVienSearch.map((item, index) => ({
-            stt: index + 1,
-            key: item.idNhanVien,
-            anhNhanVien: item.anhNhanVien,
-            idNhanVien: item.idNhanVien,
-            maNhanVien: item.maNhanVien,
-            tenNhanVien: item.tenNhanVien,
-            gioiTinh: item.gioiTinh ? "Nam" : "Nữ",
-            ngaySinh: item.ngaySinh,
-            soDienThoai: item.soDienThoai,
-            diaChiLienHe: item.diaChiLienHe,
-            email: item.email,
-            trangThai: item.trangThai,
-        }));
-    }
-    if (store.searchs) {
-        return [];
-    }
-    // Nếu không có từ khóa tìm kiếm hoặc không có kết quả tìm kiếm, hiển thị tất cả sản phẩm
-    return store.getAllNhanVienArr;
+  if (store.searchs && store.searchs.trim() !== '' && store.nhanVienSearch && store.nhanVienSearch.length > 0) {
+    console.log('Hiển thị kết quả tìm kiếm:', store.nhanVienSearch);
+    return store.nhanVienSearch.map((item, index) => ({
+      stt: index + 1,
+      key: item.idNhanVien,
+      anhNhanVien: item.anhNhanVien,
+      idNhanVien: item.idNhanVien,
+      maNhanVien: item.maNhanVien,
+      tenNhanVien: item.tenNhanVien,
+      gioiTinh: item.gioiTinh ? "Nam" : "Nữ",
+      ngaySinh: item.ngaySinh,
+      soDienThoai: item.soDienThoai,
+      diaChiLienHe: item.diaChiLienHe,
+      email: item.email,
+      trangThai: item.trangThai,
+    }));
+  }
+  if (store.searchs) {
+    return [];
+  }
+  // Nếu không có từ khóa tìm kiếm hoặc không có kết quả tìm kiếm, hiển thị tất cả sản phẩm
+  return store.getAllNhanVienArr;
 });
-watch(() => store.searchs, (newValue) => {
-    if (!newValue || newValue.trim() === '') {
-        store.getAllNhanVien(0, pageSize.value);
-    } else {
-        store.searchNhanVien(newValue, 0, pageSize.value);
-    }
-});
+// watch(() => store.searchs, (newValue) => {
+//   if (!newValue || newValue.trim() === '') {
+//     store.getAllNhanVien(0, pageSize.value);
+//   } else {
+//     store.searchNhanVien(newValue, 0, pageSize.value);
+//   }
+// });
 // Mounted hook
 onMounted(() => {
   store.getAllNhanVien(0, pageSize.value);
@@ -174,8 +183,8 @@ onMounted(() => {
 
 });
 watch(pageSize, () => {
-    store.currentPage = 0;  // Reset về trang đầu khi đổi số lượng
-    fetchData(0);
+  store.currentPage = 0;  // Reset về trang đầu khi đổi số lượng
+  fetchData(0);
 });
 
 // Theo dõi thay đổi của selectedStatus để lọc danh sách theo trạng thái
