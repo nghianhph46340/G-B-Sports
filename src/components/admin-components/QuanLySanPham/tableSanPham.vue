@@ -7,7 +7,7 @@
         class="components-table-demo-nested" /> -->
     <div>
         <menuAction />
-        <a-table :columns="columns" :row-selection="rowSelection" :data-source="data"
+        <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
             class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
             :row-key="record => record.id_san_pham">
             <template #expandedRowRender="{ record }">
@@ -95,7 +95,7 @@
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
 import { EditOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import { onMounted, ref, render } from 'vue';
+import { onMounted, ref, render, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
@@ -446,6 +446,30 @@ const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
         rowSelection.value.selectedRowKeys = currentParentKeys.filter(key => key !== parentId);
     }
 };
+
+// Computed property để quyết định hiển thị dữ liệu tìm kiếm hay tất cả sản phẩm
+const displayData = computed(() => {
+    // Nếu store có dữ liệu tìm kiếm, hiển thị kết quả tìm kiếm
+    if (store.searchSanPham && store.searchSanPham.length > 0) {
+        console.log('Hiển thị kết quả tìm kiếm:', store.searchSanPham);
+        return store.searchSanPham.map((item, index) => ({
+            stt: index + 1,
+            key: item.id_san_pham,
+            id_san_pham: item.id_san_pham,
+            ma_san_pham: item.ma_san_pham,
+            ten_san_pham: item.ten_san_pham,
+            hinh_anh: item.hinh_anh,
+            chi_muc: (item.danhMuc?.ten_danh_muc || '') + "/" + (item.thuongHieu?.ten_thuong_hieu || '') + "/" + (item.chatLieu?.ten_chat_lieu || ''),
+            trang_thai: item.trang_thai,
+            tong_so_luong: item.tong_so_luong,
+        }));
+    }
+    if (store.searchs) {
+        return [];
+    }
+    // Nếu không có dữ liệu tìm kiếm, hiển thị tất cả sản phẩm
+    return data.value;
+});
 
 onMounted(async () => {
     // Kiểm tra flag có vừa thêm sản phẩm mới không
