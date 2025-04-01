@@ -90,21 +90,24 @@ export const useGbStore = defineStore('gbStore', {
     // Thêm action cho BCTK
     async getSoLieu(type = null, startDate = null, endDate = null) {
       try {
+        console.log('Store getSoLieu được gọi với:', { type, startDate, endDate });
         const response = await bctkService.getSoLieu(type, startDate, endDate);
 
         if (response) {
+          console.log('Dữ liệu nhận được trong store:', response);
           this.thongKe = {
             doanhThu: response.doanhThu || 0,
             tongDonHang: response.tongDonHang || 0,
             tongSanPham: response.tongSanPham || 0
           };
+          console.log('State sau khi cập nhật:', this.thongKe);
           return response;
         } else {
           toast.error('Không lấy được dữ liệu thống kê');
           return null;
         }
       } catch (error) {
-        console.error('Lỗi khi lấy thống kê:', error);
+        console.error('Lỗi trong store getSoLieu:', error);
         toast.error('Có lỗi xảy ra khi lấy thống kê');
         return null;
       }

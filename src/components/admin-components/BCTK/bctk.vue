@@ -52,7 +52,28 @@
                 </div>
             </div>
         </div>
-
+        <div class="chart-container mt-4">
+            <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+                <h3>Biểu đồ doanh thu</h3>
+                <div class="chart-controls d-flex gap-2">
+                    <a-select v-model:value="timeUnit" style="width: 120px">
+                        <!-- <a-select-option value="day">Theo ngày</a-select-option> -->
+                        <a-select-option value="week">Theo tuần</a-select-option>
+                        <a-select-option value="month">Theo tháng</a-select-option>
+                        <a-select-option value="year">Theo năm</a-select-option>
+                    </a-select>
+                    <a-select v-model:value="chartType" style="width: 120px">
+                        <a-select-option value="revenue">Doanh thu</a-select-option>
+                        <a-select-option value="orders">Đơn hàng</a-select-option>
+                        <a-select-option value="products">Sản phẩm</a-select-option>
+                    </a-select>
+                </div>
+            </div>
+            <div class="chart-body">
+                <apexchart type="line" height="400" :options="chartOptions" :series="series"></apexchart>
+            </div>
+            
+        </div>
     </div>
 </template>
 
@@ -61,9 +82,11 @@ import { ref, onMounted, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { storeToRefs } from 'pinia';
 import viVN from 'ant-design-vue/es/date-picker/locale/vi_VN';
+import VueApexCharts from 'vue3-apexcharts';
+import { bctkService } from '@/services/bctkService';
 
 const store = useGbStore();
-const { thongKe} = storeToRefs(store);
+const { thongKe } = storeToRefs(store);
 
 const selectedFilter = ref('hom-nay');
 const dateRange = ref();
@@ -99,19 +122,23 @@ const filterOption = (input, option) => {
 
 // Xử lý khi thay đổi filter
 const handleFilterChange = async (value) => {
+    console.log('Filter được chọn:', value);
     selectedFilter.value = value;
     if (value === 'tuy-chon') {
-        dateRange.value = null; // Reset date range khi chọn tùy chọn
+        dateRange.value = null; // Reset date range
     } else {
+        console.log('Gửi request với filter:', value);
         await store.getSoLieu(value);
     }
 };
 
 // Xử lý khi thay đổi ngày
 const handleDateChange = async (dates) => {
+    console.log('Selected dates:', dates);
     if (dates && dates[0] && dates[1]) {
         const startDate = dates[0].format('YYYY-MM-DD');
         const endDate = dates[1].format('YYYY-MM-DD');
+        console.log('Gửi request với ngày:', { startDate, endDate });
         await store.getSoLieu('tuy-chon', startDate, endDate);
     }
 };
@@ -123,9 +150,249 @@ const formatCurrency = (value) => {
     }).format(value || 0);
 };
 
+// Thêm state cho biểu đồ
+const timeUnit = ref('month');
+const chartType = ref('revenue');
+const chartData = ref(null);
+
+const series = ref([{
+    name: 'Doanh thu',
+    data: []
+}]);
+
+const chartOptions = ref({
+    chart: {
+        type: 'line',
+        zoom: { enabled: false },
+        toolbar: { show: false }
+    },
+    stroke: {
+        curve: 'smooth',
+        width: 3
+    },
+    grid: {
+        borderColor: '#f1f1f1',
+    },
+    xaxis: {
+        categories: [],
+        labels: {
+            style: { fontSize: '12px' }
+        }
+    },
+    yaxis: {
+        labels: {
+            formatter: function (value) {
+                if (chartType.value === 'revenue') {
+                    return new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                        maximumFractionDigits: 0
+                    }).format(value);
+                }
+                return value.toFixed(0);
+            }
+        }
+    },
+    colors: ['#0ea5e9'],
+    fill: {
+        type: 'gradient',
+        gradient: {
+            shade: 'light',
+            type: 'vertical',
+            shadeIntensity: 0.5,
+            opacityFrom: 0.7,
+            opacityTo: 0.2,
+        }
+    },
+    dataLabels: { enabled: false },
+    tooltip: {
+        theme: 'light',
+        y: {
+            formatter: function (value) {
+                if (chartType.value === 'revenue') {
+                    return new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                        maximumFractionDigits: 0
+                    }).format(value);
+                }
+                return value;
+            }
+        }
+    }
+});
+
+// Hàm helper
+const getChartName = (type) => {
+    switch (type) {
+        case 'revenue': return 'Doanh thu';
+        case 'orders': return 'Đơn hàng';
+        case 'products': return 'Sản phẩm';
+        default: return 'Doanh thu';
+    }
+};
+
+const getChartColor = (type) => {
+    switch (type) {
+        case 'revenue': return '#0ea5e9';
+        case 'orders': return '#f59e0b';
+        case 'products': return '#10b981';
+        default: return '#0ea5e9';
+    }
+};
+
+// Hàm lấy dữ liệu cho biểu đồ
+const fetchChartData = async (timeUnitValue) => {
+    try {
+        console.log('Bắt đầu fetch dữ liệu cho:', timeUnitValue);
+        const data = await bctkService.getChartData(timeUnitValue);
+        console.log('Nhận được dữ liệu:', data);
+        
+        if (data) {
+            chartData.value = data;
+            console.log('Đã cập nhật chartData:', chartData.value);
+            updateChartDisplay();
+        }
+    } catch (error) {
+        console.error('Chi tiết lỗi:', error);
+        chartData.value = {
+            doanhThu: Array(getDefaultLength()).fill(0),
+            donHang: Array(getDefaultLength()).fill(0),
+            sanPham: Array(getDefaultLength()).fill(0)
+        };
+        updateChartDisplay();
+    }
+};
+
+// Helper function to get default array length based on timeUnit
+const getDefaultLength = () => {
+    switch (timeUnit.value) {
+        case 'day': return 6;
+        case 'week': return 7;
+        case 'month': return 12;
+        case 'year': return 5;
+        default: return 0;
+    }
+};
+
+// Hàm cập nhật hiển thị biểu đồ
+const updateChartDisplay = () => {
+    console.log('updateChartDisplay được gọi');
+    const { categories, data } = formatChartData();
+    console.log('Categories:', categories);
+    console.log('Data:', data);
+
+    series.value = [{
+        name: getChartName(chartType.value),
+        data: data
+    }];
+    console.log('Series mới:', series.value);
+
+    chartOptions.value = {
+        ...chartOptions.value,
+        xaxis: {
+            categories: categories,
+            labels: {
+                style: {
+                    fontSize: '12px'
+                }
+            }
+        },
+        yaxis: {
+            labels: {
+                formatter: function(value) {
+                    if (chartType.value === 'revenue') {
+                        return new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND',
+                            maximumFractionDigits: 0
+                        }).format(value);
+                    }
+                    return Math.round(value).toString();
+                }
+            }
+        },
+        colors: [getChartColor(chartType.value)]
+    };
+};
+
+// Hàm format dữ liệu cho biểu đồ
+const formatChartData = () => {
+    console.log('formatChartData được gọi');
+    console.log('timeUnit hiện tại:', timeUnit.value);
+    console.log('chartData hiện tại:', chartData.value);
+    
+    let categories = [];
+    let data = [];
+
+    switch (timeUnit.value) {
+        case 'day':
+            categories = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+            break;
+        case 'week':
+            categories = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+            break;
+        case 'month':
+            categories = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+            break;
+        case 'year':
+            const currentYear = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })).getFullYear();
+            categories = [
+                (currentYear - 4).toString(),
+                (currentYear - 3).toString(),
+                (currentYear - 2).toString(),
+                (currentYear - 1).toString(),
+                currentYear.toString()
+            ];
+            console.log('Năm hiện tại (Hà Nội):', currentYear);
+            console.log('Categories năm:', categories);
+            break;
+    }
+
+    if (chartData.value) {
+        console.log('Dữ liệu chart hiện tại:', chartData.value);
+        switch (chartType.value) {
+            case 'revenue':
+                data = chartData.value.doanhThu || Array(categories.length).fill(0);
+                break;
+            case 'orders':
+                data = chartData.value.donHang || Array(categories.length).fill(0);
+                break;
+            case 'products':
+                data = chartData.value.sanPham || Array(categories.length).fill(0);
+                break;
+        }
+    } else {
+        data = Array(categories.length).fill(0);
+    }
+
+    console.log('Categories:', categories);
+    console.log('Data formatted:', data);
+
+    return { categories, data };
+};
+
+// Theo dõi thay đổi
+watch([timeUnit, chartType], async ([newTimeUnit, newChartType], [oldTimeUnit, oldChartType]) => {
+    console.log('Watch triggered:', { newTimeUnit, newChartType, oldTimeUnit, oldChartType });
+    
+    if (newTimeUnit !== oldTimeUnit) {
+        await fetchChartData(newTimeUnit);
+    } else if (newChartType !== oldChartType) {
+        updateChartDisplay();
+    }
+});
+
+// Khởi tạo
 onMounted(async () => {
-    // Gọi API lấy dữ liệu khi component được mount
-    await store.getSoLieu('hom-nay');
+    try {
+        await Promise.all([
+            store.getSoLieu('hom-nay'),
+            fetchChartData('month')
+        ]);
+    } catch (error) {
+        console.error('Error in onMounted:', error);
+    }
 });
 </script>
 
@@ -240,7 +507,7 @@ onMounted(async () => {
     background: white;
     border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .chart-header h3 {
