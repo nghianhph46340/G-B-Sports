@@ -577,6 +577,7 @@ const themNhanVien = async () => {
             const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
             const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
             const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
+            console.log(formData);
             const nhanVienMoi = {
                 ...formData,
                 diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim()
