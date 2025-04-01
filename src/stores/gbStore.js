@@ -79,7 +79,12 @@ export const useGbStore = defineStore('gbStore', {
         type: 'hom-nay',
         startDate: '',
         endDate: ''
-      }
+      },
+      // State cho chi tiết sản phẩm
+      cTSPBySanPhamFull: [],
+      //Giỏ hàng và thanh toán
+      checkoutItems: [], //Dữ liệu sản phẩm mua ngay
+      justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
     };
   },
 
@@ -366,6 +371,17 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra');
       }
     },
+    async getCTSPBySanPhamFull(idSanPham) {
+      const cTSPBySanPhamFull = await sanPhamService.getCTSPBySanPhamFull(idSanPham);
+      if (cTSPBySanPhamFull.error) {
+        toast.error("Không lấy được dữ liệu")
+        return;
+      } else {
+        this.cTSPBySanPhamFull = cTSPBySanPhamFull;
+        console.log(this.cTSPBySanPhamFull);
+      }
+    },
+    ///////////-----------------Hóa đơn-------------------////////////
     async getAllHoaDon(page = 0, size = 5) {
       try {
         const hoaDon = await hoaDonService.getAllHoaDon(page, size);
@@ -1033,7 +1049,7 @@ export const useGbStore = defineStore('gbStore', {
           return;
         }
         toast.success('Cập nhật trạng thái thành công');
-        await this.getHoaDonDetail(maHoaDon);
+        await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
       } catch (error) {
         console.error(error);
         toast.error('Có lỗi xảy ra');
@@ -1047,7 +1063,7 @@ export const useGbStore = defineStore('gbStore', {
           return;
         }
         toast.success('Hủy hóa đơn thành công');
-        await this.getHoaDonDetail(maHoaDon);
+        await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi hủy
       } catch (error) {
         console.error(error);
         toast.error('Có lỗi xảy ra');
@@ -1072,16 +1088,6 @@ export const useGbStore = defineStore('gbStore', {
         toast.success('Lưu dữ liệu thành công');
       }
       return saveExcelImportRespone;
-    },
-    async getAllSanPhamNgaySua() {
-      const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua();
-      console.log(sanPhamNgaySua);
-      if (sanPhamNgaySua.error) {
-        toast.error('Không lấy được dữ liệu');
-        return;
-      } else {
-        this.getAllSanPham = sanPhamNgaySua;
-      }
     },
     getPath(path) {
       this.checkRouter = '';
@@ -1540,8 +1546,16 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra');
       }
     },
-  }, // Đóng actions tại đây
 
+    setCheckoutItems(items) {
+      this.checkoutItems = Array.isArray(items) ? items : [items];
+      console.log('checkoutItems', this.checkoutItems);
+    },
+
+    clearCheckoutItems() {
+      this.checkoutItems = [];
+    }
+  },
 
   // Action tìm kiếm sản phẩm (tùy chọn nếu muốn tích hợp vào store)
   async searchSanPhamKM(keyword) {
