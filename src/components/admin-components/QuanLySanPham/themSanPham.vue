@@ -238,7 +238,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, onBeforeUnmount, nextTick } from 'vue';
 import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
@@ -312,7 +312,7 @@ const variantColumns = ref([
         dataIndex: 'gia_ban',
         key: 'gia_ban',
         customRender: ({ text }) => {
-            return text.toLocaleString('vi-VN') + ' đ';
+            return text ? text.toLocaleString('vi-VN') + ' đ' : '0 đ';
         }
     },
     {
@@ -328,6 +328,13 @@ const previewTitle = ref('');
 
 const formRef = ref(null);
 const isProductValidated = ref(false);
+
+// Thêm biến đánh dấu component còn mounted không
+const mounted = ref(true);
+
+onBeforeUnmount(() => {
+    mounted.value = false;
+});
 
 // Định nghĩa rules cho form
 const rules = {
@@ -417,9 +424,8 @@ const addVariantType = () => {
     variantTypes.value.push({
         id_mau_sac: null,
         selectedSizes: [],
-        so_luong: useCommonPrice.value ? 1 : 0,
-        // gia_nhap: useCommonPrice.value ? formState.gia_nhap_chung : 0,
-        gia_ban: useCommonPrice.value ? formState.gia_ban_chung : 0,
+        so_luong: 1, // Giá trị mặc định là 1
+        gia_ban: useCommonPrice.value ? (formState.gia_ban_chung || 1000) : 1000, // Giá trị mặc định là 1000
         fileList: [],
     });
     updateAvailableColors();
@@ -524,13 +530,71 @@ const updateAvailableSizes = (typeIndex) => {
 
 // Xử lý khi thay đổi kích thước
 const handleSizeChange = (selectedSizes, typeIndex) => {
-    variantTypes.value[typeIndex].selectedSizes = selectedSizes;
+    const type = variantTypes.value[typeIndex];
+
+    // Lưu lại giá và số lượng hiện tại của type
+    const currentPrice = type.gia_ban;
+    const currentQuantity = type.so_luong;
+
+    // Cập nhật danh sách kích thước đã chọn
+    type.selectedSizes = selectedSizes;
+
+    // Đảm bảo tất cả biến thể mới tạo đều có cùng giá và số lượng
     updateVariantsFromType(typeIndex);
 };
 
-// Cập nhật danh sách biến thể từ dạng biến thể
+// Sửa hàm cập nhật tất cả biến thể cùng màu sắc để không bao giờ đặt giá null
+const updateAllVariantsWithSameColor = (colorId, price, quantity) => {
+    if (!colorId) return; // Không làm gì nếu không có ID màu sắc
+
+    // Cập nhật giá cho tất cả biến thể cùng màu sắc
+    variants.value.forEach(variant => {
+        if (variant.id_mau_sac === colorId) {
+            // Đảm bảo không đặt giá trị null
+            if (price !== undefined && price !== null) variant.gia_ban = price;
+            if (quantity !== undefined && quantity !== null) variant.so_luong = quantity;
+        }
+    });
+
+    // Cập nhật giá và số lượng cho tất cả dạng biến thể cùng màu sắc
+    variantTypes.value.forEach(type => {
+        if (type.id_mau_sac === colorId) {
+            // Đảm bảo không đặt giá trị null
+            if (price !== undefined && price !== null) type.gia_ban = price;
+            if (quantity !== undefined && quantity !== null) type.so_luong = quantity;
+        }
+    });
+};
+
+// Thêm hook để đồng bộ khi giá bán hoặc số lượng thay đổi trong variantType
+watch(variantTypes, (newValue, oldValue) => {
+    // Duyệt qua từng variantType
+    newValue.forEach((type, index) => {
+        // Kiểm tra variantType cũ có tồn tại không
+        if (oldValue && oldValue[index]) {
+            const oldType = oldValue[index];
+
+            // Nếu giá bán thay đổi
+            if (type.gia_ban !== oldType.gia_ban) {
+                // Cập nhật giá cho tất cả biến thể cùng màu sắc
+                updateAllVariantsWithSameColor(type.id_mau_sac, type.gia_ban, undefined);
+            }
+
+            // Nếu số lượng thay đổi
+            if (type.so_luong !== oldType.so_luong) {
+                // Cập nhật số lượng cho tất cả biến thể cùng màu sắc
+                updateAllVariantsWithSameColor(type.id_mau_sac, undefined, type.so_luong);
+            }
+        }
+    });
+}, { deep: true });
+
+// Sửa hàm updateVariantsFromType để đảm bảo không bao giờ có giá trị null
 const updateVariantsFromType = (typeIndex) => {
+    if (!mounted.value) return;
+
     const type = variantTypes.value[typeIndex];
+    if (!type) return;
 
     // Xóa các biến thể cũ của dạng biến thể này
     variants.value = variants.value.filter(v => v.id_mau_sac !== type.id_mau_sac);
@@ -544,40 +608,30 @@ const updateVariantsFromType = (typeIndex) => {
     const colorInfo = mauSacList.value.find(c => c.id_mau_sac === type.id_mau_sac);
     if (!colorInfo) return;
 
+    // Đảm bảo giá và số lượng có giá trị hợp lệ
+    const safePrice = type.gia_ban !== null && type.gia_ban !== undefined ? type.gia_ban : 1000;
+    const safeQuantity = type.so_luong !== null && type.so_luong !== undefined ? type.so_luong : 1;
+
     // Tạo biến thể mới cho mỗi kích thước đã chọn
     type.selectedSizes.forEach(sizeId => {
         const sizeInfo = sizeList.value.find(s => s.id_kich_thuoc === sizeId);
         if (!sizeInfo) return;
 
-        // Kiểm tra xem biến thể đã tồn tại chưa
-        const existingVariantIndex = variants.value.findIndex(
-            v => v.id_mau_sac === type.id_mau_sac && v.id_kich_thuoc === sizeId
-        );
-
-        if (existingVariantIndex >= 0) {
-            // Cập nhật biến thể hiện có
-            variants.value[existingVariantIndex].so_luong = type.so_luong;
-            // variants.value[existingVariantIndex].gia_nhap = type.gia_nhap;
-            variants.value[existingVariantIndex].gia_ban = type.gia_ban;
-            // Cập nhật fileList nếu có
-            if (type.fileList && type.fileList.length > 0) {
-                variants.value[existingVariantIndex].fileList = [...type.fileList];
-            }
-        } else {
-            // Tạo biến thể mới
-            variants.value.push({
-                id_mau_sac: type.id_mau_sac,
-                id_kich_thuoc: sizeId,
-                mau_sac_name: colorInfo.ma_mau_sac + ' ' + colorInfo.ten_mau_sac,
-                kich_thuoc_name: sizeInfo.gia_tri,
-                so_luong: type.so_luong,
-                // gia_nhap: type.gia_nhap,
-                gia_ban: type.gia_ban,
-                fileList: type.fileList ? [...type.fileList] : [],
-                hinh_anh: []
-            });
-        }
+        // Tạo biến thể mới với giá trị an toàn
+        variants.value.push({
+            id_mau_sac: type.id_mau_sac,
+            id_kich_thuoc: sizeId,
+            mau_sac_name: colorInfo.ma_mau_sac + ' ' + colorInfo.ten_mau_sac,
+            kich_thuoc_name: sizeInfo.gia_tri,
+            so_luong: safeQuantity,
+            gia_ban: safePrice,
+            fileList: type.fileList ? [...type.fileList] : [],
+            hinh_anh: []
+        });
     });
+
+    // Thông báo cập nhật thành công
+    console.log(`Đã cập nhật ${variants.value.filter(v => v.id_mau_sac === type.id_mau_sac).length} biến thể với màu ${colorInfo.ten_mau_sac}`);
 };
 
 // Lấy danh sách biến thể từ một dạng biến thể
@@ -662,15 +716,20 @@ const resetForm = () => {
     isProductValidated.value = false;
 };
 
-// Cập nhật watch cho giá chung
+// Cập nhật watch cho giá chung để sử dụng nextTick
 watch([() => formState.gia_nhap_chung, () => formState.gia_ban_chung, () => useCommonPrice.value],
     async ([newGiaNhap, newGiaBan, newUseCommon]) => {
-        if (newUseCommon) {
+        if (newUseCommon && mounted.value) {
+            // Sử dụng nextTick để đảm bảo DOM đã được cập nhật trước khi thay đổi giá
+            await nextTick();
+
             // Cập nhật giá cho tất cả dạng biến thể
             variantTypes.value.forEach((type, index) => {
-                type.gia_nhap = newGiaNhap;
-                type.gia_ban = newGiaBan;
-                updateVariantsFromType(index);
+                if (type) {
+                    type.gia_nhap = newGiaNhap;
+                    type.gia_ban = newGiaBan;
+                    updateVariantsFromType(index);
+                }
             });
         }
     }
@@ -795,7 +854,7 @@ const onFinish = async () => {
             // Validate giá của biến thể
             if (!useCommonPrice.value) {
                 if (!variant.gia_ban || variant.gia_ban < 1000) {
-                    throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
+                    throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn 1000!`);
                 }
             }
         }
@@ -880,6 +939,11 @@ const onFinish = async () => {
 
         }));
         message.success(response.message || 'Thêm sản phẩm và biến thể thành công!');
+        await store.getAllSanPhamNgaySua();
+
+        // Đánh dấu vừa thêm sản phẩm mới
+        store.justAddedProduct = true;
+
         router.push('/admin/quanlysanpham');
     } catch (error) {
         console.error('Chi tiết lỗi:', error);
@@ -898,9 +962,22 @@ const onFinish = async () => {
 
 // Thêm hàm xử lý khi giá thay đổi
 const handlePriceChange = async () => {
+    if (!mounted.value) return;
+
     if (formRef.value) {
         try {
+            await nextTick();
             await formRef.value.validateFields(['gia_chung']);
+
+            // Cập nhật giá cho tất cả biến thể khi dùng giá chung
+            if (useCommonPrice.value) {
+                variantTypes.value.forEach((type, index) => {
+                    if (type) {
+                        type.gia_ban = formState.gia_ban_chung;
+                        updateVariantsFromType(index);
+                    }
+                });
+            }
         } catch (error) {
             console.log('Validation failed:', error);
         }
@@ -968,6 +1045,7 @@ const handleVariantPriceChange = (value, variant, field) => {
 
 // Thêm watch cho formState để kiểm tra validation
 watch(() => formState, async (newVal) => {
+    if (!formRef.value) return;
     try {
         await formRef.value.validate();
         isProductValidated.value = true;
@@ -975,6 +1053,17 @@ watch(() => formState, async (newVal) => {
         isProductValidated.value = false;
     }
 }, { deep: true });
+
+const someAsyncFunction = async () => {
+    try {
+        const result = await someApi();
+        if (!mounted.value) return; // Không cập nhật nếu component đã unmount
+        // Xử lý kết quả
+    } catch (error) {
+        if (!mounted.value) return;
+        // Xử lý lỗi
+    }
+};
 </script>
 
 <style scoped>

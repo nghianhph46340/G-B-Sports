@@ -72,6 +72,7 @@ export const useGbStore = defineStore('gbStore', {
       cTSPBySanPhamFull: [],
       //Giỏ hàng và thanh toán
       checkoutItems: [], //Dữ liệu sản phẩm mua ngay
+      justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
     };
   },
 

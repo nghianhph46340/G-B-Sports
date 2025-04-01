@@ -448,7 +448,16 @@ const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
 };
 
 onMounted(async () => {
-    await store.getAllSP();
+    // Kiểm tra flag có vừa thêm sản phẩm mới không
+    if (store.justAddedProduct) {
+        // Nếu vừa thêm sản phẩm, lấy danh sách theo ngày sửa và reset flag
+        await store.getAllSanPhamNgaySua();
+        store.justAddedProduct = false; // Reset flag
+    } else {
+        // Nếu không, lấy danh sách bình thường
+        await store.getAllSP();
+    }
+
     data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
         return {
             stt: index + 1,
@@ -462,7 +471,6 @@ onMounted(async () => {
             tong_so_luong: item.tong_so_luong,
         };
     }));
-
 });
 </script>
 <style scoped>
