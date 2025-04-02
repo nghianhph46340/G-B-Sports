@@ -667,6 +667,53 @@ export const useGbStore = defineStore('gbStore', {
                 this.searchSanPham = [];
             }
         },
+        
+        getLangue(check) {
+            const vni = {
+                "nguoiDung": "Đăng nhập",
+                "cuaHang": "Cửa hàng",
+                "hoTro": "Hỗ trợ",
+                "gioHang": "Giỏ hàng",
+                "timKiem": "Bạn đang muốn tìm kiếm gì?"
+            }
+            const eng = {
+                "nguoiDung": "Login",
+                "cuaHang": "Store",
+                "hoTro": "Support",
+                "gioHang": "Cart",
+                "timKiem": "What are you looking for?"
+            }
+            if (!check) {
+                this.changeLanguage = vni
+                this.check = true
+                this.language = 'EN'
+            } else {
+                this.changeLanguage = eng
+                this.check = false
+                this.language = 'VI'
+            }
+        },
+        showModal(show) {
+            this.status = show
+        },
+        showModalSideBar(id) {
+            this.id = id
+            if (this.status) {
+                id = 0
+                this.id = id
+            }
+        },
+        hideModalSideBar(id) {
+            this.id = 0
+        },
+        showModalSideBar1(show) {
+            this.statusSideBar1 = show
+        },
+        closeNoitification() {
+            this.checkNoitification = false
+        },
+
+        ///Code bán hàng tại quầy
         async getAllCTSPKM() {
             try {
                 const response = await sanPhamService.getAllCTSPKM();
@@ -810,50 +857,6 @@ export const useGbStore = defineStore('gbStore', {
                 throw error;
             }
         },
-        getLangue(check) {
-            const vni = {
-                "nguoiDung": "Đăng nhập",
-                "cuaHang": "Cửa hàng",
-                "hoTro": "Hỗ trợ",
-                "gioHang": "Giỏ hàng",
-                "timKiem": "Bạn đang muốn tìm kiếm gì?"
-            }
-            const eng = {
-                "nguoiDung": "Login",
-                "cuaHang": "Store",
-                "hoTro": "Support",
-                "gioHang": "Cart",
-                "timKiem": "What are you looking for?"
-            }
-            if (!check) {
-                this.changeLanguage = vni
-                this.check = true
-                this.language = 'EN'
-            } else {
-                this.changeLanguage = eng
-                this.check = false
-                this.language = 'VI'
-            }
-        },
-        showModal(show) {
-            this.status = show
-        },
-        showModalSideBar(id) {
-            this.id = id
-            if (this.status) {
-                id = 0
-                this.id = id
-            }
-        },
-        hideModalSideBar(id) {
-            this.id = 0
-        },
-        showModalSideBar1(show) {
-            this.statusSideBar1 = show
-        },
-        closeNoitification() {
-            this.checkNoitification = false
-        }
     },
     persist: {
         enabled: true,
