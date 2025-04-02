@@ -7,6 +7,7 @@
         class="components-table-demo-nested" /> -->
     <div>
         <menuAction />
+        <h4 class="ms-3">Danh sách sản phẩm</h4>
         <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
             class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
             :row-key="record => record.id_san_pham">
