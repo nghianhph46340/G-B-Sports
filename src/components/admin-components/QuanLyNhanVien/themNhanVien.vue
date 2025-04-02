@@ -161,6 +161,7 @@ import axiosInstance from '@/config/axiosConfig';
 import { message } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
+import { useRouter } from 'vue-router';
 //--------------------------------------
 // Khai báo biến cho ảnh
 const store = useGbStore();
@@ -188,6 +189,7 @@ const wards = ref([]);
 const selectedProvince = ref('');
 const selectedDistrict = ref('');
 const selectedWard = ref('');
+const router = useRouter();
 
 const validateForm = () => {
     let isValid = true;
