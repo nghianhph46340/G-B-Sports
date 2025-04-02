@@ -1,148 +1,112 @@
 <template>
     <div>
-        <h2>Thêm nhân viên</h2>
+        <h2>Thêm khách hàng</h2>
         <form @submit.prevent="themNhanVien" @reset.prevent="resetForm">
-            <div class="container">
-                <div class="row">
-                    <!-- Phần ảnh đại diện -->
-                    <div class="col-md-4">
-                        <div class="avatar-label">
-                            <label>Ảnh đại diện</label>
-                        </div>
-                        <div class="avatar-container d-flex justify-content-center">
-                            <div class="avatar-upload">
-                                <div class="avatar-preview" @click="triggerFileInput">
-                                    <img :src="previewImage || defaultAvatar" alt="Avatar" class="rounded-circle">
-                                    <button v-if="previewImage" @click.stop="removeImage" class="delete-btn" type="button">
-                                        ×
-                                    </button>
-                                    <div class="camera-icon">
-                                        <i class="fas fa-camera"></i>
-                                    </div>
-                                </div>
-                                <input type="file" id="imageUpload" accept=".png, .jpg, .jpeg" @change="handleImageChange" class="d-none" ref="fileInput">
-                            </div>
-                        </div>
-                         <!-- <div class="upload-container">
-                            <input type="file" @change="onFileChange" accept="image/*" />
-                            <button @click="uploadImage" :disabled="loading">
-                                {{ loading ? 'Đang upload...' : 'Upload' }}
-                            </button>
+            <a-form :model="formData" :label-col="{ span: 24 }" :wrapper-col="{ span: 24 }">
+                <a-row :gutter="16">
+                    <a-col :span="8">
+                        <!-- Mã khách hàng -->
+                        <a-form-item label="Mã khách hàng">
+                            <a-input disabled />
+                        </a-form-item>
+                    </a-col>
 
-                            <div v-if="imageUrl" class="preview-container">
-                                <img :src="imageUrl" alt="Preview" class="preview-image w-50" />
-                                <button @click="deleteImage" class="delete-button" :disabled="loading">
-                                    Xóa ảnh
-                                </button>
-                            </div>
-                        </div> -->
-                    </div>
+                    <a-col :span="8">
+                        <!-- Tên khách hàng -->
+                        <a-form-item label="Họ tên khách hàng" :validate-status="errors.tenNhanVien ? 'error' : ''"
+                            :help="errors.tenNhanVien">
+                            <a-input v-model:value="formData.tenNhanVien" placeholder="Nhập tên khách hàng" />
+                        </a-form-item>
+                    </a-col>
 
-                    <!-- Form nhập liệu bên phải -->
-                    <div class="col-md-8">
-                        <!-- Mã nhân viên -->
-                        <div class="row mb-2">
-                            <div class="col-6">
-                                <label class="form-label">Mã nhân viên</label>
-                                <input type="text" class="form-control" v-model="formData.maNhanVien" disabled>
-                            </div>
-
-                            <!-- Tên nhân viên -->
-                            <div class="col-6">
-                                <label class="form-label">Tên nhân viên</label>
-                                <input type="text" class="form-control" v-model="formData.tenNhanVien" placeholder="Nhập tên nhân viên">
-                                <span v-if="errors.tenNhanVien" class="text-danger">{{ errors.tenNhanVien }}</span>
-                            </div>
-                        </div>
-
+                    <a-col :span="8">
                         <!-- Giới tính -->
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="form-label">Giới tính</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="true" v-model="formData.gioiTinh">
-                                    <label class="form-check-label">Nam</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="false" v-model="formData.gioiTinh">
-                                    <label class="form-check-label">Nữ</label>
-                                </div>
-                                <span v-if="errors.gioiTinh" class="text-danger">{{ errors.gioiTinh }}</span>
-                            </div>
+                        <a-form-item label="Giới tính" :validate-status="errors.gioiTinh ? 'error' : ''"
+                            :help="errors.gioiTinh">
+                            <a-radio-group v-model:value="formData.gioiTinh">
+                                <a-radio :value="true">Nam</a-radio>
+                                <a-radio :value="false">Nữ</a-radio>
+                            </a-radio-group>
+                        </a-form-item>
+                    </a-col>
 
-                            <!-- Ngày sinh -->
-                            <div class="col-md-6">
-                                <label class="form-label">Ngày sinh</label>
-                                <input type="date" class="form-control" v-model="formData.ngaySinh">
-                                <span v-if="errors.ngaySinh" class="text-danger">{{ errors.ngaySinh }}</span>
-                            </div>
-                        </div>
+                    <a-col :span="8">
+                        <!-- Ngày sinh -->
+                        <a-form-item label="Ngày sinh" :validate-status="errors.ngaySinh ? 'error' : ''"
+                            :help="errors.ngaySinh">
+                            <a-date-picker v-model:value="formData.ngaySinh" format="DD/MM/YYYY"
+                                placeholder="Chọn ngày sinh" class="w-100" />
+                        </a-form-item>
+                    </a-col>
 
-                        <!-- Số điện thoại và Email -->
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="form-label">Số điện thoại</label>
-                                <input type="tel" class="form-control" v-model="formData.soDienThoai" placeholder="Nhập số điện thoại">
-                                <span v-if="errors.soDienThoai" class="text-danger">{{ errors.soDienThoai }}</span>
-                            </div>
+                    <a-col :span="8">
+                        <!-- Số điện thoại -->
+                        <a-form-item label="Số điện thoại" :validate-status="errors.soDienThoai ? 'error' : ''"
+                            :help="errors.soDienThoai">
+                            <a-input v-model:value="formData.soDienThoai" placeholder="Nhập số điện thoại" />
+                        </a-form-item>
+                    </a-col>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Email</label>
-                                <input type="text" class="form-control" v-model="formData.email" placeholder="Nhập email">
-                                <span v-if="errors.email" class="text-danger">{{ errors.email }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <a-col :span="8">
+                        <!-- Email -->
+                        <a-form-item label="Email" :validate-status="errors.email ? 'error' : ''" :help="errors.email">
+                            <a-input v-model:value="formData.email" placeholder="Nhập email" />
+                        </a-form-item>
+                    </a-col>
 
-                <!-- Phần địa chỉ -->
-                <div class="col-12 pb-2 pt-2">
-                    <div class="row g-3">
+                    <a-col :span="8">
                         <!-- Tỉnh/Thành phố -->
-                        <div class="col-md-4">
-                            <label class="form-label">Tỉnh/Thành phố</label>
-                            <select class="form-select" v-model="selectedProvince" @change="handleProvinceChange">
-                                <option value="">Chọn Tỉnh/Thành phố</option>
-                                <option v-for="province in provinces" :key="province.code" :value="province.code">
+                        <a-form-item label="Tỉnh/Thành phố" :validate-status="errors.selectedProvince ? 'error' : ''"
+                            :help="errors.selectedProvince">
+                            <a-select v-model:value="selectedProvince" placeholder="Chọn Tỉnh/Thành phố"
+                                @change="handleProvinceChange">
+                                <a-select-option v-for="province in provinces" :key="province.code"
+                                    :value="province.code">
                                     {{ province.name }}
-                                </option>
-                            </select>
-                            <span v-if="errors.selectedProvince" class="text-danger">{{ errors.selectedProvince }}</span>
-                        </div>
+                                </a-select-option>
+                            </a-select>
+                        </a-form-item>
+                    </a-col>
 
+                    <a-col :span="8">
                         <!-- Quận/Huyện -->
-                        <div class="col-md-4">
-                            <label class="form-label">Quận/Huyện</label>
-                            <select class="form-select" v-model="selectedDistrict" @change="handleDistrictChange" :disabled="!selectedProvince">
-                                <option value="">Chọn Quận/Huyện</option>
-                                <option v-for="district in districts" :key="district.code" :value="district.code">
+                        <a-form-item label="Quận/Huyện" :validate-status="errors.selectedDistrict ? 'error' : ''"
+                            :help="errors.selectedDistrict">
+                            <a-select v-model:value="selectedDistrict" placeholder="Chọn Quận/Huyện"
+                                :disabled="!selectedProvince" @change="handleDistrictChange">
+                                <a-select-option v-for="district in districts" :key="district.code"
+                                    :value="district.code">
                                     {{ district.name }}
-                                </option>
-                            </select>
-                            <span v-if="errors.selectedDistrict" class="text-danger">{{ errors.selectedDistrict }}</span>
-                        </div>
+                                </a-select-option>
+                            </a-select>
+                        </a-form-item>
+                    </a-col>
 
+                    <a-col :span="8">
                         <!-- Phường/Xã -->
-                        <div class="col-md-4">
-                            <label class="form-label">Phường/Xã</label>
-                            <select class="form-select" v-model="selectedWard" :disabled="!selectedDistrict">
-                                <option value="">Chọn Phường/Xã</option>
-                                <option v-for="ward in wards" :key="ward.code" :value="ward.code">
+                        <a-form-item label="Phường/Xã" :validate-status="errors.selectedWard ? 'error' : ''"
+                            :help="errors.selectedWard">
+                            <a-select v-model:value="selectedWard" placeholder="Chọn Phường/Xã"
+                                :disabled="!selectedDistrict">
+                                <a-select-option v-for="ward in wards" :key="ward.code" :value="ward.code">
                                     {{ ward.name }}
-                                </option>
-                            </select>
-                            <span v-if="errors.selectedWard" class="text-danger">{{ errors.selectedWard }}</span>
-                        </div>
+                                </a-select-option>
+                            </a-select>
+                        </a-form-item>
+                    </a-col>
 
+                    <a-col :span="24">
                         <!-- Địa chỉ cụ thể -->
-                        <div class="col-12">
-                            <label class="form-label">Địa chỉ cụ thể</label>
-                            <input type="text" class="form-control" v-model="formData.diaChiLienHe" placeholder="Số nhà, tên đường...">
-                            <span v-if="errors.diaChiLienHe" class="text-danger">{{ errors.diaChiLienHe }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        <a-form-item label="Số nhà, tên đường" :validate-status="errors.diaChiLienHe ? 'error' : ''"
+                            :help="errors.diaChiLienHe">
+                            <a-input v-model:value="formData.diaChiLienHe" placeholder="Số nhà, tên đường..." />
+                        </a-form-item>
+                    </a-col>
+                </a-row>
+            </a-form>
+            <hr>
+            <button class="btn btn-primary">+ Thêm địa chỉ khác</button>
+           
 
             <!-- Buttons -->
             <div class="mt-4">
@@ -191,7 +155,7 @@ const selectedWard = ref('');
 
 const validateForm = () => {
     let isValid = true;
-    
+
     // Reset tất cả lỗi
     Object.keys(errors).forEach(key => {
         errors[key] = '';
@@ -325,69 +289,6 @@ const errors = reactive({
 });
 
 
-
-// // Submit form
-// const validateAndSubmit = async () => {
-//     if (validateForm()) {
-//         try {
-//             const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
-//             const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
-//             const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
-//             const nhanVienMoi = {
-//                 ...formData,
-//                 diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim()
-//             };
-//             console.log('Dữ liệu truyền vào mới them nhan vien', nhanVienMoi);
-//             const themNhanVien = await store.themNhanVien(nhanVienMoi);
-//             if (themNhanVien.error) {
-//                 toast.error('Có lỗi xảy ra');
-//                 console.log(themNhanVien.error);
-//             } else {
-//                 toast.success('Thêm nhân viên thành công');
-//             }
-//         } catch (error) {
-//             console.error(error);
-//         }
-//     }
-// };
-// Xử lý ảnh
-const triggerFileInput = () => {
-    fileInput.value.click();
-};
-
-const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        if (validateImage(file)) {
-            selectedFile.value = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.value = e.target.result;
-                console.log("hihi" + previewImage);
-            };
-            reader.readAsDataURL(file);
-        } else {
-            alert('Vui lòng chọn file ảnh có định dạng jpg, jpeg, png và kích thước dưới 5MB');
-            fileInput.value.value = '';
-        }
-    }
-};
-
-const validateImage = (file) => {
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    return validTypes.includes(file.type) && file.size <= maxSize;
-};
-
-const removeImage = (e) => {
-    e.stopPropagation();
-    previewImage.value = null;
-    selectedFile.value = null;
-    if (fileInput.value) {
-        fileInput.value.value = '';
-    }
-};
-
 // API địa chỉ
 const loadProvinces = async () => {
     try {
@@ -477,82 +378,6 @@ const handleSubmit = async () => {
         console.error('Error submitting form:', error);
     }
 };
-//Xử lý ảnh
-const file = ref(null);
-const imageUrl = ref('');
-const loading = ref(false);
-
-const onFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    if (selectedFile && selectedFile.type.startsWith('image/')) {
-        file.value = selectedFile;
-        // Preview ảnh
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            imageUrl.value = e.target.result;
-        };
-        reader.readAsDataURL(selectedFile);
-    } else {
-        message.error('Vui lòng chọn file ảnh!');
-    }
-};
-//upload ảnh
-const uploadImage = async () => {
-    if (!file.value) {
-        message.warning('Vui lòng chọn ảnh trước!');
-        return;
-    }
-
-    loading.value = true;
-    const formData = new FormData();
-    formData.append('file', file.value); // Phải đúng tên 'file' để match với @RequestParam
-
-    try {
-        const response = await axiosInstance.post('testImage?file=', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-        console.log('Response:', response); // Debug response
-        if (response.data) {
-            imageUrl.value = response.data; // URL từ Cloudinary
-            message.success('Upload ảnh thành công!');
-        }
-    } catch (error) {
-        console.error('Upload error:', error);
-        message.error('Có lỗi khi upload ảnh: ' + (error.response?.data || error.message));
-    } finally {
-        loading.value = false;
-    }
-};
-//xóa ảnh
-const deleteImage = async () => {
-    if (!imageUrl.value) {
-        message.warning('Không có ảnh để xóa!');
-        return;
-    }
-
-    loading.value = true;
-    try {
-        // Lấy publicId từ URL
-        const urlParts = imageUrl.value.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
-
-        // Gọi API xóa ảnh
-        await axiosInstance.delete("testDeleteImage?publicId=" + publicId);
-
-        // Reset state sau khi xóa
-        imageUrl.value = '';
-        file.value = null;
-        message.success('Xóa ảnh thành công!');
-    } catch (error) {
-        console.error('Xóa ảnh error:', error);
-        message.error('Có lỗi khi xóa ảnh: ' + (error.response?.data || error.message));
-    } finally {
-        loading.value = false;
-    }
-};
 
 const taoMaNhanVienMoi = (nhanVienArr) => {
     if (!nhanVienArr || nhanVienArr.length === 0) {
@@ -600,27 +425,19 @@ onMounted(async () => {
     try {
         // Load provinces
         await loadProvinces();
-        
+
         // Load danh sách nhân viên và tạo mã mới
         await store.layDanhSachNhanVien();
         formData.maNhanVien = taoMaNhanVienMoi(store.nhanVienArr);
-        
+
         console.log('Khởi tạo mã nhân viên:', formData.maNhanVien);
     } catch (error) {
         console.error('Lỗi khởi tạo:', error);
         toast.error('Có lỗi khi khởi tạo dữ liệu');
     }
 });
-// onMounted(() => {
-//     loadProvinces();
-// });
-// onMounted(async () => {
-//   await store.layDanhSachNhanVien();
-//     formData.maNhanVien = taoMaNhanVienMoi(store.nhanVienArr);
-// })
 </script>
 
-<!-- Phần template và style giữ nguyên như cũ -->
 
 <style scoped>
 .avatar-container {
