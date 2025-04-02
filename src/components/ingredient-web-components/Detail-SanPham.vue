@@ -884,17 +884,28 @@ const buyNow = () => {
     console.log('Mua ngay:', {
         product_id: productId.value,
         variant_id: selectedVariant.value.id_chi_tiet_san_pham,
-        image: product.value.hinh_anh[currentImageIndex.value].url,
         color: selectedColorName.value,
         size: selectedSizeName.value,
         quantity: quantity.value,
         price: product.value.gia_khuyen_mai
     });
+
+    // Lấy URL hình ảnh an toàn
+    let imageUrl = '';
+    if (product.value.hinh_anh && product.value.hinh_anh.length > 0) {
+        if (product.value.hinh_anh[currentImageIndex.value] && product.value.hinh_anh[currentImageIndex.value].url) {
+            imageUrl = product.value.hinh_anh[currentImageIndex.value].url;
+        } else {
+            // Nếu không có URL, lấy hình ảnh đầu tiên
+            imageUrl = product.value.hinh_anh[0].url || '';
+        }
+    }
+
     const checkoutItem = {
         id: selectedVariant.value.id_chi_tiet_san_pham,
         product_id: productId.value,
         ten_san_pham: product.value.ten_san_pham,
-        hinh_anh: product.value.hinh_anh[currentImageIndex.value].url,
+        hinh_anh: imageUrl,
         ten_mau_sac: selectedColorName.value,
         ten_kich_thuoc: selectedSizeName.value,
         gia: product.value.gia_khuyen_mai || product.value.gia_ban_hien_tai,
