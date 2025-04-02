@@ -50,56 +50,65 @@
             <!-- Left Side: Customer Information and Payment Methods -->
             <div class="checkout-info-section">
                 <div class="section-box">
-                    <h2 class="section-title">Thông tin khách hàng</h2>
-                    <div class="customer-info" v-if="customer">
-                        <div class="info-group">
-                            <p><span class="info-label">Họ tên:</span> {{ customer.ho_ten }}</p>
-                            <p><span class="info-label">Số điện thoại:</span> {{ customer.so_dien_thoai }}</p>
-                            <p><span class="info-label">Email:</span> {{ customer.email }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Hiển thị địa chỉ đã chọn -->
-                    <div class="selected-address-info" v-if="selectedAddress">
-                        <h3 class="subsection-title">Địa chỉ giao hàng đã chọn</h3>
-                        <div class="address-display">
-                            <p class="address-display-name">{{ selectedAddress.ten_nguoi_nhan }}</p>
-                            <p class="address-display-phone">{{ selectedAddress.so_dien_thoai }}</p>
-                            <p class="address-display-full">
-                                {{ selectedAddress.dia_chi_cu_the }}, {{ selectedAddress.xa_phuong }},
-                                {{ selectedAddress.quan_huyen }}, {{ selectedAddress.tinh_thanh }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-box">
-                    <h2 class="section-title">Địa chỉ giao hàng</h2>
-                    <a-radio-group v-model:value="selectedAddressId" class="address-list">
-                        <div v-for="address in customerAddresses" :key="address.id" class="address-item">
-                            <a-radio :value="address.id" class="address-radio">
-                                <div class="address-content">
-                                    <p class="address-name">{{ address.ten_nguoi_nhan }}</p>
-                                    <p class="address-phone">{{ address.so_dien_thoai }}</p>
-                                    <p class="address-full">
-                                        {{ address.dia_chi_cu_the }}, {{ address.xa_phuong }},
-                                        {{ address.quan_huyen }}, {{ address.tinh_thanh }}
-                                    </p>
-                                    <div class="address-actions">
-                                        <a-tag v-if="address.mac_dinh" color="blue">Mặc định</a-tag>
-                                        <a class="action-link" @click.stop="editAddress(address)">Sửa</a>
-                                        <a class="action-link delete" v-if="!address.mac_dinh"
-                                            @click.stop="confirmDeleteAddress(address)">Xóa</a>
-                                    </div>
-                                </div>
-                            </a-radio>
-                        </div>
-                    </a-radio-group>
-
-                    <div class="add-address-button">
-                        <a-button type="dashed" @click="showAddAddressModal" block>
-                            <plus-outlined />Thêm địa chỉ mới
-                        </a-button>
+                    <h2 class="section-title">Thông tin giao hàng</h2>
+                    <div class="customer-info">
+                        <a-form :model="customer" layout="vertical" class="shipping-form">
+                            <div class="form-row">
+                                <a-form-item label="Họ tên người nhận" name="ho_ten" required class="form-item">
+                                    <a-input v-model:value="customer.ho_ten" placeholder="Nhập họ tên người nhận" />
+                                </a-form-item>
+                                <a-form-item label="Số điện thoại" name="so_dien_thoai" required class="form-item">
+                                    <a-input v-model:value="customer.so_dien_thoai" placeholder="Nhập số điện thoại" />
+                                </a-form-item>
+                            </div>
+                            <div class="form-row">
+                                <a-form-item label="Email" name="email" required class="form-item">
+                                    <a-input v-model:value="customer.email" placeholder="Nhập email" />
+                                </a-form-item>
+                                <a-form-item label="Tỉnh/Thành phố" name="tinh_thanh" required class="form-item">
+                                    <a-select v-model:value="customer.tinh_thanh" placeholder="Chọn Tỉnh/Thành phố"
+                                        @change="handleProvinceChange" :loading="loadingProvinces">
+                                        <a-select-option v-for="province in provinces" :key="province.code"
+                                            :value="province.name">
+                                            {{ province.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                            </div>
+                            <div class="form-row">
+                                <a-form-item label="Quận/Huyện" name="quan_huyen" required class="form-item">
+                                    <a-select v-model:value="customer.quan_huyen" placeholder="Chọn Quận/Huyện"
+                                        @change="handleDistrictChange" :loading="loadingDistricts"
+                                        :disabled="!customer.tinh_thanh">
+                                        <a-select-option v-for="district in districts" :key="district.code"
+                                            :value="district.name">
+                                            {{ district.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                                <a-form-item label="Phường/Xã" name="xa_phuong" required class="form-item">
+                                    <a-select v-model:value="customer.xa_phuong" placeholder="Chọn Phường/Xã"
+                                        :loading="loadingWards" :disabled="!customer.quan_huyen">
+                                        <a-select-option v-for="ward in wards" :key="ward.code" :value="ward.name">
+                                            {{ ward.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                            </div>
+                            <div class="form-row">
+                                <a-form-item label="Địa chỉ cụ thể" name="dia_chi_cu_the" required
+                                    class="form-item full-width">
+                                    <a-textarea v-model:value="customer.dia_chi_cu_the"
+                                        placeholder="Số nhà, tên đường..." :rows="2" />
+                                </a-form-item>
+                            </div>
+                            <div class="form-row">
+                                <a-form-item name="mac_dinh" class="form-item checkbox-item">
+                                    <a-checkbox v-model:checked="customer.mac_dinh">Đặt làm địa chỉ mặc
+                                        định</a-checkbox>
+                                </a-form-item>
+                            </div>
+                        </a-form>
                     </div>
                 </div>
 
@@ -148,6 +157,15 @@
                                 </a-radio>
                             </div>
                             <div class="online-method-item">
+                                <a-radio value="zalopay" class="online-radio">
+                                    <div class="online-content">
+                                        <img src="https://upload.wikimedia.org/wikipedia/vi/thumb/5/5c/ZaloPay_logo.svg/2560px-ZaloPay_logo.svg.png"
+                                            alt="ZaloPay" class="online-logo" />
+                                        <span>ZaloPay</span>
+                                    </div>
+                                </a-radio>
+                            </div>
+                            <div class="online-method-item">
                                 <a-radio value="momo" class="online-radio">
                                     <div class="online-content">
                                         <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
@@ -189,7 +207,7 @@
                             <div class="product-details">
                                 <p class="product-name">{{ item.ten_san_pham }}</p>
                                 <p class="product-variant">
-                                    {{ item.ten_mau_sac }} / {{ item.ten_kich_thuoc }}
+                                    Màu sắc: {{ item.ten_mau_sac }} <br>Size: {{ item.ten_kich_thuoc }}
                                 </p>
                             </div>
                             <div class="product-price">
@@ -207,7 +225,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -337,6 +355,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 import axios from 'axios';
+import { thanhToanService } from '@/services/thanhToan';
 import {
     ShoppingCartOutlined,
     CheckCircleOutlined,
@@ -360,9 +379,14 @@ const currentStatus = ref(2); // 1: Cart, 2: Checkout, 3: Order, 4: Complete
 // Customer information
 const customer = ref({
     id: 1,
-    ho_ten: 'Nguyễn Văn A',
-    so_dien_thoai: '0987654321',
-    email: 'nguyenvana@example.com'
+    ho_ten: '',
+    so_dien_thoai: '',
+    email: '',
+    tinh_thanh: '',
+    quan_huyen: '',
+    xa_phuong: '',
+    dia_chi_cu_the: '',
+    mac_dinh: false
 });
 
 // Customer addresses
@@ -730,9 +754,11 @@ const removeCoupon = (index) => {
 
 // Place order
 const placeOrder = async () => {
-    // Validate if address is selected
-    if (!selectedAddressId.value) {
-        message.warning('Vui lòng chọn địa chỉ giao hàng');
+    // Validate form
+    if (!customer.value.ho_ten || !customer.value.so_dien_thoai || !customer.value.email ||
+        !customer.value.tinh_thanh || !customer.value.quan_huyen ||
+        !customer.value.xa_phuong || !customer.value.dia_chi_cu_the) {
+        message.warning('Vui lòng điền đầy đủ thông tin giao hàng');
         return;
     }
 
@@ -747,24 +773,22 @@ const placeOrder = async () => {
 
         // Handle different payment methods
         if (selectedPaymentMethod.value === 'online') {
-            // Redirect to payment gateway
-            message.success('Đang chuyển hướng đến cổng thanh toán...');
-
-            // Simulate redirect to payment gateway
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // In a real app, this would redirect to a payment gateway
-            // window.location.href = paymentUrl;
-
-            // For demo purposes, we'll just update the status and continue
-            currentStatus.value = 3;
-
-            // Simulate payment completion
-            setTimeout(() => {
-                currentStatus.value = 4;
-                message.success('Đặt hàng thành công!');
-                // router.push('/order-complete');
-            }, 2000);
+            if (selectedOnlineMethod.value === 'zalopay') {
+                // Xử lý thanh toán ZaloPay
+                await thanhToanService.handlePayOSPayment(orderData);
+            } else if (selectedOnlineMethod.value === 'vnpay') {
+                // Redirect to VNPAY payment gateway
+                message.success('Đang chuyển hướng đến cổng thanh toán VNPAY...');
+                // Implement VNPAY payment logic here
+            } else if (selectedOnlineMethod.value === 'momo') {
+                // Redirect to Momo payment gateway
+                message.success('Đang chuyển hướng đến cổng thanh toán Momo...');
+                // Implement Momo payment logic here
+            } else {
+                // Handle bank payment
+                message.success('Đang chuyển hướng đến cổng thanh toán ngân hàng...');
+                // Implement bank payment logic here
+            }
         } else {
             // COD payment - immediately mark as ordered
             currentStatus.value = 3;
@@ -977,32 +1001,13 @@ const selectVoucher = (voucher) => {
 
 // Calculate complete order totals and log to console
 const calculateOrderTotals = () => {
-    // Create complete invoice object
+    // Create invoice object with only required fields
     const invoice = {
-        customer: customer.value,
-        shippingAddress: selectedAddress.value,
-        orderItems: orderItems.value,
-        payment: {
-            method: selectedPaymentMethod.value,
-            onlineMethod: selectedPaymentMethod.value === 'online' ? selectedOnlineMethod.value : null
-        },
-        totals: {
-            subtotal: subtotal.value,
-            discount: discount.value,
-            shippingFee: shippingFee.value,
-            total: grandTotal.value
-        },
-        appliedVouchers: appliedCoupons.value.map(voucher => ({
-            id: voucher.id,
-            code: voucher.ma,
-            name: voucher.ten,
-            type: voucher.loai,
-            value: voucher.gia_tri,
-            maxDiscount: voucher.gia_tri_toi_da
-        })),
-        note: orderNote.value,
-        createdAt: getCurrentDateVN().toISOString(),
-        createdAtVN: formatDateVN(new Date())
+        productName: "Tên sản phảm",
+        description: "GB Sport",
+        returnUrl: "http://localhost:5173/home",
+        price: grandTotal.value * 0.01,
+        cancelUrl: "http://localhost:5173/thanhtoan-banhang"
     };
 
     // Log complete invoice to console
@@ -1063,6 +1068,9 @@ const selectedAddress = computed(() => {
     if (!selectedAddressId.value) return null;
     return customerAddresses.value.find(addr => addr.id === selectedAddressId.value);
 });
+
+// Trong phần script, thêm các hàm xử lý thanh toán ZaloPay
+
 </script>
 
 <style scoped>
@@ -1925,5 +1933,99 @@ const selectedAddress = computed(() => {
     font-size: 14px;
     line-height: 1.5;
     margin-bottom: 0;
+}
+
+/* Form styling */
+.shipping-form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+
+.form-item {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.form-item.full-width {
+    flex: 0 0 100%;
+}
+
+.form-item.checkbox-item {
+    margin-top: 8px;
+}
+
+:deep(.ant-form-item-label) {
+    padding-bottom: 4px;
+}
+
+:deep(.ant-form-item-label > label) {
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+:deep(.ant-input),
+:deep(.ant-select-selector) {
+    border-radius: 6px;
+    border-color: #d9d9d9;
+    height: 40px;
+    padding: 4px 11px;
+    transition: all 0.3s;
+}
+
+:deep(.ant-input:hover),
+:deep(.ant-select-selector:hover) {
+    border-color: #40a9ff;
+}
+
+:deep(.ant-input:focus),
+:deep(.ant-select-selector:focus) {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+:deep(.ant-select-disabled .ant-select-selector) {
+    background-color: #f5f5f5;
+    border-color: #d9d9d9;
+    color: rgba(0, 0, 0, 0.25);
+}
+
+:deep(.ant-checkbox-wrapper) {
+    font-size: 14px;
+    color: #666;
+}
+
+:deep(.ant-checkbox-checked .ant-checkbox-inner) {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+:deep(.ant-checkbox-wrapper:hover .ant-checkbox-inner),
+:deep(.ant-checkbox:hover .ant-checkbox-inner) {
+    border-color: #40a9ff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .form-item {
+        width: 100%;
+    }
+
+    .shipping-form {
+        padding: 15px;
+    }
 }
 </style>

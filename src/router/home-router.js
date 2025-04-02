@@ -20,6 +20,11 @@ const home = [
                 name: "thanhtoan-banhang",
                 component: () => import('../views/web/thanhToan-BanHang.vue'),
                 meta: { scrollToTop: true }
+            },
+            {
+                path: "giohang-banhang",
+                name: "giohang-banhang",
+                component: () => import('@/views/web/gioHang-BanHang.vue')
             }
         ]
     }
