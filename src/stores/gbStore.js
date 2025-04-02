@@ -36,6 +36,7 @@ export const useGbStore = defineStore('gbStore', {
             hoaDonDetail: {},         // Chi tiết hóa đơn hiện tại
             chiTietHoaDons: [],       // Danh sách chi tiết sản phẩm trong hóa đơn
             trangThaiHistory: [],
+            listCTSP_HD: [],     // List ctsp để thêm trong QLHĐ
             danhMucList: [],
             thuongHieuList: [],
             chatLieuList: [],
@@ -358,6 +359,20 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error('Có lỗi xảy ra');
             }
         },
+        async revertToInitialStatus(maHoaDon) {
+            try {
+                const response = await hoaDonService.quayLaiTrangThai(maHoaDon);
+                if (response.error) {
+                    toast.error('Quay lại trạng thái ban đầu thất bại');
+                    return;
+                }
+                toast.success('Đã quay lại trạng thái ban đầu thành công');
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra khi quay lại trạng thái ban đầu');
+            }
+        },
         // Thêm action để hủy hóa đơn
         async cancelHoaDon(maHoaDon) {
             try {
@@ -400,6 +415,62 @@ export const useGbStore = defineStore('gbStore', {
             } catch (error) {
                 console.error(error);
                 toast.error('Có lỗi xảy ra khi cập nhật ghi chú');
+            }
+        },
+        async getAllCTSP_HD(page = 0, size = 5, keyword = '') {
+            try {
+                const response = await hoaDonService.getAllCTSP_HD(page, size, keyword);
+                if (response.error) {
+                    toast.error('Không lấy được danh sách sản phẩm');
+                    return;
+                }
+                this.listCTSP_HD = response.content || [];
+                this.totalPages = response.totalPages || 0;
+                this.currentPage = page;
+                this.totalItems = response.totalElements || 0;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');
+            }
+        },
+        async addProductsToInvoice(maHoaDon, products) {
+            try {
+                const response = await hoaDonService.addProductsToInvoice(maHoaDon, products);
+                if (response.error) {
+                    toast.error('Thêm sản phẩm vào hóa đơn thất bại');
+                    return;
+                }
+                toast.success('Thêm sản phẩm vào hóa đơn thành công');
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu hóa đơn
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra khi thêm sản phẩm');
+            }
+        },
+        async removeProductFromInvoice(maHoaDon, idCTSP, soLuong) {
+            try {
+                const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong);
+                if (response.error) {
+                    return { error: true };
+                }
+                return response;
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
+            } catch (error) {
+                console.error('Lỗi khi xóa sản phẩm khỏi hóa đơn:', error);
+                return { error: true };
+            }
+        },
+        async updateProductQuantity(maHoaDon, idCTSP, quantityChange) {
+            try {
+                const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange);
+                if (response.error) {
+                    return { error: true };
+                }
+                return response;
+                await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
+            } catch (error) {
+                console.error('Lỗi khi cập nhật số lượng sản phẩm:', error);
+                return { error: true };
             }
         },
         //Import excel
@@ -538,7 +609,7 @@ export const useGbStore = defineStore('gbStore', {
                 throw error;
             }
         },
-        //Lấy danh sách chi tiết sản phẩm
+        //Lấy danh sách chi tiết sản phẩm//
         async getAllCTSP() {
             const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham();
             if (chiTietSanPhamRespone.error) {

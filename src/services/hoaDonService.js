@@ -75,6 +75,18 @@ const changeTrangThai = async (maHoaDon, newTrangThai) => {
     }
 };
 
+const quayLaiTrangThai = async (maHoaDon) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'quay_lai_trang_thai', null, {
+            params: { maHoaDon }
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API quay lại trạng thái ban đầu:', error);
+        return { error: true };
+    }
+};
+
 // Hủy hóa đơn
 const cancelHoaDon = async (maHoaDon) => {
     try {
@@ -119,6 +131,56 @@ const updateNote = async (maHoaDon, ghiChu) => {
     }
 };
 
+// Lấy danh sách chi tiết sản phẩm
+const getAllCTSP_HD = async (page = 0, size = 5, keyword = '') => {
+    try {
+        const params = new URLSearchParams();
+        params.append('page', page);
+        params.append('size', size);
+        if (keyword) params.append('keyword', keyword);
+        const { data } = await axiosInstance.get(qlhd + `ctsp_hd?${params.toString()}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API lấy danh sách chi tiết sản phẩm:', error);
+        return { error: true };
+    }
+};
+
+// Thêm sản phẩm vào hóa đơn
+const addProductsToInvoice = async (maHoaDon, products) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'addSP_HD', {
+            maHoaDon,
+            products
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API thêm sản phẩm vào hóa đơn:', error);
+        return { error: true };
+    }
+};
+const removeProductFromInvoice = async (maHoaDon, idCTSP, soLuong) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'removeSP_HD', null, {
+            params: { maHoaDon, idCTSP, soLuong }
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API xóa sản phẩm khỏi hóa đơn:', error);
+        return { error: true };
+    }
+};
+const updateProductQuantity = async (maHoaDon, idCTSP, quantityChange) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'update_soLuong', null, {
+            params: { maHoaDon, idCTSP, quantityChange }
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật số lượng sản phẩm:', error);
+        return { error: true };
+    }
+};
 export const hoaDonService = {
     getAllHoaDon,
     filterByTrangThai,
@@ -128,5 +190,10 @@ export const hoaDonService = {
     changeTrangThai,
     cancelHoaDon,
     updateTTKH_in_HD,
-    updateNote
+    updateNote,
+    getAllCTSP_HD,
+    addProductsToInvoice,
+    removeProductFromInvoice,
+    updateProductQuantity,
+    quayLaiTrangThai
 };

@@ -19,17 +19,23 @@
                 <hr>
                 <h4 style="text-align: center;">Lịch sử trạng thái</h4><br>
                 <div class="status-icons">
-                    <div class="col" v-for="status in computedStatusSteps" :key="status.name">
-                        <div class="status-icon" :class="getStatusClass(status.name)">
-                            <i :class="status.icon"></i>
-                            <p>{{ status.name }}</p>
-                            <small v-if="getStatusDate(status.name)">{{ getStatusDate(status.name) }}</small>
+                    <div class="col" v-for="history in sortedTrangThaiHistory" :key="history.trang_thai">
+                        <div class="status-icon" :class="getStatusClass(history.trang_thai)">
+                            <i :class="getIconForStatus(history.trang_thai)"></i>
+                            <p>{{ history.trang_thai }}</p>
+                            <small>{{ history.ngay_chuyen_formatted }}</small>
                         </div>
                     </div>
                 </div>
                 <hr>
 
                 <div class="order-status">
+                    <!-- Nút Quay lại trạng thái ban đầu -->
+                    <form @submit.prevent="revertToInitial" v-if="showRevertButton">
+                        <button type="submit" class="btn btn-warning">
+                            Quay lại trạng thái ban đầu
+                        </button>
+                    </form>
                     <form @submit.prevent="changeStatus">
                         <button type="submit" class="btn btn-success" :disabled="isCompletedOrCancelled"
                             :class="{ 'disabled': isCompletedOrCancelled }">
@@ -54,13 +60,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai_thanh_toan || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </div>
                             <div class="col">
                                 <p>Ngày tạo: {{ formatDate(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </div>
                         </div>
                     </div>
@@ -70,8 +76,8 @@
                     <div class="col-md-8">
                         <div class="info-box">
                             <h5>Thông tin sản phẩm</h5>
-                            <button class="btn btn-primary" :disabled="cannotEdit" :class="{ 'disabled': cannotEdit }"
-                                @click="addProduct">
+                            <button class="btn btn-primary" :disabled="cannotEditProduct" :class="{ 'disabled': cannotEditProduct }"
+                                @click="showAddProductPopupFn">
                                 Thêm sản phẩm
                             </button>
                             <table class="table-custom">
@@ -81,6 +87,7 @@
                                         <th>Đơn giá</th>
                                         <th>Số lượng</th>
                                         <th>Thành tiền</th>
+                                        <th>Thao tác</th> <!-- Thêm cột Thao tác -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -93,17 +100,33 @@
                                             }},
                                             Màu: {{ item.ten_mau_sac || 'N/A' }}
                                         </td>
+                                        <td>{{ formatCurrency(item.gia_ban) }} VNĐ</td>
+                                        <td>
+                                            <div class="quantity-display">
+                                                <button @click="showIncreasePopup(index)" :disabled="cannotEditProduct"><i
+                                                        class="fas fa-minus"></i></button>
+                                                <span>{{ item.so_luong }}</span>
+                                                <button @click="showDecreasePopup(index)" :disabled="cannotEditProduct"><i
+                                                        class="fas fa-plus"></i></button>
+                                            </div>
+                                        </td>
                                         <td>{{ formatCurrency(item.don_gia) }} VNĐ</td>
-                                        <td>{{ item.so_luong || 0 }}</td>
-                                        <td>{{ formatCurrency(item.don_gia * item.so_luong) }} VNĐ</td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm" @click="removeProduct(item, index)"
+                                                :disabled="cannotEditProduct">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
                             <div class="total-section">
                                 <p>Tổng tạm: {{ formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam) }} VNĐ</p>
-                                <!-- <p>Giảm giá: {{ formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) - (store.hoaDonDetail.tong_tien_sau_giam || 0)) }} VNĐ</p> -->
-                                <p>Giảm giá: - 0 VNĐ</p>
                                 <p>Phí vận chuyển: +{{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
+                                <p>{{ store.hoaDonDetail.mo_ta }} Giảm giá: - {{
+                                    formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
+                                        (store.hoaDonDetail.phi_van_chuyen || 0) - (store.hoaDonDetail.tong_tien_sau_giam ||
+                                    0)) }} VNĐ</p>
                                 <p>Tổng cuối: {{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</p>
                             </div>
                         </div>
@@ -189,6 +212,82 @@
                         </div>
                     </div>
                 </div>
+                <!-- Popup thêm sản phẩm -->
+                <div v-if="showAddProductPopup" class="modal-overlay">
+                    <div class="modal-content">
+                        <h2>Danh sách sản phẩm</h2>
+                        <div class="modal-header">
+                            <input type="text" class="form-control search-input" v-model="searchKeyword"
+                                @input="searchProducts" placeholder="Tìm kiếm sản phẩm..." />
+                            <button class="btn btn-primary" @click="addSelectedProducts">Thêm sản phẩm</button>
+                        </div>
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Danh mục</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Màu sắc</th>
+                                    <th>Kích cỡ</th>
+                                    <th>Số lượng</th>
+                                    <th>Giá bán(VNĐ)</th>
+                                    <th>Trạng thái</th>
+                                    <th>Số lượng mua</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(item, index) in store.listCTSP_HD" :key="item.id_chi_tiet_san_pham">
+                                    <td>{{ index + 1 + (store.currentPage * 5) }}</td>
+                                    <td>{{ item.ten_danh_muc || 'N/A' }}</td>
+                                    <td>{{ item.ten_san_pham || 'N/A' }}</td>
+                                    <td>{{ item.ten_mau || 'N/A' }}</td>
+                                    <td>{{ item.gia_tri || 'N/A' }}</td>
+                                    <td>{{ item.so_luong || 0 }}</td>
+                                    <td>{{ formatCurrency(item.gia_ban || 0) }}</td>
+                                    <td>{{ item.trang_thai || 'N/A' }}</td>
+                                    <td>
+                                        <div class="quantity-input">
+                                            <button @click="decreaseQuantityPopup(index)"
+                                                :disabled="quantities[index] <= 0">-</button>
+                                            <input type="number" v-model.number="quantities[index]" min="0"
+                                                :max="item.so_luong" @input="validateQuantity(index, item.so_luong)" />
+                                            <button @click="increaseQuantityPopup(index)"
+                                                :disabled="quantities[index] >= item.so_luong">+</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination">
+                            <button @click="changePage(store.currentPage - 1)" :disabled="store.currentPage === 0">
+                                Trang trước
+                            </button>
+                            <span>Trang {{ store.currentPage + 1 }} / {{ store.totalPages
+                                }}</span>
+                            <button @click="changePage(store.currentPage + 1)"
+                                :disabled="store.currentPage >= store.totalPages - 1">
+                                Trang sau
+                            </button>
+                        </div>
+                        <button class="btn btn-secondary close-btn" @click="closeAddProductPopup">Đóng</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Popup chỉnh sửa số lượng -->
+            <div v-if="showQuantityPopup" class="popup-overlay">
+                <div class="popup-content">
+                    <h3>{{ popupType === 'increase' ? 'Giảm số lượng' : 'Thêm số lượng' }}</h3>
+                    <div class="popup-input">
+                        <label>Số lượng:</label>
+                        <input type="number" v-model.number="quantityChange" min="0" />
+                    </div>
+                    <div class="popup-actions">
+                        <button @click="updateQuantity" class="btn btn-primary">
+                            <i :class="popupType === 'increase' ? 'fas fa-minus' : 'fas fa-plus'"></i>
+                        </button>
+                        <button @click="closeQuantityPopup" class="btn btn-secondary">Hủy</button>
+                    </div>
+                </div>
             </div>
 
             <div class="notification">
@@ -206,6 +305,7 @@
 import { onMounted, computed, ref } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRoute, useRouter } from 'vue-router';
+import { toast } from 'vue3-toastify';
 
 const store = useGbStore();
 const route = useRoute();
@@ -226,6 +326,7 @@ const defaultStatusSteps = [
 // Danh sách trạng thái cho "Nhận tại cửa hàng"
 const storePickupStatusSteps = [
     { name: 'Chờ xác nhận', backendStatus: 'Chờ xác nhận', icon: 'fas fa-hourglass-start' },
+    { name: 'Đã cập nhật', backendStatus: 'Đã cập nhật', icon: 'fas fa-edit' },
     { name: 'Hoàn thành', backendStatus: 'Hoàn thành', icon: 'fas fa-check-circle' },
     { name: 'Đã hủy', backendStatus: 'Đã hủy', icon: 'fas fa-times-circle' }
 ];
@@ -238,6 +339,20 @@ const computedStatusSteps = computed(() => {
     return defaultStatusSteps;
 });
 
+const sortedTrangThaiHistory = computed(() => {
+    return [...store.trangThaiHistory].sort((a, b) => {
+        return new Date(a.ngay_chuyen) - new Date(b.ngay_chuyen);
+    });
+});
+
+const getIconForStatus = (trangThai) => {
+    const statusSteps = store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng'
+        ? storePickupStatusSteps
+        : defaultStatusSteps;
+    const status = statusSteps.find(s => s.backendStatus === trangThai);
+    return status ? status.icon : 'fas fa-question'; // Icon mặc định nếu không tìm thấy
+};
+
 const isCompletedOrCancelled = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
     return trangThai === 'Hoàn thành' || trangThai === 'Đã hủy';
@@ -249,6 +364,14 @@ const cannotCancel = computed(() => {
         return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
     }
     return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+});
+
+const cannotEditProduct = computed(() => {
+    const trangThai = store.hoaDonDetail?.trang_thai;
+    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+        return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
+    }
+    return ["Đã cập nhật", "Đã xác nhận", 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
 });
 
 const cannotEdit = computed(() => {
@@ -319,101 +442,12 @@ const formatDate = (date) => {
     return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-const getStatusClass = (status) => {
-    const currentStatus = store.hoaDonDetail?.trang_thai;
-    if (!currentStatus) return '';
-
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
-        if (currentStatus === 'Đã hủy' && status === 'Đã hủy') {
-            return 'text-danger';
-        }
-        if ((currentStatus === 'Chờ xác nhận' && status === 'Chờ xác nhận') ||
-            (currentStatus === 'Hoàn thành' && status === 'Hoàn thành')) {
-            return 'text-success';
-        }
-        return '';
+const getStatusClass = (trangThai) => {
+    // Vì trạng thái này đã có trong lịch sử, nên luôn là text-success
+    if (trangThai === 'Đã hủy') {
+        return 'text-danger';
     }
-
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng') {
-        if (currentStatus === 'Đã hủy' && status === 'Đã hủy') {
-            return 'text-danger';
-        }
-        const statusOrder = {
-            'Chờ xác nhận': 1,
-            'Đã xác nhận': 2,
-            'Đã cập nhật': 3,
-            'Đang giao': 4,
-            'Đã nhận hàng': 5,
-            'Hoàn thành': 6
-        };
-        const currentStep = statusOrder[currentStatus] || 0;
-        const thisStep = defaultStatusSteps.findIndex(s => s.name === status) + 1;
-
-        if (currentStatus === 'Hoàn thành' && (status === 'Đã nhận hàng' || status === 'Hoàn thành')) {
-            return 'text-success';
-        }
-        if (currentStatus === 'Đang giao' && status === 'Đã giao cho ĐVVC') {
-            return 'text-success';
-        }
-        if (currentStatus === 'Đã xác nhận' && status === 'Đã xác nhận') {
-            return 'text-success';
-        }
-        if (currentStatus === 'Chờ xác nhận' && status === 'Đơn hàng đã đặt') {
-            return 'text-success';
-        }
-        if (currentStep >= thisStep && currentStatus !== 'Đã hủy' && status !== 'Đã cập nhật') {
-            return 'text-success';
-        }
-        return '';
-    }
-    return '';
-};
-
-const getStatusDate = (status) => {
-    // Lấy trạng thái hiện tại của đơn hàng
-    const currentStatus = store.hoaDonDetail?.trang_thai;
-    if (!currentStatus) return '';
-    // Định nghĩa thứ tự trạng thái
-    const statusOrder = {
-        'Chờ xác nhận': 1,
-        'Đã xác nhận': 2,
-        'Đã cập nhật': 3,
-        'Đang giao': 4,
-        'Đã nhận hàng': 5,
-        'Hoàn thành': 6,
-        'Đã hủy': -1 // Trạng thái hủy không thuộc luồng chính
-    };
-    // Lấy thứ tự của trạng thái hiện tại
-    const currentStep = statusOrder[currentStatus] || 0;
-    // Lấy thứ tự của trạng thái đang xét
-    const statusIndex = store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng'
-        ? storePickupStatusSteps.findIndex(s => s.name === status)
-        : defaultStatusSteps.findIndex(s => s.name === status);
-    const thisStep = statusIndex + 1;
-    // Nếu trạng thái hiện tại chưa đạt đến trạng thái đang xét, không hiển thị thời gian
-    if (currentStep < thisStep && currentStatus !== 'Đã hủy') {
-        return '';
-    }
-    // Trường hợp 1: Nếu là "Nhận tại cửa hàng" và trạng thái là "Chờ xác nhận"
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng' && status === 'Chờ xác nhận') {
-        return formatDate(store.hoaDonDetail.ngay_tao);
-    }
-    // Trường hợp 2: Nếu là "Giao hàng" và trạng thái là "Đơn hàng đã đặt"
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && status === 'Đơn hàng đã đặt') {
-        return formatDate(store.hoaDonDetail.ngay_tao);
-    }
-    // Trường hợp 3: Lấy backendStatus tương ứng với trạng thái
-    const backendStatus = (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng'
-        ? storePickupStatusSteps.find(s => s.name === status)?.backendStatus
-        : defaultStatusSteps.find(s => s.name === status)?.backendStatus);
-    // Trường hợp 4: Nếu trạng thái là "Đã nhận hàng" và phương thức là "Giao hàng"
-    if (status === 'Đã nhận hàng' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng') {
-        const history = store.trangThaiHistory.find(h => h.trang_thai === 'Hoàn thành');
-        return history?.ngay_chuyen_formatted || ''; // Không trả về ngày tạo nếu chưa có lịch sử
-    }
-    // Trường hợp 5: Tìm trong lịch sử trạng thái
-    const history = store.trangThaiHistory.find(h => h.trang_thai === backendStatus);
-    return history?.ngay_chuyen_formatted || '';
+    return 'text-success';
 };
 
 const changeStatus = () => {
@@ -428,13 +462,6 @@ const changeStatus = () => {
 const cancelOrder = () => {
     if (confirm('Bạn có chắc muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.')) {
         store.cancelHoaDon(store.hoaDonDetail.ma_hoa_don);
-    }
-};
-
-const addProduct = () => {
-    if (confirm('Bạn có muốn thêm sản phẩm vào đơn hàng này không?')) {
-        // Logic thêm sản phẩm sẽ được thêm sau
-        console.log('Thêm sản phẩm vào đơn hàng');
     }
 };
 
@@ -472,9 +499,6 @@ const cancelEditingCustomer = () => {
     isEditingCustomer.value = false; // Thoát chế độ chỉnh sửa mà không lưu
 };
 
-const editCustomerInfo = () => {
-    startEditingCustomer();
-};
 // Trạng thái chỉnh sửa ghi chú
 const isEditingNote = ref(false);
 const editedNote = ref('');
@@ -498,11 +522,227 @@ const cancelEditingNote = () => {
     isEditingNote.value = false;
 };
 
-// Các hàm khác giữ nguyên...
-const editNote = () => {
-    startEditingNote();
+
+// Trạng thái popup thêm sản phẩm
+const showAddProductPopup = ref(false);
+const searchKeyword = ref('');
+const quantities = ref([]);
+
+// Hiển thị popup thêm sản phẩm
+const showAddProductPopupFn = async () => {
+    await store.getAllCTSP_HD(0, 5, '');
+    quantities.value = new Array(store.listCTSP_HD.length).fill(0);
+    showAddProductPopup.value = true;
 };
 
+// Đóng popup thêm sản phẩm
+const closeAddProductPopup = () => {
+    showAddProductPopup.value = false;
+    searchKeyword.value = '';
+    quantities.value = new Array(store.listCTSP_HD.length).fill(0);
+};
+
+// Tìm kiếm sản phẩm
+const searchProducts = async () => {
+    await store.getAllCTSP_HD(0, 5, searchKeyword.value);
+    quantities.value = new Array(store.listCTSP_HD.length).fill(0);
+};
+
+// Thay đổi trang
+const changePage = async (page) => {
+    if (page >= 0 && page < store.totalPages) {
+        await store.getAllCTSP_HD(page, 5, searchKeyword.value);
+        quantities.value = new Array(store.listCTSP_HD.length).fill(0);
+    }
+};
+
+// Tăng số lượng trong Popup
+const increaseQuantityPopup = (index) => {
+    if (quantities.value[index] < store.listCTSP_HD[index].so_luong) {
+        quantities.value[index]++;
+    }
+};
+
+// Giảm số lượng trong Popup
+const decreaseQuantityPopup = (index) => {
+    if (quantities.value[index] > 0) {
+        quantities.value[index]--;
+    }
+};
+
+// Validate số lượng
+const validateQuantity = (index, max) => {
+    if (quantities.value[index] < 0) {
+        quantities.value[index] = 0;
+    }
+    if (quantities.value[index] > max) {
+        quantities.value[index] = max;
+        toast.error(`Số lượng mua không được vượt quá ${max}`);
+    }
+};
+
+// Thêm sản phẩm vào hóa đơn
+const addSelectedProducts = () => {
+    const selectedProducts = store.listCTSP_HD
+        .map((item, index) => ({
+            idCTSP: item.id_chi_tiet_san_pham,
+            soLuongMua: quantities.value[index]
+        }))
+        .filter(product => product.soLuongMua > 0);
+
+    if (selectedProducts.length === 0) {
+        toast.error('Vui lòng chọn ít nhất một sản phẩm để thêm!');
+        return;
+    }
+
+    store.addProductsToInvoice(store.hoaDonDetail.ma_hoa_don, selectedProducts);
+    closeAddProductPopup();
+};
+// Xóa sản phẩm khỏi hóa đơn
+const removeProduct = async (item, index) => {
+    if (confirm(`Bạn có chắc muốn xóa sản phẩm "${item.ten_san_pham}" khỏi hóa đơn không?`)) {
+        try {
+            // Gọi API để xóa sản phẩm
+            const response = await store.removeProductFromInvoice(
+                store.hoaDonDetail.ma_hoa_don,
+                item.id_chi_tiet_san_pham,
+                item.so_luong
+            );
+
+            if (response.error) {
+                toast.error('Xóa sản phẩm khỏi hóa đơn thất bại');
+                return;
+            }
+
+            // Xóa sản phẩm khỏi danh sách hiển thị
+            store.chiTietHoaDons.splice(index, 1);
+
+            // Cập nhật lại tổng tiền của hóa đơn
+            await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
+
+            toast.success('Xóa sản phẩm khỏi hóa đơn thành công');
+        } catch (error) {
+            console.error('Lỗi khi xóa sản phẩm:', error);
+            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
+        }
+    }
+};
+
+// Trạng thái popup chỉnh sửa số lượng
+const showQuantityPopup = ref(false);
+const popupType = ref('');
+const currentIndex = ref(null);
+const quantityChange = ref(0);
+
+const showIncreasePopup = (index) => {
+    currentIndex.value = index;
+    popupType.value = 'increase';
+    quantityChange.value = 0;
+    showQuantityPopup.value = true;
+};
+
+const showDecreasePopup = (index) => {
+    currentIndex.value = index;
+    popupType.value = 'decrease';
+    quantityChange.value = 0;
+    showQuantityPopup.value = true;
+};
+
+const closeQuantityPopup = () => {
+    showQuantityPopup.value = false;
+    currentIndex.value = null;
+    popupType.value = '';
+    quantityChange.value = 0;
+};
+const updateQuantity = async () => {
+    const index = currentIndex.value;
+    const item = store.chiTietHoaDons[index];
+    const change = quantityChange.value;
+
+    // Validate số lượng nhập vào
+    if (change <= 0) {
+        toast.error('Số lượng phải lớn hơn 0');
+        return;
+    }
+
+    if (popupType.value === 'decrease') {
+        // Kiểm tra số lượng còn lại
+        if (change > item.so_luong_con_lai) {
+            toast.error(`Số lượng thêm không được vượt quá ${item.so_luong_con_lai}`);
+            return;
+        }
+
+        try {
+            const response = await store.updateProductQuantity(
+                store.hoaDonDetail.ma_hoa_don,
+                item.id_chi_tiet_san_pham,
+                change // Số lượng thêm
+            );
+
+            if (response.error) {
+                toast.error('Cập nhật số lượng thất bại');
+                return;
+            }
+
+            // Cập nhật lại dữ liệu
+            await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
+            toast.success(`Đã thêm ${change} sản phẩm thành công`);
+        } catch (error) {
+            console.error('Lỗi khi thêm số lượng:', error);
+            toast.error('Có lỗi xảy ra khi thêm số lượng');
+        }
+    } else if (popupType.value === 'increase') {
+        // Kiểm tra số lượng hiện tại
+        if (change >= item.so_luong) {
+            toast.error(`Số lượng giảm không được vượt quá ${item.so_luong}`);
+            return;
+        }
+
+        try {
+            const response = await store.updateProductQuantity(
+                store.hoaDonDetail.ma_hoa_don,
+                item.id_chi_tiet_san_pham,
+                -change // Số lượng giảm
+            );
+
+            if (response.error) {
+                toast.error('Cập nhật số lượng thất bại');
+                return;
+            }
+
+            // Cập nhật lại dữ liệu
+            await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
+            toast.success(`Đã giảm ${change} sản phẩm thành công`);
+        } catch (error) {
+            console.error('Lỗi khi giảm số lượng:', error);
+            toast.error('Có lỗi xảy ra khi giảm số lượng');
+        }
+    }
+
+    // Đóng popup sau khi xử lý
+    closeQuantityPopup();
+};
+
+// Computed property để kiểm tra điều kiện hiển thị nút "Quay lại"
+const showRevertButton = computed(() => {
+    if (store.trangThaiHistory.length === 0) {
+        console.log('trangThaiHistory rỗng');
+        return false;
+    }
+    const firstStatus = store.trangThaiHistory[0].trang_thai;
+    const currentStatus = store.hoaDonDetail.trang_thai;
+    console.log('First Status:', firstStatus);
+    console.log('Current Status:', currentStatus);
+    console.log('Show Revert Button:', firstStatus === 'Chờ xác nhận' && currentStatus === 'Đã xác nhận');
+    return firstStatus === 'Chờ xác nhận' && currentStatus === 'Đã xác nhận';
+});
+
+// Hàm xử lý sự kiện "Quay lại trạng thái ban đầu"
+const revertToInitial = () => {
+    if (confirm('Bạn có chắc muốn quay lại trạng thái "Chờ xác nhận" không?')) {
+        store.revertToInitialStatus(store.hoaDonDetail.ma_hoa_don);
+    }
+};
 onMounted(async () => {
     const maHoaDon = route.params.maHoaDon;
     if (maHoaDon) {
@@ -512,6 +752,8 @@ onMounted(async () => {
         console.log('trang_thai:', store.hoaDonDetail?.trang_thai);
         console.log('phuong_thuc_nhan_hang:', store.hoaDonDetail?.phuong_thuc_nhan_hang);
         console.log('nextStatusText:', nextStatusText.value);
+        console.log('Danh sách chi tiết hóa đơn:', store.chiTietHoaDons);
+        console.log('Mô tả: ', store.chiTietHoaDons?.moTa);
     }
 });
 </script>
@@ -530,14 +772,43 @@ onMounted(async () => {
 
 .status-icons {
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 10px;
+    justify-content: flex-start;
+    /* Bắt đầu từ bên trái */
+    gap: 40px;
+    /* Tăng khoảng cách giữa các trạng thái để dễ nhìn */
+    margin-bottom: 20px;
+    position: relative;
+    flex-wrap: nowrap;
+    /* Đảm bảo không xuống dòng */
+    overflow-x: auto;
+    /* Nếu danh sách quá dài, cho phép cuộn ngang */
+    padding: 10px 0;
 }
 
 .status-icon {
     text-align: center;
     font-size: 14px;
+    position: relative;
+    z-index: 1;
+    min-width: 100px;
+    /* Đảm bảo mỗi trạng thái có chiều rộng tối thiểu */
+}
+
+/* Đường thẳng nối giữa các trạng thái */
+.status-icon:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 12px;
+    /* Đặt đường thẳng ở giữa icon */
+    left: 100%;
+    /* Bắt đầu từ bên phải của trạng thái hiện tại */
+    width: 40px;
+    /* Chiều dài đường thẳng, khớp với gap */
+    height: 2px;
+    /* Độ dày của đường thẳng */
+    background-color: #007bff;
+    /* Màu xanh cho đường thẳng */
+    z-index: 0;
 }
 
 .status-icon i {
@@ -569,7 +840,9 @@ onMounted(async () => {
     position: relative;
 }
 
-.info-box .btn {
+.info-box .btn.btn-primary,
+.info-box .btn.btn-secondary,
+.info-box .btn.btn-success {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -665,5 +938,219 @@ textarea.form-control[readonly] {
 .btn-secondary {
     margin-right: 5px;
     padding: 5px 15px;
+}
+
+/* Popup */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 900px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-content h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-input {
+    width: 300px;
+}
+
+.close-btn {
+    display: block;
+    margin: 20px auto 0;
+}
+
+.quantity-input {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quantity-input button {
+    padding: 5px 10px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.quantity-input button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.quantity-input input {
+    width: 60px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 5px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.pagination button {
+    padding: 5px 15px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.pagination button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.quantity-input {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quantity-input button {
+    padding: 5px 10px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.quantity-input button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.quantity-input input {
+    width: 60px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 5px;
+}
+
+.btn-danger.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+    visibility: visible;
+}
+
+.quantity-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quantity-display span {
+    min-width: 30px;
+    text-align: center;
+}
+
+.quantity-display button {
+    padding: 5px 10px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.quantity-display button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    width: 300px;
+    text-align: center;
+}
+
+.popup-input {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.popup-input input {
+    width: 100px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-primary {
+    padding: 5px 10px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    padding: 5px 10px;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
 }
 </style>
