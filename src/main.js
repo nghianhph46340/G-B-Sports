@@ -13,6 +13,8 @@ import 'ant-design-vue/dist/reset.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'vue3-toastify/dist/index.css';
 import 'bootstrap';
+import VueApexCharts from 'vue3-apexcharts'
+
 
 
 
@@ -22,5 +24,5 @@ app.use(router);
 app.use(Carousel);
 app.use(pinia);
 app.use(Antd);
-
+app.use(VueApexCharts)
 app.mount('#app');

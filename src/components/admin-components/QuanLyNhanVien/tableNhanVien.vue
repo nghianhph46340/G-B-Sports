@@ -104,6 +104,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
+import { Modal } from 'ant-design-vue';
 // Khởi tạo router và store
 import { Empty } from 'ant-design-vue';
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
@@ -140,8 +141,13 @@ const fetchNhanVien = (page) => {
 //Chuyểnn trạng thái
 // const checked = ref(false);
 const chuyenTrangThai = (id) => {
-  store.changeTrangThai(id)
-  console.log(id);
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn chuyển trạng thái nhân viên này không?',
+    onOk: () => {
+      store.changeTrangThai(id)
+      console.log(id);
+    }
+  })
 }
 
 //Search nhân viên
