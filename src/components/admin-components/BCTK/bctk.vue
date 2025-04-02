@@ -77,7 +77,7 @@
         <div class="row">
             <!-- Top 3 sản phẩm bán chạy -->
             <div class="col-md-6">
-                <a-card title="Top 3 Sản Phẩm Bán Chạy" :bordered="false">
+                <a-card title="Top 3 sản phẩm bán chạy" :bordered="false">
                     <a-table :columns="columns" :data-source="topSellingProducts" :pagination="false" size="small">
                         <template #bodyCell="{ column, record }">
                             <template v-if="column.key === 'index'">
@@ -95,7 +95,7 @@
 
             <!-- Top 3 sản phẩm bán chậm -->
             <div class="col-md-6">
-                <a-card title="Top 3 Sản Phẩm Bán Chậm" :bordered="false">
+                <a-card title="Top 3 sản phẩm bán chậm" :bordered="false">
                     <a-table :columns="columns" :data-source="topSlowProducts" :pagination="false" size="small">
                         <template #bodyCell="{ column, record }">
                             <template v-if="column.key === 'index'">
