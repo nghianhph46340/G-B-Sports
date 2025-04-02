@@ -80,6 +80,8 @@ export const useGbStore = defineStore('gbStore', {
         startDate: '',
         endDate: ''
       },
+      topSanPhamBanChay: [],
+      topSanPhamBanCham: [],
       // State cho chi tiết sản phẩm
       cTSPBySanPhamFull: [],
       //Giỏ hàng và thanh toán
@@ -140,6 +142,14 @@ export const useGbStore = defineStore('gbStore', {
         console.error('Lỗi khi thay đổi filter thống kê:', error);
         toast.error('Có lỗi xảy ra khi lọc thống kê');
       }
+    },
+    async getTopSanPhamBanChay() {
+      const topSanPhamBanChay = await bctkService.topSanPhamBanChay();
+      this.topSanPhamBanChay = topSanPhamBanChay;
+    },
+    async getTopSanPhamBanCham() {
+      const topSanPhamBanCham = await bctkService.topSanPhamBanCham();
+      this.topSanPhamBanCham = topSanPhamBanCham;
     },
     async layDanhSachNhanVien() {
       const nhanVienArr = await nhanVienService.layDanhSachNhanVien();

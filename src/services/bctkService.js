@@ -28,6 +28,24 @@ const getSoLieu = async (type = null, startDate = null, endDate = null) => {
         throw error;
     }
 };
+const topSanPhamBanChay = async () => {
+    try {
+        const response = await axiosInstance.get('/admin/topSPBanChay');
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi trong topSanPhamBanChay:', error);
+        throw error;
+    }
+};
+const topSanPhamBanCham = async () => {
+    try {
+        const response = await axiosInstance.get('/admin/topSPBanCham');
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi trong topSanPhamBanCham:', error);
+        throw error;
+    }
+};
 
 const getChartData = async (timeUnit) => {
     try {
@@ -194,5 +212,7 @@ const getChartData = async (timeUnit) => {
 
 export const bctkService = {
     getSoLieu,
-    getChartData
+    getChartData,
+    topSanPhamBanChay,
+    topSanPhamBanCham
 }
