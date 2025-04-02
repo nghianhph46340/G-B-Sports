@@ -72,7 +72,44 @@
             <div class="chart-body">
                 <apexchart type="line" height="400" :options="chartOptions" :series="series"></apexchart>
             </div>
-            
+
+        </div>
+        <div class="row">
+            <!-- Top 3 sản phẩm bán chạy -->
+            <div class="col-md-6">
+                <a-card title="Top 3 Sản Phẩm Bán Chạy" :bordered="false">
+                    <a-table :columns="columns" :data-source="topSellingProducts" :pagination="false" size="small">
+                        <template #bodyCell="{ column, record }">
+                            <template v-if="column.key === 'index'">
+                                <a-tag>
+                                    #{{ record.index }}
+                                </a-tag>
+                            </template>
+                            <template v-else-if="column.key === 'doanhThu'">
+                                {{ formatCurrency(record.doanhThu) }}
+                            </template>
+                        </template>
+                    </a-table>
+                </a-card>
+            </div>
+
+            <!-- Top 3 sản phẩm bán chậm -->
+            <div class="col-md-6">
+                <a-card title="Top 3 Sản Phẩm Bán Chậm" :bordered="false">
+                    <a-table :columns="columns" :data-source="topSlowProducts" :pagination="false" size="small">
+                        <template #bodyCell="{ column, record }">
+                            <template v-if="column.key === 'index'">
+                                <a-tag>
+                                    #{{ record.index }}
+                                </a-tag>
+                            </template>
+                            <template v-else-if="column.key === 'doanhThu'">
+                                {{ formatCurrency(record.doanhThu) }}
+                            </template>
+                        </template>
+                    </a-table>
+                </a-card>
+            </div>
         </div>
     </div>
 </template>
@@ -84,7 +121,59 @@ import { storeToRefs } from 'pinia';
 import viVN from 'ant-design-vue/es/date-picker/locale/vi_VN';
 import VueApexCharts from 'vue3-apexcharts';
 import { bctkService } from '@/services/bctkService';
+import { Card, Table, Tag } from 'ant-design-vue';
 
+// Định nghĩa cột
+const columns = [
+    {
+        title: '#',
+        dataIndex: 'index',
+        key: 'index',
+        width: 60,
+    },
+    {
+        title: 'Mã sản phẩm',
+        dataIndex: 'ma_san_pham',
+        key: 'ma_san_pham',
+    },
+    {
+        title: 'Tên sản phẩm',
+        dataIndex: 'ten_san_pham',
+        key: 'ten_san_pham',
+    },
+    {
+        title: 'Số lượng',
+        dataIndex: 'so_luong',
+        key: 'so_luong',
+        align: 'right',
+    },
+    {
+        title: 'Doanh thu',
+        dataIndex: 'tong_tien_sau_giam',
+        key: 'tong_tien_sau_giam',
+        align: 'right',
+    },
+];
+
+// Dữ liệu mẫu - thay thế bằng dữ liệu thực từ API
+const topSellingProducts = ref([]);
+
+const topSlowProducts = ref([]);
+
+
+// Hàm lấy màu cho tag
+// const getTagColor = (index) => {
+//     switch (index) {
+//         case 1:
+//             return 'gold';
+//         case 2:
+//             return 'silver';
+//         case 3:
+//             return '#cd7f32'; // bronze
+//         default:
+//             return 'default';
+//     }
+// };
 const store = useGbStore();
 const { thongKe } = storeToRefs(store);
 
@@ -247,7 +336,7 @@ const fetchChartData = async (timeUnitValue) => {
         console.log('Bắt đầu fetch dữ liệu cho:', timeUnitValue);
         const data = await bctkService.getChartData(timeUnitValue);
         console.log('Nhận được dữ liệu:', data);
-        
+
         if (data) {
             chartData.value = data;
             console.log('Đã cập nhật chartData:', chartData.value);
@@ -300,7 +389,7 @@ const updateChartDisplay = () => {
         },
         yaxis: {
             labels: {
-                formatter: function(value) {
+                formatter: function (value) {
                     if (chartType.value === 'revenue') {
                         return new Intl.NumberFormat('vi-VN', {
                             style: 'currency',
@@ -321,7 +410,7 @@ const formatChartData = () => {
     console.log('formatChartData được gọi');
     console.log('timeUnit hiện tại:', timeUnit.value);
     console.log('chartData hiện tại:', chartData.value);
-    
+
     let categories = [];
     let data = [];
 
@@ -375,7 +464,7 @@ const formatChartData = () => {
 // Theo dõi thay đổi
 watch([timeUnit, chartType], async ([newTimeUnit, newChartType], [oldTimeUnit, oldChartType]) => {
     console.log('Watch triggered:', { newTimeUnit, newChartType, oldTimeUnit, oldChartType });
-    
+
     if (newTimeUnit !== oldTimeUnit) {
         await fetchChartData(newTimeUnit);
     } else if (newChartType !== oldChartType) {
@@ -393,10 +482,18 @@ onMounted(async () => {
     } catch (error) {
         console.error('Error in onMounted:', error);
     }
+    await store.getTopSanPhamBanChay();
+    await store.getTopSanPhamBanCham();
+    topSellingProducts.value = store.topSanPhamBanChay;
+    topSlowProducts.value = store.topSanPhamBanCham;
 });
 </script>
 
 <style scoped>
+.ant-card {
+    margin-bottom: 16px;
+}
+
 .statistics-container {
     padding: 20px;
 }
