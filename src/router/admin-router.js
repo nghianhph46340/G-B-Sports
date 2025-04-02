@@ -95,6 +95,11 @@ const admin = [
                 path: "quanlykhachhang",
                 name: "admin-quan-ly-khach-hang",
                 component: () => import('@/views/admin/KhachHang/quanLyKhachHang.vue')
+            },
+            {
+                path: "quanlykhachhang/add",
+                name: "admin-quan-ly-khach-hang-add",
+                component: () => import('@/views/admin/KhachHang/themKH.vue')
             }
         ]
     }

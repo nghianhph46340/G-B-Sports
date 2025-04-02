@@ -9,6 +9,7 @@ import { hoaDonService } from '@/services/hoaDonService';
 import { check } from 'prettier'
 import { useRoute } from 'vue-router'
 import { khachHangService } from '@/services/khachHangService'
+import { bctkService } from '@/services/bctkService';
 export const useGbStore = defineStore('gbStore', {
   state: () => {
     return {
@@ -68,6 +69,17 @@ export const useGbStore = defineStore('gbStore', {
       khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
       khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
       khuyenMaiSearchs: '', // Riêng cho khuyến mãi
+      thongKe: {
+        doanhThu: 0,
+        tongDonHang: 0,
+        tongSanPham: 0
+      },
+      // Thêm state cho filter
+      bctkFilter: {
+        type: 'hom-nay',
+        startDate: '',
+        endDate: ''
+      },
       // State cho chi tiết sản phẩm
       cTSPBySanPhamFull: [],
       //Giỏ hàng và thanh toán
@@ -79,6 +91,56 @@ export const useGbStore = defineStore('gbStore', {
 
   ///Đầu mút2
   actions: {
+
+    // Thêm action cho BCTK
+    async getSoLieu(type = null, startDate = null, endDate = null) {
+      try {
+        console.log('Store getSoLieu được gọi với:', { type, startDate, endDate });
+        const response = await bctkService.getSoLieu(type, startDate, endDate);
+
+        if (response) {
+          console.log('Dữ liệu nhận được trong store:', response);
+          this.thongKe = {
+            doanhThu: response.doanhThu || 0,
+            tongDonHang: response.tongDonHang || 0,
+            tongSanPham: response.tongSanPham || 0
+          };
+          console.log('State sau khi cập nhật:', this.thongKe);
+          return response;
+        } else {
+          toast.error('Không lấy được dữ liệu thống kê');
+          return null;
+        }
+      } catch (error) {
+        console.error('Lỗi trong store getSoLieu:', error);
+        toast.error('Có lỗi xảy ra khi lấy thống kê');
+        return null;
+      }
+    },
+
+    // Action để xử lý thay đổi filter
+    async handleBCTKFilterChange(filter, customStartDate = null, customEndDate = null) {
+      try {
+        this.bctkFilter.type = filter;
+
+        if (filter === 'tuy-chon') {
+          if (!customStartDate || !customEndDate) {
+            toast.error('Vui lòng chọn khoảng thời gian');
+            return;
+          }
+          this.bctkFilter.startDate = customStartDate;
+          this.bctkFilter.endDate = customEndDate;
+          await this.getSoLieu(filter, customStartDate, customEndDate);
+        } else {
+          this.bctkFilter.startDate = '';
+          this.bctkFilter.endDate = '';
+          await this.getSoLieu(filter);
+        }
+      } catch (error) {
+        console.error('Lỗi khi thay đổi filter thống kê:', error);
+        toast.error('Có lỗi xảy ra khi lọc thống kê');
+      }
+    },
     async layDanhSachNhanVien() {
       const nhanVienArr = await nhanVienService.layDanhSachNhanVien();
       this.nhanVienArr = nhanVienArr;
