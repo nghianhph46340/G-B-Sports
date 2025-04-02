@@ -6,6 +6,7 @@ import { nhanVienService } from '@/services/nhanVienService'
 import { useRoute } from 'vue-router'
 import { hoaDonService } from '@/services/hoaDonService'
 import { khachHangService } from '@/services/khachHangService'
+import { banHangService } from '@/services/banHangService'
 export const useGbStore = defineStore('gbStore', {
     state: () => {
         return {
@@ -51,6 +52,8 @@ export const useGbStore = defineStore('gbStore', {
             currentKhachHang: 0,
             totalItemsKhachHang: 0,
             listSanPhamBanHang: [],
+            getAllCTSPKMList: [],
+            getAllHoaDonCTTArr: [],
         }
     },
     actions: {
@@ -662,6 +665,149 @@ export const useGbStore = defineStore('gbStore', {
             } catch (error) {
                 console.log('Lỗi khi tìm kiếm sản phẩm:', error);
                 this.searchSanPham = [];
+            }
+        },
+        async getAllCTSPKM() {
+            try {
+                const response = await sanPhamService.getAllCTSPKM();
+                if (response.error) {
+                    toast.error("Không lấy được dữ liệu chi tiết sản phẩm khuyến mãi");
+                    this.getAllCTSPKMList = [];
+                    return;
+                }
+                this.getAllCTSPKMList = response;
+            } catch (error) {
+                console.log(error);
+                this.getAllCTSPKMList = [];
+            }
+        },
+        async getAllHoaDonCTT() {
+            try {
+                const hoaDonCTT = await banHangService.getAllHoaDonCTT();
+                if (hoaDonCTT.error) {
+                    toast.error("Không lấy được dữ liệu");
+                    return;
+                }
+                this.getAllHoaDonCTTArr = hoaDonCTT;
+                
+            } catch (error) {
+                console.log(error);
+                this.getAllHoaDonCTTArr = [];
+            }
+            
+        },
+        async createHoaDon(idNhanVien) {
+            console.log("idNhanVien hoa don", idNhanVien);
+            try {
+                const hoaDon = await banHangService.createHoaDon(idNhanVien);
+                if (hoaDon.error) {
+                    toast.error("Không thêm được hoá đơn");
+                    return;
+                }
+                console.log("hoaDon đã thêm", hoaDon);
+                return hoaDon;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+                throw error;
+            }
+        },
+        async deleteHoaDon(idHoaDon) {
+            try {
+                const hoaDon = await banHangService.deleteHoaDon(idHoaDon);
+                if (hoaDon.error) {
+                    toast.error("Không xóa được hoá đơn");
+                    return;
+                }
+                return hoaDon;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lỗi xảy ra');
+                throw error;
+            }
+        },
+        async getAllSPHD(idHoaDon) {
+            try {
+                const hoaDon = await banHangService.getAllSPHD(idHoaDon);
+                if (hoaDon.error) {
+                    toast.error("Không lấy được dữ liệu");
+                    return;
+                }
+                this.getAllSPHDArr = hoaDon;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lị xảy ra');
+                throw error;
+            }
+        },
+        async addSPHD(idHoaDon, idCTSP, soLuong, giaBan) {
+            try {
+                const hoaDon = await banHangService.addSPHD(idHoaDon, idCTSP, soLuong, giaBan);
+                if (hoaDon.error) {
+                    toast.error("Không thêm được sản phẩm vào hoá đơn");
+                    return;
+                }
+                return hoaDon;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lị xảy ra');
+                throw error;
+            }
+        },
+        async themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan) {
+            try {
+                const hoaDon = await banHangService.themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan);
+                if (hoaDon.error) {
+                    toast.error("Không thêm được sản phẩm vào hoá đơn");
+                    return;
+                }
+                return hoaDon;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lị xảy ra');
+                throw error;
+            }
+        },
+        async trangThaiDonHang(idHoaDon) {
+            try {
+                const hoaDon = await banHangService.trangThaiDonHang(idHoaDon);
+                if (hoaDon.error) {
+                    toast.error("Không lấy được dữ liệu");
+                    return;
+                }
+                return hoaDon;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lị xảy ra');
+                throw error;
+            }
+        },
+        async phuongThucNhanHang(idHoaDon, phuongThucNhanHang) {
+            try {
+                const hoaDon = await banHangService.phuongThucNhanHang(idHoaDon, phuongThucNhanHang);
+                if (hoaDon.error) {
+                    toast.error("Không lấy được dữ liệu");
+                    return;
+                }
+                return hoaDon;
+            } catch (error) {
+                console.error(error);                
+                toast.error('Có lị xảy ra');
+                throw error;
+            }
+        },
+        async giamSPHD(idHoaDon, idCTSP, soLuong, giaBan) {
+            try {
+                const hoaDon = await banHangService.giamSPHD(idHoaDon, idCTSP, soLuong, giaBan);
+                if (hoaDon.error) {
+                    toast.error("Không giảm được sản phẩm hoá đơn");
+                    return;
+                }
+                return hoaDon;
+            } catch (error) {
+                console.error(error);
+                toast.error('Có lị xảy ra');
+                throw error;
             }
         },
         getLangue(check) {

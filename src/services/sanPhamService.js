@@ -233,6 +233,18 @@ const getSanPhamBySanPham = async (tenSanPham) => {
         };
     }
 }
+const getAllCTSPKM = async () => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'getAllCTSPKM');
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm khuyến mãi:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm'
+        };
+    }
+}
 
 export const sanPhamService = {
     getAllSanPham,
@@ -256,5 +268,6 @@ export const sanPhamService = {
     saveExcelImports,
     getSanPhamById,
     getAllSanPhamNgaySua,
-    getSanPhamBySanPham
+    getSanPhamBySanPham,
+    getAllCTSPKM
 }
