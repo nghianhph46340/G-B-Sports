@@ -3,7 +3,8 @@
         <div class="row">
             <div class="col-12 headers d-flex align-items-center">
                 <div class="logo-section col-sm-3 d-flex justify-content-center align-items-center">
-                    <img src="../images/logo/logo2.png" class="logo-image img-fluid ms-2" alt="GB Sports Logo">
+                    <img src="../images/logo/logo2.png" @click="chuyenTrang('/home')" class="logo-image img-fluid ms-2"
+                        alt="GB Sports Logo">
                     <div class="language-selector col-sm-3 d-flex justify-content-center align-items-center">
                         <span class="h-100 langue" @click="store.getLangue(store.check)">
                             {{ !store.changeLanguage.nguoiDung ? 'EN' : store.language }}
@@ -19,7 +20,8 @@
                     <TheHeaderSearchModal />
                 </div>
                 <div class="nav-icons col-sm-3 d-flex justify-content-evenly align-items-center">
-                    <div class="nav-item text-center" @mouseenter="animateIcon('user')">
+                    <div @click="chuyenTrang('/login-register/login')" class="nav-item text-center"
+                        @mouseenter="animateIcon('user')">
                         <div class="icon-container">
                             <User class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'user' }" />
                         </div>
@@ -39,7 +41,7 @@
                                 :class="{ 'icon-animated': animatedIcon === 'support' }" />
                         </div>
                         <span class="nav-text">{{ !store.changeLanguage.hoTro ? 'Hỗ trợ' : store.changeLanguage.hoTro
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="nav-item text-center" @mouseenter="animateIcon('cart')">
                         <div class="icon-container">
@@ -64,11 +66,14 @@ import { ShoppingCart } from 'lucide-vue-next';
 import { useGbStore } from '@/stores/gbStore';
 import TheHeaderSearchModal from './TheHeaderSearchModal.vue';
 import { ref } from 'vue';
-
+import { useRouter } from 'vue-router';
 const store = useGbStore();
 const animatedIcon = ref(null);
 const cartItemCount = ref(0); // Giả sử số lượng sản phẩm trong giỏ hàng
-
+const router = useRouter();
+const chuyenTrang = (path) => {
+    router.push(path);
+}
 const animateIcon = (iconName) => {
     animatedIcon.value = iconName;
     setTimeout(() => {

@@ -67,11 +67,13 @@
             </table>
         </div>
 
+      <div class="d-flex justify-content-center align-items-center mt-3">
         <button class="btn buttonPT p-0" @click="fetchData(store.currentHoaDon - 1)"
             :disabled="store.currentHoaDon === 0">Previous</button>
         <span class="mx-3">Trang {{ store.currentHoaDon + 1 }} / {{ store.totalHoaDon }}</span>
         <button class="btn buttonPT" @click="fetchData(store.currentHoaDon + 1)"
             :disabled="store.currentHoaDon >= store.totalHoaDon - 1">Next</button>
+      </div>
     </div>
 </template>
 
@@ -143,5 +145,22 @@ onMounted(() => {
 <style scoped>
 .table {
     --bs-table-hover-bg: rgb(183 183 183 / 8%);
+}
+.buttonPT {
+  background-color: transparent;
+  text-align: center;
+  color: #d02c39;
+  border: 2px solid #f33b47;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  width: 70px;
+  height: 40px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.buttonPT:hover {
+  background-color: #f33b47;
+  color: white;
 }
 </style>

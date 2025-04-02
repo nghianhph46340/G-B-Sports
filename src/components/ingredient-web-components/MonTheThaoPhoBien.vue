@@ -1,5 +1,5 @@
 <template>
-    <div class="popular-sports">
+    <div class="popular-sports" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Môn thể thao phổ biến</h2>
@@ -22,6 +22,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { useIntersectionObserver } from '@vueuse/core';
 
 // Import local images
 import bongDaImage from '../../images/popularSports/BR LITE  900 SET PRO SS24.webp';
@@ -91,9 +92,39 @@ const displaySports = ref([...sportsData.value]);
 
 // Tham chiếu đến slider
 const sliderRef = ref(null);
+const sectionRef = ref(null);
+const isVisible = ref(false);
+const currentIndex = ref(0);
+const intervalId = ref(null);
 let animationId = null;
 let position = 0;
 const speed = 1.5; // Tốc độ chạy
+
+// Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
+onMounted(() => {
+    const { stop } = useIntersectionObserver(
+        sectionRef,
+        ([{ isIntersecting }]) => {
+            if (isIntersecting) {
+                isVisible.value = true;
+                stop(); // Dừng quan sát sau khi đã hiển thị
+            }
+        },
+        { threshold: 0.2 } // Hiển thị khi ít nhất 20% phần tử xuất hiện trong viewport
+    );
+
+    // Đợi một chút để DOM được render đầy đủ
+    setTimeout(() => {
+        animationId = requestAnimationFrame(animateSlider);
+    }, 100);
+});
+
+// Dừng animation khi component bị unmount
+onBeforeUnmount(() => {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+    }
+});
 
 // Hàm để tạo hiệu ứng chạy tự động
 const animateSlider = () => {
@@ -112,27 +143,20 @@ const animateSlider = () => {
     sliderRef.value.style.transform = `translateX(${position}px)`;
     animationId = requestAnimationFrame(animateSlider);
 };
-
-// Khởi động animation khi component được mount
-onMounted(() => {
-    // Đợi một chút để DOM được render đầy đủ
-    setTimeout(() => {
-        animationId = requestAnimationFrame(animateSlider);
-    }, 100);
-});
-
-// Dừng animation khi component bị unmount
-onBeforeUnmount(() => {
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-    }
-});
 </script>
 
 <style scoped>
 .popular-sports {
-    /* padding: 2rem 0; */
+    padding: 2rem 0;
     background-color: #f8f9fa;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.popular-sports.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .container {
@@ -180,6 +204,33 @@ onBeforeUnmount(() => {
     text-align: center;
     transition: transform 0.3s ease;
     margin: 0 0.8rem;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.visible .sport-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.visible .sport-item:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.visible .sport-item:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.visible .sport-item:nth-child(3) {
+    transition-delay: 0.3s;
+}
+
+.visible .sport-item:nth-child(4) {
+    transition-delay: 0.4s;
+}
+
+.visible .sport-item:nth-child(5) {
+    transition-delay: 0.5s;
 }
 
 .sport-item:hover {

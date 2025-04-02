@@ -1,7 +1,7 @@
 <template>
     <div>
 
-        <khuyenMaiTable />
+      <khuyenMaiTable></khuyenMaiTable>
     </div>
 </template>
 

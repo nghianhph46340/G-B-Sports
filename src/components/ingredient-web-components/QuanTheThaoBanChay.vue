@@ -1,5 +1,5 @@
 <template>
-    <div class="best-selling-products">
+    <div class="best-selling-products" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container p-0">
             <div class="section-header">
                 <h4 class="section-title">Quần thể thao bán chạy</h4>
@@ -26,10 +26,12 @@
                                     </div>
                                     <div class="product-overlay" :class="{ 'active': activeProduct === product.id }">
                                         <div class="overlay-buttons">
-                                            <button class="overlay-btn view-btn">
+                                            <router-link
+                                                :to="{ name: 'sanPhamDetail-BanHang', params: { id: product.id } }"
+                                                class="overlay-btn view-btn">
                                                 <eye-outlined />
                                                 <span>Xem</span>
-                                            </button>
+                                            </router-link>
                                             <button class="overlay-btn cart-btn">
                                                 <shopping-cart-outlined />
                                                 <span>Thêm</span>
@@ -64,7 +66,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useIntersectionObserver } from '@vueuse/core';
 import {
     EyeOutlined,
     ShoppingCartOutlined,
@@ -72,10 +75,50 @@ import {
     LeftOutlined,
     RightOutlined
 } from '@ant-design/icons-vue';
+import { useGbStore } from '@/stores/gbStore';
 
 // Tham chiếu đến carousel
+const store = useGbStore();
 const carousel = ref(null);
+const sectionRef = ref(null);
+const isVisible = ref(false);
 const showArrows = ref(false);
+
+// Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
+onMounted(async () => {
+    await store.getSanPhamBySP('quần');
+    // Chuyển đổi dữ liệu từ API sang định dạng phù hợp với template
+    if (store.listSanPhamBanHang && store.listSanPhamBanHang.length > 0) {
+        bestSellingProducts.value = store.listSanPhamBanHang.map(item => ({
+            id: item.id_san_pham || item.id,
+            image: item.hinh_anh || 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
+            price: `${item.gia_khuyen_mai_cao_nhat?.toLocaleString()}₫` || '0₫',
+            oldPrice: item.gia_max > item.gia_khuyen_mai_cao_nhat ? `${item.gia_max.toLocaleString()}₫` : null,
+            discountPercent: item.gia_max && item.gia_khuyen_mai_cao_nhat ?
+                Math.round(((item.gia_max - item.gia_khuyen_mai_cao_nhat) / item.gia_max) * 100) : 0,
+            discount: item.gia_max && item.gia_khuyen_mai_cao_nhat ?
+                `-${Math.round(((item.gia_max - item.gia_khuyen_mai_cao_nhat) / item.gia_max) * 100)}%` : null,
+            name: item.ten_san_pham || 'Sản phẩm không tên',
+            brand: item.ten_thuong_hieu || 'Chưa có thương hiệu',
+            rating: item.danh_gia || 0,
+            reviews: item.so_luong_danh_gia || 0
+        }));
+        console.log('Dữ liệu quần đã chuyển đổi:', bestSellingProducts.value);
+    } else {
+        console.log('Không có dữ liệu quần từ API');
+    }
+
+    const { stop } = useIntersectionObserver(
+        sectionRef,
+        ([{ isIntersecting }]) => {
+            if (isIntersecting) {
+                isVisible.value = true;
+                stop(); // Dừng quan sát sau khi đã hiển thị
+            }
+        },
+        { threshold: 0.2 } // Hiển thị khi ít nhất 20% phần tử xuất hiện trong viewport
+    );
+});
 
 // Hàm điều khiển carousel
 const nextSlide = () => {
@@ -91,104 +134,7 @@ const prevSlide = () => {
 };
 
 // Sản phẩm mẫu
-const bestSellingProducts = ref([
-    {
-        id: 1,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '999.000₫',
-        oldPrice: '2.000.000₫',
-        discount: '-50%',
-        discountPercent: 50,
-        name: 'Áo khoác nỉ leo núi nam giữ ấm - MH100 xanh lá',
-        brand: 'ADIDAS',
-        rating: '4.9',
-        reviews: '1.2k'
-    },
-    {
-        id: 2,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '850.000₫',
-        oldPrice: '1.700.000₫',
-        discount: '-50%',
-        discountPercent: 50,
-        name: 'Giày chạy bộ nam Ultra Boost 21',
-        brand: 'NIKE',
-        rating: '4.8',
-        reviews: '956'
-    },
-    {
-        id: 3,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '450.000₫',
-        oldPrice: '600.000₫',
-        discount: '-25%',
-        discountPercent: 25,
-        name: 'Quần short thể thao nam dáng regular',
-        brand: 'PUMA',
-        rating: '4.7',
-        reviews: '723'
-    },
-    {
-        id: 4,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '399.000₫',
-        oldPrice: '599.000₫',
-        discount: '-33%',
-        discountPercent: 33,
-        name: 'Áo thun thể thao nữ thoáng khí',
-        brand: 'UNDER ARMOUR',
-        rating: '4.6',
-        reviews: '512'
-    },
-    {
-        id: 5,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '1.200.000₫',
-        oldPrice: '1.500.000₫',
-        discount: '-20%',
-        discountPercent: 20,
-        name: 'Giày bóng đá sân cỏ nhân tạo Predator',
-        brand: 'ADIDAS',
-        rating: '4.9',
-        reviews: '1.5k'
-    },
-    {
-        id: 6,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '750.000₫',
-        oldPrice: '1.500.000₫',
-        discount: '-50%',
-        discountPercent: 50,
-        name: 'Áo khoác gió chống nước unisex',
-        brand: 'THE NORTH FACE',
-        rating: '4.8',
-        reviews: '876'
-    },
-    {
-        id: 7,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '299.000₫',
-        oldPrice: '399.000₫',
-        discount: '-25%',
-        discountPercent: 25,
-        name: 'Áo thun thể thao nam thoáng khí',
-        brand: 'NIKE',
-        rating: '4.7',
-        reviews: '632'
-    },
-    {
-        id: 8,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '550.000₫',
-        oldPrice: '750.000₫',
-        discount: '-27%',
-        discountPercent: 27,
-        name: 'Quần legging tập gym nữ co giãn cao cấp',
-        brand: 'UNDER ARMOUR',
-        rating: '4.9',
-        reviews: '1.1k'
-    }
-]);
+const bestSellingProducts = ref([]);
 
 // Chia sản phẩm thành các slide, mỗi slide 5 sản phẩm
 // Nếu slide cuối không đủ 5 sản phẩm, lấy thêm từ đầu danh sách
@@ -204,7 +150,7 @@ const productSlides = computed(() => {
         // Lấy thêm sản phẩm từ đầu danh sách
         const extraProducts = products.slice(0, extraNeeded).map(product => ({
             ...product,
-            id: product.id + 1000 // Thêm id mới để tránh trùng lặp
+            id: product.id // Thêm id mới để tránh trùng lặp
         }));
         products.push(...extraProducts);
     }
@@ -224,8 +170,17 @@ const activeProduct = ref(null);
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 .best-selling-products {
+    padding: 2rem 0;
     font-family: 'Montserrat', sans-serif;
     background-color: #f8f9fa;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.best-selling-products.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .container {
@@ -262,17 +217,76 @@ const activeProduct = ref(null);
 }
 
 .product-card {
+    position: relative;
     flex: 0 0 20%;
     max-width: 20%;
     padding: 15px;
-    transition: all 0.3s ease;
     border-radius: 8px;
     margin-bottom: 20px;
+    background-color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+}
+
+@media (max-width: 1200px) {
+    .product-card {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+}
+
+@media (max-width: 992px) {
+    .product-card {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+    }
+}
+
+@media (max-width: 768px) {
+    .product-card {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-card {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+.visible .product-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.visible .product-card:hover {
+    transform: translateY(-10px);
+}
+
+.visible .product-card:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.visible .product-card:nth-child(2) {
+    transition-delay: 0.2s;
+}
+
+.visible .product-card:nth-child(3) {
+    transition-delay: 0.3s;
+}
+
+.visible .product-card:nth-child(4) {
+    transition-delay: 0.4s;
 }
 
 .product-image-container {
@@ -341,15 +355,16 @@ const activeProduct = ref(null);
     color: #333;
     cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.overlay-btn span {
-    margin-left: 5px;
+    text-decoration: none;
 }
 
 .overlay-btn:hover {
     background: #3a86ff;
     color: white;
+}
+
+.overlay-btn span {
+    margin-left: 5px;
 }
 
 .product-info {

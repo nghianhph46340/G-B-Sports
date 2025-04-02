@@ -13,8 +13,9 @@
                                     <div class="">
                                         <span class="category-title">Bóng đá</span>
                                     </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    <div class="me-3">
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;"
+                                                class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -26,7 +27,7 @@
                             </div>
                         </div>
                         <!-- End Menu -->
-                        
+
                         <!-- Menu -->
                         <div class="col-md-2 px-1">
                             <div class="category-section">
@@ -34,8 +35,9 @@
                                     <div class="">
                                         <span class="category-title">Bóng rổ</span>
                                     </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    <div class="me-3">
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;"
+                                                class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -46,7 +48,7 @@
                             </div>
                         </div>
                         <!-- End Menu -->
-                        
+
                         <!-- Menu -->
                         <div class="col-md-2 px-1">
                             <div class="category-section">
@@ -54,8 +56,9 @@
                                     <div class="">
                                         <span class="category-title">Cầu lông</span>
                                     </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    <div class="me-3">
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;"
+                                                class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -74,8 +77,9 @@
                                     <div class="">
                                         <span class="category-title">Chạy bộ</span>
                                     </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    <div class="me-3">
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;"
+                                                class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -86,7 +90,7 @@
                             </div>
                         </div>
                         <!-- End Menu -->
-                        
+
                         <!-- Menu -->
                         <div class="col-md-2 px-1">
                             <div class="category-section">
@@ -94,8 +98,9 @@
                                     <div class="">
                                         <span class="category-title">Bơi lội</span>
                                     </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    <div class="me-3">
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;"
+                                                class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
@@ -106,7 +111,7 @@
                             </div>
                         </div>
                         <!-- End Menu -->
-                        
+
                         <!-- Menu -->
                         <div class="col-md-2 px-1">
                             <div class="category-section">
@@ -114,8 +119,9 @@
                                     <div class="">
                                         <span class="category-title">Khác</span>
                                     </div>
-                                    <div class="">
-                                        <span class="view-all"><a href="" class="nav-link">XEM TẤT CẢ</a></span>
+                                    <div class="me-3">
+                                        <span class="view-all"><a href="" style="color: #f33b47; font-weight: bolder;"
+                                                class="nav-link">XEM TẤT CẢ</a></span>
                                     </div>
                                 </div>
                                 <div class="modal-body p-0 m-0 mt-2">
