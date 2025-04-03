@@ -593,6 +593,7 @@ export const useGbStore = defineStore('gbStore', {
           break;
         case '/admin/quanlyhoadon':
           this.indexMenu = ['8'];
+          break;
         case '/admin/quanlysanpham/add':
           this.indexMenu = ['3'];
           break;
@@ -611,7 +612,15 @@ export const useGbStore = defineStore('gbStore', {
         case '/admin/quanlykhuyenmai':
           this.indexMenu = ['13'];
           break;
-
+        case '/admin/quanlysanpham/sanpham':
+          this.indexMenu = ['4'];
+          break;
+        case '/admin/quanlysanpham/thuoctinh':
+          this.indexMenu = ['7'];
+          break;
+        case '/admin/quanlysanpham/chitietsanpham':
+          this.indexMenu = ['5'];
+          break;
         default:
           this.indexMenu = ['1'];
           break;

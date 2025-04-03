@@ -5,7 +5,8 @@
                 <img class="w-50 " src="../../images/logo/logo2.png" alt="Logo" />
             </div>
 
-            <a-menu class="" v-model:selectedKeys="selectedKeys" theme="light" mode="inline">
+            <a-menu class="" v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" theme="light"
+                mode="inline">
 
                 <a-menu-item key="2" @click="changeRoute('/admin/baocaothongke')">
                     <AreaChartOutlined />
@@ -87,7 +88,7 @@
 </template>
 <script setup>
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { HomeOutlined, AreaChartOutlined, UserOutlined, ReconciliationOutlined, MenuUnfoldOutlined, MenuFoldOutlined, LaptopOutlined, LogoutOutlined, AccountBookOutlined } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import TheAvatarAdmin from './TheAvatar-Admin.vue';
@@ -101,15 +102,67 @@ const collapsed = ref(false);
 const selectedKeys = ref([store.indexMenu]);
 console.log(selectedKeys);
 
+// Quản lý các sub-menu đang mở
+const openKeys = ref([]);
+
+// Hàm cập nhật openKeys dựa trên route hiện tại
+const updateOpenKeys = () => {
+    // Kiểm tra đường dẫn hiện tại và quyết định sub-menu nào nên được mở
+    const path = route.path;
+    const keysToOpen = [];
+
+    // Nếu đường dẫn chứa /quanlysanpham, mở sub-menu sản phẩm
+    if (path.includes('/quanlysanpham')) {
+        keysToOpen.push('sub1');
+    }
+
+    // Nếu đường dẫn chứa /quanlynhanvien hoặc /quanlykhachhang, mở sub-menu tài khoản
+    if (path.includes('/quanlynhanvien') || path.includes('/quanlykhachhang')) {
+        keysToOpen.push('sub2');
+    }
+
+    // Nếu đường dẫn chứa /quanlyvoucher hoặc /quanlykhuyenmai, mở sub-menu ưu đãi
+    if (path.includes('/quanlyvoucher') || path.includes('/quanlykhuyenmai')) {
+        keysToOpen.push('sub3');
+    }
+
+    // Chỉ cập nhật nếu không bị thu gọn
+    if (!collapsed.value) {
+        openKeys.value = keysToOpen;
+    }
+};
+
 const changeRoute = (path) => {
     store.getPath(path);
     store.getIndex(path);
     router.push(path);
     console.log(store.checkRouter);
+    // Cập nhật openKeys khi thay đổi route
+    setTimeout(() => {
+        updateOpenKeys();
+    }, 100);
 };
+
+// Theo dõi sự thay đổi của route
+watch(() => route.path, (newPath) => {
+    updateOpenKeys();
+}, { immediate: true });
+
+// Theo dõi sự thay đổi của collapsed
+watch(collapsed, (newValue) => {
+    // Nếu sidebar mở rộng, cập nhật lại openKeys
+    if (!newValue) {
+        updateOpenKeys();
+    } else {
+        // Khi thu gọn, đóng tất cả submenu
+        openKeys.value = [];
+    }
+});
+
 onMounted(() => {
     store.getIndex(route.path);
     selectedKeys.value = store.indexMenu;
+    updateOpenKeys();
 })
 </script>
 <style scoped>
@@ -148,18 +201,30 @@ onMounted(() => {
     margin-left: 1rem;
 }
 
-/* .sider { */
-/* background-color: #484848; */
-/* border-radius: 10px; */
-/* box-shadow: 0 50px 50px rgba(0, 0, 0, 0.6); */
-/* } */
+/* Thiết lập thanh menu đứng yên và cố định vị trí */
+.sider {
+    position: fixed !important;
+    height: 100vh;
+    overflow-y: auto;
+    left: 0;
+    top: 0;
+    z-index: 100;
+}
+
+/* Điều chỉnh lại layout chính để đảm bảo nội dung không bị đè */
+:deep(.ant-layout) {
+    padding-left: v-bind('collapsed ? "80px" : "200px"');
+    transition: padding-left 0.2s;
+}
 
 .header-admin {
     /* box-shadow: 0 0 50px rgba(0, 0, 0, 0.6); */
     border-bottom-right-radius: 10px;
     box-shadow: 0 4px 10px -5px rgba(122, 122, 122, 0.6);
     /* filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.6)); */
-
+    position: sticky;
+    top: 0;
+    z-index: 99;
 }
 
 .content-admin {
