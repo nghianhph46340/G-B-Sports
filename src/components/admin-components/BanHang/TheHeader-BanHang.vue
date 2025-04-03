@@ -106,7 +106,7 @@
                                 </td>
                                 <td>
                                     <a-space direction="vertical">
-                                        <a-input-number  v-model:value="item.so_luong" :min="1"
+                                        <a-input-number v-model:value="item.so_luong" :min="1"
                                             :max="item.so_luong_ton_goc" @change="updateItemTotal(item)"
                                             style="width: 80px;" />
                                     </a-space>
@@ -195,7 +195,7 @@
                                         <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
                                             :disabled="store.currentPage === 0">Previous</button>
                                         <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages
-                                            }}</span>
+                                        }}</span>
                                         <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
                                             :disabled="store.currentPage >= store.totalPages - 1">Next</button>
                                     </div>
@@ -234,10 +234,19 @@
                             :value="formatCurrency(activeTabData.hd.tong_tien_truoc_giam)" disabled>
                     </div>
                     <div class="mb-3">
-                        <label for="idVoucher" class="form-label">Voucher</label>
+                        <label for="idVoucher " class="form-label">Voucher</label>
                         <select name="idVoucher" id="idVoucher" class="form-select"
-                            v-model="activeTabData.hd.id_voucher">
+                            v-model="activeTabData.hd.id_voucher" @change="updateVoucher">
                             <option :value="null">-- Chọn voucher --</option>
+                            <option v-if="activeTabData.hd.id_voucher" :value="activeTabData.hd.id_voucher">
+                                {{ selectedVoucher ? `${selectedVoucher.ma_voucher} - ${selectedVoucher.ten_voucher}` :
+                                'Voucher đã chọn' }}
+                            </option>
+                            <option v-for="voucher in applicableVouchers" :key="voucher.id_voucher"
+                                :value="voucher.id_voucher" v-else>
+                                {{ voucher.ma_voucher }} - {{ voucher.ten_voucher }} (Giảm: {{ formatGiaTriGiam(voucher)
+                                }})
+                            </option>
                         </select>
                     </div>
                     <div class="mb-3">
