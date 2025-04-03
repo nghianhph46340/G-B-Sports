@@ -71,7 +71,14 @@
             <div class="bg-light p-4 rounded">
               <h5 style="color: #f33b47;">Sản phẩm</h5>
               <div class="d-flex gap-3 align-items-center mt-2">
-                <input type="text" class="form-control w-75" id="keywordSanPham" v-model="keywordSanPham" placeholder="Nhập mã hoặc tên sản phẩm" @input="fetchSanPham" />
+                <input
+                  type="text"
+                  class="form-control w-75"
+                  id="keywordSanPham"
+                  v-model="keywordSanPham"
+                  placeholder="Nhập mã hoặc tên sản phẩm"
+                  @input="debounceFetchSanPham"
+                />
               </div>
               <div class="table-responsive p-2 mt-3">
                 <table class="table table-bordered">
@@ -182,7 +189,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
@@ -223,7 +230,7 @@ const chiTietSanPhamCurrentPage = ref(0);
 const chiTietSanPhamTotalPages = ref(0);
 const itemsPerPage = 10;
 
-// Validation functions (giữ nguyên)
+// Validation functions
 const validateMaKhuyenMai = () => {
   if (!khuyenMai.value.maKhuyenMai || khuyenMai.value.maKhuyenMai.trim() === '') {
     errors.value.maKhuyenMai = 'Mã khuyến mãi không được để trống!';
@@ -280,7 +287,7 @@ const validateDates = () => {
   }
 
   if (!khuyenMai.value.ngayHetHan) {
-    errors.value.ngayHetHan = 'Ngày kết thúc không được để trống!';
+    errors.value.ngayHetHan = 'Ngày kết thúc không được Để trống!';
   } else if (khuyenMai.value.ngayBatDau && new Date(khuyenMai.value.ngayHetHan) <= new Date(khuyenMai.value.ngayBatDau)) {
     errors.value.ngayHetHan = 'Ngày kết thúc phải sau ngày bắt đầu!';
   } else {
@@ -288,12 +295,12 @@ const validateDates = () => {
   }
 };
 
-// Computed để kiểm tra lỗi
+// Computed to check for errors
 const hasErrors = computed(() => {
   return Object.values(errors.value).some(error => error !== '');
 });
 
-// Watch kieuGiamGia và giaTriGiam (giữ nguyên)
+// Watch kieuGiamGia and giaTriGiam
 watch(() => khuyenMai.value.kieuGiamGia, () => {
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
@@ -308,7 +315,7 @@ watch(() => khuyenMai.value.giaTriGiam, () => {
   validateGiaTriGiam();
 });
 
-// Debounce để tránh gọi API quá nhiều (giữ nguyên)
+// Debounce function
 const debounce = (func, wait) => {
   let timeout;
   return (...args) => {
@@ -317,12 +324,16 @@ const debounce = (func, wait) => {
   };
 };
 
-// Fetch SanPham với tìm kiếm và phân trang, chỉ lấy sản phẩm "Hoạt động"
+// Fetch SanPham with search and pagination (aligned with Update component)
 const fetchSanPham = async (page = 0) => {
   try {
     const response = await khuyenMaiService.searchSanPhamKM(keywordSanPham.value, page, itemsPerPage);
     if (!response.error && Array.isArray(response.content)) {
-      sanPhamList.value = response.content.filter(sp => sp.trang_thai === 'Hoạt động');
+      sanPhamList.value = response.content.map(sp => ({
+        id_san_pham: sp.idSanPham || sp.id_san_pham,
+        ma_san_pham: sp.maSanPham || sp.ma_san_pham,
+        ten_san_pham: sp.tenSanPham || sp.ten_san_pham
+      }));
       sanPhamTotalPages.value = response.totalPages || 0;
       sanPhamCurrentPage.value = Number(page);
     } else {
@@ -340,9 +351,10 @@ const fetchSanPham = async (page = 0) => {
   }
 };
 
+// Debounced version of fetchSanPham
 const debounceFetchSanPham = debounce(() => fetchSanPham(0), 300);
 
-// Refresh ChiTietSanPham, chỉ lấy chi tiết sản phẩm "Hoạt động"
+// Refresh ChiTietSanPham, only active product variants
 const refreshChiTietSanPham = async () => {
   chiTietSanPhamList.value = [];
   if (selectedSanPhamIds.value.length === 0) return;
@@ -362,7 +374,7 @@ const refreshChiTietSanPham = async () => {
   chiTietSanPhamCurrentPage.value = 0;
 };
 
-// Computed và các hàm khác (giữ nguyên)
+// Computed and helper functions
 const paginatedChiTietSanPhamList = computed(() => {
   const start = chiTietSanPhamCurrentPage.value * itemsPerPage;
   const end = start + itemsPerPage;
@@ -402,7 +414,7 @@ const formatNumber = (number) => {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number);
 };
 
-// Submit form với validate frontend và backend (giữ nguyên)
+// Submit form
 const submitForm = async () => {
   validateMaKhuyenMai();
   validateTenKhuyenMai();
@@ -464,8 +476,10 @@ const submitForm = async () => {
   }
 };
 
-// Initial fetch
-fetchSanPham();
+// Initial fetch on component mount
+onMounted(() => {
+  fetchSanPham(0);
+});
 </script>
 
 <style scoped>
