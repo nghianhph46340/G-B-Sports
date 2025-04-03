@@ -1,642 +1,499 @@
 <template>
     <div class="statistics-container">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Báo cáo doanh thu</h2>
-            <div class="filter-section d-flex gap-3">
+        <div class="row">
+            <h4 class="col-md-6 d-flex justify-content-start">📑 Thống kê doanh thu</h4>
+            <div class="filter-section col-md-6 d-flex justify-content-end gap-3 mb-4">
                 <!-- Date Range Picker -->
-                <div class="date-range d-flex align-items-center gap-2">
-                    <input type="date" class="form-control" v-model="startDate">
-                    <span>đến</span>
-                    <input type="date" class="form-control" v-model="endDate">
-                </div>
-                <!-- Quick Filter -->
-                <select class="form-select" v-model="timeFilter" @change="handleTimeFilterChange">
-                    <option value="today">Hôm nay</option>
-                    <option value="yesterday">Hôm qua</option>
-                    <option value="thisWeek">Tuần này</option>
-                    <option value="thisMonth">Tháng này</option>
-                    <option value="lastMonth">Tháng trước</option>
-                    <option value="thisYear">Năm nay</option>
-                    <option value="custom">Tùy chọn</option>
-                </select>
-                <!-- Export Options -->
-                <div class="dropdown">
-                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-download me-2"></i>Xuất báo cáo
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" @click="exportToExcel">Xuất Excel</a></li>
-                        <li><a class="dropdown-item" href="#" @click="exportToPDF">Xuất PDF</a></li>
-                    </ul>
-                </div>
+                <template v-if="selectedFilter === 'tuy-chon'">
+                    <a-range-picker v-model:value="dateRange" @change="handleDateChange"
+                        :placeholder="['Ngày bắt đầu', 'Ngày kết thúc']" :locale="locale" />
+                </template>
+                <!-- Filter Select -->
+                <a-select v-model:value="selectedFilter" show-search placeholder="Chọn thời gian cần thống kê"
+                    style="width: 250px;" :options="options" :filter-option="filterOption"
+                    @change="handleFilterChange"></a-select>
+
             </div>
         </div>
 
-        <!-- Loading Overlay -->
-        <div class="loading-overlay" v-if="isLoading">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Đang tải...</span>
-            </div>
-        </div>
-
-        <!-- Dashboard Cards -->
-        <div class="row g-4 mb-4">
-            <!-- Tổng doanh thu -->
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card bg-primary text-white">
-                    <div class="stat-card-body">
-                        <h5>Tổng doanh thu</h5>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h2 class="mb-0">{{ formatCurrency(statistics.totalRevenue) }}</h2>
-                            <i class="fas fa-dollar-sign fa-2x"></i>
-                        </div>
-                        <div class="stat-percentage">
-                            <i :class="statistics.revenueGrowth >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-                            {{ Math.abs(statistics.revenueGrowth) }}% so với kỳ trước
+        <!-- Thống kê cards -->
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card revenue-card">
+                    <div class="card-body row">
+                        <div class="col-md-3" style="font-size: 3rem;">💰</div>
+                        <div class="col-md-8">
+                            <h5 class="card-title">Doanh thu</h5>
+                            <p class="card-text">{{ formatCurrency(thongKe.doanhThu) }}</p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Đơn hàng -->
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card bg-success text-white">
-                    <div class="stat-card-body">
-                        <h5>Đơn hàng thành công</h5>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="mb-0">{{ statistics.completedOrders }}</h2>
-                                <small>Tổng: {{ statistics.totalOrders }} đơn</small>
-                            </div>
-                            <i class="fas fa-shopping-cart fa-2x"></i>
-                        </div>
-                        <div class="stat-percentage">
-                            Tỷ lệ thành công: {{ calculateSuccessRate() }}%
+            <div class="col-md-4">
+                <div class="card orders-card">
+                    <div class="card-body row">
+                        <div class="col-md-3" style="font-size: 3rem;">📦</div>
+                        <div class="col-md-8">
+                            <h5 class="card-title">Tổng đơn hàng</h5>
+                            <p class="card-text">{{ thongKe.tongDonHang }}</p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Sản phẩm -->
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card bg-warning text-white">
-                    <div class="stat-card-body">
-                        <h5>Sản phẩm bán ra</h5>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="mb-0">{{ statistics.soldProducts }}</h2>
-                                <small>{{ statistics.topProduct }}</small>
-                            </div>
-                            <i class="fas fa-box fa-2x"></i>
-                        </div>
-                        <div class="stat-percentage">
-                            Sản phẩm bán chạy nhất
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Khách hàng -->
-            <div class="col-xl-3 col-md-6">
-                <div class="stat-card bg-info text-white">
-                    <div class="stat-card-body">
-                        <h5>Khách hàng mới</h5>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h2 class="mb-0">{{ statistics.newCustomers }}</h2>
-                                <small>Tổng: {{ statistics.totalCustomers }}</small>
-                            </div>
-                            <i class="fas fa-users fa-2x"></i>
-                        </div>
-                        <div class="stat-percentage">
-                            <i :class="statistics.customerGrowth >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-                            {{ Math.abs(statistics.customerGrowth) }}% so với kỳ trước
+            <div class="col-md-4">
+                <div class="card products-card">
+                    <div class="card-body row">
+                        <div class="col-md-3" style="font-size: 3rem;">🏷️</div>
+                        <div class="col-md-8">
+                            <h5 class="card-title">Tổng sản phẩm</h5>
+                            <p class="card-text">{{ thongKe.tongSanPham }}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Charts Section -->
-        <div class="row g-4 mb-4">
-            <!-- Revenue Chart -->
-            <div class="col-xl-8">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title">Biểu đồ doanh thu</h5>
-                            <div class="chart-filters d-flex gap-2">
-                                <select class="form-select form-select-sm" v-model="chartView">
-                                    <option value="daily">Theo ngày</option>
-                                    <option value="weekly">Theo tuần</option>
-                                    <option value="monthly">Theo tháng</option>
-                                </select>
-                                <select class="form-select form-select-sm" v-model="chartMetric">
-                                    <option value="revenue">Doanh thu</option>
-                                    <option value="orders">Đơn hàng</option>
-                                    <option value="products">Sản phẩm</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas ref="revenueChartRef"></canvas>
-                        </div>
-                    </div>
+        <div class="chart-container mt-4">
+            <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+                <h3>Biểu đồ doanh thu</h3>
+                <div class="chart-controls d-flex gap-2">
+                    <a-select v-model:value="timeUnit" style="width: 120px">
+                        <!-- <a-select-option value="day">Theo ngày</a-select-option> -->
+                        <a-select-option value="week">Theo tuần</a-select-option>
+                        <a-select-option value="month">Theo tháng</a-select-option>
+                        <a-select-option value="year">Theo năm</a-select-option>
+                    </a-select>
+                    <a-select v-model:value="chartType" style="width: 120px">
+                        <a-select-option value="revenue">Doanh thu</a-select-option>
+                        <a-select-option value="orders">Đơn hàng</a-select-option>
+                        <a-select-option value="products">Sản phẩm</a-select-option>
+                    </a-select>
                 </div>
             </div>
-
-            <!-- Category Distribution -->
-            <div class="col-xl-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title">Phân bố theo danh mục</h5>
-                            <select class="form-select form-select-sm" v-model="distributionMetric">
-                                <option value="revenue">Doanh thu</option>
-                                <option value="orders">Đơn hàng</option>
-                                <option value="products">Sản phẩm</option>
-                            </select>
-                        </div>
-                        <div class="chart-container">
-                            <canvas ref="categoryChartRef"></canvas>
-                        </div>
-                    </div>
-                </div>
+            <div class="chart-body">
+                <apexchart type="line" height="400" :options="chartOptions" :series="series"></apexchart>
             </div>
+
         </div>
-
-        <!-- Detailed Analysis -->
-        <div class="row g-4 mb-4">
-            <!-- Top Products -->
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title">Top sản phẩm bán chạy</h5>
-                            <select class="form-select form-select-sm w-auto" v-model="topProductsLimit">
-                                <option value="5">Top 5</option>
-                                <option value="10">Top 10</option>
-                                <option value="20">Top 20</option>
-                            </select>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Sản phẩm</th>
-                                        <th>Danh mục</th>
-                                        <th>Số lượng bán</th>
-                                        <th>Doanh thu</th>
-                                        <th>Tỷ lệ hoàn trả</th>
-                                        <th>Đánh giá TB</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="product in topProducts" :key="product.id">
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <img :src="product.image" class="product-thumb me-2">
-                                                {{ product.name }}
-                                            </div>
-                                        </td>
-                                        <td>{{ product.category }}</td>
-                                        <td>{{ product.soldQuantity }}</td>
-                                        <td>{{ formatCurrency(product.revenue) }}</td>
-                                        <td>
-                                            <div class="progress" style="height: 6px;">
-                                                <div class="progress-bar bg-danger" 
-                                                    :style="`width: ${product.returnRate}%`">
-                                                </div>
-                                            </div>
-                                            <small>{{ product.returnRate }}%</small>
-                                        </td>
-                                        <td>
-                                            <div class="stars">
-                                                <i v-for="n in 5" :key="n"
-                                                    :class="['fas', n <= product.rating ? 'fa-star' : 'fa-star-o']">
-                                                </i>
-                                                <small>({{ product.reviewCount }})</small>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+        <div class="row">
+            <!-- Top 3 sản phẩm bán chạy -->
+            <div class="col-md-6">
+                <a-card title="Top 3 sản phẩm bán chạy" :bordered="false">
+                    <a-table :columns="columns" :data-source="topSellingProducts" :pagination="false" size="small">
+                        <template #bodyCell="{ column, record }">
+                            <template v-if="column.key === 'index'">
+                                <a-tag>
+                                    #{{ record.index }}
+                                </a-tag>
+                            </template>
+                            <template v-else-if="column.key === 'doanhThu'">
+                                {{ formatCurrency(record.doanhThu) }}
+                            </template>
+                        </template>
+                    </a-table>
+                </a-card>
             </div>
 
-            <!-- Sales by Category -->
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title">Thống kê theo danh mục</h5>
-                            <div class="d-flex gap-2">
-                                <input type="text" class="form-control form-control-sm" 
-                                    v-model="categorySearch" placeholder="Tìm kiếm...">
-                                <select class="form-select form-select-sm" v-model="categorySortBy">
-                                    <option value="revenue">Doanh thu</option>
-                                    <option value="orders">Đơn hàng</option>
-                                    <option value="products">Sản phẩm</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Danh mục</th>
-                                        <th>Doanh thu</th>
-                                        <th>Đơn hàng</th>
-                                        <th>Sản phẩm bán ra</th>
-                                        <th>Giá trị TB/đơn</th>
-                                        <th>Xu hướng</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="category in filteredCategories" :key="category.id">
-                                        <td>{{ category.name }}</td>
-                                        <td>{{ formatCurrency(category.revenue) }}</td>
-                                        <td>{{ category.orders }}</td>
-                                        <td>{{ category.products }}</td>
-                                        <td>{{ formatCurrency(category.avgOrderValue) }}</td>
-                                        <td>
-                                            <div class="trend-indicator">
-                                                <i :class="['fas', category.trend >= 0 ? 'fa-arrow-up text-success' : 'fa-arrow-down text-danger']"></i>
-                                                {{ Math.abs(category.trend) }}%
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-active">
-                                        <td><strong>Tổng cộng</strong></td>
-                                        <td><strong>{{ formatCurrency(totalRevenue) }}</strong></td>
-                                        <td><strong>{{ totalOrders }}</strong></td>
-                                        <td><strong>{{ totalProducts }}</strong></td>
-                                        <td><strong>{{ formatCurrency(averageOrderValue) }}</strong></td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            <!-- Top 3 sản phẩm bán chậm -->
+            <div class="col-md-6">
+                <a-card title="Top 3 sản phẩm bán chậm" :bordered="false">
+                    <a-table :columns="columns" :data-source="topSlowProducts" :pagination="false" size="small">
+                        <template #bodyCell="{ column, record }">
+                            <template v-if="column.key === 'index'">
+                                <a-tag>
+                                    #{{ record.index }}
+                                </a-tag>
+                            </template>
+                            <template v-else-if="column.key === 'doanhThu'">
+                                {{ formatCurrency(record.doanhThu) }}
+                            </template>
+                        </template>
+                    </a-table>
+                </a-card>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import Chart from 'chart.js/auto';
-import { saveAs } from 'file-saver';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import axios from 'axios';
-import dayjs from 'dayjs';
+import { ref, onMounted, watch } from 'vue';
+import { useGbStore } from '@/stores/gbStore';
+import { storeToRefs } from 'pinia';
+import viVN from 'ant-design-vue/es/date-picker/locale/vi_VN';
+import VueApexCharts from 'vue3-apexcharts';
+import { bctkService } from '@/services/bctkService';
+import { Card, Table, Tag } from 'ant-design-vue';
 
-// State variables
-const isLoading = ref(false);
-const startDate = ref(dayjs().subtract(30, 'day').format('YYYY-MM-DD'));
-const endDate = ref(dayjs().format('YYYY-MM-DD'));
-const timeFilter = ref('thisMonth');
-const chartView = ref('daily');
-const chartMetric = ref('revenue');
-const distributionMetric = ref('revenue');
-const topProductsLimit = ref(10);
-const categorySearch = ref('');
-const categorySortBy = ref('revenue');
-
-// Chart references
-const revenueChartRef = ref(null);
-const categoryChartRef = ref(null);
-let revenueChart = null;
-let categoryChart = null;
-
-// Mock data for testing
-const mockData = {
-    statistics: {
-        totalRevenue: 1500000000,
-        revenueGrowth: 15,
-        completedOrders: 450,
-        totalOrders: 500,
-        soldProducts: 1200,
-        topProduct: 'Giày Nike Air Max',
-        newCustomers: 85,
-        totalCustomers: 1000,
-        customerGrowth: 8
+// Định nghĩa cột
+const columns = [
+    {
+        title: '#',
+        dataIndex: 'index',
+        key: 'index',
+        width: 60,
     },
-    categories: [
-        {
-            id: 1,
-            name: 'Giày bóng đá',
-            revenue: 500000000,
-            orders: 150,
-            products: 300,
-            avgOrderValue: 3333333,
-            trend: 15
-        },
-        {
-            id: 2,
-            name: 'Áo bóng đá',
-            revenue: 300000000,
-            orders: 200,
-            products: 400,
-            avgOrderValue: 1500000,
-            trend: 10
-        },
-        {
-            id: 3,
-            name: 'Phụ kiện',
-            revenue: 200000000,
-            orders: 100,
-            products: 500,
-            avgOrderValue: 2000000,
-            trend: -5
-        }
-    ],
-    topProducts: [
-        {
-            id: 1,
-            name: 'Giày Nike Air Max',
-            category: 'Giày bóng đá',
-            image: '/path/to/image.jpg',
-            soldQuantity: 100,
-            revenue: 150000000,
-            returnRate: 2,
-            rating: 4.5,
-            reviewCount: 50
-        },
-        // Thêm các sản phẩm khác...
-    ]
+    {
+        title: 'Mã sản phẩm',
+        dataIndex: 'ma_san_pham',
+        key: 'ma_san_pham',
+    },
+    {
+        title: 'Tên sản phẩm',
+        dataIndex: 'ten_san_pham',
+        key: 'ten_san_pham',
+    },
+    {
+        title: 'Số lượng',
+        dataIndex: 'so_luong',
+        key: 'so_luong',
+        align: 'right',
+    },
+    {
+        title: 'Doanh thu',
+        dataIndex: 'tong_tien_sau_giam',
+        key: 'tong_tien_sau_giam',
+        align: 'right',
+    },
+];
+
+// Dữ liệu mẫu - thay thế bằng dữ liệu thực từ API
+const topSellingProducts = ref([]);
+
+const topSlowProducts = ref([]);
+
+
+// Hàm lấy màu cho tag
+// const getTagColor = (index) => {
+//     switch (index) {
+//         case 1:
+//             return 'gold';
+//         case 2:
+//             return 'silver';
+//         case 3:
+//             return '#cd7f32'; // bronze
+//         default:
+//             return 'default';
+//     }
+// };
+const store = useGbStore();
+const { thongKe } = storeToRefs(store);
+
+const selectedFilter = ref('hom-nay');
+const dateRange = ref();
+const locale = {
+    ...viVN,
+    lang: {
+        ...viVN.lang,
+        shortWeekDays: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+        shortMonths: ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'],
+        months: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
+        weekDays: ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'],
+        yearFormat: 'YYYY',
+        monthFormat: 'TM'
+    }
 };
 
-// Data states
-const statistics = ref({...mockData.statistics});
-const categories = ref([...mockData.categories]);
-const topProducts = ref([...mockData.topProducts]);
+const options = [
+    { value: 'hom-nay', label: 'Hôm nay' },
+    { value: 'hom-qua', label: 'Hôm qua' },
+    { value: 'tuan-nay', label: 'Tuần này' },
+    { value: 'thang-nay', label: 'Tháng này' },
+    { value: 'thang-truoc', label: 'Tháng trước' },
+    { value: 'quy-nay', label: 'Quý này' },
+    { value: 'quy-truoc', label: 'Quý trước' },
+    { value: 'nam-nay', label: 'Năm nay' },
+    { value: 'nam-ngoai', label: 'Năm ngoái' },
+    { value: 'tuy-chon', label: 'Tùy chọn' }
+];
 
-// Computed properties
-const filteredCategories = computed(() => {
-    let result = [...categories.value];
-    
-    if (categorySearch.value) {
-        const search = categorySearch.value.toLowerCase();
-        result = result.filter(cat => 
-            cat.name.toLowerCase().includes(search)
-        );
+const filterOption = (input, option) => {
+    return option.label.toLowerCase().includes(input.toLowerCase());
+};
+
+// Xử lý khi thay đổi filter
+const handleFilterChange = async (value) => {
+    console.log('Filter được chọn:', value);
+    selectedFilter.value = value;
+    if (value === 'tuy-chon') {
+        dateRange.value = null; // Reset date range
+    } else {
+        console.log('Gửi request với filter:', value);
+        await store.getSoLieu(value);
     }
-    
-    result.sort((a, b) => b[categorySortBy.value] - a[categorySortBy.value]);
-    
-    return result;
-});
+};
 
-const totalRevenue = computed(() => {
-    return filteredCategories.value.reduce((sum, cat) => sum + cat.revenue, 0);
-});
+// Xử lý khi thay đổi ngày
+const handleDateChange = async (dates) => {
+    console.log('Selected dates:', dates);
+    if (dates && dates[0] && dates[1]) {
+        const startDate = dates[0].format('YYYY-MM-DD');
+        const endDate = dates[1].format('YYYY-MM-DD');
+        console.log('Gửi request với ngày:', { startDate, endDate });
+        await store.getSoLieu('tuy-chon', startDate, endDate);
+    }
+};
 
-const totalOrders = computed(() => {
-    return filteredCategories.value.reduce((sum, cat) => sum + cat.orders, 0);
-});
-
-const totalProducts = computed(() => {
-    return filteredCategories.value.reduce((sum, cat) => sum + cat.products, 0);
-});
-
-const averageOrderValue = computed(() => {
-    return totalRevenue.value / totalOrders.value || 0;
-});
-
-// Methods
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND'
-    }).format(value);
+    }).format(value || 0);
 };
 
-const calculateSuccessRate = () => {
-    return ((statistics.value.completedOrders / statistics.value.totalOrders) * 100).toFixed(1);
-};
+// Thêm state cho biểu đồ
+const timeUnit = ref('month');
+const chartType = ref('revenue');
+const chartData = ref(null);
 
-const handleTimeFilterChange = () => {
-    if (timeFilter.value === 'today') {
-        startDate.value = dayjs().format('YYYY-MM-DD');
-        endDate.value = dayjs().format('YYYY-MM-DD');
-    } else if (timeFilter.value === 'yesterday') {
-        startDate.value = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-        endDate.value = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-    } else if (timeFilter.value === 'thisWeek') {
-        startDate.value = dayjs().startOf('week').format('YYYY-MM-DD');
-        endDate.value = dayjs().format('YYYY-MM-DD');
-    } else if (timeFilter.value === 'thisMonth') {
-        startDate.value = dayjs().startOf('month').format('YYYY-MM-DD');
-        endDate.value = dayjs().format('YYYY-MM-DD');
-    } else if (timeFilter.value === 'lastMonth') {
-        startDate.value = dayjs().subtract(1, 'month').startOf('month').format('YYYY-MM-DD');
-        endDate.value = dayjs().subtract(1, 'month').endOf('month').format('YYYY-MM-DD');
-    } else if (timeFilter.value === 'thisYear') {
-        startDate.value = dayjs().startOf('year').format('YYYY-MM-DD');
-        endDate.value = dayjs().format('YYYY-MM-DD');
+const series = ref([{
+    name: 'Doanh thu',
+    data: []
+}]);
+
+const chartOptions = ref({
+    chart: {
+        type: 'line',
+        zoom: { enabled: false },
+        toolbar: { show: false }
+    },
+    stroke: {
+        curve: 'smooth',
+        width: 3
+    },
+    grid: {
+        borderColor: '#f1f1f1',
+    },
+    xaxis: {
+        categories: [],
+        labels: {
+            style: { fontSize: '12px' }
+        }
+    },
+    yaxis: {
+        labels: {
+            formatter: function (value) {
+                if (chartType.value === 'revenue') {
+                    return new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                        maximumFractionDigits: 0
+                    }).format(value);
+                }
+                return value.toFixed(0);
+            }
+        }
+    },
+    colors: ['#0ea5e9'],
+    fill: {
+        type: 'gradient',
+        gradient: {
+            shade: 'light',
+            type: 'vertical',
+            shadeIntensity: 0.5,
+            opacityFrom: 0.7,
+            opacityTo: 0.2,
+        }
+    },
+    dataLabels: { enabled: false },
+    tooltip: {
+        theme: 'light',
+        y: {
+            formatter: function (value) {
+                if (chartType.value === 'revenue') {
+                    return new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                        maximumFractionDigits: 0
+                    }).format(value);
+                }
+                return value;
+            }
+        }
     }
-    
-    fetchData();
+});
+
+// Hàm helper
+const getChartName = (type) => {
+    switch (type) {
+        case 'revenue': return 'Doanh thu';
+        case 'orders': return 'Đơn hàng';
+        case 'products': return 'Sản phẩm';
+        default: return 'Doanh thu';
+    }
 };
 
-const fetchData = async () => {
+const getChartColor = (type) => {
+    switch (type) {
+        case 'revenue': return '#0ea5e9';
+        case 'orders': return '#f59e0b';
+        case 'products': return '#10b981';
+        default: return '#0ea5e9';
+    }
+};
+
+// Hàm lấy dữ liệu cho biểu đồ
+const fetchChartData = async (timeUnitValue) => {
     try {
-        isLoading.value = true;
-        
-        // Tạm thời dùng dữ liệu mẫu thay vì gọi API
-        statistics.value = mockData.statistics;
-        categories.value = mockData.categories;
-        topProducts.value = mockData.topProducts;
-        
-        await nextTick();
-        initializeCharts();
+        console.log('Bắt đầu fetch dữ liệu cho:', timeUnitValue);
+        const data = await bctkService.getChartData(timeUnitValue);
+        console.log('Nhận được dữ liệu:', data);
+
+        if (data) {
+            chartData.value = data;
+            console.log('Đã cập nhật chartData:', chartData.value);
+            updateChartDisplay();
+        }
     } catch (error) {
-        console.error('Error:', error);
-    } finally {
-        isLoading.value = false;
+        console.error('Chi tiết lỗi:', error);
+        chartData.value = {
+            doanhThu: Array(getDefaultLength()).fill(0),
+            donHang: Array(getDefaultLength()).fill(0),
+            sanPham: Array(getDefaultLength()).fill(0)
+        };
+        updateChartDisplay();
     }
 };
 
-const initializeCharts = () => {
-    // Destroy old charts if they exist
-    if (revenueChart) revenueChart.destroy();
-    if (categoryChart) categoryChart.destroy();
+// Helper function to get default array length based on timeUnit
+const getDefaultLength = () => {
+    switch (timeUnit.value) {
+        case 'day': return 6;
+        case 'week': return 7;
+        case 'month': return 12;
+        case 'year': return 5;
+        default: return 0;
+    }
+};
 
-    // Initialize revenue chart
-    if (revenueChartRef.value) {
-        const ctx = revenueChartRef.value.getContext('2d');
-        revenueChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-                datasets: [{
-                    label: 'Doanh thu',
-                    data: [120, 125, 130, 135, 138, 142, 145, 148, 150, 148, 145, 150],
-                    borderColor: '#0d6efd',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
+// Hàm cập nhật hiển thị biểu đồ
+const updateChartDisplay = () => {
+    console.log('updateChartDisplay được gọi');
+    const { categories, data } = formatChartData();
+    console.log('Categories:', categories);
+    console.log('Data:', data);
+
+    series.value = [{
+        name: getChartName(chartType.value),
+        data: data
+    }];
+    console.log('Series mới:', series.value);
+
+    chartOptions.value = {
+        ...chartOptions.value,
+        xaxis: {
+            categories: categories,
+            labels: {
+                style: {
+                    fontSize: '12px'
                 }
             }
-        });
-    }
-
-    // Initialize category chart
-    if (categoryChartRef.value) {
-        const ctx = categoryChartRef.value.getContext('2d');
-        categoryChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: categories.value.map(cat => cat.name),
-                datasets: [{
-                    data: categories.value.map(cat => cat.revenue),
-                    backgroundColor: [
-                        '#0d6efd',
-                        '#198754',
-                        '#ffc107',
-                        '#0dcaf0',
-                        '#dc3545',
-                        '#6610f2'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
+        },
+        yaxis: {
+            labels: {
+                formatter: function (value) {
+                    if (chartType.value === 'revenue') {
+                        return new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND',
+                            maximumFractionDigits: 0
+                        }).format(value);
                     }
+                    return Math.round(value).toString();
                 }
             }
-        });
-    }
+        },
+        colors: [getChartColor(chartType.value)]
+    };
 };
 
-const exportToExcel = () => {
-    const wb = XLSX.utils.book_new();
+// Hàm format dữ liệu cho biểu đồ
+const formatChartData = () => {
+    console.log('formatChartData được gọi');
+    console.log('timeUnit hiện tại:', timeUnit.value);
+    console.log('chartData hiện tại:', chartData.value);
 
-    // Add summary sheet
-    const summaryData = [
-        ['Báo cáo doanh thu', ''],
-        ['Từ ngày', startDate.value],
-        ['Đến ngày', endDate.value],
-        [''],
-        ['Tổng doanh thu', formatCurrency(statistics.value.totalRevenue)],
-        ['Tổng đơn hàng', statistics.value.totalOrders],
-        ['Đơn hàng thành công', statistics.value.completedOrders],
-        ['Sản phẩm đã bán', statistics.value.soldProducts],
-        ['Khách hàng mới', statistics.value.newCustomers]
-    ];
-    const ws_summary = XLSX.utils.aoa_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, ws_summary, "Tổng quan");
+    let categories = [];
+    let data = [];
 
-    // Add categories sheet
-    const ws_categories = XLSX.utils.json_to_sheet(categories.value);
-    XLSX.utils.book_append_sheet(wb, ws_categories, "Theo danh mục");
+    switch (timeUnit.value) {
+        case 'day':
+            categories = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+            break;
+        case 'week':
+            categories = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+            break;
+        case 'month':
+            categories = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+            break;
+        case 'year':
+            const currentYear = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' })).getFullYear();
+            categories = [
+                (currentYear - 4).toString(),
+                (currentYear - 3).toString(),
+                (currentYear - 2).toString(),
+                (currentYear - 1).toString(),
+                currentYear.toString()
+            ];
+            console.log('Năm hiện tại (Hà Nội):', currentYear);
+            console.log('Categories năm:', categories);
+            break;
+    }
 
-    // Add products sheet
-    const ws_products = XLSX.utils.json_to_sheet(topProducts.value);
-    XLSX.utils.book_append_sheet(wb, ws_products, "Top sản phẩm");
+    if (chartData.value) {
+        console.log('Dữ liệu chart hiện tại:', chartData.value);
+        switch (chartType.value) {
+            case 'revenue':
+                data = chartData.value.doanhThu || Array(categories.length).fill(0);
+                break;
+            case 'orders':
+                data = chartData.value.donHang || Array(categories.length).fill(0);
+                break;
+            case 'products':
+                data = chartData.value.sanPham || Array(categories.length).fill(0);
+                break;
+        }
+    } else {
+        data = Array(categories.length).fill(0);
+    }
 
-    // Generate Excel file
-    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(data, `bao-cao-doanh-thu-${startDate.value}-${endDate.value}.xlsx`);
+    console.log('Categories:', categories);
+    console.log('Data formatted:', data);
+
+    return { categories, data };
 };
 
-const exportToPDF = () => {
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(16);
-    doc.text('Báo cáo doanh thu', 14, 15);
-    
-    // Add date range
-    doc.setFontSize(10);
-    doc.text(`Từ ngày: ${startDate.value} đến ngày: ${endDate.value}`, 14, 25);
-    
-    // Add summary
-    doc.autoTable({
-        head: [['Chỉ số', 'Giá trị']],
-        body: [
-            ['Tổng doanh thu', formatCurrency(statistics.value.totalRevenue)],
-            ['Tổng đơn hàng', statistics.value.totalOrders.toString()],
-            ['Đơn hàng thành công', statistics.value.completedOrders.toString()],
-            ['Sản phẩm đã bán', statistics.value.soldProducts.toString()],
-            ['Khách hàng mới', statistics.value.newCustomers.toString()]
-        ],
-        startY: 35
-    });
-    
-    // Add categories table
-    doc.addPage();
-    doc.text('Thống kê theo danh mục', 14, 15);
-    doc.autoTable({
-        head: [['Danh mục', 'Doanh thu', 'Đơn hàng', 'Sản phẩm']],
-        body: categories.value.map(cat => [
-            cat.name,
-            formatCurrency(cat.revenue),
-            cat.orders.toString(),
-            cat.products.toString()
-        ]),
-        startY: 25
-    });
-    
-    // Save PDF
-    doc.save(`bao-cao-doanh-thu-${startDate.value}-${endDate.value}.pdf`);
-};
+// Theo dõi thay đổi
+watch([timeUnit, chartType], async ([newTimeUnit, newChartType], [oldTimeUnit, oldChartType]) => {
+    console.log('Watch triggered:', { newTimeUnit, newChartType, oldTimeUnit, oldChartType });
 
-// Watchers
-watch([startDate, endDate], () => {
-    timeFilter.value = 'custom';
-    fetchData();
-});
-
-watch([chartView, chartMetric], () => {
-    nextTick(() => {
-        initializeCharts();
-    });
-});
-
-watch([distributionMetric, topProductsLimit], fetchData);
-
-// Lifecycle hooks
-onMounted(() => {
-    nextTick(() => {
-        initializeCharts();
-        fetchData();
-    });
-});
-
-onUnmounted(() => {
-    if (revenueChart) {
-        revenueChart.destroy();
+    if (newTimeUnit !== oldTimeUnit) {
+        await fetchChartData(newTimeUnit);
+    } else if (newChartType !== oldChartType) {
+        updateChartDisplay();
     }
-    if (categoryChart) {
-        categoryChart.destroy();
+});
+
+// Khởi tạo
+onMounted(async () => {
+    try {
+        await Promise.all([
+            store.getSoLieu('hom-nay'),
+            fetchChartData('month')
+        ]);
+    } catch (error) {
+        console.error('Error in onMounted:', error);
     }
+    await store.getTopSanPhamBanChay();
+    await store.getTopSanPhamBanCham();
+    topSellingProducts.value = store.topSanPhamBanChay;
+    topSlowProducts.value = store.topSanPhamBanCham;
 });
 </script>
 
 <style scoped>
+.ant-card {
+    margin-bottom: 16px;
+}
+
 .statistics-container {
     padding: 20px;
 }
@@ -654,105 +511,105 @@ onUnmounted(() => {
     z-index: 9999;
 }
 
-.stat-card {
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.card {
+    border: none;
+    border-radius: 10px;
     transition: transform 0.2s;
 }
 
-.stat-card:hover {
+.card:hover {
     transform: translateY(-5px);
 }
 
-.stat-card-body {
-    padding: 20px;
+.revenue-card {
+    background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
 }
 
-.stat-card h5 {
-    font-size: 1rem;
-    margin-bottom: 15px;
-    opacity: 0.9;
+.orders-card {
+    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 }
 
-.stat-card h2 {
-    font-size: 2rem;
-    font-weight: 600;
+.products-card {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 }
 
-.stat-percentage {
-    font-size: 0.875rem;
-    margin-top: 10px;
-    opacity: 0.9;
-}
-
-.card {
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: none;
-    margin-bottom: 20px;
+.card-body {
+    padding: 1.5rem;
 }
 
 .card-title {
-    color: #333;
-    font-size: 1.1rem;
-    font-weight: 500;
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+
+.card-text {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
     margin: 0;
 }
 
-.chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-}
-
-.product-thumb {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-.stars {
-    color: #ffc107;
-}
-
-.stars .fas {
-    font-size: 0.875rem;
-}
-
-.progress {
-    margin-top: 4px;
-}
-
-.trend-indicator {
+.col-md-3 {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.875rem;
+    justify-content: center;
 }
 
-.trend-indicator i {
-    font-size: 12px;
+/* Style cho a-select */
+:deep(.ant-select) {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .statistics-container {
-        padding: 10px;
-    }
+:deep(.ant-select-selector) {
+    font-size: 14px !important;
+    font-weight: 600;
+}
 
-    .filter-section {
-        flex-direction: column;
-        gap: 10px;
-    }
+:deep(.ant-select-selection-item) {
+    font-size: 14px !important;
+    font-weight: 600;
+}
 
-    .date-range {
-        flex-direction: column;
-        width: 100%;
-    }
+:deep(.ant-select-item) {
+    font-size: 14px !important;
+    font-weight: 600;
+}
 
-    .chart-container {
-        height: 250px;
-    }
+/* Style cho date range picker */
+:deep(.ant-picker) {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+:deep(.ant-picker-input) {
+    font-size: 14px !important;
+    font-weight: 600;
+}
+
+:deep(.ant-picker-range-separator) {
+    font-size: 14px !important;
+}
+
+:deep(.ant-picker-suffix) {
+    font-size: 14px !important;
+    font-weight: 600;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header h3 {
+    font-size: 1.2rem;
+    margin: 0;
+    color: #374151;
 }
 </style>

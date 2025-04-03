@@ -11,15 +11,7 @@ const getAllSanPham = async () => {
         console.log('Không lấy được danh sách sản phẩm')
     }
 }
-const getAllSanPhamNgaySua = async () => {
-    try {
-        const { data } = await axiosInstance.get(qlsp + 'sanPhamTheoNgaySua');
-        return data;
-    } catch (error) {
-        console.log(error);
-        console.log('Không lấy được danh sách sản phẩm')
-    }
-}
+
 const getAllChiTietSanPham = async () => {
     try {
         const { data } = await axiosInstance.get(qlsp + 'getAllCTSP');
@@ -31,13 +23,12 @@ const getAllChiTietSanPham = async () => {
 }
 const searchChiTietSanPham = async (search) => {
     try {
-        const response = await axiosInstance.get(qlsp + 'searchCTSP?keyword=' + search);
-        console.log('Datasearch CTSP:', response.data);
-        return response.data;
+        const { data } = await axiosInstance.get(qlsp + 'searchCTSP?keywork=' + search);
+        console.log('Datasearch', data);
+        return data;
     } catch (error) {
         console.log(error);
         console.log('Không lấy được danh sách chi tiết sản phẩm');
-        return { error: true, data: [] };
     }
 }
 
@@ -209,18 +200,6 @@ const getSanPhamById = async (id) => {
         };
     }
 }
-
-const searchSanPham = async (search) => {
-    try {
-        const response = await axiosInstance.get(qlsp + 'timKiemSanPham?search=' + search);
-        console.log('Data search sản phẩm:', response.data);
-        return response.data;
-    } catch (error) {
-        console.log(error);
-        console.log('Không lấy được danh sách sản phẩm theo từ khóa');
-        return { error: true, data: [] };
-    }
-}
 const getSanPhamBySanPham = async (tenSanPham) => {
     try {
         const response = await axiosInstance.get(qlsp + 'getSanPhamByTenSanPham?tenSanPham=' + tenSanPham);
@@ -233,13 +212,43 @@ const getSanPhamBySanPham = async (tenSanPham) => {
         };
     }
 }
-
+const getCTSPBySanPhamFull = async (idSanPham) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'CTSPBySanPhamFullWeb?idSanPham=' + idSanPham);
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm:', error);
+        return {
+            error: true,
+            message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm'
+        };
+    }
+}
+const getAllSanPhamNgaySua = async () => {
+    try {
+        const { data } = await axiosInstance.get(qlsp + 'sanPhamTheoNgaySua');
+        return data;
+    } catch (error) {
+        console.log(error);
+        console.log('Không lấy được danh sách sản phẩm')
+    }
+}
+const searchSanPham = async (search) => {
+    try {
+        const response = await axiosInstance.get(qlsp + 'timKiemSanPham?search=' + search);
+        console.log('Data search sản phẩm:', response.data);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        console.log('Không lấy được danh sách sản phẩm theo từ khóa');
+        return { error: true, data: [] };
+    }
+}
 export const sanPhamService = {
     getAllSanPham,
     getAllChiTietSanPham,
     getImageInCTSP,
     searchChiTietSanPham,
-    searchSanPham,
     getCTSPBySanPham,
     changeStatusSanPham,
     updateCTSPStatusBySanPham,
@@ -255,6 +264,8 @@ export const sanPhamService = {
     importSanPhamFromExcel,
     saveExcelImports,
     getSanPhamById,
+    getSanPhamBySanPham,
+    getCTSPBySanPhamFull,
     getAllSanPhamNgaySua,
-    getSanPhamBySanPham
+    searchSanPham
 }

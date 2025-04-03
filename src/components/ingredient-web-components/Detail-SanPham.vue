@@ -16,27 +16,38 @@
             <div class="product-gallery" ref="productGalleryRef">
                 <div class="main-image-container">
                     <div class="image-zoom-container" ref="zoomContainer">
-                        <img :src="currentImage" alt="Sản phẩm" class="main-product-image" ref="mainImage"
-                            @mousemove="handleMouseMove" @mouseleave="handleMouseLeave">
+                        <div class="slider-container">
+                            <!-- All images in the product gallery are rendered, but only current one is visible -->
+                            <div v-for="(image, index) in product.hinh_anh" :key="index" class="slide-image" :class="{
+                                'active': index === currentImageIndex,
+                                'previous': isPreviousImage(index),
+                                'next': isNextImage(index)
+                            }" :style="{ 'background-image': `url(${image.url})` }" @mousemove="handleMouseMove"
+                                @mouseleave="handleMouseLeave">
+                            </div>
+                        </div>
                         <div class="zoom-lens" ref="zoomLens" v-show="zoomActive"></div>
                         <div class="zoom-result" ref="zoomResult" v-show="zoomVisible"></div>
                     </div>
                     <div class="image-controls">
                         <button class="control-btn prev-btn" @click="prevImage" :disabled="currentImageIndex === 0">
-                            <i class="fas fa-chevron-left"></i>
+                            <left-outlined />
                         </button>
                         <button class="control-btn fullscreen-btn" @click="showFullscreen = true">
-                            <i class="fas fa-expand"></i>
+                            <expand-outlined />
                         </button>
                         <button class="control-btn next-btn" @click="nextImage"
                             :disabled="currentImageIndex === product.hinh_anh.length - 1">
-                            <i class="fas fa-chevron-right"></i>
+                            <right-outlined />
                         </button>
                     </div>
                 </div>
                 <div class="thumbnails-container">
                     <div class="thumbnail-wrapper" v-for="(image, index) in product.hinh_anh" :key="index"
                         @click="changeImage(index)" :class="{ active: currentImageIndex === index }">
+                        <div class="color-indicator" :style="{ backgroundColor: image.color_code }"
+                            :title="image.color_name">
+                        </div>
                         <img :src="image.url" alt="Thumbnail" class="thumbnail-image">
                     </div>
                 </div>
@@ -78,10 +89,9 @@
 
                 <div class="product-rating">
                     <div class="stars">
-                        <i class="fas fa-star" v-for="i in Math.floor(product.danh_gia)" :key="'star-' + i"></i>
-                        <i class="fas fa-star-half-alt" v-if="product.danh_gia % 1 >= 0.5"></i>
-                        <i class="far fa-star" v-for="i in (5 - Math.ceil(product.danh_gia))"
-                            :key="'empty-star-' + i"></i>
+                        <star-filled v-for="i in Math.floor(product.danh_gia)" :key="'star-' + i" />
+                        <star-two-tone v-if="product.danh_gia % 1 >= 0.5" twoToneColor="#ffc107" />
+                        <star-outlined v-for="i in (5 - Math.ceil(product.danh_gia))" :key="'empty-star-' + i" />
                     </div>
                     <span class="rating-count">({{ product.so_luot_danh_gia }} đánh giá)</span>
                 </div>
@@ -110,33 +120,34 @@
 
                 <div class="product-quantity">
                     <h3 class="option-title">Số lượng:</h3>
-                    <div class="quantity-selector">
+                    <div class="quantity-selector mb-3">
                         <button class="quantity-btn minus" @click="decreaseQuantity" :disabled="quantity <= 1">
-                            <i class="fas fa-minus"></i>
+                            <minus-outlined />
                         </button>
                         <input type="number" v-model.number="quantity" min="1" max="99" class="quantity-input">
                         <button class="quantity-btn plus" @click="increaseQuantity" :disabled="quantity >= 99">
-                            <i class="fas fa-plus"></i>
+                            <plus-outlined />
                         </button>
                     </div>
-                    <span class="stock-status" v-if="stockStatus.text === 'Còn hàng'">{{ stockStatus.text }}</span>
-                    <span class="stock-status low-stock"
-                        v-else-if="stockStatus.text === `Còn ${product.so_luong_ton} sản phẩm`">{{ stockStatus.text
+                    <span class="stock-status mt-2" v-if="stockStatus.text === 'Còn hàng'">{{ stockStatus.text }}</span>
+                    <span class="stock-status low-stock mt-2"
+                        v-else-if="stockStatus.text === `Còn ${product.so_luong} sản phẩm`">{{ stockStatus.text
                         }}</span>
                     <span class="stock-status out-of-stock" v-else>{{ stockStatus.text }}</span>
                 </div>
 
                 <div class="product-actions">
                     <button class="btn-add-to-cart" @click="addToCart" :disabled="!canAddToCart">
-                        <i class="fas fa-shopping-cart"></i>
+                        <shopping-cart-outlined />
                         Thêm vào giỏ hàng
                     </button>
                     <button class="btn-buy-now" @click="buyNow" :disabled="!canAddToCart">
-                        <i class="fas fa-bolt"></i>
+                        <thunderbolt-outlined />
                         Mua ngay
                     </button>
                     <button class="btn-add-to-wishlist" @click="toggleWishlist">
-                        <i class="fas" :class="isInWishlist ? 'fa-heart' : 'fa-heart-o'"></i>
+                        <heart-filled v-if="isInWishlist" class="heart-icon filled" />
+                        <heart-outlined v-else class="heart-icon outlined" />
                     </button>
                 </div>
 
@@ -194,11 +205,10 @@
                         <div class="average-rating">
                             <div class="rating-number">{{ product.danh_gia.toFixed(1) }}</div>
                             <div class="rating-stars">
-                                <i class="fas fa-star" v-for="i in Math.floor(product.danh_gia)"
-                                    :key="'rev-star-' + i"></i>
-                                <i class="fas fa-star-half-alt" v-if="product.danh_gia % 1 >= 0.5"></i>
-                                <i class="far fa-star" v-for="i in (5 - Math.ceil(product.danh_gia))"
-                                    :key="'rev-empty-star-' + i"></i>
+                                <star-filled v-for="i in Math.floor(product.danh_gia)" :key="'rev-star-' + i" />
+                                <star-two-tone v-if="product.danh_gia % 1 >= 0.5" twoToneColor="#ffc107" />
+                                <star-outlined v-for="i in (5 - Math.ceil(product.danh_gia))"
+                                    :key="'rev-empty-star-' + i" />
                             </div>
                             <div class="rating-count">{{ product.so_luot_danh_gia }} đánh giá</div>
                         </div>
@@ -228,9 +238,8 @@
                                     <div class="reviewer-name">{{ review.ten_nguoi_dung }}</div>
                                 </div>
                                 <div class="review-rating">
-                                    <i class="fas fa-star" v-for="i in review.danh_gia" :key="'review-star-' + i"></i>
-                                    <i class="far fa-star" v-for="i in (5 - review.danh_gia)"
-                                        :key="'review-empty-star-' + i"></i>
+                                    <star-filled v-for="i in review.danh_gia" :key="'review-star-' + i" />
+                                    <star-outlined v-for="i in (5 - review.danh_gia)" :key="'review-empty-star-' + i" />
                                 </div>
                             </div>
                             <div class="review-date">{{ review.ngay }}</div>
@@ -258,7 +267,7 @@
 
             <div class="products-carousel">
                 <button class="carousel-control prev" @click="prevSlide" :disabled="currentSlide === 0">
-                    <i class="fas fa-chevron-left"></i>
+                    <left-outlined />
                 </button>
 
                 <div class="carousel-container">
@@ -277,7 +286,7 @@
                                     </button>
                                 </div>
                                 <div class="product-card-badge" v-if="product.giam_gia">-{{ product.phan_tram_giam_gia
-                                }}%
+                                    }}%
                                 </div>
                             </div>
                             <div class="product-card-info">
@@ -286,7 +295,7 @@
                                     <span class="current-price">{{ formatCurrency(product.gia_khuyen_mai) }}</span>
                                     <span class="original-price" v-if="product.giam_gia">{{
                                         formatCurrency(product.gia_goc)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                             </div>
                         </div>
@@ -294,7 +303,7 @@
                 </div>
 
                 <button class="carousel-control next" @click="nextSlide" :disabled="currentSlide >= totalSlides - 1">
-                    <i class="fas fa-chevron-right"></i>
+                    <right-outlined />
                 </button>
             </div>
         </div>
@@ -303,24 +312,35 @@
         <div class="fullscreen-modal" v-if="showFullscreen" @click="showFullscreen = false">
             <div class="fullscreen-content" @click.stop>
                 <button class="close-fullscreen" @click="showFullscreen = false">
-                    <i class="fas fa-times"></i>
+                    <close-outlined />
                 </button>
                 <div class="fullscreen-image-container">
-                    <img :src="currentImage" alt="Sản phẩm" class="fullscreen-image">
+                    <div class="slider-container">
+                        <div v-for="(image, index) in product.hinh_anh" :key="index"
+                            class="slide-image fullscreen-slide" :class="{
+                                'active': index === currentImageIndex,
+                                'previous': isPreviousImage(index),
+                                'next': isNextImage(index)
+                            }" :style="{ 'background-image': `url(${image.url})` }">
+                        </div>
+                    </div>
                 </div>
                 <div class="fullscreen-thumbnails">
                     <div class="thumbnail-wrapper" v-for="(image, index) in product.hinh_anh" :key="index"
                         @click="changeImage(index)" :class="{ active: currentImageIndex === index }">
+                        <div class="color-indicator" :style="{ backgroundColor: image.color_code }"
+                            :title="image.color_name">
+                        </div>
                         <img :src="image.url" alt="Thumbnail" class="thumbnail-image">
                     </div>
                 </div>
                 <div class="fullscreen-controls">
                     <button class="control-btn prev-btn" @click.stop="prevImage" :disabled="currentImageIndex === 0">
-                        <i class="fas fa-chevron-left"></i>
+                        <left-outlined />
                     </button>
                     <button class="control-btn next-btn" @click.stop="nextImage"
                         :disabled="currentImageIndex === product.hinh_anh.length - 1">
-                        <i class="fas fa-chevron-right"></i>
+                        <right-outlined />
                     </button>
                 </div>
             </div>
@@ -332,177 +352,383 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useIntersectionObserver } from '@vueuse/core';
 import { useRoute } from 'vue-router';
+import {
+    HeartFilled,
+    HeartOutlined,
+    LeftOutlined,
+    RightOutlined,
+    ExpandOutlined,
+    CloseOutlined,
+    StarFilled,
+    StarOutlined,
+    ShoppingCartOutlined,
+    ThunderboltOutlined,
+    PlusOutlined,
+    MinusOutlined,
+    StarTwoTone,
+    EyeOutlined
+} from '@ant-design/icons-vue';
+import { useGbStore } from '@/stores/gbStore';
+import { message } from 'ant-design-vue';
+import { useRouter } from 'vue-router';
 
 // Lấy ID sản phẩm từ tham số URL
 const route = useRoute();
 const productId = computed(() => route.params.id);
+const store = useGbStore();
+const router = useRouter();
+
+// Dữ liệu chi tiết sản phẩm
+const productDetails = ref([]);
+const selectedVariant = ref(null);
 
 // Dữ liệu sản phẩm
 const product = ref({
-    ma_san_pham: 'SP001',
-    ten_san_pham: 'Áo thể thao nam ProSport',
-    thuong_hieu: 'ProSport',
-    danh_muc: 'Áo thể thao nam',
-    chat_lieu: '85% Polyester, 15% Spandex',
-    gia_goc: 450000,
-    gia_khuyen_mai: 350000,
-    giam_gia: true,
-    phan_tram_giam_gia: 22,
-    moi: true,
-    danh_gia: 4.5,
-    so_luot_danh_gia: 120,
-    so_luong_ton: 25,
-    mau_sac: [
-        { ma: 'den', ten: 'Đen', ma_mau: '#000000' },
-        { ma: 'trang', ten: 'Trắng', ma_mau: '#FFFFFF' },
-        { ma: 'xanh-duong', ten: 'Xanh dương', ma_mau: '#0066CC' },
-        { ma: 'do', ten: 'Đỏ', ma_mau: '#FF0000' },
-    ],
-    kich_thuoc: [
-        { ma: 'S', ten: 'S', co_san: true },
-        { ma: 'M', ten: 'M', co_san: true },
-        { ma: 'L', ten: 'L', co_san: true },
-        { ma: 'XL', ten: 'XL', co_san: true },
-        { ma: 'XXL', ten: 'XXL', co_san: false },
-    ],
-    mo_ta: `
-    <h3>Áo thể thao nam ProSport - Sự lựa chọn hoàn hảo cho người yêu thể thao</h3>
-    <p>Áo thể thao nam ProSport được thiết kế đặc biệt cho các hoạt động thể thao và tập luyện. Với chất liệu cao cấp và công nghệ tiên tiến, sản phẩm mang đến sự thoải mái tối đa và hiệu suất cao cho người mặc.</p>
-    
-    <h4>Đặc điểm nổi bật:</h4>
-    <ul>
-      <li>Chất liệu: 85% Polyester, 15% Spandex - mềm mại, co giãn 4 chiều</li>
-      <li>Công nghệ DryFit - thấm hút mồ hôi nhanh, khô thoáng</li>
-      <li>Thiết kế khí động học - tối ưu hóa chuyển động</li>
-      <li>Đường may chắc chắn, tinh tế</li>
-      <li>Họa tiết in cao cấp, không bong tróc</li>
-    </ul>
-    
-    <h4>Hướng dẫn sử dụng:</h4>
-    <p>Giặt máy ở nhiệt độ thấp, không sử dụng chất tẩy, không ủi trực tiếp lên hình in, phơi trong bóng râm.</p>
-  `,
-    thong_so_ky_thuat: [
-        { ten: 'Thương hiệu', gia_tri: 'ProSport' },
-        { ten: 'Xuất xứ', gia_tri: 'Việt Nam' },
-        { ten: 'Chất liệu', gia_tri: '85% Polyester, 15% Spandex' },
-        { ten: 'Công nghệ', gia_tri: 'DryFit, UV Protection' },
-        { ten: 'Kiểu dáng', gia_tri: 'Regular fit' },
-        { ten: 'Bảo hành', gia_tri: '30 ngày' },
-        { ten: 'Đối tượng', gia_tri: 'Nam' },
-    ],
-    hinh_anh: [
-        { id: 1, url: 'https://example.com/anh1.jpg', alt: 'Áo thể thao nam ProSport - Mặt trước' },
-        { id: 2, url: 'https://example.com/anh2.jpg', alt: 'Áo thể thao nam ProSport - Mặt sau' },
-        { id: 3, url: 'https://example.com/anh3.jpg', alt: 'Áo thể thao nam ProSport - Chi tiết cổ áo' },
-        { id: 4, url: 'https://example.com/anh4.jpg', alt: 'Áo thể thao nam ProSport - Chi tiết tay áo' },
-        { id: 5, url: 'https://example.com/anh5.jpg', alt: 'Áo thể thao nam ProSport - Họa tiết' },
-    ],
+    ma_san_pham: '',
+    ten_san_pham: '',
+    thuong_hieu: '',
+    danh_muc: '',
+    chat_lieu: '',
+    gia_goc: 0,
+    gia_khuyen_mai: 0,
+    giam_gia: false,
+    phan_tram_giam_gia: 0,
+    moi: false,
+    danh_gia: 0,
+    so_luot_danh_gia: 0,
+    so_luong: 0,
+    ngay_tao: '',
+    mau_sac: [],
+    kich_thuoc: [],
+    mo_ta: '',
+    thong_so_ky_thuat: [],
+    hinh_anh: [],
     danh_gia_chi_tiet: {
-        trung_binh: 4.5,
-        tong_so: 120,
-        chi_tiet: [
-            { sao: 5, so_luong: 80, phan_tram: 67 },
-            { sao: 4, so_luong: 25, phan_tram: 21 },
-            { sao: 3, so_luong: 10, phan_tram: 8 },
-            { sao: 2, so_luong: 3, phan_tram: 2 },
-            { sao: 1, so_luong: 2, phan_tram: 2 },
-        ],
-        binh_luan: [
-            {
-                id: 1,
-                ten_nguoi_dung: 'Nguyễn Văn A',
-                avatar: 'https://example.com/avatar1.jpg',
-                danh_gia: 5,
-                ngay: '15/04/2023',
-                noi_dung: 'Áo rất thoải mái, thấm hút mồ hôi tốt. Tôi đã mặc nó khi chạy marathon và cảm thấy rất dễ chịu.',
-                hinh_anh: [
-                    'https://example.com/review1-1.jpg',
-                    'https://example.com/review1-2.jpg',
-                ],
-            },
-            {
-                id: 2,
-                ten_nguoi_dung: 'Trần Thị B',
-                avatar: 'https://example.com/avatar2.jpg',
-                danh_gia: 4,
-                ngay: '02/05/2023',
-                noi_dung: 'Chất liệu tốt, form áo đẹp. Tôi chỉ trừ 1 sao vì màu sắc hơi khác so với hình.',
-                hinh_anh: [],
-            },
-        ],
+        trung_binh: 0,
+        tong_so: 0,
+        chi_tiet: [],
+        binh_luan: []
     },
-    san_pham_lien_quan: [
-        {
-            id: 'SP002',
-            ten: 'Áo thể thao nam UltraSport',
-            hinh_anh: 'https://example.com/sp2.jpg',
-            gia_goc: 500000,
-            gia_khuyen_mai: 400000,
-            giam_gia: true,
-            phan_tram_giam_gia: 20,
-        },
-        {
-            id: 'SP003',
-            ten: 'Áo thể thao nam SportElite',
-            hinh_anh: 'https://example.com/sp3.jpg',
-            gia_goc: 450000,
-            gia_khuyen_mai: 450000,
-            giam_gia: false,
-            phan_tram_giam_gia: 0,
-        },
-        {
-            id: 'SP004',
-            ten: 'Áo thể thao nam ProRunner',
-            hinh_anh: 'https://example.com/sp4.jpg',
-            gia_goc: 550000,
-            gia_khuyen_mai: 385000,
-            giam_gia: true,
-            phan_tram_giam_gia: 30,
-        },
-        {
-            id: 'SP005',
-            ten: 'Áo thể thao nam GymMaster',
-            hinh_anh: 'https://example.com/sp5.jpg',
-            gia_goc: 480000,
-            gia_khuyen_mai: 384000,
-            giam_gia: true,
-            phan_tram_giam_gia: 20,
-        },
-        {
-            id: 'SP006',
-            ten: 'Áo thể thao nam FitPro',
-            hinh_anh: 'https://example.com/sp6.jpg',
-            gia_goc: 420000,
-            gia_khuyen_mai: 420000,
-            giam_gia: false,
-            phan_tram_giam_gia: 0,
-        },
-        {
-            id: 'SP007',
-            ten: 'Áo thể thao nam SpeedRun',
-            hinh_anh: 'https://example.com/sp7.jpg',
-            gia_goc: 490000,
-            gia_khuyen_mai: 343000,
-            giam_gia: true,
-            phan_tram_giam_gia: 30,
-        },
-    ],
+    san_pham_lien_quan: []
 });
 
-// Hàm lấy thông tin sản phẩm từ API
+// Thêm vào script setup
+// Thêm ref để lưu trữ hình ảnh theo màu sắc
+const imagesByColor = ref(new Map());
+const allImages = ref([]);
+
+// Cập nhật hàm fetchProductDetail để tạo map hình ảnh theo màu
 const fetchProductDetail = async (id) => {
     try {
-        // Ở đây sẽ gọi API để lấy thông tin sản phẩm dựa vào ID
-        // Ví dụ: const response = await axios.get(`/api/products/${id}`);
-        // Sau đó cập nhật dữ liệu sản phẩm
-        // product.value = response.data;
+        // Gọi API để lấy chi tiết sản phẩm từ store
+        await store.getCTSPBySanPhamFull(id);
 
-        // Hiện tại chỉ log ra ID để kiểm tra
-        console.log('Đang lấy thông tin sản phẩm có ID:', id);
+        // Cập nhật dữ liệu chi tiết sản phẩm
+        if (store.cTSPBySanPhamFull && store.cTSPBySanPhamFull.length > 0) {
+            productDetails.value = store.cTSPBySanPhamFull;
+
+            // Lấy chi tiết sản phẩm đầu tiên làm mặc định
+            selectedVariant.value = productDetails.value[0];
+
+            // Gộp tất cả hình ảnh và tổ chức theo màu sắc
+            organizeImagesByColor();
+
+            // Cập nhật thông tin sản phẩm từ variant đầu tiên
+            updateProductFromVariant(selectedVariant.value);
+
+            // Khởi tạo danh sách màu sắc và kích thước
+            initializeColorAndSizeOptions();
+
+            console.log('Đã load chi tiết sản phẩm:', productDetails.value);
+        } else {
+            message.error('Không tìm thấy thông tin sản phẩm');
+        }
     } catch (error) {
         console.error('Lỗi khi lấy thông tin sản phẩm:', error);
+        message.error('Đã xảy ra lỗi khi tải thông tin sản phẩm');
     }
 };
+
+// Thêm lại hàm khởi tạo danh sách màu sắc và kích thước từ variants
+const initializeColorAndSizeOptions = () => {
+    // Tạo danh sách màu sắc duy nhất
+    const uniqueColors = new Map();
+    const uniqueSizes = new Map();
+
+    productDetails.value.forEach(variant => {
+        // Thêm màu sắc
+        if (variant.id_mau_sac && !uniqueColors.has(variant.id_mau_sac)) {
+            uniqueColors.set(variant.id_mau_sac, {
+                ma: variant.id_mau_sac,
+                ten: variant.ten_mau || `Màu ${variant.id_mau_sac}`,
+                ma_mau: getColorCode(variant.id_mau_sac)
+            });
+        }
+
+        // Thêm kích thước
+        if (variant.id_kich_thuoc && !uniqueSizes.has(variant.id_kich_thuoc)) {
+            uniqueSizes.set(variant.id_kich_thuoc, {
+                ma: variant.id_kich_thuoc,
+                ten: variant.gia_tri || `Size ${variant.id_kich_thuoc}`,
+                co_san: variant.trang_thai === 'Hoạt động'
+            });
+        }
+    });
+
+    // Cập nhật danh sách màu sắc và kích thước
+    product.value.mau_sac = Array.from(uniqueColors.values());
+    product.value.kich_thuoc = Array.from(uniqueSizes.values());
+
+    console.log('Màu sắc:', product.value.mau_sac);
+    console.log('Kích thước:', product.value.kich_thuoc);
+
+    // Chọn màu và kích thước đầu tiên làm mặc định nếu có
+    if (product.value.mau_sac.length > 0) {
+        selectedColor.value = product.value.mau_sac[0].ma;
+        selectedColorName.value = product.value.mau_sac[0].ten;
+    }
+
+    if (product.value.kich_thuoc.length > 0) {
+        selectedSize.value = product.value.kich_thuoc[0].ma;
+        selectedSizeName.value = product.value.kich_thuoc[0].ten;
+    }
+};
+
+// Thêm lại hàm lấy mã màu
+const getColorCode = (colorId) => {
+    const colorMap = {
+        1: '#000000', // Đen
+        2: '#FFFFFF', // Trắng
+        3: '#FF0000', // Đỏ
+        4: '#0000FF', // Xanh dương
+        5: '#FFFF00', // Vàng
+        6: '#00FF00', // Xanh lá
+        7: '#FFA500', // Cam
+        8: '#800080', // Tím
+        9: '#A52A2A', // Nâu
+        10: '#808080', // Xám
+        // Thêm các màu khác nếu cần
+    };
+
+    return colorMap[colorId] || '#CCCCCC';
+};
+
+// Cập nhật organizeImagesByColor để gộp tất cả ảnh vào một danh sách chung
+const organizeImagesByColor = () => {
+    // Khởi tạo map mới
+    imagesByColor.value = new Map();
+    allImages.value = [];
+
+    // Duyệt qua tất cả variants để lấy hình ảnh
+    productDetails.value.forEach(variant => {
+        if (variant.hinh_anh) {
+            let variantImages = [];
+
+            // Xử lý hình ảnh dựa trên loại dữ liệu
+            if (Array.isArray(variant.hinh_anh)) {
+                variantImages = variant.hinh_anh.map((url, index) => ({
+                    id: `${variant.id_mau_sac}_${index}`,
+                    url: url,
+                    alt: `${variant.ten_san_pham} - ${variant.gia_tri || 'Kích thước'} - ${variant.ten_mau || 'Màu'} - Hình ${index + 1}`,
+                    color_id: variant.id_mau_sac,
+                    color_name: variant.ten_mau || `Màu ${variant.id_mau_sac}`,
+                    color_code: getColorCode(variant.id_mau_sac)
+                }));
+            } else if (typeof variant.hinh_anh === 'string') {
+                if (variant.hinh_anh.includes(',')) {
+                    // Nếu là chuỗi URL phân tách bằng dấu phẩy, tách thành mảng
+                    const imageUrls = variant.hinh_anh.split(',').map(url => url.trim()).filter(url => url);
+                    variantImages = imageUrls.map((url, index) => ({
+                        id: `${variant.id_mau_sac}_${index}`,
+                        url: url,
+                        alt: `${variant.ten_san_pham} - ${variant.gia_tri || 'Kích thước'} - ${variant.ten_mau || 'Màu'} - Hình ${index + 1}`,
+                        color_id: variant.id_mau_sac,
+                        color_name: variant.ten_mau || `Màu ${variant.id_mau_sac}`,
+                        color_code: getColorCode(variant.id_mau_sac)
+                    }));
+                } else {
+                    // Nếu chỉ là một URL đơn
+                    variantImages = [{
+                        id: `${variant.id_mau_sac}_0`,
+                        url: variant.hinh_anh,
+                        alt: `${variant.ten_san_pham} - ${variant.gia_tri || 'Kích thước'} - ${variant.ten_mau || 'Màu'}`,
+                        color_id: variant.id_mau_sac,
+                        color_name: variant.ten_mau || `Màu ${variant.id_mau_sac}`,
+                        color_code: getColorCode(variant.id_mau_sac)
+                    }];
+                }
+            }
+
+            // Thêm vào map theo màu sắc
+            if (variant.id_mau_sac && variantImages.length > 0) {
+                if (!imagesByColor.value.has(variant.id_mau_sac)) {
+                    imagesByColor.value.set(variant.id_mau_sac, []);
+                }
+
+                // Chỉ thêm ảnh mới chưa có trong danh sách
+                variantImages.forEach(img => {
+                    const existingImages = imagesByColor.value.get(variant.id_mau_sac);
+                    const hasImage = existingImages.some(existing => existing.url === img.url);
+                    if (!hasImage) {
+                        existingImages.push(img);
+                    }
+                });
+
+                // Thêm vào danh sách tất cả ảnh
+                variantImages.forEach(img => {
+                    const hasImage = allImages.value.some(existing => existing.url === img.url);
+                    if (!hasImage) {
+                        allImages.value.push(img);
+                    }
+                });
+            }
+        }
+    });
+
+    // Cập nhật hình ảnh cho sản phẩm - sử dụng tất cả hình ảnh
+    product.value.hinh_anh = allImages.value;
+
+    console.log('Hình ảnh theo màu sắc:', imagesByColor.value);
+    console.log('Tất cả hình ảnh:', allImages.value);
+};
+
+// Sửa lại hàm cập nhật thông tin sản phẩm từ variant để KHÔNG thay đổi danh sách hình ảnh
+const updateProductFromVariant = (variant) => {
+    if (!variant) return;
+
+    // Cập nhật thông tin cơ bản
+    product.value.ma_san_pham = variant.ma_san_pham;
+    product.value.ten_san_pham = variant.ten_san_pham;
+    product.value.thuong_hieu = variant.ten_thuong_hieu;
+    product.value.danh_muc = variant.ten_danh_muc;
+    product.value.chat_lieu = variant.ten_chat_lieu;
+
+    // Cập nhật giá
+    product.value.gia_goc = variant.giaGoc;
+    product.value.gia_khuyen_mai = variant.giaHienTai;
+
+    // Kiểm tra nếu có khuyến mãi
+    if (variant.kieuKhuyenMai && variant.giaTriKhuyenMai) {
+        product.value.giam_gia = true;
+        product.value.phan_tram_giam_gia = variant.giaTriKhuyenMai;
+    } else {
+        product.value.giam_gia = false;
+        product.value.phan_tram_giam_gia = 0;
+    }
+
+    // Cập nhật đánh giá
+    product.value.danh_gia = variant.danh_gia_trung_binh || 0;
+    product.value.so_luot_danh_gia = variant.so_luong_danh_gia || 0;
+
+    // Cập nhật số lượng
+    product.value.so_luong = variant.so_luong || 0;
+
+    // Cập nhật ngày tạo và tính toán trường moi
+    if (variant.ngay_tao) {
+        product.value.ngay_tao = variant.ngay_tao;
+
+        // Tính khoảng cách giữa ngày hiện tại và ngày tạo (múi giờ +7 Việt Nam)
+        const ngayTao = new Date(variant.ngay_tao);
+
+        // Tạo ngày hiện tại theo múi giờ +7 (Việt Nam)
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const ngayHienTai = new Date(utc + (7 * 60 * 60 * 1000));
+
+        const soNgayChenhLech = Math.floor((ngayHienTai - ngayTao) / (1000 * 60 * 60 * 24));
+
+        // Nếu < 10 ngày thì sản phẩm là mới
+        product.value.moi = soNgayChenhLech < 10;
+
+        console.log('Ngày tạo:', variant.ngay_tao);
+        console.log('Ngày hiện tại (múi giờ +7):', ngayHienTai.toISOString());
+        console.log('Số ngày chênh lệch:', soNgayChenhLech, 'Là sản phẩm mới:', product.value.moi);
+    } else {
+        product.value.moi = false;
+    }
+
+    // Cập nhật trạng thái
+    product.value.trang_thai = variant.trang_thai;
+
+    // KHÔNG cập nhật danh sách hình ảnh, chỉ thay đổi hình ảnh hiện tại
+    findAndShowFirstImageOfColor(variant.id_mau_sac);
+
+    console.log('Đã cập nhật sản phẩm:', product.value);
+};
+
+// Hàm mới để tìm và hiển thị ảnh đầu tiên của màu được chọn
+const findAndShowFirstImageOfColor = (colorId) => {
+    // Tìm ảnh đầu tiên của màu được chọn
+    const firstImageIndex = product.value.hinh_anh.findIndex(img => img.color_id === colorId);
+
+    // Nếu tìm thấy và khác với ảnh hiện tại, chuyển đến ảnh đó với animation
+    if (firstImageIndex !== -1 && firstImageIndex !== currentImageIndex.value) {
+        // Thêm một trì hoãn nhỏ để tạo hiệu ứng mượt hơn
+        setTimeout(() => {
+            currentImageIndex.value = firstImageIndex;
+        }, 100);
+        console.log('Đã chuyển đến ảnh đầu tiên của màu có ID:', colorId, 'tại vị trí:', firstImageIndex);
+    }
+};
+
+// Cập nhật hàm chọn màu sắc để lưu cả id và tên
+const selectColor = (color) => {
+    selectedColor.value = color.ma;
+    selectedColorName.value = color.ten;
+
+    // Tìm và hiển thị ảnh đầu tiên của màu được chọn
+    findAndShowFirstImageOfColor(color.ma);
+
+    // Tìm variant phù hợp với màu đã chọn và kích thước hiện tại (nếu có)
+    updateSelectedVariant();
+};
+
+// Xử lý chọn kích thước
+const selectSize = (size) => {
+    if (size.co_san) {
+        selectedSize.value = size.ma;
+        selectedSizeName.value = size.ten;
+
+        // Tìm variant phù hợp với kích thước đã chọn và màu hiện tại (nếu có)
+        updateSelectedVariant();
+    }
+};
+
+// Cập nhật hàm updateSelectedVariant để xử lý tốt hơn
+const updateSelectedVariant = () => {
+    // Tìm variant phù hợp với màu và kích thước đã chọn
+    const matchedVariant = productDetails.value.find(variant =>
+        variant.id_mau_sac === selectedColor.value &&
+        variant.id_kich_thuoc === selectedSize.value
+    );
+
+    if (matchedVariant) {
+        selectedVariant.value = matchedVariant;
+        updateProductFromVariant(matchedVariant);
+        console.log('Đã tìm thấy variant phù hợp:', matchedVariant);
+    } else {
+        console.log('Không tìm thấy variant phù hợp với màu:', selectedColor.value, 'và kích thước:', selectedSize.value);
+        // Tìm variant chỉ với màu đã chọn
+        const variantWithColor = productDetails.value.find(variant => variant.id_mau_sac === selectedColor.value);
+        if (variantWithColor) {
+            selectedVariant.value = variantWithColor;
+            updateProductFromVariant(variantWithColor);
+            console.log('Đã tìm variant với màu:', variantWithColor);
+        }
+    }
+};
+
+// Tính toán trạng thái có thể thêm vào giỏ hàng
+const canAddToCart = computed(() => {
+    return selectedColor.value && selectedSize.value && product.value.so_luong > 0;
+});
+
+// Theo dõi thay đổi của ID sản phẩm
+watch(productId, (newId) => {
+    if (newId) {
+        fetchProductDetail(newId);
+    }
+}, { immediate: true });
 
 // State cho gallery
 const currentImageIndex = ref(0);
@@ -521,8 +747,11 @@ const currentImage = computed(() => {
 
 // State cho thông tin sản phẩm
 const selectedColor = ref(null);
+const selectedColorName = ref(null);
 const selectedSize = ref(null);
+const selectedSizeName = ref(null);
 const quantity = ref(1);
+const isInWishlist = ref(false);
 
 // State cho tabs
 const activeTab = ref('description');
@@ -537,10 +766,10 @@ const discountPercent = computed(() => {
 
 // Tính toán trạng thái tồn kho
 const stockStatus = computed(() => {
-    if (product.value.so_luong_ton <= 0) {
+    if (product.value.so_luong <= 0) {
         return { text: 'Hết hàng', class: 'out-of-stock' };
-    } else if (product.value.so_luong_ton < 10) {
-        return { text: `Còn ${product.value.so_luong_ton} sản phẩm`, class: 'low-stock' };
+    } else if (product.value.so_luong < 10) {
+        return { text: `Còn ${product.value.so_luong} sản phẩm`, class: 'low-stock' };
     } else {
         return { text: 'Còn hàng', class: '' };
     }
@@ -548,18 +777,35 @@ const stockStatus = computed(() => {
 
 // Xử lý chuyển ảnh
 const changeImage = (index) => {
-    currentImageIndex.value = index;
+    // If clicking the same image, do nothing
+    if (currentImageIndex.value === index) return;
+
+    // Set slide direction based on index comparison
+    slideDirection.value = index > currentImageIndex.value ? 'slide-right' : 'slide-left';
+
+    // Delay the actual transition for smoother effect
+    setTimeout(() => {
+        currentImageIndex.value = index;
+    }, 80);
 };
 
 const nextImage = () => {
     if (product.value.hinh_anh && product.value.hinh_anh.length > 0) {
-        currentImageIndex.value = (currentImageIndex.value + 1) % product.value.hinh_anh.length;
+        slideDirection.value = 'slide-right';
+        // Update all slide classes before changing index
+        setTimeout(() => {
+            currentImageIndex.value = (currentImageIndex.value + 1) % product.value.hinh_anh.length;
+        }, 50);
     }
 };
 
 const prevImage = () => {
     if (product.value.hinh_anh && product.value.hinh_anh.length > 0) {
-        currentImageIndex.value = (currentImageIndex.value - 1 + product.value.hinh_anh.length) % product.value.hinh_anh.length;
+        slideDirection.value = 'slide-left';
+        // Update all slide classes before changing index
+        setTimeout(() => {
+            currentImageIndex.value = (currentImageIndex.value - 1 + product.value.hinh_anh.length) % product.value.hinh_anh.length;
+        }, 50);
     }
 };
 
@@ -594,20 +840,9 @@ const handleMouseLeave = () => {
     zoomVisible.value = false;
 };
 
-// Xử lý chọn màu sắc và kích thước
-const selectColor = (color) => {
-    selectedColor.value = color;
-};
-
-const selectSize = (size) => {
-    if (size.co_san) {
-        selectedSize.value = size;
-    }
-};
-
 // Xử lý số lượng
 const increaseQuantity = () => {
-    if (quantity.value < product.value.so_luong_ton) {
+    if (quantity.value < product.value.so_luong) {
         quantity.value++;
     }
 };
@@ -618,31 +853,83 @@ const decreaseQuantity = () => {
     }
 };
 
-// Xử lý chuyển tab
-const changeTab = (tab) => {
-    activeTab.value = tab;
-};
-
 // Xử lý thêm vào giỏ hàng
 const addToCart = () => {
+    if (!selectedVariant.value) {
+        message.warning('Vui lòng chọn màu sắc và kích thước');
+        return;
+    }
+
     // Xử lý thêm vào giỏ hàng
     console.log('Thêm vào giỏ hàng:', {
-        product: product.value.ma_san_pham,
-        color: selectedColor.value?.ma,
-        size: selectedSize.value?.ma,
-        quantity: quantity.value
+        product_id: productId.value,
+        variant_id: selectedVariant.value.id_chi_tiet_san_pham,
+        color: selectedColorName.value,
+        size: selectedSizeName.value,
+        quantity: quantity.value,
+        price: product.value.gia_khuyen_mai
     });
+
+    message.success('Đã thêm sản phẩm vào giỏ hàng');
 };
 
 // Xử lý mua ngay
 const buyNow = () => {
+    if (!selectedVariant.value) {
+        message.warning('Vui lòng chọn màu sắc và kích thước');
+        return;
+    }
+
     // Xử lý mua ngay
     console.log('Mua ngay:', {
-        product: product.value.ma_san_pham,
-        color: selectedColor.value?.ma,
-        size: selectedSize.value?.ma,
-        quantity: quantity.value
+        product_id: productId.value,
+        variant_id: selectedVariant.value.id_chi_tiet_san_pham,
+        color: selectedColorName.value,
+        size: selectedSizeName.value,
+        quantity: quantity.value,
+        price: product.value.gia_khuyen_mai
     });
+
+    // Lấy URL hình ảnh an toàn
+    let imageUrl = '';
+    if (product.value.hinh_anh && product.value.hinh_anh.length > 0) {
+        if (product.value.hinh_anh[currentImageIndex.value] && product.value.hinh_anh[currentImageIndex.value].url) {
+            imageUrl = product.value.hinh_anh[currentImageIndex.value].url;
+        } else {
+            // Nếu không có URL, lấy hình ảnh đầu tiên
+            imageUrl = product.value.hinh_anh[0].url || '';
+        }
+    }
+
+    const checkoutItem = {
+        id: selectedVariant.value.id_chi_tiet_san_pham,
+        product_id: productId.value,
+        ten_san_pham: product.value.ten_san_pham,
+        hinh_anh: imageUrl,
+        ten_mau_sac: selectedColorName.value,
+        ten_kich_thuoc: selectedSizeName.value,
+        gia: product.value.gia_khuyen_mai || product.value.gia_ban_hien_tai,
+        so_luong: quantity.value
+    };
+    store.setCheckoutItems(checkoutItem);
+    // Chuyển hướng đến trang thanh toán
+    router.push('/thanhtoan-banhang');
+};
+
+// Xử lý thêm vào danh sách yêu thích
+const toggleWishlist = () => {
+    isInWishlist.value = !isInWishlist.value;
+
+    if (isInWishlist.value) {
+        message.success('Đã thêm vào danh sách yêu thích');
+    } else {
+        message.info('Đã xóa khỏi danh sách yêu thích');
+    }
+};
+
+// Xử lý chuyển tab
+const changeTab = (tab) => {
+    activeTab.value = tab;
 };
 
 // State cho carousel sản phẩm đề xuất
@@ -709,26 +996,10 @@ const setupScrollAnimation = (target, delay = 0) => {
     );
 };
 
-// Theo dõi thay đổi của ID sản phẩm
-watch(productId, (newId) => {
-    if (newId) {
-        fetchProductDetail(newId);
-    }
-}, { immediate: true });
-
 onMounted(() => {
     // Lấy thông tin sản phẩm khi component được mount
     if (productId.value) {
         fetchProductDetail(productId.value);
-    }
-
-    // Khởi tạo màu sắc và kích thước mặc định
-    if (product.value.mau_sac && product.value.mau_sac.length > 0) {
-        selectedColor.value = product.value.mau_sac[0];
-    }
-
-    if (product.value.kich_thuoc && product.value.kich_thuoc.length > 0) {
-        selectedSize.value = product.value.kich_thuoc[0];
     }
 
     // Thiết lập hiệu ứng scroll animation
@@ -755,6 +1026,45 @@ onMounted(() => {
     updateItemsPerSlide();
     window.addEventListener('resize', updateItemsPerSlide);
 });
+
+// Add new ref for tracking slide direction in the script section
+const slideDirection = ref('slide-right');
+
+// Add the preload function in the script section
+// Helper function to preload next and previous images
+const getPreloadImages = () => {
+    if (!product.value.hinh_anh || product.value.hinh_anh.length <= 1) return [];
+
+    const preloadUrls = [];
+    const currentIdx = currentImageIndex.value;
+    const totalImages = product.value.hinh_anh.length;
+
+    // Add next image
+    const nextIdx = (currentIdx + 1) % totalImages;
+    preloadUrls.push(product.value.hinh_anh[nextIdx].url);
+
+    // Add previous image
+    const prevIdx = (currentIdx - 1 + totalImages) % totalImages;
+    preloadUrls.push(product.value.hinh_anh[prevIdx].url);
+
+    return preloadUrls;
+};
+
+// Add helper functions in the script section to determine previous and next images
+// Helper functions to determine previous and next images
+const isPreviousImage = (index) => {
+    if (slideDirection.value === 'slide-right') {
+        return index === ((currentImageIndex.value - 1 + product.value.hinh_anh.length) % product.value.hinh_anh.length);
+    }
+    return false;
+};
+
+const isNextImage = (index) => {
+    if (slideDirection.value === 'slide-left') {
+        return index === ((currentImageIndex.value + 1) % product.value.hinh_anh.length);
+    }
+    return false;
+};
 </script>
 
 <style scoped>
@@ -828,8 +1138,12 @@ onMounted(() => {
     width: 100%;
     height: 0;
     padding-bottom: 100%;
-    /* Tỷ lệ khung hình 1:1 */
     overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    background-color: #f8f8f8;
+    /* Add background color as fallback */
 }
 
 .main-product-image {
@@ -839,7 +1153,10 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transform-origin: center center;
+    transition: transform 0.5s ease;
+    backface-visibility: hidden;
+    /* Prevent flickering */
 }
 
 .zoom-lens {
@@ -937,23 +1254,40 @@ onMounted(() => {
     border-radius: 4px;
     overflow: hidden;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .thumbnail-wrapper.active {
     border-color: #007bff;
+    transform: scale(1.08);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    z-index: 1;
 }
 
-.thumbnail-wrapper:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.thumbnail-wrapper:hover:not(.active) {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .thumbnail-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.color-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    z-index: 5;
 }
 
 /* Kiểu dáng modal xem toàn màn hình */
@@ -968,64 +1302,28 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-.fullscreen-content {
-    position: relative;
-    width: 90%;
-    max-width: 1200px;
-    height: 90vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.close-fullscreen {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 10;
-    transition: all 0.2s ease;
-}
-
-.close-fullscreen:hover {
-    background: rgba(255, 255, 255, 0.4);
-    transform: rotate(90deg);
-}
-
-.fullscreen-image-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .fullscreen-image {
     max-width: 100%;
     max-height: 80vh;
     object-fit: contain;
-    animation: zoomIn 0.3s ease;
+    animation: zoomIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0);
+    }
+
+    to {
+        opacity: 1;
+        backdrop-filter: blur(5px);
+    }
 }
 
 @keyframes zoomIn {
@@ -1040,49 +1338,100 @@ onMounted(() => {
     }
 }
 
-.fullscreen-thumbnails {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    padding: 15px 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #ffffff #333333;
+/* Nâng cao hiệu ứng khi hover lên hình ảnh chính */
+.image-zoom-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
 }
 
-.fullscreen-thumbnails::-webkit-scrollbar {
-    height: 6px;
+.image-zoom-container:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.fullscreen-thumbnails::-webkit-scrollbar-track {
-    background: #333333;
-    border-radius: 10px;
-}
-
-.fullscreen-thumbnails::-webkit-scrollbar-thumb {
-    background-color: #ffffff;
-    border-radius: 10px;
-}
-
-.fullscreen-controls {
+.main-product-image {
     position: absolute;
-    top: 50%;
+    top: 0;
     left: 0;
-    right: 0;
-    transform: translateY(-50%);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.image-zoom-container:hover .main-product-image:not(:active) {
+    transform: scale(1.03);
+}
+
+/* Animation cho color indicator */
+.color-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+    transition: all 0.3s ease;
+}
+
+.thumbnail-wrapper:hover .color-indicator {
+    transform: scale(1.2);
+}
+
+.thumbnail-wrapper.active .color-indicator {
+    transform: scale(1.3);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Animation cho color selection */
+.color-option {
     display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 2px solid transparent;
 }
 
-.fullscreen-controls .control-btn {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
+.color-option.active {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
 }
 
-.fullscreen-controls .control-btn:hover {
-    background-color: rgba(255, 255, 255, 0.4);
+.color-option:hover:not(.active) {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.color-option:hover .color-swatch {
+    transform: scale(1.1);
+}
+
+.color-option.active .color-swatch {
+    transform: scale(1.15);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Kiểu dáng phần thông tin sản phẩm */
@@ -1220,40 +1569,6 @@ onMounted(() => {
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
-}
-
-.color-option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.color-option.active {
-    border: 2px solid #007bff;
-    background-color: rgba(0, 123, 255, 0.05);
-}
-
-.color-option:hover:not(.active) {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.color-swatch {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.color-name {
-    font-size: 14px;
-    color: #333;
 }
 
 .product-sizes {
@@ -1411,18 +1726,52 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    font-size: 18px;
-    color: #6c757d;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-add-to-wishlist:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255, 77, 79, 0.3);
+    border-color: #ff4d4f;
 }
 
-.btn-add-to-wishlist .fa-heart {
-    color: #ff5252;
+.btn-add-to-wishlist:active {
+    transform: translateY(0);
+}
+
+.heart-icon {
+    font-size: 22px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.heart-icon.filled {
+    color: #ff4d4f;
+    animation: heartBeat 0.3s ease-in-out;
+}
+
+.heart-icon.outlined {
+    color: #777;
+}
+
+.btn-add-to-wishlist:hover .heart-icon.outlined {
+    color: #ff4d4f;
+}
+
+@keyframes heartBeat {
+    0% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .product-delivery-info {
@@ -2116,5 +2465,141 @@ onMounted(() => {
         flex: 0 0 100%;
         max-width: 100%;
     }
+}
+
+/* Animation cho chuyển đổi hình ảnh */
+.fade-slide-enter-active {
+    transition: all 0.4s ease;
+}
+
+.fade-slide-leave-active {
+    transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.fade-slide-enter-from {
+    transform: translateX(10px);
+    opacity: 0;
+}
+
+.fade-slide-leave-to {
+    transform: translateX(-10px);
+    opacity: 0;
+}
+
+/* Add directional slide transitions at the end of the CSS section */
+/* Right to left transition */
+.slide-right-enter-active,
+.slide-right-leave-active,
+.slide-left-enter-active,
+.slide-left-leave-active {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    backface-visibility: hidden;
+    /* Prevent flickering */
+    will-change: transform, opacity;
+    /* Performance optimization */
+}
+
+/* Adjust the enter/leave positions to ensure overlap */
+.slide-right-enter-from {
+    transform: translateX(100%);
+    opacity: 1;
+    /* Start fully visible */
+}
+
+.slide-right-leave-to {
+    transform: translateX(-100%);
+    opacity: 1;
+    /* End fully visible */
+}
+
+.slide-left-enter-from {
+    transform: translateX(-100%);
+    opacity: 1;
+    /* Start fully visible */
+}
+
+.slide-left-leave-to {
+    transform: translateX(100%);
+    opacity: 1;
+    /* End fully visible */
+}
+
+/* Left to right transition */
+.slide-left-enter-from {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+.slide-left-leave-to {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* Add the new slider styles at the end of the CSS section */
+.slider-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.slide-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: none;
+}
+
+.slide-image.active {
+    opacity: 1;
+    transform: translateX(0);
+    z-index: 2;
+    pointer-events: auto;
+}
+
+.slide-image.previous {
+    opacity: 1;
+    transform: translateX(-100%);
+    z-index: 1;
+}
+
+.slide-image.next {
+    opacity: 1;
+    transform: translateX(100%);
+    z-index: 1;
+}
+
+/* Add styles for fullscreen slider */
+.fullscreen-image-container {
+    position: relative;
+    width: 100%;
+    height: 80vh;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.fullscreen-slide {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 </style>

@@ -99,7 +99,7 @@
                                 style="width: 100%" :options="provinceOptions" :filter-option="filterOption"
                                 @change="handleProvinceChange"></a-select>
                             <span v-if="errors.selectedProvince" class="text-danger">{{ errors.selectedProvince
-                            }}</span>
+                                }}</span>
                         </div>
 
                         <!-- Quận/Huyện -->
@@ -109,7 +109,7 @@
                                 style="width: 100%" :options="districtOptions" :filter-option="filterOption"
                                 :disabled="!selectedProvince" @change="handleDistrictChange"></a-select>
                             <span v-if="errors.selectedDistrict" class="text-danger">{{ errors.selectedDistrict
-                            }}</span>
+                                }}</span>
                         </div>
 
                         <!-- Phường/Xã -->
@@ -567,39 +567,47 @@ const deleteImage = async () => {
 
 const suaNhanVien = async () => {
     if (validateForm()) {
-        try {
-            const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
-            const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
-            const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
-            const nhanVienUpdate = {
-                idNhanVien: formData.idNhanVien,
-                maNhanVien: formData.maNhanVien,
-                tenNhanVien: formData.tenNhanVien,
-                gioiTinh: formData.gioiTinh,
-                ngaySinh: formData.ngaySinh,
-                soDienThoai: formData.soDienThoai,
-                email: formData.email,
-                trangThai: formData.trangThai,
-                anhNhanVien: formData.anhNhanVien,
-                diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim(),
-                taiKhoan: {
-                    id_tai_khoan: formData.taiKhoan.id_tai_khoan,
-                    mat_khau: formData.taiKhoan.mat_khau,
-                    roles: formData.taiKhoan.roles
+        Modal.confirm({
+            title: 'Bạn có chắc chắn muốn sửa nhân viên này không?',
+            onOk: async () => {
+                try {
+                    const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
+                    const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
+                    const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
+                    const nhanVienUpdate = {
+                        idNhanVien: formData.idNhanVien,
+                        maNhanVien: formData.maNhanVien,
+                        tenNhanVien: formData.tenNhanVien,
+                        gioiTinh: formData.gioiTinh,
+                        ngaySinh: formData.ngaySinh,
+                        soDienThoai: formData.soDienThoai,
+                        email: formData.email,
+                        trangThai: formData.trangThai,
+                        anhNhanVien: formData.anhNhanVien,
+                        diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim(),
+                        taiKhoan: {
+                            id_tai_khoan: formData.taiKhoan.id_tai_khoan,
+                            mat_khau: formData.taiKhoan.mat_khau,
+                            roles: formData.taiKhoan.roles
+                        }
+                    };
+                    console.log('Dữ liệu truyền vào mới sửa nhan vien', nhanVienUpdate);
+                    const suaNhanViens = await store.suaNhanVien(nhanVienUpdate);
+                    if (suaNhanViens.error) {
+                        toast.error('Có lỗi xảy ra');
+                        console.log(suaNhanViens.error);
+                    } else {
+                        toast.success('Sửa nhân viên thành công');
+                        router.push('/admin/quanlynhanvien');
+                    }
+                } catch (error) {
+                    console.error(error);
                 }
-            };
-            console.log('Dữ liệu truyền vào mới sửa nhan vien', nhanVienUpdate);
-            const suaNhanViens = await store.suaNhanVien(nhanVienUpdate);
-            if (suaNhanViens.error) {
-                toast.error('Có lỗi xảy ra');
-                console.log(suaNhanViens.error);
-            } else {
-                toast.success('Sửa nhân viên thành công');
-                router.push('/admin/quanlynhanvien');
+            },
+            onCancel() {
+                console.log('Đã hủy sửa nhân viên');
             }
-        } catch (error) {
-            console.error(error);
-        }
+        });
     }
 }
 

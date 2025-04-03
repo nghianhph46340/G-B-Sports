@@ -9,6 +9,7 @@ import { hoaDonService } from '@/services/hoaDonService';
 import { check } from 'prettier'
 import { useRoute } from 'vue-router'
 import { khachHangService } from '@/services/khachHangService'
+import { bctkService } from '@/services/bctkService';
 export const useGbStore = defineStore('gbStore', {
   state: () => {
     return {
@@ -68,12 +69,88 @@ export const useGbStore = defineStore('gbStore', {
       khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
       khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
       khuyenMaiSearchs: '', // Riêng cho khuyến mãi
+      thongKe: {
+        doanhThu: 0,
+        tongDonHang: 0,
+        tongSanPham: 0
+      },
+      // Thêm state cho filter
+      bctkFilter: {
+        type: 'hom-nay',
+        startDate: '',
+        endDate: ''
+      },
+      topSanPhamBanChay: [],
+      topSanPhamBanCham: [],
+      // State cho chi tiết sản phẩm
+      cTSPBySanPhamFull: [],
+      //Giỏ hàng và thanh toán
+      checkoutItems: [], //Dữ liệu sản phẩm mua ngay
+      justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
     };
   },
 
 
   ///Đầu mút2
   actions: {
+
+    // Thêm action cho BCTK
+    async getSoLieu(type = null, startDate = null, endDate = null) {
+      try {
+        console.log('Store getSoLieu được gọi với:', { type, startDate, endDate });
+        const response = await bctkService.getSoLieu(type, startDate, endDate);
+
+        if (response) {
+          console.log('Dữ liệu nhận được trong store:', response);
+          this.thongKe = {
+            doanhThu: response.doanhThu || 0,
+            tongDonHang: response.tongDonHang || 0,
+            tongSanPham: response.tongSanPham || 0
+          };
+          console.log('State sau khi cập nhật:', this.thongKe);
+          return response;
+        } else {
+          toast.error('Không lấy được dữ liệu thống kê');
+          return null;
+        }
+      } catch (error) {
+        console.error('Lỗi trong store getSoLieu:', error);
+        toast.error('Có lỗi xảy ra khi lấy thống kê');
+        return null;
+      }
+    },
+
+    // Action để xử lý thay đổi filter
+    async handleBCTKFilterChange(filter, customStartDate = null, customEndDate = null) {
+      try {
+        this.bctkFilter.type = filter;
+
+        if (filter === 'tuy-chon') {
+          if (!customStartDate || !customEndDate) {
+            toast.error('Vui lòng chọn khoảng thời gian');
+            return;
+          }
+          this.bctkFilter.startDate = customStartDate;
+          this.bctkFilter.endDate = customEndDate;
+          await this.getSoLieu(filter, customStartDate, customEndDate);
+        } else {
+          this.bctkFilter.startDate = '';
+          this.bctkFilter.endDate = '';
+          await this.getSoLieu(filter);
+        }
+      } catch (error) {
+        console.error('Lỗi khi thay đổi filter thống kê:', error);
+        toast.error('Có lỗi xảy ra khi lọc thống kê');
+      }
+    },
+    async getTopSanPhamBanChay() {
+      const topSanPhamBanChay = await bctkService.topSanPhamBanChay();
+      this.topSanPhamBanChay = topSanPhamBanChay;
+    },
+    async getTopSanPhamBanCham() {
+      const topSanPhamBanCham = await bctkService.topSanPhamBanCham();
+      this.topSanPhamBanCham = topSanPhamBanCham;
+    },
     async layDanhSachNhanVien() {
       const nhanVienArr = await nhanVienService.layDanhSachNhanVien();
       this.nhanVienArr = nhanVienArr;
@@ -304,6 +381,17 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra');
       }
     },
+    async getCTSPBySanPhamFull(idSanPham) {
+      const cTSPBySanPhamFull = await sanPhamService.getCTSPBySanPhamFull(idSanPham);
+      if (cTSPBySanPhamFull.error) {
+        toast.error("Không lấy được dữ liệu")
+        return;
+      } else {
+        this.cTSPBySanPhamFull = cTSPBySanPhamFull;
+        console.log(this.cTSPBySanPhamFull);
+      }
+    },
+    ///////////-----------------Hóa đơn-------------------////////////
     async getAllHoaDon(page = 0, size = 5) {
       try {
         const hoaDon = await hoaDonService.getAllHoaDon(page, size);
@@ -971,7 +1059,7 @@ export const useGbStore = defineStore('gbStore', {
           return;
         }
         toast.success('Cập nhật trạng thái thành công');
-        await this.getHoaDonDetail(maHoaDon);
+        await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi cập nhật
       } catch (error) {
         console.error(error);
         toast.error('Có lỗi xảy ra');
@@ -985,7 +1073,7 @@ export const useGbStore = defineStore('gbStore', {
           return;
         }
         toast.success('Hủy hóa đơn thành công');
-        await this.getHoaDonDetail(maHoaDon);
+        await this.getHoaDonDetail(maHoaDon); // Refresh dữ liệu sau khi hủy
       } catch (error) {
         console.error(error);
         toast.error('Có lỗi xảy ra');
@@ -1010,16 +1098,6 @@ export const useGbStore = defineStore('gbStore', {
         toast.success('Lưu dữ liệu thành công');
       }
       return saveExcelImportRespone;
-    },
-    async getAllSanPhamNgaySua() {
-      const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua();
-      console.log(sanPhamNgaySua);
-      if (sanPhamNgaySua.error) {
-        toast.error('Không lấy được dữ liệu');
-        return;
-      } else {
-        this.getAllSanPham = sanPhamNgaySua;
-      }
     },
     getPath(path) {
       this.checkRouter = '';
@@ -1478,8 +1556,16 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra');
       }
     },
-  }, // Đóng actions tại đây
 
+    setCheckoutItems(items) {
+      this.checkoutItems = Array.isArray(items) ? items : [items];
+      console.log('checkoutItems', this.checkoutItems);
+    },
+
+    clearCheckoutItems() {
+      this.checkoutItems = [];
+    }
+  },
 
   // Action tìm kiếm sản phẩm (tùy chọn nếu muốn tích hợp vào store)
   async searchSanPhamKM(keyword) {

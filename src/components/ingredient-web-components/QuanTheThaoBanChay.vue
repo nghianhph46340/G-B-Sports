@@ -32,7 +32,7 @@
                                                 <eye-outlined />
                                                 <span>Xem</span>
                                             </router-link>
-                                            <button class="overlay-btn cart-btn">
+                                            <button class="overlay-btn cart-btn" @click="showProductDetail(product)">
                                                 <shopping-cart-outlined />
                                                 <span>Thêm</span>
                                             </button>
@@ -43,9 +43,9 @@
                                     <div class="product-price-row">
                                         <span class="product-price">{{ product.price }}</span>
                                         <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
-                                        }}</span>
+                                            }}</span>
                                         <span class="product-discount" v-if="product.discount">{{ product.discount
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <h6 class="product-name">{{ product.name }}</h6>
                                     <div class="product-meta">
@@ -63,6 +63,84 @@
             </div>
         </div>
     </div>
+
+    <!-- Product Detail Modal -->
+    <a-modal v-model:visible="modalVisible" :title="selectedProduct?.name" width="800px" :footer="null"
+        @cancel="handleModalCancel" :zIndex="9999" :maskStyle="{ zIndex: 9998 }" :wrapStyle="{ zIndex: 9999 }" centered
+        :style="{ top: '20px' }">
+        <div class="product-detail-modal">
+            <div class="product-detail-content">
+                <div class="product-images">
+                    <div class="main-image">
+                        <img :src="selectedProduct?.image" :alt="selectedProduct?.name">
+                    </div>
+                    <div class="thumbnail-images" v-if="selectedProduct?.variants">
+                        <img v-for="(variant, index) in selectedProduct.variants" :key="index" :src="variant.image"
+                            :alt="variant.name" @click="selectedProduct.image = variant.image">
+                    </div>
+                </div>
+                <div class="product-info-detail">
+                    <div class="price-section">
+                        <span class="current-price">{{ selectedProduct?.price }}</span>
+                        <span class="old-price" v-if="selectedProduct?.oldPrice">{{ selectedProduct?.oldPrice }}</span>
+                        <span class="discount-badge" v-if="selectedProduct?.discount">{{ selectedProduct?.discount
+                        }}</span>
+                    </div>
+                    <div class="brand-section">
+                        <span class="brand-label">Thương hiệu:</span>
+                        <span class="brand-value">{{ selectedProduct?.brand }}</span>
+                    </div>
+                    <div class="rating-section">
+                        <div class="rating">
+                            <star-filled />
+                            <span>{{ selectedProduct?.rating }} ({{ selectedProduct?.reviews }})</span>
+                        </div>
+                    </div>
+                    <div class="description-section">
+                        <h4>Mô tả sản phẩm</h4>
+                        <p>{{ selectedProduct?.description || 'Chưa có mô tả chi tiết' }}</p>
+                    </div>
+                    <div class="variants-section">
+                        <div class="color-variants">
+                            <h4>Màu sắc</h4>
+                            <div class="color-options">
+                                <div v-for="(color, index) in selectedProduct?.colors" :key="index" class="color-option"
+                                    :class="{ 'selected': selectedColor === color }" :style="{ backgroundColor: color }"
+                                    @click="selectedColor = color">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="size-variants">
+                            <h4>Kích thước</h4>
+                            <div class="size-options">
+                                <div v-for="(size, index) in selectedProduct?.sizes" :key="index" class="size-option"
+                                    :class="{ 'selected': selectedSize === size }" @click="selectedSize = size">
+                                    {{ size }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quantity-section">
+                        <h4>Số lượng</h4>
+                        <div class="quantity-controls">
+                            <a-button @click="decreaseQuantity" :disabled="quantity <= 1">
+                                <minus-outlined />
+                            </a-button>
+                            <span class="quantity-value">{{ quantity }}</span>
+                            <a-button @click="increaseQuantity" :disabled="quantity >= selectedProduct?.stock">
+                                <plus-outlined />
+                            </a-button>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <a-button type="primary" size="large" @click="addToCart" :disabled="!isValidSelection">
+                            Thêm vào giỏ hàng
+                        </a-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </a-modal>
 </template>
 
 <script setup>
@@ -73,9 +151,12 @@ import {
     ShoppingCartOutlined,
     StarFilled,
     LeftOutlined,
-    RightOutlined
+    RightOutlined,
+    MinusOutlined,
+    PlusOutlined
 } from '@ant-design/icons-vue';
 import { useGbStore } from '@/stores/gbStore';
+import { message } from 'ant-design-vue';
 
 // Tham chiếu đến carousel
 const store = useGbStore();
@@ -150,7 +231,7 @@ const productSlides = computed(() => {
         // Lấy thêm sản phẩm từ đầu danh sách
         const extraProducts = products.slice(0, extraNeeded).map(product => ({
             ...product,
-            id: product.id + 1000 // Thêm id mới để tránh trùng lặp
+            id: product.id // Thêm id mới để tránh trùng lặp
         }));
         products.push(...extraProducts);
     }
@@ -164,6 +245,72 @@ const productSlides = computed(() => {
 });
 
 const activeProduct = ref(null);
+
+// Modal state
+const modalVisible = ref(false);
+const selectedProduct = ref(null);
+const selectedColor = ref(null);
+const selectedSize = ref(null);
+const quantity = ref(1);
+
+// Methods
+const showProductDetail = (product) => {
+    selectedProduct.value = {
+        ...product,
+        colors: ['#000000', '#FF0000', '#0000FF'], // Màu sắc mẫu
+        sizes: ['S', 'M', 'L', 'XL', 'XXL'], // Kích thước mẫu
+        stock: 10, // Số lượng tồn kho mẫu
+        description: 'Quần thể thao chất liệu thun co giãn, thoáng khí, thấm hút mồ hôi tốt. Thiết kế đơn giản, dễ phối đồ, phù hợp cho các hoạt động thể thao và mặc hàng ngày.'
+    };
+    modalVisible.value = true;
+};
+
+const handleModalCancel = () => {
+    modalVisible.value = false;
+    selectedProduct.value = null;
+    selectedColor.value = null;
+    selectedSize.value = null;
+    quantity.value = 1;
+};
+
+const decreaseQuantity = () => {
+    if (quantity.value > 1) {
+        quantity.value--;
+    }
+};
+
+const increaseQuantity = () => {
+    if (quantity.value < selectedProduct.value?.stock) {
+        quantity.value++;
+    }
+};
+
+const isValidSelection = computed(() => {
+    return selectedColor.value && selectedSize.value;
+});
+
+const addToCart = () => {
+    if (!isValidSelection.value) {
+        message.warning('Vui lòng chọn màu sắc và kích thước');
+        return;
+    }
+
+    const cartItem = {
+        id: selectedProduct.value.id,
+        ten_san_pham: selectedProduct.value.name,
+        hinh_anh: selectedProduct.value.image,
+        gia: parseInt(selectedProduct.value.price.replace(/[^\d]/g, '')),
+        so_luong: quantity.value,
+        so_luong_ton: selectedProduct.value.stock,
+        ten_mau_sac: selectedColor.value,
+        ten_kich_thuoc: selectedSize.value,
+        selected: true
+    };
+
+    store.addToCart(cartItem);
+    message.success('Đã thêm sản phẩm vào giỏ hàng');
+    handleModalCancel();
+};
 </script>
 
 <style scoped>
@@ -499,5 +646,233 @@ const activeProduct = ref(null);
 :deep(.ant-carousel .slick-dots li.slick-active button) {
     background: #3a86ff;
     opacity: 1;
+}
+
+/* Modal styles */
+.product-detail-modal {
+    padding: 20px;
+    position: relative;
+    z-index: 10000;
+}
+
+:deep(.ant-modal) {
+    z-index: 9999 !important;
+    padding-top: 20px !important;
+}
+
+:deep(.ant-modal-mask) {
+    z-index: 9998 !important;
+}
+
+:deep(.ant-modal-wrap) {
+    z-index: 9999 !important;
+}
+
+:deep(.ant-modal-content) {
+    position: relative;
+    z-index: 10000;
+    margin-top: 0 !important;
+}
+
+:deep(.ant-modal-header) {
+    position: relative;
+    z-index: 10000;
+}
+
+:deep(.ant-modal-body) {
+    position: relative;
+    z-index: 10000;
+}
+
+.product-detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.product-images {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.main-image {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.main-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-images {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 5px 0;
+}
+
+.thumbnail-images img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.thumbnail-images img:hover {
+    opacity: 0.8;
+}
+
+.product-info-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.price-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.current-price {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+.old-price {
+    font-size: 16px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-label {
+    color: #666;
+}
+
+.brand-value {
+    font-weight: 500;
+    color: #333;
+}
+
+.rating-section {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating :deep(svg) {
+    color: #ffc107;
+}
+
+.description-section h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.description-section p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.variants-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.color-variants h4,
+.size-variants h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.color-options {
+    display: flex;
+    gap: 10px;
+}
+
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.color-option.selected {
+    border-color: #3a86ff;
+}
+
+.size-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.size-option {
+    padding: 5px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.size-option.selected {
+    background-color: #3a86ff;
+    color: white;
+    border-color: #3a86ff;
+}
+
+.quantity-section h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-value {
+    min-width: 40px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.action-buttons {
+    margin-top: 20px;
+}
+
+.action-buttons button {
+    width: 100%;
+    height: 40px;
+}
+
+@media (max-width: 768px) {
+    .product-detail-content {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

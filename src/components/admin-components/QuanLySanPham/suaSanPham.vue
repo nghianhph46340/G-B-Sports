@@ -366,6 +366,7 @@ const addVariant = async () => {
     }
 
     variants.value.push({
+        id_chi_tiet_san_pham: null,
         id_mau_sac: undefined,
         id_kich_thuoc: undefined,
         so_luong: 1,
@@ -575,17 +576,22 @@ const onFinish = async () => {
 
             // Cập nhật các biến thể CTSP
             for (const variant of variants.value) {
-                // Đảm bảo variant có id_san_pham
+                // Đảm bảo variant có id_san_pham và id_chi_tiet_san_pham
                 variant.id_san_pham = formState.id_san_pham;
 
                 // Gọi API lưu chi tiết sản phẩm
                 await store.createCTSP({
                     ...variant,
-                    hinh_anh: variant.hinh_anh
+                    hinh_anh: variant.hinh_anh,
+                    id_chi_tiet_san_pham: variant.id_chi_tiet_san_pham
                 });
             }
 
             message.success(response.data.message || 'Cập nhật sản phẩm và biến thể thành công!');
+            await store.getAllSanPhamNgaySua();
+
+            // Đánh dấu vừa thêm sản phẩm mới
+            store.justAddedProduct = true;
             router.push('/admin/quanlysanpham');
         } catch (error) {
             console.error('Chi tiết lỗi:', error);

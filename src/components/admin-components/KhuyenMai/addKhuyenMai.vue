@@ -12,19 +12,19 @@
             <div class="mb-3">
               <label for="maKhuyenMai" class="form-label">Mã khuyến mãi</label>
               <input type="text" class="form-control" id="maKhuyenMai" v-model="khuyenMai.maKhuyenMai" required
-                     :class="{ 'is-invalid': errors.maKhuyenMai }" @input="validateMaKhuyenMai" />
+                :class="{ 'is-invalid': errors.maKhuyenMai }" @input="validateMaKhuyenMai" />
               <div class="text-danger" v-if="errors.maKhuyenMai">{{ errors.maKhuyenMai }}</div>
             </div>
             <div class="mb-3">
               <label for="tenKhuyenMai" class="form-label">Tên khuyến mãi</label>
               <input type="text" class="form-control" id="tenKhuyenMai" v-model="khuyenMai.tenKhuyenMai" required
-                     :class="{ 'is-invalid': errors.tenKhuyenMai }" @input="validateTenKhuyenMai" />
+                :class="{ 'is-invalid': errors.tenKhuyenMai }" @input="validateTenKhuyenMai" />
               <div class="text-danger" v-if="errors.tenKhuyenMai">{{ errors.tenKhuyenMai }}</div>
             </div>
             <div class="mb-3">
               <label for="kieuGiamGia" class="form-label">Kiểu giảm giá</label>
               <select class="form-select" id="kieuGiamGia" v-model="khuyenMai.kieuGiamGia" required
-                      :class="{ 'is-invalid': errors.kieuGiamGia }" @change="validateKieuGiamGia">
+                :class="{ 'is-invalid': errors.kieuGiamGia }" @change="validateKieuGiamGia">
                 <option value="" disabled>Chọn kiểu</option>
                 <option value="Phần trăm">Phần trăm</option>
                 <option value="Tiền mặt">Tiền mặt</option>
@@ -33,26 +33,27 @@
             </div>
             <div class="mb-3">
               <label for="giaTriGiam" class="form-label">Giá trị giảm</label>
-              <input type="number" step="1" class="form-control" id="giaTriGiam" v-model="khuyenMai.giaTriGiam" min="0"  required
-                     :class="{ 'is-invalid': errors.giaTriGiam }" @input="validateGiaTriGiam" />
+              <input type="number" step="1" class="form-control" id="giaTriGiam" v-model="khuyenMai.giaTriGiam" min="0"
+                required :class="{ 'is-invalid': errors.giaTriGiam }" @input="validateGiaTriGiam" />
               <div class="text-danger" v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</div>
             </div>
             <div class="mb-3">
               <label for="giaTriToiDa" class="form-label">Giá trị tối đa</label>
-              <input type="number" step="1" class="form-control" id="giaTriToiDa" v-model="khuyenMai.giaTriToiDa" min="0"
-                     :disabled="khuyenMai.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }" @input="validateGiaTriToiDa" />
+              <input type="number" step="1" class="form-control" id="giaTriToiDa" v-model="khuyenMai.giaTriToiDa"
+                min="0" :disabled="khuyenMai.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }"
+                @input="validateGiaTriToiDa" />
               <div class="text-danger" v-if="errors.giaTriToiDa">{{ errors.giaTriToiDa }}</div>
             </div>
             <div class="mb-3">
               <label for="ngayBatDau" class="form-label">Ngày bắt đầu</label>
               <input type="datetime-local" class="form-control" id="ngayBatDau" v-model="khuyenMai.ngayBatDau" required
-                     :class="{ 'is-invalid': errors.ngayBatDau }" @input="validateDates" />
+                :class="{ 'is-invalid': errors.ngayBatDau }" @input="validateDates" />
               <div class="text-danger" v-if="errors.ngayBatDau">{{ errors.ngayBatDau }}</div>
             </div>
             <div class="mb-3">
               <label for="ngayHetHan" class="form-label">Ngày kết thúc</label>
               <input type="datetime-local" class="form-control" id="ngayHetHan" v-model="khuyenMai.ngayHetHan" required
-                     :class="{ 'is-invalid': errors.ngayHetHan }" @input="validateDates" />
+                :class="{ 'is-invalid': errors.ngayHetHan }" @input="validateDates" />
               <div class="text-danger" v-if="errors.ngayHetHan">{{ errors.ngayHetHan }}</div>
             </div>
             <div class="mb-3">
@@ -60,8 +61,10 @@
               <textarea class="form-control" id="moTa" v-model="khuyenMai.moTa" rows="3"></textarea>
             </div>
             <div class="d-flex justify-content-center gap-3 mt-4">
-              <button type="submit" class="btn btn-primary" :disabled="hasErrors || selectedChiTietSanPhamIds.length === 0">Lưu</button>
-              <button type="button" class="btn btn-secondary" @click="router.push('/admin/quanlykhuyenmai')">Quay lại</button>
+              <button type="submit" class="btn btn-primary"
+                :disabled="hasErrors || selectedChiTietSanPhamIds.length === 0">Lưu</button>
+              <button type="button" class="btn btn-secondary" @click="router.push('/admin/quanlykhuyenmai')">Quay
+                lại</button>
             </div>
           </div>
 
@@ -79,6 +82,8 @@
                   placeholder="Nhập mã hoặc tên sản phẩm"
                   @input="debounceFetchSanPham"
                 />
+                <input type="text" class="form-control w-75" id="keywordSanPham" v-model="keywordSanPham"
+                  placeholder="Nhập mã hoặc tên sản phẩm" @input="debounceFetchSanPham" />
               </div>
               <div class="table-responsive p-2 mt-3">
                 <table class="table table-bordered">
@@ -88,23 +93,24 @@
                       <th>STT</th>
                       <th>Mã sản phẩm</th>
                       <th>Tên sản phẩm</th>
-                    
+
                     </tr>
                   </thead>
                   <tbody>
-                      <tr v-if="sanPhamList.length === 0">
-                        <td colspan="5" class="text-center">Không có sản phẩm nào</td>
-                      </tr>
-                      <tr v-for="(sanPham, index) in sanPhamList" :key="sanPham.id_san_pham">
-                        <td>
-                          <input class="form-check-input sanPhamCheckbox" type="checkbox" :value="sanPham.id_san_pham" v-model="selectedSanPhamIds" @change="refreshChiTietSanPham" />
-                        </td>
-                        <td>{{ index + 1 }}</td>
-                        <td>{{ sanPham.ma_san_pham }}</td>
-                        <td>{{ sanPham.ten_san_pham }}</td>
-                        
-                      </tr>
-                    </tbody>
+                    <tr v-if="sanPhamList.length === 0">
+                      <td colspan="5" class="text-center">Không có sản phẩm nào</td>
+                    </tr>
+                    <tr v-for="(sanPham, index) in sanPhamList" :key="sanPham.id_san_pham">
+                      <td>
+                        <input class="form-check-input sanPhamCheckbox" type="checkbox" :value="sanPham.id_san_pham"
+                          v-model="selectedSanPhamIds" @change="refreshChiTietSanPham" />
+                      </td>
+                      <td>{{ index + 1 }}</td>
+                      <td>{{ sanPham.ma_san_pham }}</td>
+                      <td>{{ sanPham.ten_san_pham }}</td>
+
+                    </tr>
+                  </tbody>
                 </table>
               </div>
               <div class="mt-3" v-if="sanPhamTotalPages > 1">
@@ -113,7 +119,8 @@
                     <li class="page-item" :class="{ disabled: sanPhamCurrentPage === 0 }">
                       <a class="page-link" href="#" @click.prevent="fetchSanPham(sanPhamCurrentPage - 1)">Trước</a>
                     </li>
-                    <li v-for="page in sanPhamTotalPages" :key="page" class="page-item" :class="{ active: sanPhamCurrentPage === page - 1 }">
+                    <li v-for="page in sanPhamTotalPages" :key="page" class="page-item"
+                      :class="{ active: sanPhamCurrentPage === page - 1 }">
                       <a class="page-link" href="#" @click.prevent="fetchSanPham(page - 1)">{{ page }}</a>
                     </li>
                     <li class="page-item" :class="{ disabled: sanPhamCurrentPage === sanPhamTotalPages - 1 }">
@@ -131,7 +138,8 @@
                 <table class="table table-bordered">
                   <thead class="co">
                     <tr>
-                      <th><input class="form-check-input" type="checkbox" @change="toggleSelectAllChiTietSanPham" /></th>
+                      <th><input class="form-check-input" type="checkbox" @change="toggleSelectAllChiTietSanPham" />
+                      </th>
                       <th>STT</th>
                       <th>Ảnh</th>
                       <th>Mã sản phẩm</th>
@@ -148,11 +156,14 @@
                     </tr>
                     <tr v-for="(item, index) in paginatedChiTietSanPhamList" :key="item.id_chi_tiet_san_pham">
                       <td>
-                        <input class="form-check-input chiTietSanPhamCheckbox" type="checkbox" :value="item.id_chi_tiet_san_pham" v-model="selectedChiTietSanPhamIds" />
+                        <input class="form-check-input chiTietSanPhamCheckbox" type="checkbox"
+                          :value="item.id_chi_tiet_san_pham" v-model="selectedChiTietSanPhamIds" />
                       </td>
                       <td>{{ index + 1 + (chiTietSanPhamCurrentPage * itemsPerPage) }}</td>
                       <td>
-                        <img v-if="item.hinhAnhSanPhams && item.hinhAnhSanPhams.length > 0" :src="getMainImage(item.hinhAnhSanPhams)" style="width: 50px; height: 50px;" alt="Ảnh chính" />
+                        <img v-if="item.hinhAnhSanPhams && item.hinhAnhSanPhams.length > 0"
+                          :src="getMainImage(item.hinhAnhSanPhams)" style="width: 50px; height: 50px;"
+                          alt="Ảnh chính" />
                         <span v-else>N/A</span>
                       </td>
                       <td>{{ item.sanPham.ma_san_pham }}</td>
@@ -169,13 +180,17 @@
                 <nav aria-label="ChiTietSanPham navigation">
                   <ul class="pagination justify-content-center">
                     <li class="page-item" :class="{ disabled: chiTietSanPhamCurrentPage === 0 }">
-                      <a class="page-link" href="#" @click.prevent="changeChiTietSanPhamPage(chiTietSanPhamCurrentPage - 1)">Trước</a>
+                      <a class="page-link" href="#"
+                        @click.prevent="changeChiTietSanPhamPage(chiTietSanPhamCurrentPage - 1)">Trước</a>
                     </li>
-                    <li v-for="page in chiTietSanPhamTotalPages" :key="page" class="page-item" :class="{ active: chiTietSanPhamCurrentPage === page - 1 }">
+                    <li v-for="page in chiTietSanPhamTotalPages" :key="page" class="page-item"
+                      :class="{ active: chiTietSanPhamCurrentPage === page - 1 }">
                       <a class="page-link" href="#" @click.prevent="changeChiTietSanPhamPage(page - 1)">{{ page }}</a>
                     </li>
-                    <li class="page-item" :class="{ disabled: chiTietSanPhamCurrentPage === chiTietSanPhamTotalPages - 1 }">
-                      <a class="page-link" href="#" @click.prevent="changeChiTietSanPhamPage(chiTietSanPhamCurrentPage + 1)">Sau</a>
+                    <li class="page-item"
+                      :class="{ disabled: chiTietSanPhamCurrentPage === chiTietSanPhamTotalPages - 1 }">
+                      <a class="page-link" href="#"
+                        @click.prevent="changeChiTietSanPhamPage(chiTietSanPhamCurrentPage + 1)">Sau</a>
                     </li>
                   </ul>
                 </nav>

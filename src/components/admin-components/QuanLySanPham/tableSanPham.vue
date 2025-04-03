@@ -7,8 +7,7 @@
         class="components-table-demo-nested" /> -->
     <div>
         <menuAction />
-        <h4 class="ms-3 mb-2">Danh sách sản phẩm</h4>
-        <hr>
+        <h4 class="ms-3">Danh sách sản phẩm</h4>
         <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
             class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
             :row-key="record => record.id_san_pham">
@@ -75,11 +74,9 @@
                         :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
                         :checked="record.trang_thai === 'Hoạt động' ? true : false" />
                 </template>
-
                 <template v-if="column.key === 'hinh_anh'">
                     <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" />
                 </template>
-
                 <template v-if="column.key === 'gia_ban'">
                     {{ record.gia_ban }}
                 </template>
@@ -89,24 +86,8 @@
                         <EditOutlined />Sửa
                     </a-button>
                 </template>
-
-                <!-- Generate QR code -->
-                <template v-if="column.key === 'qrcode'">
-                    <a-button type="primary" @click="showQRCodeModal(record)" class="d-flex align-items-center">
-                        <QrcodeOutlined />QR
-                    </a-button>
-                    <a-modal v-model:open="qrCodeModalVisible" :title="'Mã QR cho ' + selectedProduct?.ten_san_pham"
-                        :footer="null">
-                        <div class="text-center">
-                            <qrcode-vue :value="qrCodeValue" :size="200" level="H" />
-                            <p class="mt-3">Mã sản phẩm: {{ selectedProduct?.ma_san_pham }}</p>
-                            <a-button type="primary" @click="downloadQRCode" class="mt-2">
-                                Tải xuống
-                            </a-button>
-                        </div>
-                    </a-modal>
-                </template>
             </template>
+
 
         </a-table>
     </div>
@@ -114,42 +95,17 @@
 </template>
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
-import { EditOutlined, PlusOutlined, DeleteOutlined, QrcodeOutlined } from '@ant-design/icons-vue';
-import { onMounted, ref, render, computed, watch } from 'vue';
+import { EditOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import { onMounted, ref, render, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
-import QrcodeVue from 'qrcode.vue';
 
 
 const router = useRouter();
 const open = ref(false);
 const store = useGbStore();
-const qrCodeModalVisible = ref(false);
-const selectedProduct = ref(null);
-const qrCodeValue = ref('');
 
-//Generate QR code
-const showQRCodeModal = (record) => {
-    selectedProduct.value = record;
-    qrCodeValue.value = JSON.stringify({
-        id: record.id_san_pham,
-        ma: record.ma_san_pham,
-        ten: record.ten_san_pham,
-
-    });
-    qrCodeModalVisible.value = true;
-};
-//Download QR code
-const downloadQRCode = () => {
-    const canvas = document.querySelector('.qrcode-vue > canvas');
-    if (canvas) {
-        const link = document.createElement('a');
-        link.setAttribute('download', `QR_${selectedProduct.value.ma_san_pham}.png`);
-        link.setAttribute('href', canvas.toDataURL('image/png'));
-        link.click();
-    }
-};
 const changeRouter = (path) => {
     router.push('/admin/quanlysanpham/update/' + path);
 }
@@ -273,12 +229,6 @@ const columns = [
         render: (text, record, index) => index + 1
     },
     {
-        title: 'Hình ảnh',
-        dataIndex: 'hinh_anh',
-        key: 'hinh_anh',
-        width: '10%',
-    },
-    {
         title: 'Mã sản phẩm',
         dataIndex: 'ma_san_pham',
         key: 'ma_san_pham',
@@ -289,6 +239,12 @@ const columns = [
         dataIndex: 'ten_san_pham',
         key: 'ten_san_pham',
         width: '17%',
+    },
+    {
+        title: 'Hình ảnh',
+        dataIndex: 'hinh_anh',
+        key: 'hinh_anh',
+        width: '10%',
     },
     {
         title: 'SL',
@@ -315,12 +271,6 @@ const columns = [
         key: 'trang_thai',
         width: '10%',
 
-    },
-    {
-        title: 'QR code',
-        dataIndex: 'qrcode',
-        key: 'qrcode',
-        width: '10%',
     },
 
     {
@@ -500,8 +450,8 @@ const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
 
 // Computed property để quyết định hiển thị dữ liệu tìm kiếm hay tất cả sản phẩm
 const displayData = computed(() => {
-    // Nếu có từ khóa tìm kiếm và có kết quả tìm kiếm, hiển thị kết quả tìm kiếm
-    if (store.searchs && store.searchs.trim() !== '' && store.searchSanPham && store.searchSanPham.length > 0) {
+    // Nếu store có dữ liệu tìm kiếm, hiển thị kết quả tìm kiếm
+    if (store.searchSanPham && store.searchSanPham.length > 0) {
         console.log('Hiển thị kết quả tìm kiếm:', store.searchSanPham);
         return store.searchSanPham.map((item, index) => ({
             stt: index + 1,
@@ -510,7 +460,7 @@ const displayData = computed(() => {
             ma_san_pham: item.ma_san_pham,
             ten_san_pham: item.ten_san_pham,
             hinh_anh: item.hinh_anh,
-            chi_muc: (item.danhMuc.ten_danh_muc || '') + "/" + (item.thuongHieu.ten_thuong_hieu || '') + "/" + (item.chatLieu.ten_chat_lieu || ''),
+            chi_muc: (item.danhMuc?.ten_danh_muc || '') + "/" + (item.thuongHieu?.ten_thuong_hieu || '') + "/" + (item.chatLieu?.ten_chat_lieu || ''),
             trang_thai: item.trang_thai,
             tong_so_luong: item.tong_so_luong,
         }));
@@ -518,21 +468,21 @@ const displayData = computed(() => {
     if (store.searchs) {
         return [];
     }
-    // Nếu không có từ khóa tìm kiếm hoặc không có kết quả tìm kiếm, hiển thị tất cả sản phẩm
+    // Nếu không có dữ liệu tìm kiếm, hiển thị tất cả sản phẩm
     return data.value;
-
 });
 
-// Watch để theo dõi thay đổi từ khóa tìm kiếm
-watch(() => store.searchs, (newValue, oldValue) => {
-    if (!newValue || newValue.trim() === '') {
-        // Nếu từ khóa tìm kiếm trống, tải lại tất cả sản phẩm
-        store.getAllSanPhamNgaySua();
-    }
-}, { immediate: true });
-
 onMounted(async () => {
-    await store.getAllSanPhamNgaySua();
+    // Kiểm tra flag có vừa thêm sản phẩm mới không
+    if (store.justAddedProduct) {
+        // Nếu vừa thêm sản phẩm, lấy danh sách theo ngày sửa và reset flag
+        await store.getAllSanPhamNgaySua();
+        store.justAddedProduct = false; // Reset flag
+    } else {
+        // Nếu không, lấy danh sách bình thường
+        await store.getAllSP();
+    }
+
     data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
         return {
             stt: index + 1,
@@ -544,7 +494,6 @@ onMounted(async () => {
             chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
             trang_thai: item.trang_thai,
             tong_so_luong: item.tong_so_luong,
-            ngay_sua_moi: item.ngay_sua_moi
         };
     }));
 });
