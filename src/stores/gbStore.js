@@ -519,6 +519,7 @@ export const useGbStore = defineStore('gbStore', {
       }
       return importExcelRespone
     },
+    //Save excel
     async saveExcelImport(data) {
       const saveExcelImportRespone = await sanPhamService.saveExcelImports(data)
       if (saveExcelImportRespone.error) {
@@ -529,6 +530,7 @@ export const useGbStore = defineStore('gbStore', {
       }
       return saveExcelImportRespone
     },
+
     async getAllSanPhamNgaySua() {
       const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua()
       console.log(sanPhamNgaySua)
@@ -547,14 +549,12 @@ export const useGbStore = defineStore('gbStore', {
         return
       }
       if (!khachHang.danhSachKhachHang || khachHang.danhSachKhachHang.length === 0) {
-        this.getAllKhachHangArr = []
-        this.diaChiMap = {}
-        this.totalKhachHang = 0
-        this.currentKhachHang = 0
-        this.totalItemsKhachHang = 0
-
+        this.getAllKhachHangArr = [];
+        this.diaChiMap = {};
+        this.totalKhachHang = 0;
+        this.currentKhachHang = 0;
+        this.totalItemsKhachHang = 0;
         // Hiển thị thông báo tùy thuộc vào điều kiện lọc
-
         if (trangThai && keyword) {
           toast.error(
             `Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`,
@@ -1128,13 +1128,38 @@ export const useGbStore = defineStore('gbStore', {
           this.indexMenu = ['3']
           break
         case '/admin/quanlynhanvien':
-          this.indexMenu = ['10']
-          break
-        case 'admin/quanlyhoadon':
-          this.indexMenu = ['8']
+          this.indexMenu = ['10'];
+          break;
+        case '/admin/quanlyhoadon':
+          this.indexMenu = ['8'];
+          break;
         case '/admin/quanlysanpham/add':
-          this.indexMenu = ['3']
-          break
+          this.indexMenu = ['3'];
+          break;
+        case '/admin/quanlysanpham/sua':
+          this.indexMenu = ['3'];
+          break;
+        case '/admin/quanlykhachhang':
+          this.indexMenu = ['11'];
+          break;
+        case '/admin/baocaothongke':
+          this.indexMenu = ['2'];
+          break;
+        case '/admin/quanlyvoucher':
+          this.indexMenu = ['12'];
+          break;
+        case '/admin/quanlykhuyenmai':
+          this.indexMenu = ['13'];
+          break;
+        case '/admin/quanlysanpham/sanpham':
+          this.indexMenu = ['4'];
+          break;
+        case '/admin/quanlysanpham/thuoctinh':
+          this.indexMenu = ['7'];
+          break;
+        case '/admin/quanlysanpham/chitietsanpham':
+          this.indexMenu = ['5'];
+          break;
         default:
           this.indexMenu = ['1']
           break
@@ -1344,6 +1369,7 @@ export const useGbStore = defineStore('gbStore', {
     closeNoitification() {
       this.checkNoitification = false
     },
+
   },
 
   persist: {

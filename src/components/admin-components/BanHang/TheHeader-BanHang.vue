@@ -97,7 +97,7 @@
                             <tr v-for="(item, index) in currentInvoiceItems" :key="item.id_chi_tiet_san_pham">
                                 <td>{{ index + 1 }}</td>
                                 <td>
-                                    <img :src="item.hinh_anh || 'default-product.png'" alt="Item"
+                                    <img style="width: 50px; height: 50px;" :src="item.hinh_anh || 'default-product.png'" alt="Item"
                                         class="invoice-item-image" />
                                 </td>
                                 <td>
