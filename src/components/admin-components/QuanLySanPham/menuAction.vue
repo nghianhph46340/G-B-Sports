@@ -165,6 +165,7 @@ import { useGbStore } from '@/stores/gbStore';
 import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { Upload } from 'ant-design-vue';
+import { storeToRefs } from 'pinia';
 
 
 const route = useRoute();
@@ -461,6 +462,7 @@ const saveExcelImport = async () => {
 
             // Tải lại danh sách sản phẩm nếu cần
             await store.getAllSanPhamNgaySua();
+            store.justAddedProduct = true;
             router.push('/admin/quanlysanpham');
         }
     } catch (error) {

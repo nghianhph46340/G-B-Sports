@@ -518,6 +518,7 @@ export const useGbStore = defineStore('gbStore', {
       }
       return importExcelRespone;
     },
+    //Save excel
     async saveExcelImport(data) {
       const saveExcelImportRespone = await sanPhamService.saveExcelImports(data);
       if (saveExcelImportRespone.error) {
@@ -528,6 +529,7 @@ export const useGbStore = defineStore('gbStore', {
       }
       return saveExcelImportRespone;
     },
+
     async getAllSanPhamNgaySua() {
       const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua();
       console.log(sanPhamNgaySua);
@@ -551,9 +553,7 @@ export const useGbStore = defineStore('gbStore', {
         this.totalKhachHang = 0;
         this.currentKhachHang = 0;
         this.totalItemsKhachHang = 0;
-
         // Hiển thị thông báo tùy thuộc vào điều kiện lọc
-
         if (trangThai && keyword) {
           toast.error(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`);
         } else if (trangThai) {
@@ -591,11 +591,27 @@ export const useGbStore = defineStore('gbStore', {
         case '/admin/quanlynhanvien':
           this.indexMenu = ['10'];
           break;
-        case 'admin/quanlyhoadon':
+        case '/admin/quanlyhoadon':
           this.indexMenu = ['8'];
         case '/admin/quanlysanpham/add':
           this.indexMenu = ['3'];
           break;
+        case '/admin/quanlysanpham/sua':
+          this.indexMenu = ['3'];
+          break;
+        case '/admin/quanlykhachhang':
+          this.indexMenu = ['11'];
+          break;
+        case '/admin/baocaothongke':
+          this.indexMenu = ['2'];
+          break;
+        case '/admin/quanlyvoucher':
+          this.indexMenu = ['12'];
+          break;
+        case '/admin/quanlykhuyenmai':
+          this.indexMenu = ['13'];
+          break;
+
         default:
           this.indexMenu = ['1'];
           break;
@@ -1099,37 +1115,6 @@ export const useGbStore = defineStore('gbStore', {
       }
       return saveExcelImportRespone;
     },
-    getPath(path) {
-      this.checkRouter = '';
-      this.checkRouter = path;
-    },
-    getRoutePresent(path) {
-      this.checkRoutePresent = '';
-      this.checkRoutePresent = path;
-    },
-    getIndex(path) {
-      this.indexMenu = ['1'];
-      switch (path) {
-        case '/admin':
-          this.indexMenu = ['1'];
-          break;
-        case '/admin/quanlysanpham':
-          this.indexMenu = ['3'];
-          break;
-        case '/admin/quanlynhanvien':
-          this.indexMenu = ['10'];
-          break;
-        case 'admin/quanlyhoadon':
-          this.indexMenu = ['8'];
-          break;
-        case '/admin/quanlysanpham/add':
-          this.indexMenu = ['3'];
-          break;
-        default:
-          this.indexMenu = ['1'];
-          break;
-      }
-    },
     async getImage(id, anhChinh) {
       const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh);
       if (getImageRespone.error) {
@@ -1160,7 +1145,7 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     async getAllSP() {
-      if (this.getAllChiTietSanPham.length === 0) {
+      try {
         const sanPhamRespone = await sanPhamService.getAllSanPham();
         console.log(sanPhamRespone);
         if (!sanPhamRespone || sanPhamRespone.error) {
@@ -1169,8 +1154,9 @@ export const useGbStore = defineStore('gbStore', {
         } else {
           this.getAllSanPham = sanPhamRespone;
         }
-      } else {
-        toast.error('Bị lấy dữ liệu nhiều lần');
+      } catch (error) {
+        console.error('Lỗi trong getAllSP:', error);
+        toast.error('Có lỗi xảy ra');
       }
     },
     async createSanPham(sanPhamData) {
