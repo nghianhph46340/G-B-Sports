@@ -13,17 +13,19 @@
                             <div class="avatar-upload">
                                 <div class="avatar-preview" @click="triggerFileInput">
                                     <img :src="previewImage || defaultAvatar" alt="Avatar" class="rounded-circle">
-                                    <button v-if="previewImage" @click.stop="removeImage" class="delete-btn" type="button">
+                                    <button v-if="previewImage" @click.stop="removeImage" class="delete-btn"
+                                        type="button">
                                         ×
                                     </button>
                                     <div class="camera-icon">
                                         <i class="fas fa-camera"></i>
                                     </div>
                                 </div>
-                                <input type="file" id="imageUpload" accept=".png, .jpg, .jpeg" @change="handleImageChange" class="d-none" ref="fileInput">
+                                <input type="file" id="imageUpload" accept=".png, .jpg, .jpeg"
+                                    @change="handleImageChange" class="d-none" ref="fileInput">
                             </div>
                         </div>
-                         <!-- <div class="upload-container">
+                        <!-- <div class="upload-container">
                             <input type="file" @change="onFileChange" accept="image/*" />
                             <button @click="uploadImage" :disabled="loading">
                                 {{ loading ? 'Đang upload...' : 'Upload' }}
@@ -50,7 +52,8 @@
                             <!-- Tên nhân viên -->
                             <div class="col-6">
                                 <label class="form-label">Tên nhân viên</label>
-                                <input type="text" class="form-control" v-model="formData.tenNhanVien" placeholder="Nhập tên nhân viên">
+                                <input type="text" class="form-control" v-model="formData.tenNhanVien"
+                                    placeholder="Nhập tên nhân viên">
                                 <span v-if="errors.tenNhanVien" class="text-danger">{{ errors.tenNhanVien }}</span>
                             </div>
                         </div>
@@ -60,11 +63,13 @@
                             <div class="col-md-6">
                                 <label class="form-label">Giới tính</label>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="true" v-model="formData.gioiTinh">
+                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="true"
+                                        v-model="formData.gioiTinh">
                                     <label class="form-check-label">Nam</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="false" v-model="formData.gioiTinh">
+                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="false"
+                                        v-model="formData.gioiTinh">
                                     <label class="form-check-label">Nữ</label>
                                 </div>
                                 <span v-if="errors.gioiTinh" class="text-danger">{{ errors.gioiTinh }}</span>
@@ -82,13 +87,15 @@
                         <div class="row mb-2">
                             <div class="col-md-6">
                                 <label class="form-label">Số điện thoại</label>
-                                <input type="tel" class="form-control" v-model="formData.soDienThoai" placeholder="Nhập số điện thoại">
+                                <input type="tel" class="form-control" v-model="formData.soDienThoai"
+                                    placeholder="Nhập số điện thoại">
                                 <span v-if="errors.soDienThoai" class="text-danger">{{ errors.soDienThoai }}</span>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Email</label>
-                                <input type="text" class="form-control" v-model="formData.email" placeholder="Nhập email">
+                                <input type="text" class="form-control" v-model="formData.email"
+                                    placeholder="Nhập email">
                                 <span v-if="errors.email" class="text-danger">{{ errors.email }}</span>
                             </div>
                         </div>
@@ -107,19 +114,22 @@
                                     {{ province.name }}
                                 </option>
                             </select>
-                            <span v-if="errors.selectedProvince" class="text-danger">{{ errors.selectedProvince }}</span>
+                            <span v-if="errors.selectedProvince" class="text-danger">{{ errors.selectedProvince
+                                }}</span>
                         </div>
 
                         <!-- Quận/Huyện -->
                         <div class="col-md-4">
                             <label class="form-label">Quận/Huyện</label>
-                            <select class="form-select" v-model="selectedDistrict" @change="handleDistrictChange" :disabled="!selectedProvince">
+                            <select class="form-select" v-model="selectedDistrict" @change="handleDistrictChange"
+                                :disabled="!selectedProvince">
                                 <option value="">Chọn Quận/Huyện</option>
                                 <option v-for="district in districts" :key="district.code" :value="district.code">
                                     {{ district.name }}
                                 </option>
                             </select>
-                            <span v-if="errors.selectedDistrict" class="text-danger">{{ errors.selectedDistrict }}</span>
+                            <span v-if="errors.selectedDistrict" class="text-danger">{{ errors.selectedDistrict
+                                }}</span>
                         </div>
 
                         <!-- Phường/Xã -->
@@ -137,7 +147,8 @@
                         <!-- Địa chỉ cụ thể -->
                         <div class="col-12">
                             <label class="form-label">Địa chỉ cụ thể</label>
-                            <input type="text" class="form-control" v-model="formData.diaChiLienHe" placeholder="Số nhà, tên đường...">
+                            <input type="text" class="form-control" v-model="formData.diaChiLienHe"
+                                placeholder="Số nhà, tên đường...">
                             <span v-if="errors.diaChiLienHe" class="text-danger">{{ errors.diaChiLienHe }}</span>
                         </div>
                     </div>
@@ -161,6 +172,7 @@ import axiosInstance from '@/config/axiosConfig';
 import { message } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
+import { Modal } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
 //--------------------------------------
 // Khai báo biến cho ảnh
@@ -193,7 +205,7 @@ const router = useRouter();
 
 const validateForm = () => {
     let isValid = true;
-    
+
     // Reset tất cả lỗi
     Object.keys(errors).forEach(key => {
         errors[key] = '';
@@ -575,27 +587,34 @@ const taoMaNhanVienMoi = (nhanVienArr) => {
 
 const themNhanVien = async () => {
     if (validateForm()) {
-        try {
-            const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
-            const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
-            const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
-            console.log(formData);
-            const nhanVienMoi = {
-                ...formData,
-                diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim()
-            };
-            console.log('Dữ liệu truyền vào mới them nhan vien', nhanVienMoi);
-            const themNhanVien = await store.themNhanVien(nhanVienMoi);
-            if (themNhanVien.error) {
-                toast.error('Có lỗi xảy ra');
-                console.log(themNhanVien.error);
-            } else {
-                toast.success('Thêm nhân viên thành công');
-                router.push('/admin/quanlynhanvien');
+        Modal.confirm({
+            title: 'Bạn có chắc chắn muốn thêm nhân viên này không?',
+            onOk: async () => {
+                try {
+                    const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
+                    const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
+                    const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
+                    const nhanVienMoi = {
+                        ...formData,
+                        diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim()
+                    };
+                    console.log('Dữ liệu truyền vào mới them nhan vien', nhanVienMoi);
+                    const themNhanVien = await store.themNhanVien(nhanVienMoi);
+                    if (themNhanVien.error) {
+                        toast.error('Có lỗi xảy ra');
+                        console.log(themNhanVien.error);
+                    } else {
+                        toast.success('Thêm nhân viên thành công');
+                        router.push('/admin/quanlynhanvien');
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            onCancel() {
+                console.log('Đã hủy thêm nhân viên');
             }
-        } catch (error) {
-            console.error(error);
-        }
+        });
     }
 }
 
@@ -603,11 +622,11 @@ onMounted(async () => {
     try {
         // Load provinces
         await loadProvinces();
-        
+
         // Load danh sách nhân viên và tạo mã mới
         await store.layDanhSachNhanVien();
         formData.maNhanVien = taoMaNhanVienMoi(store.nhanVienArr);
-        
+
         console.log('Khởi tạo mã nhân viên:', formData.maNhanVien);
     } catch (error) {
         console.error('Lỗi khởi tạo:', error);

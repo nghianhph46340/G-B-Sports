@@ -45,3 +45,8 @@ npm install xlsx file-saver jspdf jspdf-autotable chart.js
 npm install --save @fortawesome/fontawesome-free
 #vue-core
 npm install @vueuse/core
+# mới
+npm install vue3-apexcharts apexcharts --save
+
+npm install date-fns-tz
+npm install date-fns date-fns-tz
