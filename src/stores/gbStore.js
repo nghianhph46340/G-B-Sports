@@ -1013,333 +1013,337 @@ export const useGbStore = defineStore('gbStore', {
     clearCheckoutItems() {
       this.checkoutItems = []
     },
-  },
 
-  // Action tìm kiếm sản phẩm (tùy chọn nếu muốn tích hợp vào store)
-  async searchSanPhamKM(keyword) {
-    try {
-      const response = await khuyenMaiService.searchSanPhamKM(keyword)
-      if (response && !response.error) {
-        this.searchSanPham = response
-        return response
-      } else {
-        toast.error('Không tìm thấy sản phẩm')
-        this.searchSanPham = []
+    // Action tìm kiếm sản phẩm (tùy chọn nếu muốn tích hợp vào store)
+    async searchSanPhamKM(keyword) {
+      try {
+        const response = await khuyenMaiService.searchSanPhamKM(keyword)
+        if (response && !response.error) {
+          this.searchSanPham = response
+          return response
+        } else {
+          toast.error('Không tìm thấy sản phẩm')
+          this.searchSanPham = []
+          return []
+        }
+      } catch (error) {
+        console.error('Lỗi khi tìm kiếm sản phẩm:', error)
+        toast.error('Có lỗi xảy ra')
         return []
       }
-    } catch (error) {
-      console.error('Lỗi khi tìm kiếm sản phẩm:', error)
-      toast.error('Có lỗi xảy ra')
-      return []
-    }
-  },
+    },
 
-  // Action lấy chi tiết sản phẩm theo sản phẩm
-  async getChiTietSanPhamBySanPham(idSanPham) {
-    try {
-      const response = await khuyenMaiService.getChiTietSanPhamBySanPham(idSanPham)
-      if (response && !response.error) {
-        return response
-      } else {
-        toast.error('Không lấy được chi tiết sản phẩm')
+    // Action lấy chi tiết sản phẩm theo sản phẩm
+    async getChiTietSanPhamBySanPham(idSanPham) {
+      try {
+        const response = await khuyenMaiService.getChiTietSanPhamBySanPham(idSanPham)
+        if (response && !response.error) {
+          return response
+        } else {
+          toast.error('Không lấy được chi tiết sản phẩm')
+          return []
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
+        toast.error('Có lỗi xảy ra')
         return []
       }
-    } catch (error) {
-      console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
-      toast.error('Có lỗi xảy ra')
-      return []
-    }
-  },
-  async getKhuyenMaiById(id) {
-    if (!id || id <= 0) {
-      toast.error('ID khuyến mãi không hợp lệ')
-      return null
-    }
-
-    try {
-      const response = await khuyenMaiService.getKhuyenMaiById(id)
-      if (response.error) {
-        toast.error(response.message || 'Không lấy được chi tiết khuyến mãi')
+    },
+    async getKhuyenMaiById(id) {
+      if (!id || id <= 0) {
+        toast.error('ID khuyến mãi không hợp lệ')
         return null
       }
-      return response
-    } catch (error) {
-      console.error('Lỗi khi lấy chi tiết khuyến mãi:', error)
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tải chi tiết khuyến mãi')
-      return null
-    }
-  },
-  async addKhuyenMai(khuyenMaiData, selectedChiTietSanPhamIds) {
-    try {
-      const response = await khuyenMaiService.addKhuyenMai(khuyenMaiData, selectedChiTietSanPhamIds)
-      if (response === 'Thêm khuyến mãi thành công!') {
-        toast.success(response)
-        await this.getAllKhuyenMai(0, 5) // Làm mới danh sách khuyến mãi
-        return true
-      } else {
-        toast.error(response)
-        return false
-      }
-    } catch (error) {
-      console.error('Lỗi khi thêm khuyến mãi:', error)
-      toast.error('Có lỗi xảy ra khi thêm khuyến mãi')
-      return false
-    }
-  },
 
-  async updateKhuyenMai(khuyenMaiData, selectedChiTietSanPhamIds) {
-    try {
-      const response = await khuyenMaiService.updateKhuyenMai(
-        khuyenMaiData,
-        selectedChiTietSanPhamIds,
-      )
-      if (response === 'Cập nhật khuyến mãi thành công!') {
-        toast.success(response)
-        await this.getAllKhuyenMai(0, 5) // Làm mới danh sách
-        return true
-      } else {
-        toast.error(response)
-        return false
-      }
-    } catch (error) {
-      console.error('Lỗi khi cập nhật khuyến mãi:', error)
-      toast.error('Có lỗi xảy ra khi cập nhật khuyến mãi')
-      return false
-    }
-  },
-
-  getPath(path) {
-    this.checkRouter = ''
-    this.checkRouter = path
-  },
-  getRoutePresent(path) {
-    this.checkRoutePresent = ''
-    this.checkRoutePresent = path
-  },
-  getIndex(path) {
-    this.indexMenu = ['1']
-    switch (path) {
-      case '/admin':
-        this.indexMenu = ['1']
-        break
-      case '/admin/quanlysanpham':
-        this.indexMenu = ['3']
-        break
-      case '/admin/quanlynhanvien':
-        this.indexMenu = ['10']
-        break
-      case 'admin/quanlyhoadon':
-        this.indexMenu = ['8']
-      case '/admin/quanlysanpham/add':
-        this.indexMenu = ['3']
-        break
-      default:
-        this.indexMenu = ['1']
-        break
-    }
-  },
-
-  // Lấy ảnh sản phẩm
-
-  async getImage(id, anhChinh) {
-    const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh)
-
-    if (getImageRespone.error) {
-      toast.error('Không lấy được dữ liệu')
-      return
-    } else {
-      this.getImages = getImageRespone
-    }
-    return getImageRespone
-  },
-  //Lấy danh sách chi tiết sản phẩm theo sản phẩm
-  async getCTSPBySanPham(id) {
-    const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
-    if (getCTSPBySanPhamRespone.error) {
-      toast.error('Không lấy được dữ liệu')
-      return
-    } else {
-      this.getCTSPBySanPhams = getCTSPBySanPhamRespone
       try {
-        const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
+        const response = await khuyenMaiService.getKhuyenMaiById(id)
+        if (response.error) {
+          toast.error(response.message || 'Không lấy được chi tiết khuyến mãi')
+          return null
+        }
+        return response
+      } catch (error) {
+        console.error('Lỗi khi lấy chi tiết khuyến mãi:', error)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tải chi tiết khuyến mãi')
+        return null
+      }
+    },
+    async addKhuyenMai(khuyenMaiData, selectedChiTietSanPhamIds) {
+      try {
+        const response = await khuyenMaiService.addKhuyenMai(
+          khuyenMaiData,
+          selectedChiTietSanPhamIds,
+        )
+        if (response === 'Thêm khuyến mãi thành công!') {
+          toast.success(response)
+          await this.getAllKhuyenMai(0, 5) // Làm mới danh sách khuyến mãi
+          return true
+        } else {
+          toast.error(response)
+          return false
+        }
+      } catch (error) {
+        console.error('Lỗi khi thêm khuyến mãi:', error)
+        toast.error('Có lỗi xảy ra khi thêm khuyến mãi')
+        return false
+      }
+    },
+
+    async updateKhuyenMai(khuyenMaiData, selectedChiTietSanPhamIds) {
+      try {
+        const response = await khuyenMaiService.updateKhuyenMai(
+          khuyenMaiData,
+          selectedChiTietSanPhamIds,
+        )
+        if (response === 'Cập nhật khuyến mãi thành công!') {
+          toast.success(response)
+          await this.getAllKhuyenMai(0, 5) // Làm mới danh sách
+          return true
+        } else {
+          toast.error(response)
+          return false
+        }
+      } catch (error) {
+        console.error('Lỗi khi cập nhật khuyến mãi:', error)
+        toast.error('Có lỗi xảy ra khi cập nhật khuyến mãi')
+        return false
+      }
+    },
+
+    getPath(path) {
+      this.checkRouter = ''
+      this.checkRouter = path
+    },
+    getRoutePresent(path) {
+      this.checkRoutePresent = ''
+      this.checkRoutePresent = path
+    },
+    getIndex(path) {
+      this.indexMenu = ['1']
+      switch (path) {
+        case '/admin':
+          this.indexMenu = ['1']
+          break
+        case '/admin/quanlysanpham':
+          this.indexMenu = ['3']
+          break
+        case '/admin/quanlynhanvien':
+          this.indexMenu = ['10']
+          break
+        case 'admin/quanlyhoadon':
+          this.indexMenu = ['8']
+        case '/admin/quanlysanpham/add':
+          this.indexMenu = ['3']
+          break
+        default:
+          this.indexMenu = ['1']
+          break
+      }
+    },
+
+    // Lấy ảnh sản phẩm
+
+    async getImage(id, anhChinh) {
+      const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh)
+
+      if (getImageRespone.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        this.getImages = getImageRespone
+      }
+      return getImageRespone
+    },
+    //Lấy danh sách chi tiết sản phẩm theo sản phẩm
+    async getCTSPBySanPham(id) {
+      const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
+      if (getCTSPBySanPhamRespone.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        this.getCTSPBySanPhams = getCTSPBySanPhamRespone
+        try {
+          const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
+            const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
+            ctsp.hinh_anh = (await images.length) > 0 ? images[0].hinh_anh : 'Không có ảnh chính' // Thêm trường hinh_anh vào object ctsp
+          })
+          this.getCTSPBySanPhams = await Promise.all(imagePromises)
+          this.getCTSPBySanPhams = getCTSPBySanPhamRespone
+        } catch (error) {
+          console.log(error)
+        }
+      }
+    },
+    //Lấy danh sách sản phẩm
+    async getAllSP() {
+      if (this.getAllChiTietSanPham.length === 0) {
+        const sanPhamRespone = await sanPhamService.getAllSanPham()
+        console.log(sanPhamRespone)
+        if (!sanPhamRespone || sanPhamRespone.error) {
+          toast.error('Không lấy được dữ liệu')
+          return
+        } else {
+          this.getAllSanPham = sanPhamRespone
+        }
+      } else {
+        toast.error('Bị lấy dữ liệu nhiều lần')
+      }
+    },
+    //Thêm sản phẩm
+    async createSanPham(sanPhamData) {
+      try {
+        console.log('Data gửi đi:', sanPhamData)
+        const response = await sanPhamService.createSanPhams(sanPhamData)
+        console.log('Response từ service:', response)
+        return response
+      } catch (error) {
+        console.error('Lỗi trong createSanPham:', error)
+        throw error
+      }
+    },
+    //Thêm chi tiết sản phẩm
+    async createCTSP(CTSPData) {
+      try {
+        console.log('Dữ liệu CTSP gửi đi:', CTSPData)
+        const response = await sanPhamService.createCTSP(CTSPData)
+        console.log('Response từ service thêm chi tiết sản phẩm:', response)
+        return response
+      } catch (error) {
+        console.error('Lỗi trong createCTSP:', error)
+        throw error
+      }
+    },
+    //Lấy danh sách chi tiết sản phẩm
+    async getAllCTSP() {
+      const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham()
+      if (chiTietSanPhamRespone.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      }
+      this.getAllChiTietSanPham = chiTietSanPhamRespone
+      try {
+        const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
           const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
           ctsp.hinh_anh = (await images.length) > 0 ? images[0].hinh_anh : 'Không có ảnh chính' // Thêm trường hinh_anh vào object ctsp
         })
-        this.getCTSPBySanPhams = await Promise.all(imagePromises)
-        this.getCTSPBySanPhams = getCTSPBySanPhamRespone
+        this.getAllChiTietSanPham = await Promise.all(imagePromises)
+        this.getAllChiTietSanPham = chiTietSanPhamRespone
       } catch (error) {
         console.log(error)
       }
-    }
-  },
-  //Lấy danh sách sản phẩm
-  async getAllSP() {
-    if (this.getAllChiTietSanPham.length === 0) {
-      const sanPhamRespone = await sanPhamService.getAllSanPham()
-      console.log(sanPhamRespone)
-      if (!sanPhamRespone || sanPhamRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        this.getAllSanPham = sanPhamRespone
-      }
-    } else {
-      toast.error('Bị lấy dữ liệu nhiều lần')
-    }
-  },
-  //Thêm sản phẩm
-  async createSanPham(sanPhamData) {
-    try {
-      console.log('Data gửi đi:', sanPhamData)
-      const response = await sanPhamService.createSanPhams(sanPhamData)
-      console.log('Response từ service:', response)
-      return response
-    } catch (error) {
-      console.error('Lỗi trong createSanPham:', error)
-      throw error
-    }
-  },
-  //Thêm chi tiết sản phẩm
-  async createCTSP(CTSPData) {
-    try {
-      console.log('Dữ liệu CTSP gửi đi:', CTSPData)
-      const response = await sanPhamService.createCTSP(CTSPData)
-      console.log('Response từ service thêm chi tiết sản phẩm:', response)
-      return response
-    } catch (error) {
-      console.error('Lỗi trong createCTSP:', error)
-      throw error
-    }
-  },
-  //Lấy danh sách chi tiết sản phẩm
-  async getAllCTSP() {
-    const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham()
-    if (chiTietSanPhamRespone.error) {
-      toast.error('Không lấy được dữ liệu')
-      return
-    }
-    this.getAllChiTietSanPham = chiTietSanPhamRespone
-    try {
-      const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
-        const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
-        ctsp.hinh_anh = (await images.length) > 0 ? images[0].hinh_anh : 'Không có ảnh chính' // Thêm trường hinh_anh vào object ctsp
-      })
-      this.getAllChiTietSanPham = await Promise.all(imagePromises)
-      this.getAllChiTietSanPham = chiTietSanPhamRespone
-    } catch (error) {
-      console.log(error)
-    }
-  },
-  //Tìm kiếm chi tiết sản phẩm
-  async searchCTSP(search) {
-    try {
-      const chiTietSanPhamRespone = await sanPhamService.searchChiTietSanPham(search)
-      if (chiTietSanPhamRespone && chiTietSanPhamRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        this.searchChiTietSanPham = []
-        return
-      }
-
-      // Nếu không có dữ liệu hoặc mảng rỗng
-      if (
-        !chiTietSanPhamRespone ||
-        !Array.isArray(chiTietSanPhamRespone) ||
-        chiTietSanPhamRespone.length === 0
-      ) {
-        console.log('Không có kết quả tìm kiếm chi tiết sản phẩm')
-        this.searchChiTietSanPham = []
-        return
-      }
-
+    },
+    //Tìm kiếm chi tiết sản phẩm
+    async searchCTSP(search) {
       try {
-        const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
-          if (ctsp && ctsp.id_chi_tiet_san_pham) {
-            const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
-            ctsp.hinh_anh = images && images.length > 0 ? images[0].hinh_anh : 'Không có ảnh chính'
-          }
-          return ctsp
-        })
+        const chiTietSanPhamRespone = await sanPhamService.searchChiTietSanPham(search)
+        if (chiTietSanPhamRespone && chiTietSanPhamRespone.error) {
+          toast.error('Không lấy được dữ liệu')
+          this.searchChiTietSanPham = []
+          return
+        }
 
-        const results = await Promise.all(imagePromises)
-        this.searchChiTietSanPham = results.filter((item) => item !== null)
-        console.log('Kết quả tìm kiếm chi tiết sản phẩm đã xử lý:', this.searchChiTietSanPham)
+        // Nếu không có dữ liệu hoặc mảng rỗng
+        if (
+          !chiTietSanPhamRespone ||
+          !Array.isArray(chiTietSanPhamRespone) ||
+          chiTietSanPhamRespone.length === 0
+        ) {
+          console.log('Không có kết quả tìm kiếm chi tiết sản phẩm')
+          this.searchChiTietSanPham = []
+          return
+        }
+
+        try {
+          const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
+            if (ctsp && ctsp.id_chi_tiet_san_pham) {
+              const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
+              ctsp.hinh_anh =
+                images && images.length > 0 ? images[0].hinh_anh : 'Không có ảnh chính'
+            }
+            return ctsp
+          })
+
+          const results = await Promise.all(imagePromises)
+          this.searchChiTietSanPham = results.filter((item) => item !== null)
+          console.log('Kết quả tìm kiếm chi tiết sản phẩm đã xử lý:', this.searchChiTietSanPham)
+        } catch (error) {
+          console.log('Lỗi khi xử lý hình ảnh:', error)
+          this.searchChiTietSanPham = chiTietSanPhamRespone
+        }
       } catch (error) {
-        console.log('Lỗi khi xử lý hình ảnh:', error)
-        this.searchChiTietSanPham = chiTietSanPhamRespone
+        console.log('Lỗi khi tìm kiếm chi tiết sản phẩm:', error)
+        this.searchChiTietSanPham = []
       }
-    } catch (error) {
-      console.log('Lỗi khi tìm kiếm chi tiết sản phẩm:', error)
-      this.searchChiTietSanPham = []
-    }
-  },
-  // Tìm kiếm sản phẩm
-  async searchSP(search) {
-    try {
-      const sanPhamResponse = await sanPhamService.searchSanPham(search)
-      if (sanPhamResponse && sanPhamResponse.error) {
-        toast.error('Không lấy được dữ liệu sản phẩm')
-        this.searchSanPham = []
-        return
-      }
+    },
+    // Tìm kiếm sản phẩm
+    async searchSP(search) {
+      try {
+        const sanPhamResponse = await sanPhamService.searchSanPham(search)
+        if (sanPhamResponse && sanPhamResponse.error) {
+          toast.error('Không lấy được dữ liệu sản phẩm')
+          this.searchSanPham = []
+          return
+        }
 
-      // Nếu không có dữ liệu hoặc mảng rỗng
-      if (!sanPhamResponse || !Array.isArray(sanPhamResponse) || sanPhamResponse.length === 0) {
-        console.log('Không có kết quả tìm kiếm sản phẩm')
-        this.searchSanPham = []
-        return
-      }
+        // Nếu không có dữ liệu hoặc mảng rỗng
+        if (!sanPhamResponse || !Array.isArray(sanPhamResponse) || sanPhamResponse.length === 0) {
+          console.log('Không có kết quả tìm kiếm sản phẩm')
+          this.searchSanPham = []
+          return
+        }
 
-      // Xử lý dữ liệu sản phẩm nếu cần
-      this.searchSanPham = sanPhamResponse
-      console.log('Kết quả tìm kiếm sản phẩm:', this.searchSanPham)
-    } catch (error) {
-      console.log('Lỗi khi tìm kiếm sản phẩm:', error)
-      this.searchSanPham = []
-    }
-  },
-  getLangue(check) {
-    const vni = {
-      nguoiDung: 'Đăng nhập',
-      cuaHang: 'Cửa hàng',
-      hoTro: 'Hỗ trợ',
-      gioHang: 'Giỏ hàng',
-      timKiem: 'Bạn đang muốn tìm kiếm gì?',
-    }
-    const eng = {
-      nguoiDung: 'Login',
-      cuaHang: 'Store',
-      hoTro: 'Support',
-      gioHang: 'Cart',
-      timKiem: 'What are you looking for?',
-    }
-    if (!check) {
-      this.changeLanguage = vni
-      this.check = true
-      this.language = 'EN'
-    } else {
-      this.changeLanguage = eng
-      this.check = false
-      this.language = 'VI'
-    }
-  },
-  showModal(show) {
-    this.status = show
-  },
-  showModalSideBar(id) {
-    this.id = id
-    if (this.status) {
-      id = 0
+        // Xử lý dữ liệu sản phẩm nếu cần
+        this.searchSanPham = sanPhamResponse
+        console.log('Kết quả tìm kiếm sản phẩm:', this.searchSanPham)
+      } catch (error) {
+        console.log('Lỗi khi tìm kiếm sản phẩm:', error)
+        this.searchSanPham = []
+      }
+    },
+    getLangue(check) {
+      const vni = {
+        nguoiDung: 'Đăng nhập',
+        cuaHang: 'Cửa hàng',
+        hoTro: 'Hỗ trợ',
+        gioHang: 'Giỏ hàng',
+        timKiem: 'Bạn đang muốn tìm kiếm gì?',
+      }
+      const eng = {
+        nguoiDung: 'Login',
+        cuaHang: 'Store',
+        hoTro: 'Support',
+        gioHang: 'Cart',
+        timKiem: 'What are you looking for?',
+      }
+      if (!check) {
+        this.changeLanguage = vni
+        this.check = true
+        this.language = 'EN'
+      } else {
+        this.changeLanguage = eng
+        this.check = false
+        this.language = 'VI'
+      }
+    },
+    showModal(show) {
+      this.status = show
+    },
+    showModalSideBar(id) {
       this.id = id
-    }
-  },
-  hideModalSideBar(id) {
-    this.id = 0
-  },
-  showModalSideBar1(show) {
-    this.statusSideBar1 = show
-  },
-  closeNoitification() {
-    this.checkNoitification = false
+      if (this.status) {
+        id = 0
+        this.id = id
+      }
+    },
+    hideModalSideBar(id) {
+      this.id = 0
+    },
+    showModalSideBar1(show) {
+      this.statusSideBar1 = show
+    },
+    closeNoitification() {
+      this.checkNoitification = false
+    },
   },
 
   persist: {
