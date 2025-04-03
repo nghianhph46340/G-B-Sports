@@ -105,8 +105,11 @@
                                     <small>({{ item.mau_sac }} - {{ item.kich_thuoc }})</small>
                                 </td>
                                 <td>
-                                    <a-input-number v-model:value="item.so_luong" :min="1" :max="item.so_luong_ton_goc"
-                                        size="small" @change="updateItemTotal(item)" style="width: 80px;" />
+                                    <a-space direction="vertical">
+                                        <a-input-number  v-model:value="item.so_luong" :min="1"
+                                            :max="item.so_luong_ton_goc" @change="updateItemTotal(item)"
+                                            style="width: 80px;" />
+                                    </a-space>
                                 </td>
                                 <td>{{ formatCurrency(item.gia_ban) }}</td>
                                 <td>{{ formatCurrency(item.tong_tien) }}</td>
@@ -192,7 +195,7 @@
                                         <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
                                             :disabled="store.currentPage === 0">Previous</button>
                                         <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages
-                                        }}</span>
+                                            }}</span>
                                         <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
                                             :disabled="store.currentPage >= store.totalPages - 1">Next</button>
                                     </div>
@@ -598,10 +601,10 @@ const updateItemTotal = async (item) => {
                 hinh_anh: hd.hinh_anh,
                 ten_san_pham: hd.ten_san_pham,
                 mau_sac: hd.ten_mau_sac || hd.mau_sac || null,
-                kich_thuoc: hd.kich_thuoc || null,
+                kich_thuoc: hd.gia_tri || null,
                 so_luong: hd.so_luong,
                 gia_ban: hd.gia_ban,
-                tong_tien: hd.don_gia * hd.so_luong, // Tính lại tổng tiền từ backend
+                tong_tien: hd.don_gia, // Tính lại tổng tiền từ backend
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
@@ -895,7 +898,7 @@ watch(() => activeKey.value, async (newKey) => {
             hinh_anh: item.hinh_anh,
             ten_san_pham: item.ten_san_pham,
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
-            kich_thuoc: item.kich_thuoc || null,
+            kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
             gia_ban: item.gia_ban,
             tong_tien: item.don_gia,
