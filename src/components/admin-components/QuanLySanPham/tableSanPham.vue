@@ -448,31 +448,41 @@ const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
     }
 };
 
-// Computed property để quyết định hiển thị dữ liệu tìm kiếm hay tất cả sản phẩm
+// Computed property để xác định danh sách sản phẩm hiển thị
 const displayData = computed(() => {
-    // Nếu store có dữ liệu tìm kiếm, hiển thị kết quả tìm kiếm
-    if (store.searchSanPham && store.searchSanPham.length > 0) {
-        console.log('Hiển thị kết quả tìm kiếm:', store.searchSanPham);
-        return store.searchSanPham.map((item, index) => ({
+    // Lấy danh sách sản phẩm đã lọc/tìm kiếm từ store
+    const filteredProducts = store.getFilteredProducts;
+
+    // Kiểm tra xem có sản phẩm nào được lọc/tìm kiếm không
+    if (filteredProducts && filteredProducts.length > 0) {
+        console.log(`Hiển thị ${filteredProducts.length} sản phẩm đã lọc/tìm kiếm`);
+
+        // Format dữ liệu để phù hợp với cấu trúc bảng
+        return filteredProducts.map((item, index) => ({
             stt: index + 1,
             key: item.id_san_pham,
             id_san_pham: item.id_san_pham,
             ma_san_pham: item.ma_san_pham,
             ten_san_pham: item.ten_san_pham,
             hinh_anh: item.hinh_anh,
-            chi_muc: (item.danhMuc?.ten_danh_muc || '') + "/" + (item.thuongHieu?.ten_thuong_hieu || '') + "/" + (item.chatLieu?.ten_chat_lieu || ''),
+            chi_muc: (item.ten_danh_muc || '') + "/" +
+                (item.ten_thuong_hieu || '') + "/" +
+                (item.ten_chat_lieu || ''),
             trang_thai: item.trang_thai,
-            tong_so_luong: item.tong_so_luong,
+            tong_so_luong: item.tong_so_luong || 0,
         }));
     }
-    if (store.searchs) {
-        return [];
-    }
-    // Nếu không có dữ liệu tìm kiếm, hiển thị tất cả sản phẩm
+
+    // Nếu không có kết quả lọc hoặc tìm kiếm, hiển thị tất cả sản phẩm
+    console.log(`Hiển thị tất cả ${data.value.length} sản phẩm`);
     return data.value;
 });
 
 onMounted(async () => {
+    // Đảm bảo tải cả dữ liệu chi tiết sản phẩm để sử dụng cho bộ lọc
+    await store.getAllCTSP();
+    console.log('Đã tải dữ liệu chi tiết sản phẩm:', store.getAllChiTietSanPham.length);
+
     // Kiểm tra flag có vừa thêm sản phẩm mới không
     if (store.justAddedProduct) {
         // Nếu vừa thêm sản phẩm, lấy danh sách theo ngày sửa và reset flag
