@@ -11,7 +11,7 @@
           <div class="col-lg-4 bg-light p-4 rounded">
             <div class="mb-3">
               <label for="maKhuyenMai" class="form-label">Mã khuyến mãi</label>
-              <input type="text" class="form-control" id="maKhuyenMai" v-model="khuyenMai.maKhuyenMai" required
+              <input type="text" class="form-control" id="maKhuyenMai" v-model="khuyenMai.maKhuyenMai" disabled
                      :class="{ 'is-invalid': errors.maKhuyenMai }" @input="validateMaKhuyenMai" />
               <div class="text-danger" v-if="errors.maKhuyenMai">{{ errors.maKhuyenMai }}</div>
             </div>
@@ -33,13 +33,13 @@
             </div>
             <div class="mb-3">
               <label for="giaTriGiam" class="form-label">Giá trị giảm</label>
-              <input type="number" step="1" class="form-control" id="giaTriGiam" v-model="khuyenMai.giaTriGiam" min="0" max="9999999999" required
+              <input type="number" step="1" class="form-control" id="giaTriGiam" v-model="khuyenMai.giaTriGiam" min="0" required
                      :class="{ 'is-invalid': errors.giaTriGiam }" @input="validateGiaTriGiam" />
               <div class="text-danger" v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</div>
             </div>
             <div class="mb-3">
               <label for="giaTriToiDa" class="form-label">Giá trị tối đa</label>
-              <input type="number" step="1" class="form-control" id="giaTriToiDa" v-model="khuyenMai.giaTriToiDa" min="0" max="9999999999" 
+              <input type="number" step="1" class="form-control" id="giaTriToiDa" v-model="khuyenMai.giaTriToiDa" min="0"
                      :disabled="khuyenMai.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }" @input="validateGiaTriToiDa" />
               <div class="text-danger" v-if="errors.giaTriToiDa">{{ errors.giaTriToiDa }}</div>
             </div>
@@ -124,7 +124,6 @@
                     <tr>
                       <th><input class="form-check-input" type="checkbox" @change="toggleSelectAllChiTietSanPham" /></th>
                       <th>STT</th>
-                      <th>Ảnh</th>
                       <th>Mã sản phẩm</th>
                       <th>Tên sản phẩm</th>
                       <th>Giá bán</th>
@@ -142,10 +141,6 @@
                         <input class="form-check-input chiTietSanPhamCheckbox" type="checkbox" :value="item.idChiTietSanPham" v-model="selectedChiTietSanPhamIds" />
                       </td>
                       <td>{{ index + 1 + (chiTietSanPhamCurrentPage * itemsPerPage) }}</td>
-                      <td>
-                        <img v-if="item.hinhAnhSanPhams && item.hinhAnhSanPhams.length > 0" :src="getMainImage(item.hinhAnhSanPhams)" style="width: 50px; height: 50px;" alt="Ảnh chính" />
-                        <span v-else>N/A</span>
-                      </td>
                       <td>{{ item.sanPham.maSanPham }}</td>
                       <td>{{ item.sanPham.tenSanPham }}</td>
                       <td>{{ formatNumber(item.giaBan) }}</td>
@@ -223,7 +218,7 @@ const itemsPerPage = 10;
 const initialChiTietSanPhamIds = ref([]);
 const initialSanPhamIds = ref([]);
 
-// Validation functions (unchanged)
+// Validation functions
 const validateMaKhuyenMai = () => {
   if (!khuyenMai.value.maKhuyenMai || khuyenMai.value.maKhuyenMai.trim() === '') {
     errors.value.maKhuyenMai = 'Mã khuyến mãi không được để trống!';
@@ -253,10 +248,17 @@ const validateGiaTriGiam = () => {
   const giaTri = parseFloat(khuyenMai.value.giaTriGiam);
   if (isNaN(giaTri) || giaTri <= 0) {
     errors.value.giaTriGiam = 'Giá trị giảm phải là số lớn hơn 0!';
+  } else if (giaTri > 5000000) {
+    errors.value.giaTriGiam = 'Giá trị giảm không được lớn hơn 5,000,000!';
   } else if (khuyenMai.value.kieuGiamGia === 'Phần trăm' && giaTri > 100) {
     errors.value.giaTriGiam = 'Giá trị giảm không được vượt quá 100 khi chọn Phần trăm!';
   } else {
     errors.value.giaTriGiam = '';
+  }
+
+  if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
+    khuyenMai.value.giaTriToiDa = giaTri;
+    validateGiaTriToiDa();
   }
 };
 
@@ -267,6 +269,8 @@ const validateGiaTriToiDa = () => {
     errors.value.giaTriToiDa = '';
   } else if (isNaN(giaTriToiDa) || giaTriToiDa <= 0) {
     errors.value.giaTriToiDa = 'Giá trị tối đa phải là số lớn hơn 0!';
+  } else if (giaTriToiDa > 5000000) {
+    errors.value.giaTriToiDa = 'Giá trị tối đa không được lớn hơn 5,000,000!';
   } else {
     errors.value.giaTriToiDa = '';
   }
@@ -293,7 +297,7 @@ const hasErrors = computed(() => {
   return Object.values(errors.value).some(error => error !== '');
 });
 
-// Watch kieuGiamGia and giaTriGiam (unchanged)
+// Watch kieuGiamGia and giaTriGiam
 watch(() => khuyenMai.value.kieuGiamGia, () => {
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
@@ -333,14 +337,14 @@ const fetchSanPham = async (page = 0) => {
       sanPhamList.value = [];
       sanPhamTotalPages.value = 0;
       sanPhamCurrentPage.value = 0;
-      toast.error('Không tìm thấy sản phẩm');
+      toast.error('Không tìm thấy sản phẩm', { autoClose: 1000 });
     }
   } catch (error) {
     console.error('Error fetching SanPham:', error);
     sanPhamList.value = [];
     sanPhamTotalPages.value = 0;
     sanPhamCurrentPage.value = 0;
-    toast.error('Không thể tải danh sách sản phẩm');
+    toast.error('Không thể tải danh sách sản phẩm', { autoClose: 1000 });
   }
 };
 
@@ -348,7 +352,7 @@ const debounceFetchSanPham = debounce(() => fetchSanPham(0), 300);
 
 // Refresh ChiTietSanPham with deduplication
 const refreshChiTietSanPham = async () => {
-  chiTietSanPhamList.value = []; // Reset list
+  chiTietSanPhamList.value = [];
   if (selectedSanPhamIds.value.length === 0) {
     selectedChiTietSanPhamIds.value = [];
     chiTietSanPhamTotalPages.value = 0;
@@ -356,7 +360,7 @@ const refreshChiTietSanPham = async () => {
   }
 
   try {
-    const uniqueChiTietSanPhamMap = new Map(); // Use Map to deduplicate by idChiTietSanPham
+    const uniqueChiTietSanPhamMap = new Map();
     for (const sanPhamId of selectedSanPhamIds.value) {
       const response = await khuyenMaiService.getChiTietSanPhamBySanPham(sanPhamId);
       if (!Array.isArray(response)) {
@@ -378,7 +382,7 @@ const refreshChiTietSanPham = async () => {
           kichThuoc: ctsp.kichThuoc ? { giaTri: ctsp.kichThuoc.giaTri || ctsp.kichThuoc.gia_tri } : null,
           mauSac: ctsp.mauSac ? { tenMauSac: ctsp.mauSac.tenMauSac || ctsp.mauSac.ten_mau_sac } : null
         };
-        uniqueChiTietSanPhamMap.set(mappedCtsp.idChiTietSanPham, mappedCtsp); // Overwrite duplicates
+        uniqueChiTietSanPhamMap.set(mappedCtsp.idChiTietSanPham, mappedCtsp);
       });
     }
 
@@ -386,14 +390,12 @@ const refreshChiTietSanPham = async () => {
     chiTietSanPhamTotalPages.value = Math.ceil(chiTietSanPhamList.value.length / itemsPerPage);
     chiTietSanPhamCurrentPage.value = 0;
 
-    // Ensure selectedChiTietSanPhamIds only includes items from initialChiTietSanPhamIds that are still in chiTietSanPhamList
     selectedChiTietSanPhamIds.value = chiTietSanPhamList.value
       .filter(ctsp => initialChiTietSanPhamIds.value.includes(ctsp.idChiTietSanPham))
       .map(ctsp => ctsp.idChiTietSanPham);
-
   } catch (error) {
     console.error('Error refreshing ChiTietSanPham:', error);
-    toast.error('Không thể tải chi tiết sản phẩm');
+    toast.error('Không thể tải chi tiết sản phẩm', { autoClose: 1000 });
   }
 };
 
@@ -427,11 +429,6 @@ const toggleSelectAllChiTietSanPham = (event) => {
   }
 };
 
-const getMainImage = (hinhAnhSanPhams) => {
-  const mainImage = hinhAnhSanPhams?.find(img => img.anhChinh || img.anh_chinh);
-  return mainImage ? (mainImage.hinhAnh || mainImage.hinh_anh) : '';
-};
-
 const formatNumber = (number) => {
   if (!number) return '0';
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number);
@@ -441,7 +438,7 @@ const formatNumber = (number) => {
 onMounted(async () => {
   const id = route.params.id;
   if (!id) {
-    toast.error('Không tìm thấy ID khuyến mãi!');
+    toast.error('Không tìm thấy ID khuyến mãi!', { autoClose: 1000 });
     router.push('/admin/quanlykhuyenmai');
     return;
   }
@@ -471,6 +468,7 @@ onMounted(async () => {
       initialChiTietSanPhamIds.value = response.chiTietSanPhams?.map(ctsp => ctsp.idChiTietSanPham || ctsp.id_chi_tiet_san_pham) || [];
       initialSanPhamIds.value = [...new Set(response.chiTietSanPhams?.map(ctsp => ctsp.sanPham?.idSanPham || ctsp.sanPham?.id_san_pham))] || [];
       selectedSanPhamIds.value = [...initialSanPhamIds.value];
+      selectedChiTietSanPhamIds.value = [...initialChiTietSanPhamIds.value];
 
       await refreshChiTietSanPham();
       await fetchSanPham();
@@ -479,7 +477,7 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('Error fetching KhuyenMai:', error);
-    toast.error('Không thể tải thông tin khuyến mãi');
+    toast.error('Không thể tải thông tin khuyến mãi', { autoClose: 1000 });
     router.push('/admin/quanlykhuyenmai');
   }
 });
@@ -494,12 +492,12 @@ const submitForm = async () => {
   validateDates();
 
   if (hasErrors.value) {
-    toast.error('Vui lòng sửa các lỗi trước khi cập nhật!');
+    toast.error('Vui lòng sửa các lỗi trước khi cập nhật!', { autoClose: 1000 });
     return;
   }
 
   if (selectedChiTietSanPhamIds.value.length === 0) {
-    toast.error('Vui lòng chọn ít nhất một chi tiết sản phẩm!');
+    toast.error('Vui lòng chọn ít nhất một chi tiết sản phẩm!', { autoClose: 1000 });
     return;
   }
 
@@ -518,15 +516,16 @@ const submitForm = async () => {
   try {
     const response = await khuyenMaiService.updateKhuyenMai(khuyenMaiData, selectedChiTietSanPhamIds.value);
     if (response === 'Cập nhật khuyến mãi thành công!') {
-      toast.success(response);
-    
-      router.push('/admin/quanlykhuyenmai');
+      toast.success(response, {
+        autoClose: 3000,
+        onClose: () => router.push('/admin/quanlykhuyenmai'),
+      });
     } else {
-      toast.error(response);
+      toast.error(response, { autoClose: 1000 });
     }
   } catch (error) {
     console.error('Error updating KhuyenMai:', error);
-    toast.error(error.response?.data || 'Có lỗi xảy ra khi cập nhật khuyến mãi');
+    toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật khuyến mãi', { autoClose: 1000 });
   }
 };
 </script>

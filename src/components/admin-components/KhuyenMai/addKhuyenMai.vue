@@ -82,8 +82,6 @@
                   placeholder="Nhập mã hoặc tên sản phẩm"
                   @input="debounceFetchSanPham"
                 />
-                <input type="text" class="form-control w-75" id="keywordSanPham" v-model="keywordSanPham"
-                  placeholder="Nhập mã hoặc tên sản phẩm" @input="debounceFetchSanPham" />
               </div>
               <div class="table-responsive p-2 mt-3">
                 <table class="table table-bordered">
@@ -93,7 +91,6 @@
                       <th>STT</th>
                       <th>Mã sản phẩm</th>
                       <th>Tên sản phẩm</th>
-
                     </tr>
                   </thead>
                   <tbody>
@@ -108,7 +105,6 @@
                       <td>{{ index + 1 }}</td>
                       <td>{{ sanPham.ma_san_pham }}</td>
                       <td>{{ sanPham.ten_san_pham }}</td>
-
                     </tr>
                   </tbody>
                 </table>
@@ -141,7 +137,6 @@
                       <th><input class="form-check-input" type="checkbox" @change="toggleSelectAllChiTietSanPham" />
                       </th>
                       <th>STT</th>
-                      <th>Ảnh</th>
                       <th>Mã sản phẩm</th>
                       <th>Tên sản phẩm</th>
                       <th>Giá bán</th>
@@ -160,12 +155,6 @@
                           :value="item.id_chi_tiet_san_pham" v-model="selectedChiTietSanPhamIds" />
                       </td>
                       <td>{{ index + 1 + (chiTietSanPhamCurrentPage * itemsPerPage) }}</td>
-                      <td>
-                        <img v-if="item.hinhAnhSanPhams && item.hinhAnhSanPhams.length > 0"
-                          :src="getMainImage(item.hinhAnhSanPhams)" style="width: 50px; height: 50px;"
-                          alt="Ảnh chính" />
-                        <span v-else>N/A</span>
-                      </td>
                       <td>{{ item.sanPham.ma_san_pham }}</td>
                       <td>{{ item.sanPham.ten_san_pham }}</td>
                       <td>{{ formatNumber(item.gia_ban) }}</td>
@@ -275,10 +264,17 @@ const validateGiaTriGiam = () => {
   const giaTri = parseFloat(khuyenMai.value.giaTriGiam);
   if (isNaN(giaTri) || giaTri <= 0) {
     errors.value.giaTriGiam = 'Giá trị giảm phải là số lớn hơn 0!';
+  } else if (giaTri > 5000000) {
+    errors.value.giaTriGiam = 'Giá trị giảm không được lớn hơn 5,000,000!';
   } else if (khuyenMai.value.kieuGiamGia === 'Phần trăm' && giaTri > 100) {
     errors.value.giaTriGiam = 'Giá trị giảm không được vượt quá 100 khi chọn Phần trăm!';
   } else {
     errors.value.giaTriGiam = '';
+  }
+
+  if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
+    khuyenMai.value.giaTriToiDa = giaTri;
+    validateGiaTriToiDa();
   }
 };
 
@@ -289,6 +285,8 @@ const validateGiaTriToiDa = () => {
     errors.value.giaTriToiDa = '';
   } else if (isNaN(giaTriToiDa) || giaTriToiDa <= 0) {
     errors.value.giaTriToiDa = 'Giá trị tối đa phải là số lớn hơn 0!';
+  } else if (giaTriToiDa > 5000000) {
+    errors.value.giaTriToiDa = 'Giá trị tối đa không được lớn hơn 5,000,000!';
   } else {
     errors.value.giaTriToiDa = '';
   }
@@ -302,7 +300,7 @@ const validateDates = () => {
   }
 
   if (!khuyenMai.value.ngayHetHan) {
-    errors.value.ngayHetHan = 'Ngày kết thúc không được Để trống!';
+    errors.value.ngayHetHan = 'Ngày kết thúc không được để trống!';
   } else if (khuyenMai.value.ngayBatDau && new Date(khuyenMai.value.ngayHetHan) <= new Date(khuyenMai.value.ngayBatDau)) {
     errors.value.ngayHetHan = 'Ngày kết thúc phải sau ngày bắt đầu!';
   } else {
@@ -339,7 +337,7 @@ const debounce = (func, wait) => {
   };
 };
 
-// Fetch SanPham with search and pagination (aligned with Update component)
+// Fetch SanPham with search and pagination
 const fetchSanPham = async (page = 0) => {
   try {
     const response = await khuyenMaiService.searchSanPhamKM(keywordSanPham.value, page, itemsPerPage);
@@ -355,14 +353,14 @@ const fetchSanPham = async (page = 0) => {
       sanPhamList.value = [];
       sanPhamTotalPages.value = 0;
       sanPhamCurrentPage.value = 0;
-      toast.error('Không tìm thấy sản phẩm');
+      toast.error('Không tìm thấy sản phẩm', { autoClose: 1000 });
     }
   } catch (error) {
     console.error('Error fetching SanPham:', error);
     sanPhamList.value = [];
     sanPhamTotalPages.value = 0;
     sanPhamCurrentPage.value = 0;
-    toast.error('Không thể tải danh sách sản phẩm');
+    toast.error('Không thể tải danh sách sản phẩm', { autoClose: 3000 });
   }
 };
 
@@ -381,7 +379,7 @@ const refreshChiTietSanPham = async () => {
       chiTietSanPhamList.value = [...chiTietSanPhamList.value, ...filteredChiTiet];
     } catch (error) {
       console.error(`Error fetching ChiTietSanPham for SanPham ID ${sanPhamId}:`, error);
-      toast.error(`Không thể tải chi tiết sản phẩm cho ID ${sanPhamId}`);
+      toast.error(`Không thể tải chi tiết sản phẩm cho ID ${sanPhamId}`, { autoClose: 3000 });
     }
   }
 
@@ -419,11 +417,6 @@ const toggleSelectAllChiTietSanPham = (event) => {
   }
 };
 
-const getMainImage = (hinhAnhSanPhams) => {
-  const mainImage = hinhAnhSanPhams?.find(img => img.anh_chinh);
-  return mainImage ? mainImage.hinh_anh : '';
-};
-
 const formatNumber = (number) => {
   if (!number) return '0';
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number);
@@ -441,13 +434,13 @@ const submitForm = async () => {
   if (hasErrors.value) {
     const errorMessages = Object.values(errors.value).filter(error => error !== '').join(' ');
     console.log('Frontend Validation Errors:', errors.value);
-    toast.error(errorMessages || 'Vui lòng sửa các lỗi trước khi lưu!');
+    toast.error(errorMessages || 'Vui lòng sửa các lỗi trước khi lưu!', { autoClose: 1000 });
     return;
   }
 
   if (selectedChiTietSanPhamIds.value.length === 0) {
     console.log('No ChiTietSanPham selected');
-    toast.error('Vui lòng chọn ít nhất một chi tiết sản phẩm!');
+    toast.error('Vui lòng chọn ít nhất một chi tiết sản phẩm!', { autoClose: 1000 });
     return;
   }
 
@@ -469,24 +462,26 @@ const submitForm = async () => {
     console.log('Add KhuyenMai Response:', response);
 
     if (response === 'Thêm khuyến mãi thành công!') {
-      toast.success(response);
-      router.push('/admin/quanlykhuyenmai');
+      toast.success(response, {
+        autoClose: 3000,
+        onClose: () => router.push('/admin/quanlykhuyenmai'),
+      });
     } else {
       if (typeof response === 'string') {
-        toast.error(response);
+        toast.error(response, { autoClose: 1000 });
       } else if (response && response.message) {
-        toast.error(response.message);
+        toast.error(response.message, { autoClose: 1000 });
       } else {
-        toast.error('Thêm khuyến mãi thất bại!');
+        toast.error('Thêm khuyến mãi thất bại!', { autoClose: 1000 });
       }
     }
   } catch (error) {
     console.error('Error adding KhuyenMai:', error);
     if (error.response && error.response.data) {
       const backendError = error.response.data.message || error.response.data.error || 'Có lỗi xảy ra khi thêm khuyến mãi';
-      toast.error(backendError);
+      toast.error(backendError, { autoClose: 1000 });
     } else {
-      toast.error('Không thể kết nối đến server!');
+      toast.error('Không thể kết nối đến server!', { autoClose: 1000 });
     }
   }
 };
@@ -535,3 +530,4 @@ onMounted(() => {
   --bs-table-hover-bg: rgb(183 183 183 / 8%);
 }
 </style>
+--huy
