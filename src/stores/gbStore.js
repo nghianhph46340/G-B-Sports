@@ -525,15 +525,30 @@ export const useGbStore = defineStore('gbStore', {
     },
     //Import excel
     async importExcel(file) {
-      const importExcelRespone = await sanPhamService.importSanPhamFromExcel(file)
-      if (importExcelRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        toast.success('Import dữ liệu thành công')
+      try {
+        console.log('Store processing file:', file);
+        console.log('File type:', file.type);
+        console.log('File name:', file.name);
+
+        // If we have a file from Ant Design Upload, make sure we're using the right reference
+        const fileToSend = file.originFileObj || file;
+
+        const importExcelRespone = await sanPhamService.importSanPhamFromExcel(fileToSend);
+
+        if (importExcelRespone.error) {
+          toast.error('Không lấy được dữ liệu');
+          return importExcelRespone; // Return the error response so we can handle it
+        } else {
+          toast.success('Import dữ liệu thành công');
+        }
+        return importExcelRespone;
+      } catch (error) {
+        console.error('Error in importExcel store method:', error);
+        toast.error('Lỗi khi xử lý file Excel');
+        throw error; // Rethrow to let the component handle it
       }
-      return importExcelRespone
     },
+
     //Save excel
     async saveExcelImport(data) {
       const saveExcelImportRespone = await sanPhamService.saveExcelImports(data)
@@ -544,6 +559,32 @@ export const useGbStore = defineStore('gbStore', {
         toast.success('Lưu dữ liệu thành công')
       }
       return saveExcelImportRespone
+    },
+
+    // Xuất Excel với các tùy chọn
+    async exportExcel(productIds, fields) {
+      try {
+        console.log('Đang xuất Excel cho sản phẩm:', productIds);
+        console.log('Các trường được chọn:', fields);
+
+        const blob = await sanPhamService.exportExcel(productIds, fields);
+
+        // Tạo URL cho blob và tải xuống
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `san-pham-export-${new Date().getTime()}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast.success('Xuất Excel thành công');
+        return true;
+      } catch (error) {
+        console.error('Lỗi khi xuất Excel:', error);
+        toast.error('Không thể xuất Excel');
+        return false;
+      }
     },
 
     async getAllSanPhamNgaySua() {
