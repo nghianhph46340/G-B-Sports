@@ -6,7 +6,7 @@
     <!-- <a-table :columns="columns" :data-source="data" :row-selection="rowSelection" :expandable="expandableConfig"
         class="components-table-demo-nested" /> -->
     <div>
-        <menuAction />
+        <menuAction ref="menuActionRef" />
         <h4 class="ms-3">Danh sách sản phẩm</h4>
         <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
             class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
@@ -107,7 +107,15 @@ const open = ref(false);
 const store = useGbStore();
 
 const changeRouter = (path) => {
-    router.push('/admin/quanlysanpham/update/' + path);
+    try {
+        // Wait until current tick completes before navigating
+        setTimeout(() => {
+            router.push('/admin/quanlysanpham/update/' + path);
+        }, 0);
+    } catch (error) {
+        console.error('Navigation error:', error);
+        message.error('Không thể mở trang chỉnh sửa. Vui lòng thử lại.');
+    }
 }
 const productDetails = ref({
     ten_san_pham: '',
@@ -348,6 +356,11 @@ const rowSelection = ref({
                 selectedCTSPKeys.value = [...new Set([...selectedCTSPKeys.value, ...childKeys])];
             }
         });
+
+        // Truyền danh sách sản phẩm đã chọn cho menuAction component
+        if (menuActionRef.value) {
+            menuActionRef.value.updateSelectedRows(selectedRows);
+        }
     }
 });
 
@@ -477,6 +490,9 @@ const displayData = computed(() => {
     console.log(`Hiển thị tất cả ${data.value.length} sản phẩm`);
     return data.value;
 });
+
+// Tham chiếu tới menuAction component
+const menuActionRef = ref(null);
 
 onMounted(async () => {
     // Đảm bảo tải cả dữ liệu chi tiết sản phẩm để sử dụng cho bộ lọc

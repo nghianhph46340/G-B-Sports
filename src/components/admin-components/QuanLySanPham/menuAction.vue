@@ -114,7 +114,7 @@
                 <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
                     style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select>
 
-                <a-button type="" class="d-flex align-items-center btn-filter">
+                <a-button type="" class="d-flex align-items-center btn-filter" @click="showExportModal">
                     <ExportOutlined class="icon-filler" />
                     <span class="button-text">Xuất excel</span>
                 </a-button>
@@ -222,6 +222,44 @@
             Hiển thị: {{ filteredCount }} sản phẩm
         </span>
     </div>
+
+    <a-modal v-model:open="exportModalVisible" title="Xuất Excel" width="700px">
+        <div class="export-modal-content">
+            <p>Chọn các trường thông tin bạn muốn xuất:</p>
+            <a-checkbox v-model:checked="selectAllFields" @change="handleSelectAllFields">
+                Chọn tất cả các trường
+            </a-checkbox>
+
+            <div class="field-selection mt-3">
+                <a-row :gutter="[16, 8]">
+                    <a-col :span="8" v-for="field in exportFields" :key="field.value">
+                        <a-checkbox v-model:checked="field.selected">{{ field.label }}</a-checkbox>
+                    </a-col>
+                </a-row>
+            </div>
+
+            <a-divider />
+
+            <p>Chọn sản phẩm:</p>
+            <a-radio-group v-model:value="exportSelection" class="mb-3">
+                <a-radio value="all">Tất cả sản phẩm</a-radio>
+                <a-radio value="filtered" :disabled="!isFiltering">Sản phẩm đã lọc</a-radio>
+                <a-radio value="selected" :disabled="!hasSelectedProducts">Sản phẩm đã chọn</a-radio>
+            </a-radio-group>
+
+            <div v-if="exportSelection === 'selected' && selectedRows.length === 0" class="alert alert-warning">
+                Bạn chưa chọn sản phẩm nào. Vui lòng chọn ít nhất một sản phẩm hoặc chọn tùy chọn khác.
+            </div>
+        </div>
+
+        <template #footer>
+            <a-button key="back" @click="exportModalVisible = false">Hủy</a-button>
+            <a-button key="submit" type="primary" :loading="exportLoading" :disabled="!canExport"
+                @click="handleExportExcel">
+                Xuất Excel
+            </a-button>
+        </template>
+    </a-modal>
 </template>
 
 <script setup>
@@ -493,7 +531,16 @@ const handleFileChange = (info) => {
     if (file.status === 'removed') {
         selectedFile.value = null;
     } else {
-        selectedFile.value = file;
+        // Store the file object correctly - prefer the raw file object if available
+        selectedFile.value = file.originFileObj ? file : file;
+        console.log('File selected:', selectedFile.value);
+        console.log('File is Blob?', selectedFile.value instanceof Blob);
+        console.log('File is File?', selectedFile.value instanceof File);
+
+        // Check file type and size to ensure it's valid
+        if (file.type && !file.type.includes('spreadsheet') && !file.type.includes('excel')) {
+            message.warning('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+        }
     }
 };
 
@@ -506,9 +553,15 @@ const handleImportExcel = async () => {
     uploadLoading.value = true;
 
     try {
-        const file = selectedFile.value;
-        console.log('File được upload:', file);
+        // Fix: Correctly access the actual file object
+        // Ant Design Upload component stores the actual file in originFileObj
+        const file = selectedFile.value.originFileObj || selectedFile.value;
 
+        console.log('File được upload:', file);
+        console.log('File type:', file.type);
+        console.log('File size:', file.size);
+
+        // Make sure we're passing a raw File object to the service
         const result = await store.importExcel(file);
 
         console.table(result);
@@ -521,7 +574,8 @@ const handleImportExcel = async () => {
 
     } catch (error) {
         console.error('Lỗi khi import Excel:', error);
-        message.error('Đã xảy ra lỗi khi import dữ liệu!');
+        console.error('Chi tiết lỗi:', error.response?.data);
+        message.error('Đã xảy ra lỗi khi import dữ liệu! ' + (error.response?.data?.message || ''));
     } finally {
         uploadLoading.value = false;
     }
@@ -553,6 +607,112 @@ const saveExcelImport = async () => {
         uploadLoading.value = false;
     }
 }
+
+// Thêm các biến và hàm cho tính năng xuất Excel
+const exportModalVisible = ref(false);
+const exportLoading = ref(false);
+const exportSelection = ref('all'); // 'all', 'filtered', hoặc 'selected'
+const selectAllFields = ref(false);
+const exportFields = ref([
+    { label: 'Mã sản phẩm', value: 'ma_san_pham', selected: true },
+    { label: 'Tên sản phẩm', value: 'ten_san_pham', selected: true },
+    { label: 'Danh mục', value: 'ten_danh_muc', selected: true },
+    { label: 'Thương hiệu', value: 'ten_thuong_hieu', selected: true },
+    { label: 'Chất liệu', value: 'ten_chat_lieu', selected: true },
+    { label: 'Tổng số lượng', value: 'tong_so_luong', selected: true },
+    { label: 'Giá bán', value: 'gia_ban', selected: true },
+    { label: 'Màu sắc', value: 'mau_sac', selected: false },
+    { label: 'Kích thước', value: 'kich_thuoc', selected: false },
+    { label: 'Mô tả', value: 'mo_ta', selected: false },
+    { label: 'Trạng thái', value: 'trang_thai', selected: true }
+]);
+
+// Lấy danh sách sản phẩm được chọn từ component cha
+const selectedRows = ref([]);
+const hasSelectedProducts = computed(() => selectedRows.value.length > 0);
+
+// Kiểm tra xem có thể xuất được không
+const canExport = computed(() => {
+    // Kiểm tra nếu có ít nhất 1 trường được chọn
+    const hasSelectedFields = exportFields.value.some(field => field.selected);
+
+    // Nếu chọn sản phẩm đã chọn, cần có ít nhất 1 sản phẩm được chọn
+    const hasValidSelection = exportSelection.value !== 'selected' || hasSelectedProducts.value;
+
+    return hasSelectedFields && hasValidSelection;
+});
+
+// Hàm hiển thị modal xuất Excel
+const showExportModal = () => {
+    // Lấy danh sách sản phẩm đã chọn từ store hoặc component cha
+    exportModalVisible.value = true;
+};
+
+// Khi người dùng chọn/bỏ chọn tất cả các trường
+const handleSelectAllFields = (e) => {
+    const checked = e.target.checked;
+    exportFields.value.forEach(field => {
+        field.selected = checked;
+    });
+};
+
+// Theo dõi thay đổi của từng trường để cập nhật selectAllFields
+watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
+    selectAllFields.value = newVal.every(v => v === true);
+}, { deep: true });
+
+// Xử lý xuất Excel
+const handleExportExcel = async () => {
+    try {
+        exportLoading.value = true;
+
+        // Lấy danh sách các trường đã chọn
+        const selectedFields = exportFields.value
+            .filter(field => field.selected)
+            .map(field => field.value);
+
+        // Lấy danh sách ID sản phẩm cần xuất
+        let productIds = [];
+
+        if (exportSelection.value === 'all') {
+            // Xuất tất cả sản phẩm
+            productIds = null; // Null có nghĩa là tất cả sản phẩm
+        } else if (exportSelection.value === 'filtered' && store.getFilteredProducts.length > 0) {
+            // Xuất các sản phẩm đã lọc
+            productIds = store.getFilteredProducts.map(p => p.id_san_pham);
+        } else if (exportSelection.value === 'selected' && selectedRows.value.length > 0) {
+            // Xuất các sản phẩm đã chọn
+            productIds = selectedRows.value.map(p => p.id_san_pham);
+        } else {
+            message.warning('Vui lòng chọn sản phẩm để xuất');
+            exportLoading.value = false;
+            return;
+        }
+
+        // Gọi hàm xuất Excel
+        const result = await store.exportExcel(productIds, selectedFields);
+
+        if (result) {
+            message.success('Xuất Excel thành công!');
+            exportModalVisible.value = false;
+        }
+    } catch (error) {
+        console.error('Lỗi khi xuất Excel:', error);
+        message.error('Có lỗi xảy ra khi xuất Excel');
+    } finally {
+        exportLoading.value = false;
+    }
+};
+
+// Phương thức để nhận danh sách sản phẩm được chọn từ component cha
+const updateSelectedRows = (rows) => {
+    selectedRows.value = rows;
+};
+
+// Expose để component cha có thể gọi
+defineExpose({
+    updateSelectedRows
+});
 </script>
 
 <style scoped>

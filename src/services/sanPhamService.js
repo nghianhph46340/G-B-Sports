@@ -160,17 +160,36 @@ const getCurrentDateTime = () => {
 
 const importSanPhamFromExcel = async (file) => {
   try {
-    const formData = new FormData()
-    formData.append('file', file)
+    console.log('Service processing file:', file);
+    console.log('File name:', file.name);
+    console.log('File type:', file.type);
+    console.log('File size:', file.size, 'bytes');
+
+    // Ensure we have a valid File object
+    if (!(file instanceof File) && !(file instanceof Blob)) {
+      console.error('Invalid file object:', file);
+      throw new Error('Invalid file object provided');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Log form data entries for debugging
+    for (let pair of formData.entries()) {
+      console.log('FormData entry:', pair[0], pair[1]);
+    }
+
     const response = await axiosInstance.post(qlsp + 'listImport', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    })
-    return response.data
+    });
+
+    return response.data;
   } catch (error) {
-    console.log(error)
-    throw error
+    console.log('Excel import error:', error);
+    console.log('Error response:', error.response?.data);
+    throw error;
   }
 }
 const saveExcelImports = async (data) => {
@@ -260,6 +279,25 @@ const searchSanPham = async (search) => {
     return { error: true, data: [] }
   }
 }
+
+const exportExcel = async (productIds, fields) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'exportExcel',
+      {
+        productIds: productIds,
+        fields: fields
+      },
+      {
+        responseType: 'blob', // Quan trọng để nhận dữ liệu dạng file
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xuất Excel:', error);
+    throw error;
+  }
+}
+
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -285,4 +323,5 @@ export const sanPhamService = {
   getAllSanPhamNgaySua,
   getAllCTSPKM,
   searchSanPham,
+  exportExcel,
 }
