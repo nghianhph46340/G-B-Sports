@@ -778,15 +778,15 @@ const placeOrder = async () => {
                 await thanhToanService.handlePayOSPayment(orderData);
             } else if (selectedOnlineMethod.value === 'vnpay') {
                 // Redirect to VNPAY payment gateway
-                message.success('Đang chuyển hướng đến cổng thanh toán VNPAY...');
+                message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
                 // Implement VNPAY payment logic here
             } else if (selectedOnlineMethod.value === 'momo') {
                 // Redirect to Momo payment gateway
-                message.success('Đang chuyển hướng đến cổng thanh toán Momo...');
+                message.info('Đang chuyển hướng đến cổng thanh toán Momo...');
                 // Implement Momo payment logic here
             } else {
                 // Handle bank payment
-                message.success('Đang chuyển hướng đến cổng thanh toán ngân hàng...');
+                message.info('Đang chuyển hướng đến cổng thanh toán ngân hàng...');
                 // Implement bank payment logic here
             }
         } else {

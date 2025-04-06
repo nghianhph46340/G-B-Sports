@@ -174,8 +174,6 @@ import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
 import { Modal } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
-
-const router = useRouter();
 //--------------------------------------
 // Khai báo biến cho ảnh
 const store = useGbStore();
@@ -203,6 +201,7 @@ const wards = ref([]);
 const selectedProvince = ref('');
 const selectedDistrict = ref('');
 const selectedWard = ref('');
+const router = useRouter();
 
 const validateForm = () => {
     let isValid = true;

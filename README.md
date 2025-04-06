@@ -49,3 +49,4 @@ npm install @vueuse/core
 npm install vue3-apexcharts apexcharts --save
 
 npm install date-fns-tz
+npm install date-fns date-fns-tz
