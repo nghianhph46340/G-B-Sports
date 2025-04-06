@@ -13,77 +13,30 @@ import { banHangService } from '@/services/banHangService'
 import { bctkService } from '@/services/bctkService'
 export const useGbStore = defineStore('gbStore', {
   state: () => ({
-    // Các state hiện tại
+    // Các state hiện tại chung
     changeLanguage: {},
     check: true,
     language: 'EN',
     status: false,
     id: 0,
     checkNoitification: true,
+    checkRouter: '',
+    checkRoutePresent: '',
+    indexMenu: ['1'],
+    searchs: '', // Dùng chung cho tìm kiếm
+    //Sản phẩm
     getAllSanPham: [],
     getAllChiTietSanPham: [],
     searchChiTietSanPham: [],
     searchSanPham: [],
     getCTSPBySanPhams: [],
-    checkRouter: '',
-    checkRoutePresent: '',
     getImages: [],
-    indexMenu: ['1'],
-    searchs: '', // Dùng chung cho tìm kiếm
-    getAllNhanVienArr: [],
-    totalPages: 0, // Dùng chung cho phân trang
-    currentPage: 0, // Dùng chung cho phân trang
-    totalItems: 0, // Dùng chung cho phân trang
-    getAllHoaDonArr: [],
-    totalHoaDon: 0,
-    currentHoaDon: 0,
-    totalItemsHoaDon: 0,
-    hoaDonDetail: {},
-    chiTietHoaDons: [],
-    trangThaiHistory: [],
     danhMucList: [],
     thuongHieuList: [],
     chatLieuList: [],
     mauSacList: [],
     sizeList: [],
-    nhanVienArr: [],
-    nhanVienSearch: [],
     sanPhamById: {},
-    getAllKhachHangArr: [],
-    totalKhachHang: 0,
-    currentKhachHang: 0,
-    totalItemsKhachHang: 0,
-    listSanPhamBanHang: [],
-    getAllCTSPKMList: [],
-    getAllHoaDonCTTArr: [],
-    // State cho voucher
-    getAllVoucherArr: [],
-    voucherSearch: [],
-    voucherTotalPages: 0,
-    voucherCurrentPage: 0,
-    voucherTotalItems: 0,
-    voucherSearchs: '',
-
-    // State cho khuyến mãi
-    getAllKhuyenMaiArr: [],
-    khuyenMaiSearch: [],
-    khuyenMaiTotalPages: 0, // Riêng cho khuyến mãi
-    khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
-    khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
-    khuyenMaiSearchs: '', // Riêng cho khuyến mãi
-    thongKe: {
-      doanhThu: 0,
-      tongDonHang: 0,
-      tongSanPham: 0,
-    },
-    // Thêm state cho filter
-    bctkFilter: {
-      type: 'hom-nay',
-      startDate: '',
-      endDate: '',
-    },
-    topSanPhamBanChay: [],
-    topSanPhamBanCham: [],
     // State cho chi tiết sản phẩm
     cTSPBySanPhamFull: [],
     filteredSanPhamList: [],
@@ -106,11 +59,75 @@ export const useGbStore = defineStore('gbStore', {
     isSearching: false, // Đang trong trạng thái tìm kiếm?
     isFiltering: false, // Đang trong trạng thái lọc?
     debug: true, // Chế độ debug để ghi log chi tiết
+
+
+
+    //Nhân viên
+    getAllNhanVienArr: [],
+    totalPages: 0, // Dùng chung cho phân trang
+    currentPage: 0, // Dùng chung cho phân trang
+    totalItems: 0, // Dùng chung cho phân trang
+    nhanVienArr: [],
+    nhanVienSearch: [],
+
+
+    //Hóa đơn
+    getAllHoaDonArr: [],
+    totalHoaDon: 0,
+    currentHoaDon: 0,
+    totalItemsHoaDon: 0,
+    hoaDonDetail: {},
+    chiTietHoaDons: [],
+    trangThaiHistory: [],
+    getAllHoaDonCTTArr: [],
+
+
+    //Khách hàng
+    getAllKhachHangArr: [],
+    totalKhachHang: 0,
+    currentKhachHang: 0,
+    totalItemsKhachHang: 0,
+    listSanPhamBanHang: [],
+    getAllCTSPKMList: [],
+
+
+    // State cho voucher
+    getAllVoucherArr: [],
+    voucherSearch: [],
+    voucherTotalPages: 0,
+    voucherCurrentPage: 0,
+    voucherTotalItems: 0,
+    voucherSearchs: '',
+
+    // State cho khuyến mãi
+    getAllKhuyenMaiArr: [],
+    khuyenMaiSearch: [],
+    khuyenMaiTotalPages: 0, // Riêng cho khuyến mãi
+    khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
+    khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
+    khuyenMaiSearchs: '', // Riêng cho khuyến mãi
+
+    //Thống kê
+    thongKe: {
+      doanhThu: 0,
+      tongDonHang: 0,
+      tongSanPham: 0,
+    },
+    // Thêm state cho filter
+    bctkFilter: {
+      type: 'hom-nay',
+      startDate: '',
+      endDate: '',
+    },
+    topSanPhamBanChay: [],
+    topSanPhamBanCham: [],
+
+
   }),
 
   ///Đầu mút2
   actions: {
-    // Thêm action cho BCTK
+    // BCTK
     async getSoLieu(type = null, startDate = null, endDate = null) {
       try {
         console.log('Store getSoLieu được gọi với:', { type, startDate, endDate })
@@ -167,6 +184,11 @@ export const useGbStore = defineStore('gbStore', {
       const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
       this.topSanPhamBanCham = topSanPhamBanCham
     },
+    //Kết thúc BCTK
+
+
+
+    //Nhân viên
     async layDanhSachNhanVien() {
       const nhanVienArr = await nhanVienService.layDanhSachNhanVien()
       this.nhanVienArr = nhanVienArr
@@ -407,6 +429,16 @@ export const useGbStore = defineStore('gbStore', {
         console.log(this.cTSPBySanPhamFull)
       }
     },
+    async getAllSanPhamNgaySua() {
+      const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua()
+      console.log(sanPhamNgaySua)
+      if (sanPhamNgaySua.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        this.getAllSanPham = sanPhamNgaySua
+      }
+    },
     ///////////-----------------Hóa đơn-------------------////////////
     async getAllHoaDon(page = 0, size = 5) {
       try {
@@ -586,17 +618,8 @@ export const useGbStore = defineStore('gbStore', {
         return false;
       }
     },
-
-    async getAllSanPhamNgaySua() {
-      const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua()
-      console.log(sanPhamNgaySua)
-      if (sanPhamNgaySua.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        this.getAllSanPham = sanPhamNgaySua
-      }
-    },
+    //Kết thúc Xuất Excel
+    //Khách hàng
     //Lấy danh sách khách hàng
     async getAllKhachHang(page = 0, size = 3, keyword = null, trangThai = null) {
       const khachHang = await khachHangService.getAllKhachHang(page, size, keyword, trangThai)
@@ -631,7 +654,7 @@ export const useGbStore = defineStore('gbStore', {
       this.totalItemsKhachHang = khachHang.totalElements || 0
     },
 
-    ///Code bán hàng tại quầy
+    ///=======Code bán hàng tại quầy=======///
     async getAllCTSPKM() {
       try {
         const response = await sanPhamService.getAllCTSPKM()
@@ -789,7 +812,7 @@ export const useGbStore = defineStore('gbStore', {
 
     /////
 
-    // Action cho voucher
+    //================= Action cho voucher =================///
     async getAllVouchers(page = 0, size = 5) {
       try {
         const vouchers = await voucherService.getAllVouchers(page, size)
@@ -1165,7 +1188,7 @@ export const useGbStore = defineStore('gbStore', {
         return false
       }
     },
-
+    //================= Kết thúc khuyến mãi =================///
     getPath(path) {
       this.checkRouter = ''
       this.checkRouter = path
