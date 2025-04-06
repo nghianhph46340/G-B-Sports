@@ -80,6 +80,11 @@ export const useGbStore = defineStore('gbStore', {
         startDate: '',
         endDate: ''
       },
+      // tỉ lệ trạng thái đơn hàng
+      tiLeTrangThai: [],
+      loading: false,
+      error: null,
+      // top sản phẩm bán chạy
       topSanPhamBanChay: [],
       topSanPhamBanCham: [],
       // State cho chi tiết sản phẩm
@@ -141,6 +146,60 @@ export const useGbStore = defineStore('gbStore', {
       } catch (error) {
         console.error('Lỗi khi thay đổi filter thống kê:', error);
         toast.error('Có lỗi xảy ra khi lọc thống kê');
+      }
+    },
+    async fetchTiLeTrangThai() {
+      try {
+        this.loading = true;
+        const data = await bctkService.getTiLeTrangThai();
+        console.log('Dữ liệu thô từ API:', data);
+
+        if (!data || !Array.isArray(data)) {
+          console.error('Định dạng dữ liệu không hợp lệ');
+          this.tiLeTrangThai = [];
+          return;
+        }
+
+        // Chuyển đổi từ dữ liệu API sang định dạng frontend cần
+        this.tiLeTrangThai = data.map(item => ({
+          trangThai: this.formatTrangThai(item.trangThaiDonHang || 'Unknown'),
+          soLuong: parseFloat(item.tiLeTrangThaiDonHang || 0), // Lấy phần trăm
+          tiLe: parseFloat(item.tiLeTrangThaiDonHang || 0)
+        }));
+
+        // Thêm dữ liệu mẫu nếu không có
+        if (this.tiLeTrangThai.length === 0) {
+          this.tiLeTrangThai = [{
+            trangThai: 'Không có dữ liệu',
+            soLuong: 100,
+            tiLe: 100
+          }];
+        }
+
+        console.log('Dữ liệu đã xử lý:', this.tiLeTrangThai);
+      } catch (error) {
+        console.error('Lỗi trong fetchTiLeTrangThai:', error);
+        this.error = error.message;
+        this.tiLeTrangThai = [{
+          trangThai: 'Lỗi',
+          soLuong: 100,
+          tiLe: 100
+        }];
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // Hàm format tên trạng thái (nếu chưa có)
+    formatTrangThai(trangThai) {
+      switch (trangThai) {
+        case "CHO_XAC_NHAN": return "Chờ xác nhận";
+        case "DA_XAC_NHAN": return "Đã xác nhận";
+        case "DA_CAP_NHAT": return "Đã cập nhật";
+        case "DANG_GIAO": return "Đang giao";
+        case "HOAN_THANH": return "Hoàn thành";
+        case "DA_HUY": return "Đã hủy";
+        default: return trangThai;
       }
     },
     async getTopSanPhamBanChay() {
