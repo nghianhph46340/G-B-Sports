@@ -43,7 +43,8 @@
                         <span class="nav-text">{{ !store.changeLanguage.hoTro ? 'Hỗ trợ' : store.changeLanguage.hoTro
                         }}</span>
                     </div>
-                    <div class="nav-item text-center" @mouseenter="animateIcon('cart')">
+                    <div class="nav-item text-center" @click="chuyenTrang('/giohang-banhang')"
+                        @mouseenter="animateIcon('cart')">
                         <div class="icon-container">
                             <ShoppingCart class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'cart' }" />
                             <span v-if="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>

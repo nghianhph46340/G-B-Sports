@@ -20,6 +20,7 @@
                     <label class="form-check-label" for="all">Tất cả</label>
                 </div>
             </div>
+            <button class="btn buttonADD" @click="router.push('/admin/quanlykhachhang/add')">+ Tạo tài khoản</button>
         </div>
 
         <!-- Card chứa tiêu đề và select số lượng hiển thị -->
@@ -103,7 +104,9 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
 import { Empty } from 'ant-design-vue';
+import { useRouter } from 'vue-router';
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
+const router = useRouter();
 // Khai báo biến
 const store = useGbStore();
 const pageSize = ref(3);
@@ -180,7 +183,16 @@ onMounted(() => {
     --bs-btn-hover-bg: #0d6efd;
     --bs-btn-hover-color: #fff;
 }
+.buttonADD {
+  background-color: #d02c39;
+  color: white;
+  font-weight: bold;
+}
 
+.buttonADD:hover {
+  background-color: #f33b47;
+  color: white;
+}
 /* Ẩn radio mặc định */
 .form-check-input {
     appearance: none;
