@@ -124,34 +124,111 @@
                 <span class="button-text">Nhập excel</span>
             </a-button>
             <!-- Modal nhập excel -->
-            <a-modal v-model:open="openModalImportExcel" title="Nhập excel">
+            <a-modal v-model:open="openModalImportExcel" title="Nhập Excel" width="650px">
                 <div class="upload-container">
-                    <input type="file" ref="fileInput" style="display: none" accept=".xlsx,.xls"
-                        @change="handleManualFileChange" />
-                    <a-button @click="triggerFileSelect">
-                        <upload-outlined />
-                        Chọn file Excel
-                    </a-button>
-                    <p v-if="selectedFile">File đã chọn: {{ selectedFile.name }}</p>
+                    <div class="upload-instructions mb-3">
+                        <h5>Hướng dẫn nhập Excel</h5>
+                        <ol>
+                            <li>Tải <a @click.prevent="downloadTemplate" href="#" class="template-link">file mẫu</a>
+                                hoặc sử dụng
+                                file Excel có định dạng tương tự</li>
+                            <li>Điền thông tin sản phẩm (các trường có dấu * là bắt buộc)</li>
+                            <li>Tải lên file và kiểm tra dữ liệu trước khi lưu</li>
+                        </ol>
+                    </div>
+
+                    <div class="upload-area" :class="{ 'has-file': selectedFile, 'is-dragging': isDragging }"
+                        @dragenter.prevent="isDragging = true" @dragover.prevent="isDragging = true"
+                        @dragleave.prevent="isDragging = false" @drop.prevent="handleFileDrop">
+                        <input type="file" ref="fileInput" style="display: none" accept=".xlsx,.xls"
+                            @change="handleManualFileChange" />
+
+                        <template v-if="!selectedFile">
+                            <div class="upload-placeholder">
+                                <upload-outlined class="upload-icon" />
+                                <p class="mb-2">Kéo thả file Excel vào đây hoặc</p>
+                                <a-button type="primary" @click="triggerFileSelect">
+                                    Chọn file
+                                </a-button>
+                            </div>
+                        </template>
+
+                        <div v-else class="selected-file">
+                            <file-excel-outlined class="file-icon" />
+                            <div class="file-info">
+                                <p class="file-name">{{ selectedFile.name }}</p>
+                                <p class="file-size">{{ formatFileSize(selectedFile.size) }}</p>
+                            </div>
+                            <div class="file-actions">
+                                <a-button type="text" @click="replaceFile">
+                                    <reload-outlined />
+                                </a-button>
+                                <a-button type="text" @click="removeFile">
+                                    <delete-outlined />
+                                </a-button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="importError" class="error-message mt-3">
+                        <alert-outlined />
+                        <span>{{ importError }}</span>
+                    </div>
+
+                    <div v-if="importValidating" class="validating-status mt-3">
+                        <loading-outlined spin />
+                        <span>Đang kiểm tra dữ liệu...</span>
+                    </div>
                 </div>
+
                 <template #footer>
-                    <a-button key="back" @click="openModalImportExcel = false">Hủy</a-button>
-                    <a-button key="submit" type="primary" :loading="uploadLoading" :disabled="!selectedFile"
-                        @click="handleImportExcel">
+                    <a-button key="back" @click="closeImportModal">Hủy</a-button>
+                    <a-button key="preview" type="default" :disabled="!selectedFile || uploadLoading"
+                        @click="validateAndPreview">
+                        <eye-outlined />
+                        Xem trước
+                    </a-button>
+                    <a-button key="submit" type="primary" :loading="uploadLoading"
+                        :disabled="!selectedFile || uploadLoading" @click="handleImportExcel">
+                        <import-outlined />
                         Import
                     </a-button>
                 </template>
             </a-modal>
             <!-- Modal hiển thị dữ liệu import -->
-            <a-modal v-model:open="importExcelModal" title="Dữ liệu import" width="90%" :style="{ top: '20px' }">
+            <a-modal v-model:open="importExcelModal" title="Xác nhận dữ liệu import" width="90%"
+                :style="{ top: '20px' }">
+                <div class="data-preview-stats" v-if="importExcelData.length">
+                    <div class="stat-item">
+                        <p class="stat-value">{{ importExcelData.length }}</p>
+                        <p class="stat-label">Tổng số dòng</p>
+                    </div>
+                    <div class="stat-item">
+                        <p class="stat-value">{{ countValidRows() }}</p>
+                        <p class="stat-label">Dòng hợp lệ</p>
+                    </div>
+                    <div class="stat-item text-warning" v-if="countInvalidRows() > 0">
+                        <p class="stat-value">{{ countInvalidRows() }}</p>
+                        <p class="stat-label">Dòng có lỗi</p>
+                    </div>
+                </div>
+
+                <div class="data-action-buttons mb-3" v-if="importExcelData.length">
+                    <a-radio-group v-model:value="dataPreviewMode" button-style="solid">
+                        <a-radio-button value="all">Tất cả dữ liệu</a-radio-button>
+                        <a-radio-button value="valid" :disabled="countValidRows() === 0">Chỉ dữ liệu hợp
+                            lệ</a-radio-button>
+                        <a-radio-button value="invalid" :disabled="countInvalidRows() === 0">Chỉ dữ liệu
+                            lỗi</a-radio-button>
+                    </a-radio-group>
+                </div>
+
                 <div class="table-container">
                     <table class="table table-bordered">
                         <thead>
                             <tr>
                                 <th>STT</th>
                                 <th>Tên sản phẩm</th>
-                                <!-- <th>Giới tính</th> -->
-
                                 <th>Giá bán</th>
                                 <th>Số lượng</th>
                                 <th>Danh mục</th>
@@ -159,51 +236,70 @@
                                 <th>Chất liệu</th>
                                 <th>Màu sắc</th>
                                 <th>Kích thước</th>
+                                <th>Trạng thái</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(item, index) in importExcelData" :key="index">
+                            <tr v-for="(item, index) in filteredImportData" :key="index"
+                                :class="{ 'has-error': hasRowError(item) }">
                                 <td>{{ index + 1 }}</td>
-                                <td
-                                    :style="{ backgroundColor: item.sanPham.ten_san_pham === null || item.sanPham.ten_san_pham === '' ? '#ff6b6b' : '' }">
-                                    {{
-                                        item.sanPham.ten_san_pham
-                                    }}</td>
-                                <!-- <td
-                                    :style="{ backgroundColor: item.sanPham.gioi_tinh === null || item.sanPham.gioi_tinh === '' ? '#ff6b6b' : '' }">
-                                    {{ item.sanPham.gioi_tinh ? "Nam" : "Nữ" }}</td> -->
-                                <!-- <td :style="{ backgroundColor: item.gia_nhap === 0 ? '#ff6b6b' : '' }">{{ item.gia_nhap
-                                    }}</td> -->
-                                <td :style="{ backgroundColor: item.gia_ban === 0 ? '#ff6b6b' : '' }">{{ item.gia_ban }}
+                                <td :class="{ 'cell-error': !item.sanPham.ten_san_pham }">
+                                    {{ item.sanPham.ten_san_pham || '(Thiếu dữ liệu)' }}
                                 </td>
-                                <td
-                                    :style="{ backgroundColor: item.so_luong === 0 || item.so_luong === null ? '#ff6b6b' : '' }">
-                                    {{
-                                        item.so_luong
-                                    }}</td>
-                                <td
-                                    :style="{ backgroundColor: item.sanPham.danhMuc.ten_danh_muc === null || item.sanPham.danhMuc.ten_danh_muc === '' ? '#ff6b6b' : '' }">
-                                    {{ item.sanPham.danhMuc.ten_danh_muc }}</td>
-                                <td
-                                    :style="{ backgroundColor: item.sanPham.thuongHieu.ten_thuong_hieu === null || item.sanPham.thuongHieu.ten_thuong_hieu === '' ? '#ff6b6b' : '' }">
-                                    {{ item.sanPham.thuongHieu.ten_thuong_hieu }}</td>
-                                <td
-                                    :style="{ backgroundColor: item.sanPham.chatLieu.ten_chat_lieu === null || item.sanPham.chatLieu.ten_chat_lieu === '' ? '#ff6b6b' : '' }">
-                                    {{ item.sanPham.chatLieu.ten_chat_lieu }}</td>
-                                <td
-                                    :style="{ backgroundColor: item.mauSac.ma_mau_sac === null || item.mauSac.ma_mau_sac === '' ? '#ff6b6b' : '' }">
-                                    {{ item.mauSac.ma_mau_sac + ' ' + item.mauSac.ten_mau_sac }}</td>
-                                <td
-                                    :style="{ backgroundColor: item.kichThuoc.gia_tri === null || item.kichThuoc.gia_tri === '' ? '#ff6b6b' : '' }">
-                                    {{ item.kichThuoc.gia_tri + ' ' + item.kichThuoc.don_vi }}</td>
+                                <td :class="{ 'cell-error': item.gia_ban === 0 }">
+                                    {{ formatPrice(item.gia_ban) }}
+                                </td>
+                                <td :class="{ 'cell-error': item.so_luong === 0 || item.so_luong === null }">
+                                    {{ item.so_luong || '(Thiếu dữ liệu)' }}
+                                </td>
+                                <td :class="{ 'cell-error': !item.sanPham.danhMuc.ten_danh_muc }">
+                                    {{ item.sanPham.danhMuc.ten_danh_muc || '(Thiếu dữ liệu)' }}
+                                </td>
+                                <td :class="{ 'cell-error': !item.sanPham.thuongHieu.ten_thuong_hieu }">
+                                    {{ item.sanPham.thuongHieu.ten_thuong_hieu || '(Thiếu dữ liệu)' }}
+                                </td>
+                                <td :class="{ 'cell-error': !item.sanPham.chatLieu.ten_chat_lieu }">
+                                    {{ item.sanPham.chatLieu.ten_chat_lieu || '(Thiếu dữ liệu)' }}
+                                </td>
+                                <td :class="{ 'cell-error': !item.mauSac.ma_mau_sac }">
+                                    {{ (item.mauSac.ma_mau_sac && item.mauSac.ten_mau_sac) ?
+                                        (item.mauSac.ma_mau_sac + ' ' + item.mauSac.ten_mau_sac) : '(Thiếu dữ liệu)' }}
+                                </td>
+                                <td :class="{ 'cell-error': !item.kichThuoc.gia_tri }">
+                                    {{ (item.kichThuoc.gia_tri && item.kichThuoc.don_vi) ?
+                                        (item.kichThuoc.gia_tri + ' ' + item.kichThuoc.don_vi) : '(Thiếu dữ liệu)' }}
+                                </td>
+                                <td>
+                                    <a-tag :color="item.trang_thai ? 'green' : 'red'">
+                                        {{ item.trang_thai ? 'Hoạt động' : 'Không hoạt động' }}
+                                    </a-tag>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+
+                <div class="import-summary mt-3" v-if="countInvalidRows() > 0">
+                    <a-alert type="warning" show-icon>
+                        <template #message>
+                            <span>Cảnh báo: Có {{ countInvalidRows() }} dòng dữ liệu chứa lỗi</span>
+                        </template>
+                        <template #description>
+                            <p>Các ô có nền đỏ là dữ liệu bị thiếu hoặc không hợp lệ. Bạn có thể:</p>
+                            <ul>
+                                <li>Tiếp tục import (chỉ các dòng hợp lệ sẽ được lưu)</li>
+                                <li>Hủy để sửa file Excel và thử lại</li>
+                            </ul>
+                        </template>
+                    </a-alert>
+                </div>
+
                 <template #footer>
                     <a-button key="back" @click="importExcelModal = false">Hủy</a-button>
-                    <a-button key="submit" type="primary" :loading="uploadLoading" @click="saveExcelImport">
-                        Save
+                    <a-button key="submit" type="primary" :loading="uploadLoading" :disabled="countValidRows() === 0"
+                        @click="saveExcelImport">
+                        <save-outlined />
+                        Lưu {{ countValidRows() }} sản phẩm
                     </a-button>
                 </template>
             </a-modal>
@@ -271,7 +367,14 @@ import {
     ExportOutlined,
     ImportOutlined,
     UploadOutlined,
-    SyncOutlined
+    SyncOutlined,
+    FileExcelOutlined,
+    DeleteOutlined,
+    ReloadOutlined,
+    EyeOutlined,
+    AlertOutlined,
+    LoadingOutlined,
+    SaveOutlined
 } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
@@ -355,6 +458,10 @@ const uploadLoading = ref(false);
 const selectedFile = ref(null);
 const importExcelModal = ref(false);
 const importExcelData = ref([]);
+const isDragging = ref(false);
+const importError = ref('');
+const importValidating = ref(false);
+const dataPreviewMode = ref('all');
 
 const showFilter = () => {
     // Kiểm tra dữ liệu trước khi mở bộ lọc
@@ -511,12 +618,12 @@ const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
 };
 
-const formatPrice = (value) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-    }).format(value);
-};
+// const formatPrice = (value) => {
+//     return new Intl.NumberFormat('vi-VN', {
+//         style: 'currency',
+//         currency: 'VND'
+//     }).format(value);
+// };
 
 const handleRemove = (file) => {
     fileList.value = [];
@@ -589,41 +696,14 @@ const handleImportExcel = async (event) => {
         event.stopPropagation();
     }
 
+    // Nếu chưa có file, yêu cầu chọn file
     if (!selectedFile.value) {
         message.error('Vui lòng chọn file Excel!');
         return;
     }
 
-    uploadLoading.value = true;
-
-    try {
-        console.log('File được upload:', selectedFile.value);
-        console.log('File type:', selectedFile.value.type);
-        console.log('File size:', selectedFile.value.size);
-
-        // Make sure we're passing a raw File object to the service
-        const result = await store.importExcel(selectedFile.value);
-
-        console.table(result);
-        message.success('Import dữ liệu thành công!');
-        openModalImportExcel.value = false;
-
-        // Reset file input
-        if (fileInput.value) {
-            fileInput.value.value = '';
-        }
-
-        selectedFile.value = null;
-        importExcelModal.value = true;
-        importExcelData.value = result;
-
-    } catch (error) {
-        console.error('Lỗi khi import Excel:', error);
-        console.error('Chi tiết lỗi:', error.response?.data);
-        message.error('Đã xảy ra lỗi khi import dữ liệu! ' + (error.response?.data?.message || ''));
-    } finally {
-        uploadLoading.value = false;
-    }
+    // Bắt đầu quá trình validation và preview
+    validateAndPreview();
 };
 
 const saveExcelImport = async () => {
@@ -634,11 +714,17 @@ const saveExcelImport = async () => {
             message.error('Lỗi hệ thống: Không thể lưu dữ liệu!');
             return;
         }
-        const result = await store.saveExcelImport(importExcelData.value);
-        console.log('Kết quả trả về:', result);
+
+        // Nếu có dòng không hợp lệ, chỉ lưu các dòng hợp lệ
+        const dataToSave = countInvalidRows() > 0
+            ? importExcelData.value.filter(item => !hasRowError(item))
+            : importExcelData.value;
+
+        const result = await store.saveExcelImport(dataToSave);
+        console.log('Kết quả lưu dữ liệu:', result);
 
         if (result) {
-            message.success('Lưu dữ liệu thành công!');
+            message.success(`Đã lưu thành công ${dataToSave.length} sản phẩm!`);
             importExcelModal.value = false;
 
             await store.getAllSanPhamNgaySua();
@@ -647,11 +733,11 @@ const saveExcelImport = async () => {
         }
     } catch (error) {
         console.error('Lỗi khi lưu dữ liệu:', error);
-        message.error('Đã xảy ra lỗi khi lưu dữ liệu!');
+        message.error('Đã xảy ra lỗi khi lưu dữ liệu: ' + (error.response?.data?.message || error.message || ''));
     } finally {
         uploadLoading.value = false;
     }
-}
+};
 
 // Thêm các biến và hàm cho tính năng xuất Excel
 const exportModalVisible = ref(false);
@@ -758,6 +844,177 @@ const updateSelectedRows = (rows) => {
 defineExpose({
     updateSelectedRows
 });
+
+// Các hàm tiện ích
+const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const formatPrice = (price) => {
+    if (!price) return '0 ₫';
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0
+    }).format(price);
+};
+
+// Xử lý khi kéo thả file
+const handleFileDrop = (event) => {
+    isDragging.value = false;
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        validateAndProcessFile(files[0]);
+    }
+};
+
+// Kiểm tra và xử lý file
+const validateAndProcessFile = (file) => {
+    importError.value = '';
+
+    // Kiểm tra file type
+    const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.type === 'application/vnd.ms-excel' ||
+        file.name.endsWith('.xlsx') ||
+        file.name.endsWith('.xls');
+
+    if (!isExcel) {
+        importError.value = 'Vui lòng chỉ tải lên file Excel (.xlsx hoặc .xls)';
+        return;
+    }
+
+    // Kiểm tra kích thước file (dưới 5MB)
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+        importError.value = 'File phải nhỏ hơn 5MB!';
+        return;
+    }
+
+    console.log('File hợp lệ:', file);
+    console.log('File type:', file.type);
+    console.log('File size:', file.size);
+
+    selectedFile.value = file;
+
+    // Reset input file để có thể chọn lại cùng một file
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+};
+
+// Thay thế file hiện tại
+const replaceFile = () => {
+    triggerFileSelect();
+};
+
+// Xóa file đã chọn
+const removeFile = () => {
+    selectedFile.value = null;
+    importError.value = '';
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+};
+
+// Đóng modal import
+const closeImportModal = () => {
+    openModalImportExcel.value = false;
+    selectedFile.value = null;
+    importError.value = '';
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+};
+
+// Kiểm tra và xem trước dữ liệu
+const validateAndPreview = async () => {
+    if (!selectedFile.value) {
+        message.error('Vui lòng chọn file Excel!');
+        return;
+    }
+
+    importValidating.value = true;
+    importError.value = '';
+
+    try {
+        const result = await store.importExcel(selectedFile.value);
+
+        if (result && result.length > 0) {
+            importExcelData.value = result;
+            importExcelModal.value = true;
+            openModalImportExcel.value = false;
+        } else {
+            importError.value = 'Không tìm thấy dữ liệu trong file Excel hoặc định dạng không hợp lệ';
+        }
+    } catch (error) {
+        console.error('Lỗi khi validate Excel:', error);
+        importError.value = 'Không thể đọc file Excel: ' + (error.response?.data?.message || error.message || 'Lỗi không xác định');
+    } finally {
+        importValidating.value = false;
+    }
+};
+
+// Đếm số dòng hợp lệ
+const countValidRows = () => {
+    if (!importExcelData.value || importExcelData.value.length === 0) return 0;
+
+    return importExcelData.value.filter(item => !hasRowError(item)).length;
+};
+
+// Đếm số dòng không hợp lệ
+const countInvalidRows = () => {
+    if (!importExcelData.value || importExcelData.value.length === 0) return 0;
+
+    return importExcelData.value.filter(item => hasRowError(item)).length;
+};
+
+// Kiểm tra xem dòng có lỗi không
+const hasRowError = (item) => {
+    if (!item) return true;
+
+    return !item.sanPham.ten_san_pham ||
+        item.gia_ban === 0 ||
+        item.so_luong === 0 ||
+        item.so_luong === null ||
+        !item.sanPham.danhMuc.ten_danh_muc ||
+        !item.sanPham.thuongHieu.ten_thuong_hieu ||
+        !item.sanPham.chatLieu.ten_chat_lieu ||
+        !item.mauSac.ma_mau_sac ||
+        !item.kichThuoc.gia_tri;
+};
+
+// Lọc dữ liệu theo chế độ xem
+const filteredImportData = computed(() => {
+    if (!importExcelData.value || importExcelData.value.length === 0) return [];
+
+    switch (dataPreviewMode.value) {
+        case 'valid':
+            return importExcelData.value.filter(item => !hasRowError(item));
+        case 'invalid':
+            return importExcelData.value.filter(item => hasRowError(item));
+        case 'all':
+        default:
+            return importExcelData.value;
+    }
+});
+
+// Tải template mẫu
+const downloadTemplate = () => {
+    // Thông báo nếu chưa có API tải template
+    message.info('Tính năng tải template sẽ được cập nhật sau');
+
+    // Khi có API tải template, thực hiện như sau:
+    // const link = document.createElement('a');
+    // link.href = '/api/template/excel-import-template.xlsx';
+    // link.download = 'san-pham-template.xlsx';
+    // document.body.appendChild(link);
+    // link.click();
+    // document.body.removeChild(link);
+};
 </script>
 
 <style scoped>
@@ -808,6 +1065,201 @@ defineExpose({
     padding: 0 16px;
     height: 100%;
     overflow-y: auto;
+}
+
+/* Styles cho phần import Excel */
+.upload-container {
+    margin-bottom: 20px;
+}
+
+.upload-instructions {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.upload-instructions h5 {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.upload-instructions ol {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.upload-instructions .template-link {
+    color: #f33b47;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.upload-area {
+    border: 2px dashed #d9d9d9;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.upload-area.is-dragging {
+    border-color: #f33b47;
+    background-color: rgba(243, 59, 71, 0.05);
+}
+
+.upload-area.has-file {
+    border-color: #52c41a;
+    background-color: rgba(82, 196, 26, 0.05);
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+}
+
+.upload-icon {
+    font-size: 32px;
+    color: #999;
+    margin-bottom: 10px;
+}
+
+.selected-file {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #fafafa;
+    border-radius: 4px;
+}
+
+.file-icon {
+    font-size: 28px;
+    color: #52c41a;
+    margin-right: 15px;
+}
+
+.file-info {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.file-name {
+    margin: 0;
+    font-weight: 500;
+}
+
+.file-size {
+    margin: 0;
+    color: #888;
+    font-size: 12px;
+}
+
+.file-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ff4d4f;
+    padding: 8px 12px;
+    background-color: #fff2f0;
+    border: 1px solid #ffccc7;
+    border-radius: 4px;
+}
+
+.validating-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1890ff;
+    padding: 8px 12px;
+    background-color: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 4px;
+}
+
+/* Styles cho modal dữ liệu import */
+.data-preview-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 15px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.stat-label {
+    margin: 0;
+    color: #666;
+}
+
+.text-warning .stat-value {
+    color: #fa8c16;
+}
+
+.data-action-buttons {
+    margin-bottom: 15px;
+}
+
+.table-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 8px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    background-color: #f5f5f5;
+    z-index: 1;
+}
+
+.table-bordered th,
+.table-bordered td {
+    border: 1px solid #dee2e6;
+}
+
+.table tr.has-error {
+    background-color: #fff1f0;
+}
+
+.table td.cell-error {
+    background-color: #ffccc7;
+    color: #cf1322;
+}
+
+.import-summary {
+    margin-top: 15px;
 }
 
 :deep(.custom-select) {
@@ -922,33 +1374,14 @@ defineExpose({
     justify-content: center;
 }
 
-.table-container {
+/* Style cho export Excel */
+.export-modal-content {
     max-height: 70vh;
     overflow-y: auto;
-    overflow-x: auto;
 }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th,
-.table td {
-    padding: 8px;
-    text-align: left;
-    white-space: nowrap;
-}
-
-.table th {
-    position: sticky;
-    top: 0;
-    background-color: #f5f5f5;
-    z-index: 1;
-}
-
-.table-bordered th,
-.table-bordered td {
-    border: 1px solid #dee2e6;
+.field-selection {
+    margin-top: 16px;
+    margin-bottom: 16px;
 }
 </style>
