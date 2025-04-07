@@ -4,38 +4,41 @@
         <div class="search-section">
             <a-dropdown v-model:visible="dropdownVisible" :trigger="['click']" overlayClassName="product-dropdown">
                 <a-input-search v-model:value="searchQuery" placeholder="Tìm kiếm sản phẩm theo tên..."
-                    @input="handleSearchInput" @search="performSearch" @focus="showDropdown" style="width: 300px">
+                    @input="handleSearchInput" @search="performSearch" style="width: 300px">
                     <template #enterButton>
                         <search-outlined />
                     </template>
                 </a-input-search>
 
                 <template #overlay>
-                    <div class="dropdown-content">
-                        <div v-if="filteredProducts.length === 0 && searchQuery.length > 0"
-                            style="padding: 15px; text-align: center;">
+                    <div class="dropdown-content-custom">
+                        <div v-if="filteredProducts.length === 0 && searchQuery.length > 0" class="empty-result">
                             Không tìm thấy sản phẩm phù hợp.
                         </div>
-                        <a-table v-else-if="filteredProducts.length > 0" :dataSource="filteredProducts"
-                            style="width: 800px;" :columns="productColumns" :pagination="false" size="small" bordered
-                            :scroll="{ y: 300 }" rowKey="id">
-                            <template #bodyCell="{ column, record }">
-                                <template v-if="column.key === 'hinh_anh'">
-                                    <img :src="record.hinh_anh || 'default-product.png'" alt="Product"
-                                        class="product-image" />
-                                </template>
-                                <template v-else-if="column.key === 'gia_ban'">
-                                    {{ formatCurrency(record.gia_ban) }}
-                                </template>
-                                <template v-else-if="column.key === 'action'">
-                                    <a-button type="primary" size="small" @click="addToBill(record)"
-                                        :disabled="record.so_luong_ton <= 0">
-                                        Thêm
-                                    </a-button>
-                                </template>
-                            </template>
-                        </a-table>
-                        <div v-else style="padding: 15px; text-align: center;">
+                        <div v-else-if="filteredProducts.length > 0">
+                            <div v-for="(product, index) in filteredProducts" :key="product.id" class="product-option"
+                                @click="handleDropdownClick(product)">
+
+                                <img :src="product.hinh_anh || 'default-product.png'" alt="Product"
+                                    class="product-image" />
+                                <div class="product-info-split">
+                                    <div class="info-left">
+                                        <div class="product-name">{{ product.ten_san_pham }}</div>
+                                        <div class="product-details">
+                                            <span>Kích thước: {{ product.gia_tri }}</span>
+                                            <span>Màu sắc: {{ product.ten_mau }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-left">
+                                        <span class="product-quantity">SL: {{ product.so_luong || 1 }}</span>
+                                    </div>
+                                    <div class="info-right">
+                                        <span class="product-price">{{ formatCurrency(product.gia_ban) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="empty-result">
                             Nhập tên sản phẩm để tìm kiếm.
                         </div>
                     </div>
@@ -43,14 +46,15 @@
             </a-dropdown>
         </div>
 
-
-
         <!-- Invoice Tabs -->
-        <a-tabs v-model:activeKey="activeKey" type="editable-card" @edit="onEdit">
-            <a-tab-pane v-for="pane in panes" :key="pane.key" :tab="pane.title" :closable="pane.closable">
-                {{ pane.content }}
-            </a-tab-pane>
-        </a-tabs>
+        <div class="invoice-tabs">
+            <a-tabs v-model:activeKey="activeKey" type="editable-card" @edit="onEdit">
+                <a-tab-pane v-for="pane in panes" :key="pane.key" :tab="pane.title" :closable="pane.closable">
+                    {{ pane.content }}
+                </a-tab-pane>
+            </a-tabs>
+        </div>
+
 
         <!-- Action Buttons -->
         <div class="action-buttons">
@@ -97,12 +101,13 @@
                             <tr v-for="(item, index) in currentInvoiceItems" :key="item.id_chi_tiet_san_pham">
                                 <td>{{ index + 1 }}</td>
                                 <td>
-                                    <img style="width: 50px; height: 50px;" :src="item.hinh_anh || 'default-product.png'" alt="Item"
+                                    <img style="width: 50px; height: 50px;"
+                                        :src="item.hinh_anh || 'default-product.png'" alt="Item"
                                         class="invoice-item-image" />
                                 </td>
                                 <td>
                                     {{ item.ten_san_pham }} <br />
-                                    <small>({{ item.mau_sac }} - {{ item.kich_thuoc }})</small>
+                                    <small>({{ item.ten_mau }} - {{ item.gia_tri }})</small>
                                 </td>
                                 <td>
                                     <a-space direction="vertical">
@@ -111,7 +116,7 @@
                                             style="width: 80px;" />
                                     </a-space>
                                 </td>
-                                <td>{{ formatCurrency(item.gia_ban) }}</td>
+                                <td>{{ formatCurrency(item.gia_ban || item.gia_sau_giam) }}</td>
                                 <td>{{ formatCurrency(item.tong_tien) }}</td>
                                 <td>
                                     <a-button type="danger" shape="circle" size="small"
@@ -128,7 +133,7 @@
                 <form v-if="activeTabData && activeTabData.hd" @submit.prevent="handlePayment">
                     <input type="hidden" v-model="activeTabData.hd.id_hoa_don">
                     <div class="mb-3">
-                        <label class="form-label">Mã hoá đơn: {{ activeTabData.hd.ma_hoa_don }}</label>
+                        <label class="form-label">Mã hóa đơn: {{ activeTabData.hd.ma_hoa_don }}</label>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Tên nhân viên: {{ activeTabData.hd.ten_nhan_vien }}</label>
@@ -152,9 +157,9 @@
 
                             <a-modal v-model:open="open" title="Danh sách khách hàng" @ok="handleOk" width="1000px">
                                 <template #footer>
-                                    <a-button key="back" @click="handleCancel">Return</a-button>
-                                    <a-button key="submit" type="primary" :loading="loading"
-                                        @click="handleOk">Submit</a-button>
+                                    <a-button key="back" @click="handleCancel">Quay lại</a-button>
+                                    <a-button key="submit" type="primary" :loading="loading" @click="handleOk">Xác
+                                        nhận</a-button>
                                 </template>
                                 <div v-if="dataNhanVien.length === 0" class="text-center py-4">
                                     <a-empty :image="simpleImage" />
@@ -163,28 +168,27 @@
                                     <div class="table-responsive mt-4">
                                         <table class="table table-hover">
                                             <thead>
-                                                <tr class="">
-                                                    <th scope="col">#</th>
+                                                <tr>
+                                                    <th scope="col">STT</th>
                                                     <th scope="col">Ảnh</th>
-                                                    <th scope="col">Tên nhân viên </th>
+                                                    <th scope="col">Tên khách hàng</th>
                                                     <th scope="col">Giới tính</th>
-                                                    <th scope="col">SĐT</th>
+                                                    <th scope="col">Số điện thoại</th>
                                                     <th scope="col">Địa chỉ</th>
                                                     <th scope="col">Thao tác</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr v-for="(nhanVien, index) in dataNhanVien"
-                                                    :key="nhanVien.idNhanVien">
+                                                <tr v-for="(khachHang, index) in dataNhanVien"
+                                                    :key="khachHang.idKhachHang">
                                                     <td>{{ index + 1 }}</td>
                                                     <td>
-                                                        <a-image :width="50" :src="nhanVien.anhNhanVien" />
-
+                                                        <a-image :width="50" :src="khachHang.anhKhachHang" />
                                                     </td>
-                                                    <td>{{ nhanVien.tenNhanVien }}</td>
-                                                    <td>{{ nhanVien.gioiTinh ? "Nam" : "Nữ" }}</td>
-                                                    <td>{{ nhanVien.soDienThoai }}</td>
-                                                    <td>{{ nhanVien.diaChiLienHe }}</td>
+                                                    <td>{{ khachHang.tenKhachHang }}</td>
+                                                    <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
+                                                    <td>{{ khachHang.soDienThoai }}</td>
+                                                    <td>{{ khachHang.diaChiLienHe }}</td>
                                                     <td></td>
                                                 </tr>
                                             </tbody>
@@ -193,11 +197,11 @@
 
                                     <div class="d-flex justify-content-center align-items-center mt-3">
                                         <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
-                                            :disabled="store.currentPage === 0">Previous</button>
+                                            :disabled="store.currentPage === 0">Trang trước</button>
                                         <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages
                                         }}</span>
                                         <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
-                                            :disabled="store.currentPage >= store.totalPages - 1">Next</button>
+                                            :disabled="store.currentPage >= store.totalPages - 1">Trang sau</button>
                                     </div>
                                 </div>
                             </a-modal>
@@ -209,7 +213,8 @@
                             <input class="form-check-input" type="radio" :name="'phuongThucNhanHang_' + activeKey"
                                 :id="'nhanTaiCuahang_' + activeKey" value="Nhận tại cửa hàng"
                                 v-model="activeTabData.hd.phuong_thuc_nhan_hang">
-                            <label class="form-check-label" :for="'nhanTaiCuahang_' + activeKey">Tại cửa hàng</label>
+                            <label class="form-check-label" :for="'nhanTaiCuahang_' + activeKey">Nhận tại cửa
+                                hàng</label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" :name="'phuongThucNhanHang_' + activeKey"
@@ -221,7 +226,7 @@
                             <label class="form-label">Địa chỉ nhận hàng</label>
                             <input type="text" class="form-control mb-2" placeholder="Nhập địa chỉ"
                                 v-model="activeTabData.hd.dia_chi_nhan_hang">
-                            <label class="form-label">Phí vận chuyển</label>
+                            <label class="form-label">Phí vận chuyển (VNĐ)</label>
                             <a-input-number v-model:value="activeTabData.hd.phi_van_chuyen" :min="0"
                                 :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                                 :parser="value => value.replace(/\$\s?|(,*)/g, '')" placeholder="Nhập phí vận chuyển"
@@ -229,28 +234,29 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tổng tiền hàng:</label>
+                        <label class="form-label">Tổng tiền hàng (VNĐ):</label>
                         <input type="text" class="form-control"
                             :value="formatCurrency(activeTabData.hd.tong_tien_truoc_giam)" disabled>
                     </div>
                     <div class="mb-3">
-                        <label for="idVoucher " class="form-label">Voucher</label>
+                        <label for="idVoucher" class="form-label">Voucher</label>
                         <select name="idVoucher" id="idVoucher" class="form-select"
                             v-model="activeTabData.hd.id_voucher" @change="updateVoucher">
                             <option :value="null">-- Chọn voucher --</option>
                             <option v-if="activeTabData.hd.id_voucher" :value="activeTabData.hd.id_voucher">
-                                {{ selectedVoucher ? `${selectedVoucher.ma_voucher} - ${selectedVoucher.ten_voucher}` :
-                                'Voucher đã chọn' }}
+                                {{ selectedVoucher ? `${selectedVoucher.ten_voucher}` :
+                                    'Voucher đã chọn' }}
                             </option>
                             <option v-for="voucher in applicableVouchers" :key="voucher.id_voucher"
                                 :value="voucher.id_voucher" v-else>
                                 {{ voucher.ma_voucher }} - {{ voucher.ten_voucher }} (Giảm: {{ formatGiaTriGiam(voucher)
-                                }})
+                                }}
+                                VNĐ)
                             </option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tổng tiền thanh toán:</label>
+                        <label class="form-label">Tổng tiền thanh toán (VNĐ):</label>
                         <input type="text" class="form-control"
                             :value="formatCurrency(activeTabData.hd.tong_tien_sau_giam)" disabled>
                     </div>
@@ -269,23 +275,19 @@
                             <label class="form-check-label" :for="'chuyenKhoan_' + activeKey">Chuyển khoản</label>
                         </div>
                         <div v-if="activeTabData.hd.hinh_thuc_thanh_toan === 'Tiền mặt'" class="mt-2">
-                            <label class="form-label">Tiền khách đưa</label>
+                            <label class="form-label">Tiền khách đưa (VNĐ)</label>
                             <a-input-number v-model:value="tienKhachDua" :min="0"
                                 :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                                 :parser="value => value.replace(/\$\s?|(,*)/g, '')" placeholder="Nhập số tiền khách đưa"
                                 style="width: 100%" />
-                            <label class="form-label mt-2">Tiền thừa trả khách</label>
+                            <label class="form-label mt-2">Tiền dư trả khách (VNĐ)</label>
                             <input type="text" class="form-control" :value="formatCurrency(calculatedChange)" disabled>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <a-switch v-model:checked="activeTabData.hd.in_hoa_don" checked-children="In hoá đơn"
-                            un-checked-children="Không in hoá đơn" />
                     </div>
 
                     <!-- Nút thanh toán với điều kiện vô hiệu hóa -->
                     <button type="submit" class="btn btn-primary w-100" :disabled="isPaymentDisabled">
-                        Tạo Đơn Hàng & Thanh Toán
+                        Tạo đơn hàng & Thanh toán
                     </button>
                     <a-modal v-model:open="showPrintConfirm" title="Xác nhận in hóa đơn" @ok="confirmPrint(true)"
                         @cancel="confirmPrint(false)">
@@ -338,7 +340,6 @@ const fetchData = (page = 0) => {
 
 const dataNhanVien = computed(() => {
     if (store.searchs && store.searchs.trim() !== '' && store.nhanVienSearch && store.nhanVienSearch.length > 0) {
-        console.log('Hiển thị kết quả tìm kiếm:', store.nhanVienSearch);
         return store.nhanVienSearch.map((item, index) => ({
             stt: index + 1,
             key: item.idNhanVien,
@@ -372,17 +373,6 @@ const panes = ref([]); // Khởi tạo rỗng, sẽ tạo tab đầu tiên trong
 const activeKey = ref('');
 const newTabIndex = ref(0); // Chỉ dùng để tạo key duy nhất nếu cần, không dùng cho tiêu đề
 
-// --- Định nghĩa cột cho bảng dropdown sản phẩm ---
-const productColumns = [
-    { title: 'Ảnh', dataIndex: 'hinh_anh', key: 'hinh_anh', width: 60 },
-    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham', width: 200 },
-    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: 60 },
-    { title: 'Màu', dataIndex: 'ten_mau', key: 'ten_mau', width: 80 },
-    { title: 'Size', dataIndex: 'gia_tri', key: 'gia_tri', width: 60 },
-    { title: 'Giá bán', dataIndex: 'gia_sau_giam', key: 'gia_sau_giam', width: 100 },
-    { title: 'Thêm', key: 'action', width: 70, align: 'center' },
-];
-
 const loading = ref(false);
 const open = ref(false);
 const showModal = () => {
@@ -404,23 +394,17 @@ const handleCancel = () => {
 // --- Computed Properties ---
 // Lọc sản phẩm cho dropdown tìm kiếm
 const filteredProducts = computed(() => {
-    // Nếu chưa có danh sách sản phẩm gốc thì trả về mảng rỗng
     if (!allProducts.value || allProducts.value.length === 0) {
         return [];
     }
-
-    // Nếu ô tìm kiếm trống, hiển thị 5 sản phẩm đầu tiên
     if (!searchQuery.value) {
         return allProducts.value;
     }
 
-    // Nếu có từ khóa tìm kiếm, lọc và hiển thị tối đa 5 sản phẩm phù hợp
     const lowerCaseQuery = searchQuery.value.toLowerCase();
     return allProducts.value.filter(product =>
         product.ten_san_pham.toLowerCase().includes(lowerCaseQuery)
-        // Có thể thêm điều kiện lọc theo mã SKU, màu sắc,...
-        // && product.so_luong_ton > 0 // Chỉ hiện sản phẩm còn hàng khi lọc
-    ); // Giới hạn 5 kết quả khi lọc
+    );
 });
 
 // Lấy dữ liệu của tab đang active
@@ -440,11 +424,11 @@ const formatCurrency = (value) => {
 };
 
 // Hiển thị dropdown khi focus vào input
-const showDropdown = () => {
-    if (!dropdownVisible.value) {
-        dropdownVisible.value = true;
-    }
-};
+// const showDropdown = () => {
+//     this.$nextTick(() => {
+//         this.dropdownVisible = true;
+//     });
+// };
 
 // Xử lý khi người dùng gõ vào ô tìm kiếm
 const handleSearchInput = () => {
@@ -469,48 +453,58 @@ const performSearch = () => {
     console.log('Performing search for:', searchQuery.value);
 };
 
-// Thêm sản phẩm vào hóa đơn chi tiết của tab hiện tại
-const addToBill = async (product) => {
-    const currentTab = activeTabData.value;
-    console.log("product", product);
+const refreshHoaDon = async (idHoaDon) => {
+    try {
+        await store.getHoaDonByIdHoaDon(idHoaDon); // Hoặc API khác nếu bạn có
+        const hoaDonInfo = store.getHDBIDHD;
+        const currentTab = activeTabData.value;
+        if (hoaDonInfo && currentTab && currentTab.hd?.id_hoa_don === idHoaDon) {
+            currentTab.hd.tong_tien_truoc_giam = hoaDonInfo.tong_tien_truoc_giam || 0;
+            currentTab.hd.tong_tien_sau_giam = hoaDonInfo.tong_tien_sau_giam || 0;
+        }
+    } catch (error) {
+        console.error('Lỗi khi cập nhật thông tin hóa đơn:', error);
+        message.error('Không thể làm mới thông tin hóa đơn.');
+    }
+};
 
-    if (!currentTab || !currentTab.items || !currentTab.hd?.id_hoa_don) {
+
+
+// Thêm sản phẩm vào hóa đơn chi tiết của tab hiện tại
+const handleDropdownClick = (product) => {
+  if (!dropdownVisible.value) return; // Ngăn nếu dropdown đang ẩn
+  addToBill(product);
+};
+
+
+let isAdding = false;
+
+const addToBill = async (product) => {
+    if (isAdding) return;
+    isAdding = true;
+
+    const currentTab = activeTabData.value;
+    if (!currentTab || !currentTab.hd?.id_hoa_don) {
         message.error('Vui lòng chọn hoặc tạo một hóa đơn hợp lệ trước!');
+        isAdding = false;
         return;
     }
 
     if (product.so_luong_ton <= 0) {
         message.warning(`Sản phẩm "${product.ten_san_pham}" đã hết hàng!`);
+        isAdding = false;
         return;
     }
 
-    const itemsArray = currentTab.items.value;
-    const existingItem = itemsArray.find(item => item.id_chi_tiet_san_pham === product.id);
-
     try {
-        if (existingItem) {
-            // Trường hợp sản phẩm đã tồn tại: Tăng số lượng
-            if (existingItem.so_luong + 1 > product.so_luong_ton) {
-                message.warning(`Số lượng tồn của "${product.ten_san_pham}" không đủ (${product.so_luong_ton})!`);
-                return;
-            }
-            await store.addSPHD(
-                currentTab.hd.id_hoa_don,
-                product.id_chi_tiet_san_pham,
-                1, // Chỉ tăng thêm 1 đơn vị
-                product.gia_sau_giam
-            );
-        } else {
-            // Trường hợp thêm mới
-            await store.themSPHDMoi(
-                currentTab.hd.id_hoa_don,
-                product.id_chi_tiet_san_pham,
-                1,
-                product.gia_sau_giam
-            );
-        }
+        const result = await store.themSPHDMoi(
+            currentTab.hd.id_hoa_don,
+            product.id_chi_tiet_san_pham,
+            1,
+            product.gia_sau_giam || product.gia_ban
+        );
+        if (!result) return;
 
-        // Load lại danh sách sản phẩm từ backend
         await store.getAllSPHD(currentTab.hd.id_hoa_don);
         currentTab.items.value = store.getAllSPHDArr.map(item => ({
             id_hoa_don: item.id_hoa_don,
@@ -518,23 +512,27 @@ const addToBill = async (product) => {
             hinh_anh: item.hinh_anh,
             ten_san_pham: item.ten_san_pham,
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
-            kich_thuoc: item.kich_thuoc || null,
+            kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban || item.gia_sau_giam,
-            tong_tien: item.don_gia * item.so_luong, // Tính lại tổng tiền từ backend
+            gia_ban: item.gia_ban,
+            tong_tien: item.don_gia,
             so_luong_ton_goc: item.so_luong_ton || 0
         }));
 
-        // Đóng dropdown và reset tìm kiếm
+        console.log(currentTab.items.value);
+        await refreshHoaDon(currentTab.hd.id_hoa_don);
+
         dropdownVisible.value = false;
         searchQuery.value = '';
         message.success(`Đã thêm "${product.ten_san_pham}" vào hóa đơn.`);
-        window.location.href = 'http://localhost:5173/admin';
     } catch (error) {
         console.error('Lỗi khi thêm sản phẩm:', error);
         message.error('Đã xảy ra lỗi khi thêm sản phẩm!');
+    } finally {
+        isAdding = false;
     }
 };
+
 
 const tienKhachDua = ref(0);
 
@@ -556,15 +554,15 @@ const isPaymentDisabled = computed(() => {
 
 // Cập nhật tổng tiền khi số lượng thay đổi trong bảng hóa đơn
 const updateItemTotal = async (item) => {
-    const productInfo = allProducts.value.find(p => p.id === item.id_chi_tiet_san_pham);
-    const hoadon = store.getAllSPHDArr;
+    const productInfo = allProducts.value.find(p => p.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
     // Tìm sản phẩm chính xác bằng id_chi_tiet_san_pham thay vì chỉ id_hoa_don
-    const sphd = hoadon.find(hd => hd.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
-
+    await store.getHoaDonByIdHoaDon(item.id_hoa_don);
+    const sphd = store.getHDBIDHD;
+    console.log("sphd", sphd)
     // Kiểm tra số lượng tồn
-    if (productInfo && item.so_luong > productInfo.so_luong_ton) {
+    if (productInfo && item.so_luong > productInfo.so_luong) {
         message.warning(`Số lượng tồn của "${item.ten_san_pham}" không đủ (${productInfo.so_luong_ton}). Đã đặt lại số lượng tối đa.`);
-        item.so_luong = productInfo.so_luong_ton;
+        item.so_luong = productInfo.so_luong;
     }
     if (item.so_luong <= 0) {
         item.so_luong = 1;
@@ -574,6 +572,7 @@ const updateItemTotal = async (item) => {
         // Nếu sphd tồn tại (sản phẩm đã có trong hóa đơn)
         if (sphd) {
             if (sphd.so_luong > item.so_luong) {
+                console.log("vào giảm số lượng")
                 // Giảm số lượng
                 await store.giamSPHD(
                     item.id_hoa_don,
@@ -582,6 +581,7 @@ const updateItemTotal = async (item) => {
                     item.gia_ban
                 );
             } else if (sphd.so_luong < item.so_luong) {
+                console.log("vào tăng số lượng")
                 // Tăng số lượng
                 await store.addSPHD(
                     item.id_hoa_don,
@@ -613,13 +613,13 @@ const updateItemTotal = async (item) => {
                 kich_thuoc: hd.gia_tri || null,
                 so_luong: hd.so_luong,
                 gia_ban: hd.gia_ban,
-                tong_tien: hd.don_gia, // Tính lại tổng tiền từ backend
+                tong_tien: hd.don_gia,
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
+        console.log("id hoá đơn truyền vào ", item.id_hoa_don)
+        await refreshHoaDon(item.id_hoa_don);
 
-        // Cập nhật tổng tiền trên UI
-        item.tong_tien = item.so_luong * item.gia_ban;
     } catch (error) {
         console.error('Lỗi khi cập nhật số lượng:', error);
         message.error('Đã xảy ra lỗi khi cập nhật số lượng!');
@@ -627,15 +627,41 @@ const updateItemTotal = async (item) => {
 };
 
 // Xóa sản phẩm khỏi hóa đơn chi tiết của tab hiện tại
-const removeFromBill = (productId) => {
+const removeFromBill = async (productId) => {
     const currentTab = activeTabData.value;
-    if (!currentTab || !currentTab.items) return; // Kiểm tra cả items
+    if (!currentTab || !currentTab.items) return;
 
-    const itemsArray = currentTab.items.value; // Truy cập qua .value
+    const itemsArray = currentTab.items.value;
     const itemIndex = itemsArray.findIndex(item => item.id_chi_tiet_san_pham === productId);
-    if (itemIndex !== -1) {
-        const removedItem = itemsArray.splice(itemIndex, 1);
-        message.info(`Đã xóa "${removedItem[0].ten_san_pham}" khỏi hóa đơn.`);
+    if (itemIndex === -1) return;
+
+    const removedItem = itemsArray[itemIndex];
+
+    try {
+        const result = await store.xoaSPHD(currentTab.hd.id_hoa_don, productId);
+        if (!result) return;
+
+        // Làm mới danh sách sản phẩm từ server
+        await store.getAllSPHD(currentTab.hd.id_hoa_don);
+        currentTab.items.value = store.getAllSPHDArr.map(item => ({
+            id_hoa_don: item.id_hoa_don,
+            id_chi_tiet_san_pham: item.id_chi_tiet_san_pham,
+            hinh_anh: item.hinh_anh,
+            ten_san_pham: item.ten_san_pham,
+            mau_sac: item.ten_mau_sac || item.mau_sac || null,
+            kich_thuoc: item.gia_tri || null,
+            so_luong: item.so_luong,
+            gia_ban: item.gia_ban,
+            tong_tien: item.don_gia,
+            so_luong_ton_goc: item.so_luong_ton || 0,
+        }));
+
+        await refreshHoaDon(currentTab.hd.id_hoa_don);
+
+        message.info(`Đã xóa "${removedItem.ten_san_pham}" khỏi hóa đơn.`);
+    } catch (error) {
+        console.error('Lỗi không mong đợi:', error);
+        message.error('Đã xảy ra lỗi bất ngờ khi xóa sản phẩm!');
     }
 };
 
@@ -701,15 +727,21 @@ const remove = async (targetKey) => {
 
 const performRemove = async (tabToRemove, targetKey) => {
     try {
-        // Gọi API xóa nếu có ID hóa đơn
         if (tabToRemove.hd?.id_hoa_don) {
-            await store.deleteHoaDon(tabToRemove.hd.id_hoa_don);
+            const result = await store.deleteHoaDon(tabToRemove.hd.id_hoa_don);
+            if (result.error || !result.success) {
+                message.error(result.message || 'Xóa hóa đơn thất bại');
+                return;
+            }
+
+            // Làm mới danh sách sản phẩm để cập nhật số lượng tồn
+            await store.getAllCTSPKM();
+            allProducts.value = store.getAllCTSPKMList;
         }
 
-        // Cập nhật UI
+        // Cập nhật UI chỉ khi xóa thành công
         panes.value = panes.value.filter(pane => pane.key !== targetKey);
 
-        // Chọn tab khác nếu đang xóa tab active
         if (activeKey.value === targetKey) {
             const remainingPanes = panes.value;
             activeKey.value = remainingPanes.length > 0
@@ -717,15 +749,27 @@ const performRemove = async (tabToRemove, targetKey) => {
                 : '';
         }
 
-        // Tạo tab mới nếu không còn tab nào
         if (panes.value.length === 0) {
             await add();
         }
+
+        message.success('Đã xóa hóa đơn thành công');
     } catch (error) {
         console.error("Lỗi khi xóa hóa đơn:", error);
+        message.error('Đã xảy ra lỗi khi xóa hóa đơn!');
     }
 };
 
+
+// Thêm font Arial tiếng Việt (cần tải file font .ttf và chuyển thành base64)
+const callAddFont = function () {
+    this.addFileToVFS('Arial-normal.ttf', 'base64-encoded-font-here');
+    this.addFont('Arial-normal.ttf', 'Arial', 'normal');
+};
+jsPDF.API.events.push(['addFonts', callAddFont]);
+
+
+// Phương thức in hóa đơn
 const printInvoice = () => {
     const doc = new jsPDF();
 
@@ -860,9 +904,6 @@ onMounted(async () => {
         await store.getAllHoaDonCTT();
         await store.getAllCTSPKM();
         await store.getAllNhanVien(0, pageSize.value);
-        await store.getAllSPHD(1);
-        const listSPHD = store.getAllSPHDArr;
-        console.log("listSPHD", listSPHD);
         // Gán dữ liệu hóa đơn
         da.value = store.getAllHoaDonCTTArr;
 
@@ -916,86 +957,140 @@ watch(() => activeKey.value, async (newKey) => {
     }
 }, { immediate: true });
 
+watch(() => searchQuery, (newVal) => {
+    if (newVal.length > 0) {
+        dropdownVisible.value = true
+    } else {
+        dropdownVisible.value = false
+    }
+})
+
 
 
 </script>
 
 <style scoped>
 .header-container {
-    height: 60px;
-    background-color: #343434;
+    height: 70px;
+    background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid #eee;
 }
+
+.search-section {
+    flex-shrink: 0;
+    margin-right: 20px;
+}
+
+.dropdown-content-custom {
+    width: 600px;
+    max-height: 400px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.product-option {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.product-option:hover {
+    background-color: #f0f0f0;
+}
+
+.product-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 12px;
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-name {
+    font-weight: 600;
+}
+
+.product-details span {
+    display: block;
+    font-size: 12px;
+    color: #555;
+}
+
+.empty-result {
+    padding: 10px;
+    color: #999;
+    text-align: center;
+}
+
 
 .search-section {
     position: relative;
 }
 
-/* Style cho dropdown */
-:deep(.product-dropdown) {
-    width: 800px !important;
-    /* Điều chỉnh độ rộng theo nhu cầu */
-    max-height: 500px;
-    overflow: hidden;
+.product-info-split {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
 }
 
-:deep(.product-dropdown .ant-dropdown-menu) {
-    padding: 0;
+.info-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Style cho dropdown */
-:deep(.product-dropdown) {
-    width: 600px !important;
-    max-height: 400px;
-    /* Hoặc chiều cao phù hợp */
-    overflow: hidden;
+.info-center {
+    width: 70px;
+    text-align: center;
+    font-size: 13px;
+    color: #333;
+    font-weight: 500;
 }
 
-/* --- CSS làm nhỏ bảng bên trong dropdown --- */
-
-/* Giảm padding và font-size cho header của bảng */
-:deep(.product-dropdown .ant-table-thead > tr > th) {
-    padding: 6px 8px !important;
-    /* Giảm padding top/bottom và left/right */
-    font-size: 13px !important;
-    /* Giảm kích thước font */
-    /* background: #fafafa; /* Giữ lại style cũ nếu cần */
-    /* position: sticky; */
-    /* top: 0; */
-    /* z-index: 1; */
+.info-right {
+    min-width: 90px;
+    text-align: right;
+    font-weight: bold;
+    color: #d4380d;
 }
 
-/* Giảm padding và font-size cho các ô dữ liệu (cell) của bảng */
-:deep(.product-dropdown .ant-table-tbody > tr > td) {
-    padding: 4px 8px !important;
-    /* Giảm padding top/bottom và left/right */
-    font-size: 13px !important;
-    /* Giảm kích thước font */
-    vertical-align: middle;
-    /* Căn giữa nội dung theo chiều dọc */
+.product-price {
+    font-size: 14px;
 }
 
-/* Điều chỉnh kích thước ảnh sản phẩm trong bảng nhỏ này nếu cần */
-:deep(.product-dropdown .product-image) {
-    width: 35px !important;
-    /* Làm ảnh nhỏ hơn */
-    height: 35px !important;
-    /* object-fit: cover; */
-    /* border-radius: 4px; */
+.product-name {
+    font-weight: 600;
+    margin-bottom: 4px;
 }
 
-/* Bỏ margin âm mặc định có thể gây thừa khoảng trắng */
-:deep(.product-dropdown .ant-table) {
-    margin: 0 !important;
+.product-details span {
+    font-size: 12px;
+    color: #555;
+    display: block;
 }
 
-/* Đảm bảo container không có border thừa nếu có */
-:deep(.product-dropdown .ant-table-container) {
-    border: none !important;
-}
+
+
 
 /* Có thể cần thêm !important để ghi đè mạnh hơn style mặc định */
 
@@ -1049,18 +1144,28 @@ watch(() => activeKey.value, async (newKey) => {
 }
 
 .add-invoice-btn {
-    margin-left: 5px;
+    margin-left: 8px;
 }
 
 .action-buttons {
     display: flex;
     gap: 10px;
+    align-items: center;
 }
 
 .action-btn {
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: #1890ff;
+    border-color: #1890ff;
+    color: white;
+}
+
+.action-btn:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+    color: white;
 }
 
 .custom-tab {
@@ -1068,7 +1173,7 @@ watch(() => activeKey.value, async (newKey) => {
     padding-right: 4px;
     display: flex;
     align-items: center;
-    color: white;
+    color: black;
 }
 
 .close-icon {
@@ -1091,16 +1196,23 @@ watch(() => activeKey.value, async (newKey) => {
 /* Overriding Ant Design styles for dark theme */
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab) {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgb(235, 235, 235);
     border: none;
-    color: white;
+    color: black !important;
 }
 
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab-active) {
     background-color: #1890ff;
-    color: white;
+    color: white !important;
 }
+
+:deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn),
+:deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: white !important;
+    text-shadow: none !important;
+}
+
 
 :deep(.ant-tabs-nav) {
     margin-bottom: 0;
