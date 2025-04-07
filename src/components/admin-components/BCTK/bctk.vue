@@ -107,14 +107,15 @@
                             </div>
                         </div>
                     </template>
-                    <a-table :columns="columns" :data-source="topSellingProducts" :pagination="false" size="small">
+                    <a-table :columns="columns" :data-source="gbStore.topSanPhamBanChay" :pagination="false"
+                        size="small">
                         <template #bodyCell="{ column, text, index }">
                             <template v-if="column.key === 'stt'">
                                 <a-tag :color="getTagColor(index + 1)">
                                     {{ getTopRank(index + 1) }}
                                 </a-tag>
                             </template>
-                            <template v-else-if="column.key === 'tong_tien_sau_giam'">
+                            <template v-else-if="column.key === 'gia_ban'">
                                 {{ formatCurrency(text) }}
                             </template>
                         </template>
@@ -142,7 +143,8 @@
                             </div>
                         </div>
                     </template>
-                    <a-table :columns="columns" :data-source="topSlowProducts" :pagination="false" size="small">
+                    <a-table :columns="columns" :data-source="gbStore.topSanPhamBanCham" :pagination="false"
+                        size="small">
                         <template #bodyCell="{ column, text, index }">
                             <template v-if="column.key === 'stt'">
                                 <a-tag :color="getTagColor(index + 1)">
@@ -199,6 +201,7 @@ const columns = [
         dataIndex: 'gia_ban',
         key: 'gia_ban',
         align: 'right',
+        render: (text) => formatCurrency(text)
     },
 ];
 
@@ -223,7 +226,7 @@ const getTagColor = (index) => {
 };
 const gbStore = useGbStore();
 const { thongKe } = storeToRefs(gbStore);
-
+const { topSanPhamBanChay } = storeToRefs(gbStore);
 const selectedFilter = ref('hom-nay');
 const dateRange = ref();
 const locale = {
@@ -520,64 +523,125 @@ watch([timeUnit, chartType], async ([newTimeUnit, newChartType], [oldTimeUnit, o
 });
 
 // State cho bộ lọc sản phẩm bán chạy
-const sellingFilter = ref('hom-nay');
+const sellingFilter = ref('nam-nay');
 const sellingDateRange = ref();
 
 // State cho bộ lọc sản phẩm bán chậm
-const slowFilter = ref('hom-nay');
+const slowFilter = ref('nam-nay');
 const slowDateRange = ref();
+
+//tạm comment
+// Xử lý khi thay đổi filter sản phẩm bán chạy
+// const handleSellingFilterChange = async (value) => {
+//     console.log('Filter sản phẩm bán chạy:', value);
+//     sellingFilter.value = value;
+//     if (value === 'tuy-chon') {
+//         sellingDateRange.value = null; // Reset date range
+//     } else {
+//         console.log('Gửi request với filter:', value);
+//         await gbStore.getTopSanPhamBanChay(value);
+//         topSellingProducts.value = gbStore.topSanPhamBanChay;
+//     }
+// };
 
 // Xử lý khi thay đổi filter sản phẩm bán chạy
 const handleSellingFilterChange = async (value) => {
-    console.log('Filter sản phẩm bán chạy:', value);
-    sellingFilter.value = value;
-    if (value === 'tuy-chon') {
-        sellingDateRange.value = null; // Reset date range
-    } else {
-        console.log('Gửi request với filter:', value);
+    try {
+        console.log('Selected filter:', value);
+        sellingFilter.value = value;
+
+        if (value === 'tuy-chon') {
+            sellingDateRange.value = null;
+            return;
+        }
+
         await gbStore.getTopSanPhamBanChay(value);
-        topSellingProducts.value = gbStore.topSanPhamBanChay;
+        console.log('Dữ liệu sau khi cập nhật:', gbStore.topSanPhamBanChay);
+    } catch (error) {
+        console.error('Filter change error:', error);
     }
 };
 
 // Xử lý khi thay đổi ngày cho sản phẩm bán chạy
+// const handleSellingDateChange = async (dates) => {
+//     console.log('Selected dates for selling products:', dates);
+//     if (dates && dates[0] && dates[1]) {
+//         const startDate = dates[0].format('YYYY-MM-DD');
+//         const endDate = dates[1].format('YYYY-MM-DD');
+//         console.log('Gửi request với ngày:', { startDate, endDate });
+//         await gbStore.getTopSanPhamBanChay('tuy-chon', startDate, endDate);
+//         topSellingProducts.value = gbStore.topSanPhamBanChay;
+//     }
+// };
+//thử nghiệm
 const handleSellingDateChange = async (dates) => {
-    console.log('Selected dates for selling products:', dates);
-    if (dates && dates[0] && dates[1]) {
+    try {
+        if (!dates || !dates[0] || !dates[1]) return;
+
         const startDate = dates[0].format('YYYY-MM-DD');
         const endDate = dates[1].format('YYYY-MM-DD');
-        console.log('Gửi request với ngày:', { startDate, endDate });
+
         await gbStore.getTopSanPhamBanChay('tuy-chon', startDate, endDate);
-        topSellingProducts.value = gbStore.topSanPhamBanChay;
+        console.log('Dữ liệu sau khi cập nhật date range:', gbStore.topSanPhamBanChay);
+    } catch (error) {
+        console.error('Date change error:', error);
     }
 };
 
 // Xử lý khi thay đổi filter sản phẩm bán chậm
 const handleSlowFilterChange = async (value) => {
-    console.log('Filter sản phẩm bán chậm:', value);
-    slowFilter.value = value;
-    if (value === 'tuy-chon') {
-        slowDateRange.value = null; // Reset date range
-    } else {
-        console.log('Gửi request với filter:', value);
+    try {
+        console.log('Selected filter (Bán chậm):', value);
+        slowFilter.value = value;
+
+        if (value === 'tuy-chon') {
+            slowDateRange.value = null;
+            return;
+        }
+
         await gbStore.getTopSanPhamBanCham(value);
-        topSlowProducts.value = gbStore.topSanPhamBanCham;
+        console.log('Dữ liệu sau khi cập nhật (Bán chậm):', gbStore.topSanPhamBanCham);
+    } catch (error) {
+        console.error('Filter change error (Bán chậm):', error);
     }
 };
 
 // Xử lý khi thay đổi ngày cho sản phẩm bán chậm
 const handleSlowDateChange = async (dates) => {
-    console.log('Selected dates for slow products:', dates);
-    if (dates && dates[0] && dates[1]) {
+    try {
+        if (!dates || !dates[0] || !dates[1]) return;
+
         const startDate = dates[0].format('YYYY-MM-DD');
         const endDate = dates[1].format('YYYY-MM-DD');
-        console.log('Gửi request với ngày:', { startDate, endDate });
+
         await gbStore.getTopSanPhamBanCham('tuy-chon', startDate, endDate);
-        topSlowProducts.value = gbStore.topSanPhamBanCham;
+        console.log('Dữ liệu sau khi cập nhật date range (Bán chậm):', gbStore.topSanPhamBanCham);
+    } catch (error) {
+        console.error('Date change error (Bán chậm):', error);
     }
 };
 
 // Cập nhật onMounted
+// onMounted(async () => {
+//     try {
+//         console.log('Đang fetch dữ liệu...');
+//         await Promise.all([
+//             gbStore.getSoLieu('hom-nay'),
+//             fetchChartData('month'),
+//             gbStore.fetchTiLeTrangThai(),
+//             gbStore.getTopSanPhamBanChay('hom-nay'),
+//             gbStore.getTopSanPhamBanCham('hom-nay')
+//         ]);
+
+//         // Cập nhật dữ liệu
+//         topSellingProducts.value = gbStore.topSanPhamBanChay;
+//         topSlowProducts.value = gbStore.topSanPhamBanCham;
+//     } catch (error) {
+//         console.error('Lỗi trong onMounted:', error);
+//     }
+// });
+
+// thử nghiệm
 onMounted(async () => {
     try {
         console.log('Đang fetch dữ liệu...');
@@ -585,13 +649,9 @@ onMounted(async () => {
             gbStore.getSoLieu('hom-nay'),
             fetchChartData('month'),
             gbStore.fetchTiLeTrangThai(),
-            gbStore.getTopSanPhamBanChay('hom-nay'),
-            gbStore.getTopSanPhamBanCham('hom-nay')
+            gbStore.getTopSanPhamBanChay('nam-nay'),
+            gbStore.getTopSanPhamBanCham('nam-nay')
         ]);
-
-        // Cập nhật dữ liệu
-        topSellingProducts.value = gbStore.topSanPhamBanChay;
-        topSlowProducts.value = gbStore.topSanPhamBanCham;
     } catch (error) {
         console.error('Lỗi trong onMounted:', error);
     }
