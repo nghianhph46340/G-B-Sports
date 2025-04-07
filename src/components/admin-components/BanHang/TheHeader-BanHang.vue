@@ -4,7 +4,7 @@
         <div class="search-section">
             <a-dropdown v-model:visible="dropdownVisible" :trigger="['click']" overlayClassName="product-dropdown">
                 <a-input-search v-model:value="searchQuery" placeholder="Tìm kiếm sản phẩm theo tên..."
-                    @input="handleSearchInput" @search="performSearch" @focus="showDropdown" style="width: 300px">
+                    @input="handleSearchInput" @search="performSearch" style="width: 300px">
                     <template #enterButton>
                         <search-outlined />
                     </template>
@@ -17,7 +17,8 @@
                         </div>
                         <div v-else-if="filteredProducts.length > 0">
                             <div v-for="(product, index) in filteredProducts" :key="product.id" class="product-option"
-                                @click="addToBill(product)">
+                                @click="handleDropdownClick(product)">
+
                                 <img :src="product.hinh_anh || 'default-product.png'" alt="Product"
                                     class="product-image" />
                                 <div class="product-info-split">
@@ -106,7 +107,7 @@
                                 </td>
                                 <td>
                                     {{ item.ten_san_pham }} <br />
-                                    <small>({{ item.mau_sac }} - {{ item.kich_thuoc }})</small>
+                                    <small>({{ item.ten_mau }} - {{ item.gia_tri }})</small>
                                 </td>
                                 <td>
                                     <a-space direction="vertical">
@@ -339,7 +340,6 @@ const fetchData = (page = 0) => {
 
 const dataNhanVien = computed(() => {
     if (store.searchs && store.searchs.trim() !== '' && store.nhanVienSearch && store.nhanVienSearch.length > 0) {
-        console.log('Hiển thị kết quả tìm kiếm:', store.nhanVienSearch);
         return store.nhanVienSearch.map((item, index) => ({
             stt: index + 1,
             key: item.idNhanVien,
@@ -424,11 +424,11 @@ const formatCurrency = (value) => {
 };
 
 // Hiển thị dropdown khi focus vào input
-const showDropdown = () => {
-    this.$nextTick(() => {
-        this.dropdownVisible = true;
-    });
-};
+// const showDropdown = () => {
+//     this.$nextTick(() => {
+//         this.dropdownVisible = true;
+//     });
+// };
 
 // Xử lý khi người dùng gõ vào ô tìm kiếm
 const handleSearchInput = () => {
@@ -455,7 +455,9 @@ const performSearch = () => {
 
 const refreshHoaDon = async (idHoaDon) => {
     try {
-        const hoaDonInfo = await store.getHoaDonByIdHoaDon(idHoaDon); // Hoặc API khác nếu bạn có
+        await store.getHoaDonByIdHoaDon(idHoaDon); // Hoặc API khác nếu bạn có
+        const hoaDonInfo = store.getHDBIDHD;
+        console.log('Thống tin hóa đơn:', hoaDonInfo);
         const currentTab = activeTabData.value;
         if (hoaDonInfo && currentTab && currentTab.hd?.id_hoa_don === idHoaDon) {
             currentTab.hd.tong_tien_truoc_giam = hoaDonInfo.tong_tien_truoc_giam || 0;
@@ -468,17 +470,30 @@ const refreshHoaDon = async (idHoaDon) => {
 };
 
 
+
 // Thêm sản phẩm vào hóa đơn chi tiết của tab hiện tại
+const handleDropdownClick = (product) => {
+  if (!dropdownVisible.value) return; // Ngăn nếu dropdown đang ẩn
+  addToBill(product);
+};
+
+
+let isAdding = false;
+
 const addToBill = async (product) => {
+    if (isAdding) return;
+    isAdding = true;
+
     const currentTab = activeTabData.value;
-    console.log("product", product);
     if (!currentTab || !currentTab.hd?.id_hoa_don) {
         message.error('Vui lòng chọn hoặc tạo một hóa đơn hợp lệ trước!');
+        isAdding = false;
         return;
     }
 
     if (product.so_luong_ton <= 0) {
         message.warning(`Sản phẩm "${product.ten_san_pham}" đã hết hàng!`);
+        isAdding = false;
         return;
     }
 
@@ -489,7 +504,7 @@ const addToBill = async (product) => {
             1,
             product.gia_sau_giam || product.gia_ban
         );
-        if (!result) return; // Lỗi đã được toast trong store
+        if (!result) return;
 
         await store.getAllSPHD(currentTab.hd.id_hoa_don);
         currentTab.items.value = store.getAllSPHDArr.map(item => ({
@@ -504,8 +519,9 @@ const addToBill = async (product) => {
             tong_tien: item.don_gia,
             so_luong_ton_goc: item.so_luong_ton || 0
         }));
-        await refreshHoaDon(currentTab.hd.id_hoa_don);
 
+        console.log(currentTab.items.value);
+        await refreshHoaDon(currentTab.hd.id_hoa_don);
 
         dropdownVisible.value = false;
         searchQuery.value = '';
@@ -513,8 +529,11 @@ const addToBill = async (product) => {
     } catch (error) {
         console.error('Lỗi khi thêm sản phẩm:', error);
         message.error('Đã xảy ra lỗi khi thêm sản phẩm!');
+    } finally {
+        isAdding = false;
     }
 };
+
 
 const tienKhachDua = ref(0);
 
@@ -537,12 +556,9 @@ const isPaymentDisabled = computed(() => {
 // Cập nhật tổng tiền khi số lượng thay đổi trong bảng hóa đơn
 const updateItemTotal = async (item) => {
     const productInfo = allProducts.value.find(p => p.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
-    console.log('productInfo', productInfo);
     const hoadon = store.getAllSPHDArr;
     // Tìm sản phẩm chính xác bằng id_chi_tiet_san_pham thay vì chỉ id_hoa_don
     const sphd = hoadon.find(hd => hd.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
-    console.log('sphd', sphd);
-    console.log('item', item);
     // Kiểm tra số lượng tồn
     if (productInfo && item.so_luong > productInfo.so_luong) {
         message.warning(`Số lượng tồn của "${item.ten_san_pham}" không đủ (${productInfo.so_luong_ton}). Đã đặt lại số lượng tối đa.`);
@@ -561,16 +577,18 @@ const updateItemTotal = async (item) => {
                     item.id_hoa_don,
                     item.id_chi_tiet_san_pham,
                     sphd.so_luong - item.so_luong,
-                    item.gia_ban || item.gia_sau_giam
+                    item.gia_ban
                 );
+                console.log(sphd.so_luong - item.so_luong, item.id_hoa_don, item.id_chi_tiet_san_pham, item.gia_ban);
             } else if (sphd.so_luong < item.so_luong) {
                 // Tăng số lượng
                 await store.addSPHD(
                     item.id_hoa_don,
                     item.id_chi_tiet_san_pham,
                     item.so_luong - sphd.so_luong,
-                    item.gia_ban || item.gia_sau_giam
+                    item.gia_ban
                 );
+                console.log(sphd.so_luong - item.so_luong, item.id_hoa_don, item.id_chi_tiet_san_pham, item.gia_ban);
             }
         } else {
             // Nếu sản phẩm chưa có trong hóa đơn (trường hợp bất ngờ), thêm mới
@@ -578,7 +596,7 @@ const updateItemTotal = async (item) => {
                 item.id_hoa_don,
                 item.id_chi_tiet_san_pham,
                 item.so_luong,
-                item.gia_ban || item.gia_sau_giam
+                item.gia_ban
             );
         }
 
@@ -599,8 +617,8 @@ const updateItemTotal = async (item) => {
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
-        await refreshHoaDon(item.id_hoa_don);
 
+        await refreshHoaDon(item.id_hoa_don);
 
     } catch (error) {
         console.error('Lỗi khi cập nhật số lượng:', error);
@@ -621,7 +639,6 @@ const removeFromBill = async (productId) => {
 
     try {
         const result = await store.xoaSPHD(currentTab.hd.id_hoa_don, productId);
-        console.log('Result from xoaSPHD:', result);
         if (!result) return;
 
         // Làm mới danh sách sản phẩm từ server
@@ -639,9 +656,7 @@ const removeFromBill = async (productId) => {
             so_luong_ton_goc: item.so_luong_ton || 0,
         }));
 
-        // Cập nhật tổng tiền từ result.data
-        currentTab.hd.tong_tien_truoc_giam = result.tong_tien_truoc_giam || 0;
-        currentTab.hd.tong_tien_sau_giam = result.tong_tien_sau_giam || 0;
+        await refreshHoaDon(currentTab.hd.id_hoa_don);
 
         message.info(`Đã xóa "${removedItem.ten_san_pham}" khỏi hóa đơn.`);
     } catch (error) {
@@ -722,7 +737,6 @@ const performRemove = async (tabToRemove, targetKey) => {
             // Làm mới danh sách sản phẩm để cập nhật số lượng tồn
             await store.getAllCTSPKM();
             allProducts.value = store.getAllCTSPKMList;
-            console.log('Đã cập nhật danh sách sản phẩm:', allProducts.value);
         }
 
         // Cập nhật UI chỉ khi xóa thành công
@@ -890,8 +904,6 @@ onMounted(async () => {
         await store.getAllHoaDonCTT();
         await store.getAllCTSPKM();
         await store.getAllNhanVien(0, pageSize.value);
-        const listSPHD = store.getAllSPHDArr;
-        console.log("listSPHD", listSPHD);
         // Gán dữ liệu hóa đơn
         da.value = store.getAllHoaDonCTTArr;
 
@@ -920,7 +932,6 @@ onMounted(async () => {
 
         // Load danh sách sản phẩm
         allProducts.value = store.getAllCTSPKMList;
-        console.log('Danh sách sản phẩm:', allProducts.value);
 
     } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
