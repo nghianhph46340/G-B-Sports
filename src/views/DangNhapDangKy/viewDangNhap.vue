@@ -22,7 +22,7 @@
                             style="width:150px">
                     </a>
 
-                    <p>Chào mừng bạn quay trở lại với G&B SPORTS! 👋</p>
+                    <p>Chào mừng bạn đến với G&B SPORTS! 👋</p>
                 </div>
 
                 <form @submit.prevent="handleLogin" class="login-form">
@@ -76,13 +76,18 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue';
+import { useGbStore } from '@/stores/gbStore';
 
 const router = useRouter();
+const gbStore = useGbStore();
 const email = ref('');
 const password = ref('');
 const rememberMe = ref(false);
 const showPassword = ref(false);
 const isLoading = ref(false);
+
+// Khôi phục trạng thái đăng nhập khi component được tạo
+gbStore.restoreLoginState();
 
 const chuyenTrang = (path) => {
     router.push(path);
@@ -96,10 +101,32 @@ const handleLogin = async () => {
     try {
         isLoading.value = true;
         // Xử lý logic đăng nhập ở đây
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Giả lập API call
-
-        toast.success('Đăng nhập thành công!');
-        router.push('/dashboard');
+        console.log('Email:', email.value);
+        console.log('Password:', password.value);
+        console.log('RememberMe:', rememberMe.value);
+        const loginData = {
+            email: email.value,
+            password: password.value,
+            rememberMe: rememberMe.value
+        };
+        const result = await gbStore.login(loginData);
+        if (result.error) {
+            if (result.fieldErrors) {
+                toast.error('Vui lòng kiểm tra lại thông tin!');
+            }
+            return;
+        }
+        // Điều hướng dựa trên id_roles
+        if (result.id_roles === 4) {
+            console.log('đã vào khách hàng')
+            router.push('/home'); // Khách hàng
+        } else {
+            console.log('đã vào admin')
+            console.log('hehe', result.id_roles);
+            router.push('/admin'); // Admin, quản lý, nhân viên
+        }
+        await new Promise(resolve => setTimeout(resolve, 500)); // Giả lập API call
+        // toast.success('Đăng nhập thành công!');
     } catch (error) {
         toast.error('Đăng nhập thất bại. Vui lòng thử lại!');
     } finally {

@@ -33,7 +33,36 @@ const getAllKhachHang = async(page = 0, size = 3, keyword = null, trangThai = nu
         };
     }
 }
-
+// Đăng ký khách hàng
+const registerKhachHang = async (registerData) => {
+    try {
+        const { data } = await axiosInstance.post('api/khach-hang/register', registerData);
+        return data;
+    } catch (error) {
+        console.error('Lỗi khi đăng ký khách hàng:', error);
+        return {
+            error: true,
+            message: error.response?.data?.error || 'Có lỗi xảy ra khi đăng ký khách hàng',
+            fieldErrors: error.response?.data?.fieldErrors || null
+        };
+    }
+}
+// Đăng nhập
+const login = async (loginData) => {
+    try {
+        const { data } = await axiosInstance.post('api/khach-hang/login', loginData);
+        return data;
+    } catch (error) {
+        console.error('Lỗi khi đăng nhập:', error);
+        return {
+            error: true,
+            message: error.response?.data?.error || 'Có lỗi xảy ra khi đăng nhập',
+            fieldErrors: error.response?.data?.fieldErrors || null
+        };
+    }
+}
 export const khachHangService = {
-    getAllKhachHang
+    getAllKhachHang,
+    registerKhachHang,
+    login
 }

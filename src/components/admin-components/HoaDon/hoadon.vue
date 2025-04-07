@@ -1,11 +1,6 @@
 <template>
     <div class="container">
         <div class="d-flex justify-content-start align-items-center pb-2">
-            <a-select class="mb-2" v-model:value="valueTrangThaiDonHang" show-search
-                placeholder="Chọn trạng thái đơn hàng" style="width: 210px" :options="trangThaiDonHangOptions"
-                :filter-option="filterOption" @change="handleTrangThaiChange"></a-select>
-            <button class="btn btn-outline-danger d-flex align-items-center ms-2 mb-2" style="height: 32px"
-                @click="resetFilters">Làm mới</button>
             <a-form-item name="range-time-picker" label="Thời gian" class="mb-2 ms-4">
                 <a-range-picker v-model:value="formState['range-time-picker']" show-time format="DD-MM-YYYY HH:mm:ss"
                     value-format="YYYY-MM-DD HH:mm:ss" :placeholder="['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']" />
@@ -28,6 +23,38 @@
         </div>
 
         <div class="table-responsive mt-4">
+            <!-- Dải trạng thái ngang -->
+            <div class="d-flex flex-wrap gap-2 mt-2 status-strip">
+                <a-badge :count="totalHoaDonCount" :overflow-count="999">
+                    <button
+                        class="btn d-flex align-items-center flex-fill"
+                        :class="{
+                            'btn-primary': valueTrangThaiDonHang === 'Chọn trạng thái đơn hàng',
+                            'btn-outline-primary': valueTrangThaiDonHang !== 'Chọn trạng thái đơn hàng',
+                        }"
+                        @click="handleTrangThaiChange('Chọn trạng thái đơn hàng')"
+                    >
+                        Tất cả
+                    </button>
+                </a-badge>
+                <a-badge
+                    v-for="option in trangThaiDonHangOptions"
+                    :key="option.value"
+                    :count="countByTrangThai[option.value] || 0"
+                    :overflow-count="999"
+                >
+                    <button
+                        class="btn d-flex align-items-center flex-fill"
+                        :class="{
+                            'btn-primary': valueTrangThaiDonHang === option.value,
+                            'btn-outline-primary': valueTrangThaiDonHang !== option.value,
+                        }"
+                        @click="handleTrangThaiChange(option.value)"
+                    >
+                        {{ option.label }}
+                    </button>
+                </a-badge>
+            </div>
             <table class="table table-hover">
                 <thead>
                     <tr>
@@ -67,31 +94,33 @@
             </table>
         </div>
 
-      <div class="d-flex justify-content-center align-items-center mt-3">
-        <button class="btn buttonPT p-0" @click="fetchData(store.currentHoaDon - 1)"
-            :disabled="store.currentHoaDon === 0">Previous</button>
-        <span class="mx-3">Trang {{ store.currentHoaDon + 1 }} / {{ store.totalHoaDon }}</span>
-        <button class="btn buttonPT" @click="fetchData(store.currentHoaDon + 1)"
-            :disabled="store.currentHoaDon >= store.totalHoaDon - 1">Next</button>
-      </div>
+        <div class="d-flex justify-content-center align-items-center mt-3">
+            <button class="btn buttonPT p-0" @click="fetchData(store.currentHoaDon - 1)"
+                :disabled="store.currentHoaDon === 0">Previous</button>
+            <span class="mx-3">Trang {{ store.currentHoaDon + 1 }} / {{ store.totalHoaDon }}</span>
+            <button class="btn buttonPT" @click="fetchData(store.currentHoaDon + 1)"
+                :disabled="store.currentHoaDon >= store.totalHoaDon - 1">Next</button>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { toast } from 'vue3-toastify';
+
 const router = useRouter();
 const store = useGbStore();
 const pageSize = ref(5);
 const valueTrangThaiDonHang = ref('Chọn trạng thái đơn hàng');
 const trangThaiDonHangOptions = ref([
     { label: 'Chờ xác nhận', value: 'Chờ xác nhận' },
-    { label: 'Đã xác nhận', value: 'Đã xác nhận' },
     { label: 'Đã cập nhật', value: 'Đã cập nhật' },
+    { label: 'Đã xác nhận', value: 'Đã xác nhận' },
+    { label: 'Chờ đóng gói', value: 'Chờ đóng gói' },
     { label: 'Đang giao', value: 'Đang giao' },
     { label: 'Hoàn thành', value: 'Hoàn thành' },
     { label: 'Đã hủy', value: 'Đã hủy' }
@@ -112,55 +141,117 @@ const formatCurrency = (value) => {
     if (value === null || value === undefined) return '0';
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Thêm ' VNĐ' nếu cần
 };
-const fetchData = (page) => {
-    store.getAllHoaDon(page, pageSize.value);
-};
-const handleTrangThaiChange = (value) => {
-    if (value === 'Chọn trạng thái đơn hàng') {
-        fetchData(0);
-    } else {
-        store.filterByTrangThai(value, 0, pageSize.value);
-    }
+
+const countByTrangThai = ref({});
+
+const totalHoaDonCount = computed(() => {
+  return Object.values(countByTrangThai.value).reduce((sum, count) => sum + count, 0);
+});
+
+const calculateCounts = async () => {
+  try {
+    const countsFromServer = await store.getHoaDonCountsByStatus();
+    countByTrangThai.value = countsFromServer;
+    console.log('Số lượng theo trạng thái:', countByTrangThai.value);
+  } catch (error) {
+    console.error('Lỗi khi tính số lượng:', error);
+    trangThaiDonHangOptions.value.forEach(option => {
+      countByTrangThai.value[option.value] = 0;
+    });
+  }
 };
 
-const filterData = () => {
-    const [tuNgay, denNgay] = formState['range-time-picker'] || [];
-    if (!tuNgay || !denNgay) {
-        toast.warning('Vui lòng chọn đầy đủ khoảng thời gian!')
-        return; // Không gọi filter nếu thiếu ngày
-    }
-    store.filterByDate(tuNgay, denNgay, 0, pageSize.value);
+const fetchData = async (page) => {
+  await store.getAllHoaDon(page, pageSize.value);
+  await calculateCounts();
 };
 
-const resetFilters = () => {
-    valueTrangThaiDonHang.value = 'Chọn trạng thái đơn hàng';
-    formState['range-time-picker'] = [];
-    fetchData(0);
+const handleTrangThaiChange = async (value) => {
+  console.log(`Trạng thái đã chọn: ${value}, Số lượng: ${countByTrangThai.value[value] || 0}`);
+  valueTrangThaiDonHang.value = value;
+  if (value === 'Chọn trạng thái đơn hàng') {
+    await fetchData(0);
+  } else {
+    await store.filterByTrangThai(value, 0, pageSize.value);
+    await calculateCounts();
+  }
 };
-onMounted(() => {
-    fetchData(0);
-})
+
+const filterData = async () => {
+  const [tuNgay, denNgay] = formState['range-time-picker'] || [];
+  if (!tuNgay || !denNgay) {
+    toast.warning('Vui lòng chọn đầy đủ khoảng thời gian!');
+    return;
+  }
+  await store.filterByDate(tuNgay, denNgay, 0, pageSize.value);
+  await calculateCounts();
+};
+
+const resetFilters = async () => {
+  valueTrangThaiDonHang.value = 'Chọn trạng thái đơn hàng';
+  formState['range-time-picker'] = [];
+  await fetchData(0);
+};
+
+onMounted(async () => {
+  await fetchData(0);
+});
 </script>
 
 <style scoped>
 .table {
     --bs-table-hover-bg: rgb(183 183 183 / 8%);
 }
+
 .buttonPT {
-  background-color: transparent;
-  text-align: center;
-  color: #d02c39;
-  border: 2px solid #f33b47;
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-  width: 70px;
-  height: 40px;
-  font-size: 14px;
-  font-weight: bold;
+    background-color: transparent;
+    text-align: center;
+    color: #d02c39;
+    border: 2px solid #f33b47;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    width: 70px;
+    height: 40px;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 .buttonPT:hover {
-  background-color: #f33b47;
-  color: white;
+    background-color: #f33b47;
+    color: white;
+}
+
+/* Style cho dải trạng thái */
+.status-strip {
+    width: 100%; /* Chiều rộng bằng với bảng */
+    display: flex;
+    flex-wrap: nowrap; /* Không xuống dòng, tất cả trạng thái nằm trên 1 hàng */
+    gap: 8px; /* Khoảng cách giữa các nút */
+    overflow-x: auto; /* Nếu có quá nhiều trạng thái, cho phép cuộn ngang */
+}
+
+/* Style cho các nút trạng thái */
+.status-strip .btn {
+    flex: 1; /* Chia đều chiều rộng */
+    min-width: 120px; /* Đảm bảo nút không quá nhỏ */
+    height: 32px;
+    font-size: 14px;
+    white-space: nowrap; /* Không xuống dòng trong nút */
+    justify-content: center; /* Căn giữa nội dung trong nút */
+}
+
+/* Tùy chỉnh a-badge */
+.ant-badge {
+    display: flex;
+    align-items: center;
+}
+.ant-badge-count {
+    font-size: 12px;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    border-radius: 50%;
+    background-color: #f33b47; /* Đảm bảo màu đỏ */
+    color: white;
 }
 </style>

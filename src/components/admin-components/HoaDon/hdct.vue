@@ -2,21 +2,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <div class="container-fluid main-content">
         <div v-if="loading" class="text-center">
-            <p>Đang tải dữ liệu...</p>
+            <a-spin tip="Đang tải dữ liệu..." />
         </div>
         <div v-else-if="store.hoaDonDetail">
             <div class="order-header">
-                <div class="row">
-                    <div class="col-md-7">
-                        <h2>Thông tin chi tiết đơn hàng {{ store.hoaDonDetail.loai_hoa_don }} #{{
-                            store.hoaDonDetail.ma_hoa_don || 'N/A' }}</h2>
-                    </div>
-                    <div class="col">
-                        <button class="btn btn-primary float-end" @click="$router.push('/admin/quanlyhoadon')">Quay
-                            lại</button>
-                    </div>
-                </div>
-                <hr>
+                <a-row :gutter="16">
+                    <a-col :md="17">
+                        <h2 style="color: #f33b47;">Thông tin chi tiết đơn hàng {{ store.hoaDonDetail.loai_hoa_don }}
+                            #{{
+                                store.hoaDonDetail.ma_hoa_don || 'N/A' }}</h2>
+                    </a-col>
+                    <a-col :md="7" class="text-right">
+                        <a-button type="primary" @click="$router.push('/admin/quanlyhoadon')">Quay lại</a-button>
+                    </a-col>
+                </a-row>
+                <a-divider />
                 <h4 style="text-align: center;">Lịch sử trạng thái</h4><br>
                 <div class="status-icons">
                     <div class="col" v-for="history in sortedTrangThaiHistory" :key="history.trang_thai">
@@ -27,268 +27,361 @@
                         </div>
                     </div>
                 </div>
-                <hr>
+                <a-divider />
 
                 <div class="order-status">
                     <!-- Nút Quay lại trạng thái ban đầu -->
-                    <form @submit.prevent="revertToInitial" v-if="showRevertButton">
-                        <button type="submit" class="btn btn-warning">
+                    <a-form @submit="revertToInitial" v-if="showRevertButton" :inline="true">
+                        <a-button type="warning" html-type="submit">
                             Quay lại trạng thái ban đầu
-                        </button>
-                    </form>
-                    <form @submit.prevent="changeStatus">
-                        <button type="submit" class="btn btn-success" :disabled="isCompletedOrCancelled"
+                        </a-button>
+                    </a-form>
+                    <a-form @submit="changeStatus" :inline="true">
+                        <a-button type="primary" html-type="submit" :disabled="isCompletedOrCancelled"
                             :class="{ 'disabled': isCompletedOrCancelled }">
                             {{ nextStatusText }}
-                        </button>
-                    </form>
-                    <form @submit.prevent="cancelOrder">
-                        <button type="submit" class="btn btn-danger" :disabled="cannotCancel"
+                        </a-button>
+                    </a-form>
+                    <a-form @submit="cancelOrder" :inline="true">
+                        <a-button type="text" html-type="submit" :disabled="cannotCancel"
                             :class="{ 'disabled': cannotCancel }">
                             Hủy đơn
-                        </button>
-                    </form>
+                        </a-button>
+                    </a-form>
+                    <a-form :inline="true">
+                        <a-button type="text" html-type="submit">
+                            Xuất hóa đơn
+                        </a-button>
+                    </a-form>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-12">
+            <a-row :gutter="16">
+                <a-col :md="24">
                     <div class="info-box">
                         <h5>Thông tin đơn hàng</h5>
-                        <div class="row">
-                            <div class="col">
+                        <hr>
+                        <a-row :gutter="16">
+                            <a-col :span="12">
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai_thanh_toan || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
                                 }}</p>
-                            </div>
-                            <div class="col">
+                            </a-col>
+                            <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDate(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
                                 }}</p>
-                            </div>
+                            </a-col>
+                        </a-row>
+                    </div>
+                </a-col>
+            </a-row>
+
+            <a-row :gutter="16">
+                <a-col :md="16">
+                    <div class="info-box">
+                        <a-row>
+                            <a-col :md="19">
+                                <h5>Thông tin sản phẩm</h5>
+                            </a-col>
+                            <a-col :md="5" class="text-right">
+                                <a-button type="primary" :disabled="cannotEditProduct"
+                                    :class="{ 'disabled': cannotEditProduct }" @click="showAddProductPopupFn">
+                                    Thêm sản phẩm
+                                </a-button>
+                            </a-col>
+                        </a-row>
+                        <hr>
+                        <a-table :columns="productColumns" :data-source="store.chiTietHoaDons" :pagination="false"
+                            row-key="id_chi_tiet_san_pham">
+                            <template #bodyCell="{ column, record, index }">
+                                <template v-if="column.key === 'san_pham'">
+                                    <img :src="record.hinh_anh || '/images/default.jpg'" alt="Product"
+                                        class="product-image">
+                                    {{ record.ten_san_pham || 'N/A' }} <br>
+                                    Kích thước: {{ record.kich_thuoc || 'N/A' }},
+                                    Màu: {{ record.ten_mau_sac || 'N/A' }}
+                                </template>
+                                <template v-if="column.key === 'don_gia'">
+                                    {{ formatCurrency(record.gia_ban) }} VNĐ
+                                </template>
+                                <template v-if="column.key === 'so_luong'">
+                                    <div class="quantity-display">
+                                        <a-button @click="showIncreasePopup(index)" :disabled="cannotEditProduct">
+                                            <i class="fas fa-minus"></i>
+                                        </a-button>
+                                        <span>{{ record.so_luong }}</span>
+                                        <a-button @click="showDecreasePopup(index)" :disabled="cannotEditProduct">
+                                            <i class="fas fa-plus"></i>
+                                        </a-button>
+                                    </div>
+                                </template>
+                                <template v-if="column.key === 'thanh_tien'">
+                                    {{ formatCurrency(record.don_gia) }} VNĐ
+                                </template>
+                                <template v-if="column.key === 'thao_tac'">
+                                    <a-button type="danger" size="small" @click="removeProduct(record, index)"
+                                        :disabled="cannotEditProduct">
+                                        <i class="fas fa-trash"></i>
+                                    </a-button>
+                                </template>
+                            </template>
+                        </a-table>
+                        <div class="total-section">
+                            <a-row>
+                                <a-col :md="16"></a-col>
+                                <a-col :md="4" style="text-align: left;">
+                                    <p>Tổng tiền hàng:</p>
+                                </a-col>
+                                <a-col :md="4" style="text-align: right;">
+                                    <h6>{{ formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam) }} VNĐ</h6>
+                                </a-col>
+                            </a-row>
+                            <a-row>
+                                <a-col :md="7"></a-col>
+                                <a-col :md="9" style="text-align: left;color: red;">
+                                    <p>{{ store.hoaDonDetail.mo_ta }}</p>
+                                </a-col>
+                                <a-col :md="4" style="text-align: left;">
+                                    <p>Giảm giá:</p>
+                                </a-col>
+                                <a-col :md="4" style="text-align: right;color: red;">
+                                    <p>- {{
+                                        formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
+                                            (store.hoaDonDetail.phi_van_chuyen || 0) -
+                                            (store.hoaDonDetail.tong_tien_sau_giam ||
+                                        0)) }} VNĐ</p>
+                                </a-col>
+                            </a-row>
+                            <a-row>
+                                <a-col :md="16"></a-col>
+                                <a-col :md="4" style="text-align: left;">
+                                    <p>Phí vận chuyển:</p>
+                                </a-col>
+                                <a-col :md="4" style="text-align: right;">
+                                    <p>+ {{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
+                                </a-col>
+                            </a-row>
+                            <a-row>
+                                <a-col :md="16"></a-col>
+                                <a-col :md="4" style="text-align: left;">
+                                    <p>Thành tiền:</p>
+                                </a-col>
+                                <a-col :md="4" style="text-align: right;">
+                                    <h6>{{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</h6>
+                                </a-col>
+                            </a-row>
                         </div>
                     </div>
+                </a-col>
+
+                <a-col :md="8">
+                    <div class="info-box">
+                        <a-row>
+                            <a-col :md="16">
+                                <h5>Thông tin khách hàng</h5>
+                            </a-col>
+                            <a-col :md="8" class="text-right">
+                                <div v-if="!isEditingCustomer">
+                                    <a-button type="primary" :disabled="cannotEdit" :class="{ 'disabled': cannotEdit }"
+                                        @click="openDrawer">
+                                        Sửa
+                                    </a-button>
+                                </div>
+                                <!-- <div v-else>
+                                    <a-button type="primary" @click="saveCustomerInfo">Lưu</a-button>
+                                    <a-button style="margin-left: 8px;" type="default"
+                                        @click="cancelEditingCustomer">Hủy</a-button>
+                                </div> -->
+                            </a-col>
+                        </a-row>
+                        <hr>
+                        <div v-if="!isEditingCustomer">
+                            <p>Tên: {{ store.hoaDonDetail.ho_ten || 'Chưa xác định' }}</p>
+                            <p>Email: {{ store.hoaDonDetail.email || 'Chưa xác định' }}</p>
+                            <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
+                            <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
+                        </div>
+                        <!-- <div v-else>
+                            <a-form @submit="saveCustomerInfo" layout="vertical">
+                                <a-form-item label="Tên">
+                                    <a-input v-model:value="editedCustomer.hoTen" required />
+                                </a-form-item>
+                                <a-form-item label="Email">
+                                    <a-input v-model:value="editedCustomer.email" type="email" required />
+                                </a-form-item>
+                                <a-form-item label="Phone">
+                                    <a-input v-model:value="editedCustomer.sdtNguoiNhan" required />
+                                </a-form-item>
+                                <a-form-item label="Địa chỉ">
+                                    <a-input v-model:value="editedCustomer.diaChi" required />
+                                </a-form-item>
+                            </a-form>
+                        </div> -->
+                        <!-- Drawer cho chỉnh sửa thông tin khách hàng -->
+                        <a-drawer v-model:open="isEditingCustomer" title="Chỉnh sửa thông tin khách hàng"
+                            placement="right" :width="500" @after-open-change="afterOpenChange">
+                            <a-form :model="editedCustomer" layout="vertical" @submit.prevent="saveCustomerInfo">
+                                <a-form-item label="Tên người nhận" name="hoTen">
+                                    <a-input v-model:value="editedCustomer.hoTen" placeholder="Nhập tên người nhận" />
+                                </a-form-item>
+                                <a-form-item label="Email" name="email">
+                                    <a-input v-model:value="editedCustomer.email" type="email"
+                                        placeholder="Nhập email" />
+                                </a-form-item>
+                                <a-form-item label="Số điện thoại" name="sdtNguoiNhan">
+                                    <a-input v-model:value="editedCustomer.sdtNguoiNhan"
+                                        placeholder="Nhập số điện thoại" />
+                                </a-form-item>
+                                <a-form-item label="Tỉnh/Thành phố" name="tinh">
+                                    <a-select v-model:value="editedCustomer.tinh" placeholder="Chọn tỉnh/thành phố"
+                                        show-search :filter-option="filterOption" @change="handleTinhChange"
+                                        @focus="handleFocus" @blur="handleBlur">
+                                        <a-select-option v-for="tinh in tinhList" :key="tinh.id" :value="tinh.name">
+                                            {{ tinh.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                                <a-form-item label="Quận/Huyện" name="huyen">
+                                    <a-select v-model:value="editedCustomer.huyen" placeholder="Chọn quận/huyện"
+                                        show-search :filter-option="filterOption" :disabled="!editedCustomer.tinh"
+                                        @change="handleHuyenChange" @focus="handleFocus" @blur="handleBlur">
+                                        <a-select-option v-for="huyen in huyenList" :key="huyen.id" :value="huyen.name">
+                                            {{ huyen.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                                <a-form-item label="Xã/Phường" name="xa">
+                                    <a-select v-model:value="editedCustomer.xa" placeholder="Chọn xã/phường" show-search
+                                        :filter-option="filterOption" :disabled="!editedCustomer.huyen"
+                                        @focus="handleFocus" @blur="handleBlur">
+                                        <a-select-option v-for="xa in xaList" :key="xa.id" :value="xa.name">
+                                            {{ xa.name }}
+                                        </a-select-option>
+                                    </a-select>
+                                </a-form-item>
+                                <a-form-item label="Địa chỉ cụ thể" name="diaChiCuThe">
+                                    <a-input v-model:value="editedCustomer.diaChiCuThe"
+                                        placeholder="Nhập địa chỉ cụ thể" />
+                                </a-form-item>
+
+                                <!-- Bảng danh sách địa chỉ -->
+                                <a-divider orientation="left">Danh sách địa chỉ</a-divider>
+                                <a-table :columns="addressColumns" :data-source="addressList" :pagination="false"
+                                    row-key="id">
+                                    <template #bodyCell="{ column }">
+                                        <template v-if="column.key === 'thao_tac'">
+                                            <a-button type="link">Chọn</a-button>
+                                        </template>
+                                    </template>
+                                </a-table>
+
+                                <a-form-item>
+                                    <a-button type="primary" html-type="submit">Lưu</a-button>
+                                    <a-button type="default" @click="closeDrawer">Hủy</a-button>
+                                </a-form-item>
+                            </a-form>
+                        </a-drawer>
+                    </div>
+
+                    <div class="info-box">
+                        <a-row>
+                            <a-col :md="16">
+                                <h5>Ghi chú</h5>
+                            </a-col>
+                            <a-col :md="8" class="text-right">
+                                <div v-if="!isEditingNote">
+                                    <a-button type="primary" :disabled="cannotEdit" :class="{ 'disabled': cannotEdit }"
+                                        @click="startEditingNote">
+                                        Sửa
+                                    </a-button>
+                                </div>
+                                <div v-else class="edit-buttons">
+                                    <a-button type="primary" @click="saveNote">Lưu</a-button>
+                                    <a-button style="margin-left: 8px;" type="default"
+                                        @click="cancelEditingNote">Hủy</a-button>
+                                </div>
+                            </a-col>
+                        </a-row>
+                        <hr>
+
+                        <div v-if="!isEditingNote">
+                            <a-textarea :value="store.hoaDonDetail.ghi_chu || 'Không có ghi chú'" :rows="2" readonly />
+                        </div>
+                        <div v-else>
+                            <a-form @submit="saveNote">
+                                <a-form-item>
+                                    <a-textarea v-model:value="editedNote" :rows="2" placeholder="Nhập ghi chú..."
+                                        maxlength="100" />
+                                    <p style="color: red;">Nhập tối đa 100 ký tự</p>
+                                </a-form-item>
+                            </a-form>
+                        </div>
+                    </div>
+                </a-col>
+            </a-row>
+
+            <!-- Popup thêm sản phẩm -->
+            <a-modal v-model:visible="showAddProductPopup" title="Danh sách sản phẩm" :footer="null" width="80%">
+                <a-row :gutter="16" class="modal-header">
+                    <a-col :span="18">
+                        <a-input v-model:value="searchKeyword" @input="searchProducts"
+                            placeholder="Tìm kiếm sản phẩm..." />
+                    </a-col>
+                    <a-col :span="6" class="text-right">
+                        <a-button type="primary" @click="addSelectedProducts">Thêm sản phẩm</a-button>
+                    </a-col>
+                </a-row>
+                <a-table :columns="productPopupColumns" :data-source="store.listCTSP_HD" :pagination="false"
+                    row-key="id_chi_tiet_san_pham">
+                    <template #bodyCell="{ column, record, index }">
+                        <template v-if="column.key === 'stt'">
+                            {{ index + 1 + (store.currentPage * 5) }}
+                        </template>
+                        <template v-if="column.key === 'gia_ban'">
+                            {{ formatCurrency(record.gia_ban || 0) }}
+                        </template>
+                        <template v-if="column.key === 'so_luong_mua'">
+                            <div class="quantity-input">
+                                <a-button @click="decreaseQuantityPopup(index)"
+                                    :disabled="quantities[index] <= 0">-</a-button>
+                                <a-input-number v-model:value="quantities[index]" :min="0" :max="record.so_luong"
+                                    @change="validateQuantity(index, record.so_luong)" />
+                                <a-button @click="increaseQuantityPopup(index)"
+                                    :disabled="quantities[index] >= record.so_luong">+</a-button>
+                            </div>
+                        </template>
+                    </template>
+                </a-table>
+                <div class="pagination">
+                    <a-button @click="changePage(store.currentPage - 1)" :disabled="store.currentPage === 0">
+                        Trang trước
+                    </a-button>
+                    <span>Trang {{ store.currentPage + 1 }} / {{ store.totalPages }}</span>
+                    <a-button @click="changePage(store.currentPage + 1)"
+                        :disabled="store.currentPage >= store.totalPages - 1">
+                        Trang sau
+                    </a-button>
                 </div>
+                <a-button type="default" class="close-btn" @click="closeAddProductPopup">Đóng</a-button>
+            </a-modal>
 
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="info-box">
-                            <h5>Thông tin sản phẩm</h5>
-                            <button class="btn btn-primary" :disabled="cannotEditProduct" :class="{ 'disabled': cannotEditProduct }"
-                                @click="showAddProductPopupFn">
-                                Thêm sản phẩm
-                            </button>
-                            <table class="table-custom">
-                                <thead>
-                                    <tr>
-                                        <th>Sản phẩm</th>
-                                        <th>Đơn giá</th>
-                                        <th>Số lượng</th>
-                                        <th>Thành tiền</th>
-                                        <th>Thao tác</th> <!-- Thêm cột Thao tác -->
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(item, index) in store.chiTietHoaDons" :key="index">
-                                        <td>
-                                            <img :src="item.hinh_anh || '/images/default.jpg'" alt="Product"
-                                                class="product-image">
-                                            {{ item.ten_san_pham || 'N/A' }} <br>
-                                            Mã: {{ item.ma_san_pham || 'N/A' }}, Kích thước: {{ item.kich_thuoc || 'N/A'
-                                            }},
-                                            Màu: {{ item.ten_mau_sac || 'N/A' }}
-                                        </td>
-                                        <td>{{ formatCurrency(item.gia_ban) }} VNĐ</td>
-                                        <td>
-                                            <div class="quantity-display">
-                                                <button @click="showIncreasePopup(index)" :disabled="cannotEditProduct"><i
-                                                        class="fas fa-minus"></i></button>
-                                                <span>{{ item.so_luong }}</span>
-                                                <button @click="showDecreasePopup(index)" :disabled="cannotEditProduct"><i
-                                                        class="fas fa-plus"></i></button>
-                                            </div>
-                                        </td>
-                                        <td>{{ formatCurrency(item.don_gia) }} VNĐ</td>
-                                        <td>
-                                            <button class="btn btn-danger btn-sm" @click="removeProduct(item, index)"
-                                                :disabled="cannotEditProduct">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div class="total-section">
-                                <p>Tổng tạm: {{ formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam) }} VNĐ</p>
-                                <p>Phí vận chuyển: +{{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
-                                <p>{{ store.hoaDonDetail.mo_ta }} Giảm giá: - {{
-                                    formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
-                                        (store.hoaDonDetail.phi_van_chuyen || 0) - (store.hoaDonDetail.tong_tien_sau_giam ||
-                                    0)) }} VNĐ</p>
-                                <p>Tổng cuối: {{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="info-box">
-                            <h5>Thông tin khách hàng</h5>
-                            <!-- Nút Sửa hoặc Lưu/Hủy -->
-                            <div v-if="!isEditingCustomer">
-                                <button class="btn btn-primary" :disabled="cannotEdit"
-                                    :class="{ 'disabled': cannotEdit }" @click="startEditingCustomer">
-                                    Sửa
-                                </button>
-                            </div>
-                            <div v-else>
-                                <!-- <a-button type="text" @click="saveCustomerInfo">Lưu</a-button>
-                                <a-button type="text" @click="cancelEditingCustomer">Hủy</a-button> -->
-                                <button class="btn btn-success" @click="saveCustomerInfo">Lưu</button>
-                                <button class="btn btn-secondary" @click="cancelEditingCustomer">Hủy</button>
-                            </div>
-
-                            <!-- Hiển thị thông tin tĩnh hoặc form nhập liệu -->
-                            <div v-if="!isEditingCustomer">
-                                <p>Tên: {{ store.hoaDonDetail.ho_ten || 'Chưa xác định' }}</p>
-                                <p>Email: {{ store.hoaDonDetail.email || 'Chưa xác định' }}</p>
-                                <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
-                                <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
-                            </div>
-                            <div v-else>
-                                <form @submit.prevent="saveCustomerInfo">
-                                    <div class="mb-3">
-                                        <label for="hoTen" class="form-label">Tên:</label>
-                                        <input type="text" class="form-control" id="hoTen"
-                                            v-model="editedCustomer.hoTen" required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">Email:</label>
-                                        <input type="email" class="form-control" id="email"
-                                            v-model="editedCustomer.email" required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="sdtNguoiNhan" class="form-label">Phone:</label>
-                                        <input type="text" class="form-control" id="sdtNguoiNhan"
-                                            v-model="editedCustomer.sdtNguoiNhan" required />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="diaChi" class="form-label">Địa chỉ:</label>
-                                        <input type="text" class="form-control" id="diaChi"
-                                            v-model="editedCustomer.diaChi" required />
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                        <!-- Phần Ghi chú -->
-                        <div class="info-box">
-                            <h5>Ghi chú</h5>
-                            <!-- Nút Sửa hoặc Lưu/Hủy -->
-                            <div v-if="!isEditingNote">
-                                <button class="btn btn-primary" :disabled="cannotEdit"
-                                    :class="{ 'disabled': cannotEdit }" @click="startEditingNote">
-                                    Sửa
-                                </button>
-                            </div>
-                            <div v-else class="edit-buttons">
-                                <button class="btn btn-success" @click="saveNote">Lưu</button>
-                                <button class="btn btn-secondary" @click="cancelEditingNote">Hủy</button>
-                            </div>
-
-                            <!-- Hiển thị ghi chú tĩnh hoặc form nhập liệu -->
-                            <div v-if="!isEditingNote">
-                                <textarea class="form-control" rows="2"
-                                    readonly>{{ store.hoaDonDetail.ghi_chu || 'Không có ghi chú' }}</textarea>
-                            </div>
-                            <div v-else>
-                                <form @submit.prevent="saveNote">
-                                    <div class="mb-3">
-                                        <textarea class="form-control" rows="2" v-model="editedNote"
-                                            placeholder="Nhập ghi chú..."></textarea>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Popup thêm sản phẩm -->
-                <div v-if="showAddProductPopup" class="modal-overlay">
-                    <div class="modal-content">
-                        <h2>Danh sách sản phẩm</h2>
-                        <div class="modal-header">
-                            <input type="text" class="form-control search-input" v-model="searchKeyword"
-                                @input="searchProducts" placeholder="Tìm kiếm sản phẩm..." />
-                            <button class="btn btn-primary" @click="addSelectedProducts">Thêm sản phẩm</button>
-                        </div>
-                        <table class="table-custom">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Danh mục</th>
-                                    <th>Tên sản phẩm</th>
-                                    <th>Màu sắc</th>
-                                    <th>Kích cỡ</th>
-                                    <th>Số lượng</th>
-                                    <th>Giá bán(VNĐ)</th>
-                                    <th>Trạng thái</th>
-                                    <th>Số lượng mua</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(item, index) in store.listCTSP_HD" :key="item.id_chi_tiet_san_pham">
-                                    <td>{{ index + 1 + (store.currentPage * 5) }}</td>
-                                    <td>{{ item.ten_danh_muc || 'N/A' }}</td>
-                                    <td>{{ item.ten_san_pham || 'N/A' }}</td>
-                                    <td>{{ item.ten_mau || 'N/A' }}</td>
-                                    <td>{{ item.gia_tri || 'N/A' }}</td>
-                                    <td>{{ item.so_luong || 0 }}</td>
-                                    <td>{{ formatCurrency(item.gia_ban || 0) }}</td>
-                                    <td>{{ item.trang_thai || 'N/A' }}</td>
-                                    <td>
-                                        <div class="quantity-input">
-                                            <button @click="decreaseQuantityPopup(index)"
-                                                :disabled="quantities[index] <= 0">-</button>
-                                            <input type="number" v-model.number="quantities[index]" min="0"
-                                                :max="item.so_luong" @input="validateQuantity(index, item.so_luong)" />
-                                            <button @click="increaseQuantityPopup(index)"
-                                                :disabled="quantities[index] >= item.so_luong">+</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="pagination">
-                            <button @click="changePage(store.currentPage - 1)" :disabled="store.currentPage === 0">
-                                Trang trước
-                            </button>
-                            <span>Trang {{ store.currentPage + 1 }} / {{ store.totalPages
-                                }}</span>
-                            <button @click="changePage(store.currentPage + 1)"
-                                :disabled="store.currentPage >= store.totalPages - 1">
-                                Trang sau
-                            </button>
-                        </div>
-                        <button class="btn btn-secondary close-btn" @click="closeAddProductPopup">Đóng</button>
-                    </div>
-                </div>
-            </div>
             <!-- Popup chỉnh sửa số lượng -->
-            <div v-if="showQuantityPopup" class="popup-overlay">
-                <div class="popup-content">
-                    <h3>{{ popupType === 'increase' ? 'Giảm số lượng' : 'Thêm số lượng' }}</h3>
-                    <div class="popup-input">
-                        <label>Số lượng:</label>
-                        <input type="number" v-model.number="quantityChange" min="0" />
-                    </div>
-                    <div class="popup-actions">
-                        <button @click="updateQuantity" class="btn btn-primary">
-                            <i :class="popupType === 'increase' ? 'fas fa-minus' : 'fas fa-plus'"></i>
-                        </button>
-                        <button @click="closeQuantityPopup" class="btn btn-secondary">Hủy</button>
-                    </div>
+            <a-modal v-model:visible="showQuantityPopup"
+                :title="popupType === 'increase' ? 'Giảm số lượng' : 'Thêm số lượng'" :footer="null">
+                <div class="popup-input">
+                    <label>Số lượng:</label>
+                    <a-input-number v-model:value="quantityChange" :min="0" />
                 </div>
-            </div>
+                <div class="popup-actions">
+                    <a-button type="primary" @click="updateQuantity">
+                        <i :class="popupType === 'increase' ? 'fas fa-minus' : 'fas fa-plus'"></i>
+                    </a-button>
+                    <a-button type="default" @click="closeQuantityPopup">Hủy</a-button>
+                </div>
+            </a-modal>
 
             <div class="notification">
                 {{ store.hoaDonDetail.trang_thai?.toUpperCase() || 'ĐANG XỬ LÝ' }} ĐƠN HÀNG {{
@@ -306,11 +399,37 @@ import { onMounted, computed, ref } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
+import axios from 'axios';
+
+// Ant Design Vue components
+import { Row as ARow, Col as ACol, Button as AButton, Divider as ADivider, Form as AForm, FormItem as AFormItem, Input as AInput, Textarea as ATextarea, Table as ATable, Modal as AModal, InputNumber as AInputNumber, Spin as ASpin } from 'ant-design-vue';
 
 const store = useGbStore();
 const route = useRoute();
 const router = useRouter();
 const loading = ref(true);
+
+// Product table columns
+const productColumns = [
+    { title: 'Sản phẩm', key: 'san_pham', width: '40%' },
+    { title: 'Đơn giá', key: 'don_gia', width: '20%' },
+    { title: 'Số lượng', key: 'so_luong', width: '10%' },
+    { title: 'Thành tiền', key: 'thanh_tien', width: '20%' },
+    { title: 'Thao tác', key: 'thao_tac', width: '10%' },
+];
+
+// Product popup table columns
+const productPopupColumns = [
+    { title: 'STT', key: 'stt' },
+    { title: 'Danh mục', dataIndex: 'ten_danh_muc', key: 'ten_danh_muc' },
+    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham' },
+    { title: 'Màu sắc', dataIndex: 'ten_mau', key: 'ten_mau' },
+    { title: 'Kích cỡ', dataIndex: 'gia_tri', key: 'gia_tri' },
+    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong' },
+    { title: 'Giá bán(VNĐ)', key: 'gia_ban' },
+    { title: 'Trạng thái', dataIndex: 'trang_thai', key: 'trang_thai' },
+    { title: 'Số lượng mua', key: 'so_luong_mua' },
+];
 
 // Danh sách trạng thái cho hình thức "Giao hàng"
 const defaultStatusSteps = [
@@ -338,6 +457,210 @@ const computedStatusSteps = computed(() => {
     }
     return defaultStatusSteps;
 });
+
+// Address table columns
+const addressColumns = [
+    { title: 'Địa chỉ', dataIndex: 'dia_chi', key: 'dia_chi' },
+    { title: 'Thao tác', key: 'thao_tac' },
+];
+
+// Danh sách tỉnh, huyện, xã từ API
+const tinhList = ref([]);
+const huyenList = ref([]);
+const xaList = ref([]);
+
+// Dữ liệu mẫu cho bảng danh sách địa chỉ (sẽ xử lý luồng sau)
+const addressList = ref([]);
+
+// Trạng thái chỉnh sửa thông tin khách hàng
+const isEditingCustomer = ref(false);
+const editedCustomer = ref({
+    hoTen: '',
+    email: '',
+    sdtNguoiNhan: '',
+    tinh: null,
+    huyen: null,
+    xa: null,
+    diaChiCuThe: '',
+    diaChi: '', // Địa chỉ đầy đủ (sẽ được ghép từ các trường)
+});
+// Hàm tìm kiếm cho select
+const filterOption = (input, option) => {
+    return option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+};
+
+// Xử lý focus
+const handleFocus = () => {
+    console.log('Focus on select');
+};
+
+// Xử lý blur
+const handleBlur = () => {
+    console.log('Blur on select');
+};
+
+// Mở drawer và load dữ liệu
+const openDrawer = async () => {
+    // Lấy danh sách tỉnh trước khi mở drawer
+    if (tinhList.value.length === 0) {
+        await fetchTinhList();
+    }
+    // Load dữ liệu ban đầu
+    editedCustomer.value = {
+        hoTen: store.hoaDonDetail.ho_ten || '',
+        email: store.hoaDonDetail.email || '',
+        sdtNguoiNhan: store.hoaDonDetail.sdt_nguoi_nhan || '',
+        tinh: null,
+        huyen: null,
+        xa: null,
+        diaChiCuThe: '',
+        diaChi: store.hoaDonDetail.dia_chi || '',
+    };
+
+    // Tách địa chỉ thành các trường nếu có
+    if (store.hoaDonDetail.dia_chi) {
+        const diaChiParts = store.hoaDonDetail.dia_chi.split(', ');
+        console.log(diaChiParts.length);
+        if (diaChiParts.length > 4 || diaChiParts.length === 4) {
+            if (diaChiParts.length > 4) {
+                editedCustomer.value.diaChiCuThe = diaChiParts[0] + ', ' + diaChiParts[1];
+                editedCustomer.value.xa = diaChiParts[diaChiParts.length - 3];
+                editedCustomer.value.huyen = diaChiParts[diaChiParts.length - 2];
+                editedCustomer.value.tinh = diaChiParts[diaChiParts.length - 1];
+            } if (diaChiParts.length === 4) {
+                editedCustomer.value.diaChiCuThe = diaChiParts[0];
+                editedCustomer.value.xa = diaChiParts[1];
+                editedCustomer.value.huyen = diaChiParts[2];
+                editedCustomer.value.tinh = diaChiParts[3];
+            }
+            // Load danh sách huyện và xã dựa trên tỉnh, huyện đã chọn
+            if (editedCustomer.value.tinh) {
+                const provinceCode = findProvinceCode(editedCustomer.value.tinh);
+                if (provinceCode) {
+                    await fetchHuyenList(provinceCode);
+                }
+            }
+            if (editedCustomer.value.huyen) {
+                const districtCode = findDistrictCode(editedCustomer.value.huyen);
+                if (districtCode) {
+                    await fetchXaList(districtCode);
+                }
+            }
+        }
+    }
+    isEditingCustomer.value = true;
+};
+// Đóng drawer
+const closeDrawer = () => {
+    isEditingCustomer.value = false;
+    // Reset các trường
+    editedCustomer.value = {
+        hoTen: '',
+        email: '',
+        sdtNguoiNhan: '',
+        tinh: null,
+        huyen: null,
+        xa: null,
+        diaChiCuThe: '',
+        diaChi: '',
+    };
+    huyenList.value = [];
+    xaList.value = [];
+};
+
+// Lấy danh sách tỉnh từ API
+const fetchTinhList = async () => {
+    try {
+        const response = await axios.get('https://provinces.open-api.vn/api/p/');
+        tinhList.value = response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách tỉnh:', error);
+        toast.error('Không thể lấy danh sách tỉnh!');
+    }
+};
+
+// Lấy danh sách huyện theo tỉnh
+const fetchHuyenList = async (provinceCode) => {
+    try {
+        const response = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+        huyenList.value = response.data.districts || [];
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách huyện:', error);
+        toast.error('Không thể lấy danh sách huyện!');
+    }
+};
+
+// Lấy danh sách xã theo huyện
+const fetchXaList = async (districtCode) => {
+    try {
+        const response = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+        xaList.value = response.data.wards || [];
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách xã:', error);
+        toast.error('Không thể lấy danh sách xã!');
+    }
+};
+
+// Tìm mã tỉnh từ tên tỉnh
+const findProvinceCode = (provinceName) => {
+    const province = tinhList.value.find(tinh => tinh.name === provinceName);
+    return province ? province.code : null;
+};
+
+// Tìm mã huyện từ tên huyện
+const findDistrictCode = (districtName) => {
+    const district = huyenList.value.find(huyen => huyen.name === districtName);
+    return district ? district.code : null;
+};
+// Xử lý khi chọn tỉnh
+const handleTinhChange = async (value) => {
+    editedCustomer.value.huyen = null;
+    editedCustomer.value.xa = null;
+    xaList.value = [];
+
+    const provinceCode = findProvinceCode(value);
+    if (provinceCode) {
+        await fetchHuyenList(provinceCode);
+    }
+};
+
+// Xử lý khi chọn huyện
+const handleHuyenChange = async (value) => {
+    editedCustomer.value.xa = null;
+
+    const districtCode = findDistrictCode(value);
+    if (districtCode) {
+        await fetchXaList(districtCode);
+    }
+};
+// Lưu thông tin khách hàng
+const saveCustomerInfo = () => {
+    if (confirm('Bạn có đồng ý sửa thông tin khách hàng không?')) {
+        // Ghép địa chỉ từ các trường
+        if (editedCustomer.value.tinh && editedCustomer.value.huyen && editedCustomer.value.xa && editedCustomer.value.diaChiCuThe) {
+            editedCustomer.value.diaChi = `${editedCustomer.value.diaChiCuThe}, ${editedCustomer.value.xa}, ${editedCustomer.value.huyen}, ${editedCustomer.value.tinh}`;
+        } else {
+            editedCustomer.value.diaChi = editedCustomer.value.diaChiCuThe || '';
+        }
+
+        // Gọi hàm cập nhật thông tin khách hàng
+        store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, {
+            hoTen: editedCustomer.value.hoTen,
+            email: editedCustomer.value.email,
+            sdtNguoiNhan: editedCustomer.value.sdtNguoiNhan,
+            diaChi: editedCustomer.value.diaChi,
+        });
+
+        // Đóng drawer
+        closeDrawer();
+    }
+};
+// Hàm xử lý sau khi drawer mở/đóng
+const afterOpenChange = (visible) => {
+    if (!visible) {
+        closeDrawer();
+    }
+};
 
 const sortedTrangThaiHistory = computed(() => {
     return [...store.trangThaiHistory].sort((a, b) => {
@@ -368,10 +691,13 @@ const cannotCancel = computed(() => {
 
 const cannotEditProduct = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
+    if (store.hoaDonDetail.size === 1) {
+        toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm!');
+    }
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
         return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
     }
-    return ["Đã cập nhật", "Đã xác nhận", 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+    return ["Đã xác nhận", 'Chờ đóng gói', 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
 });
 
 const cannotEdit = computed(() => {
@@ -379,7 +705,7 @@ const cannotEdit = computed(() => {
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
         return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
     }
-    return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+    return ["Đã xác nhận", 'Chờ đóng gói', 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
 });
 
 const nextStatusText = computed(() => {
@@ -391,16 +717,17 @@ const nextStatusText = computed(() => {
     if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
         return trangThai === 'Chờ xác nhận' ? 'Hoàn thành' : 'Hoàn thành';
     }
+
     switch (trangThai) {
         case 'Chờ xác nhận':
             return 'Xác nhận đơn hàng';
+        case 'Đã cập nhật': // Chỉ xử lý "Đã cập nhật" sau "Chờ xác nhận"
+            return 'Xác nhận đơn hàng'; // Vẫn chuyển sang "Đã xác nhận"
         case 'Đã xác nhận':
-            return 'Giao cho ĐVVC';
-        case 'Đã cập nhật':
+            return 'Chuẩn bị hàng';
+        case 'Chờ đóng gói':
             return 'Giao cho ĐVVC';
         case 'Đang giao':
-            return 'Hoàn thành';
-        case 'Đã nhận hàng':
             return 'Hoàn thành';
         default:
             return 'Hoàn thành';
@@ -416,16 +743,17 @@ const nextStatusValue = computed(() => {
     if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
         return trangThai === 'Chờ xác nhận' ? 'Hoàn thành' : 'Hoàn thành';
     }
+
     switch (trangThai) {
         case 'Chờ xác nhận':
             return 'Đã xác nhận';
+        case 'Đã cập nhật': // Chỉ xử lý "Đã cập nhật" sau "Chờ xác nhận"
+            return 'Đã xác nhận'; // Vẫn chuyển sang "Đã xác nhận"
         case 'Đã xác nhận':
-            return 'Đang giao';
-        case 'Đã cập nhật':
+            return 'Chờ đóng gói';
+        case 'Chờ đóng gói':
             return 'Đang giao';
         case 'Đang giao':
-            return 'Hoàn thành';
-        case 'Đã nhận hàng':
             return 'Hoàn thành';
         default:
             return 'Hoàn thành';
@@ -443,7 +771,6 @@ const formatDate = (date) => {
 };
 
 const getStatusClass = (trangThai) => {
-    // Vì trạng thái này đã có trong lịch sử, nên luôn là text-success
     if (trangThai === 'Đã hủy') {
         return 'text-danger';
     }
@@ -463,40 +790,6 @@ const cancelOrder = () => {
     if (confirm('Bạn có chắc muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.')) {
         store.cancelHoaDon(store.hoaDonDetail.ma_hoa_don);
     }
-};
-
-// Trạng thái chỉnh sửa thông tin khách hàng
-const isEditingCustomer = ref(false);
-const editedCustomer = ref({
-    hoTen: '',
-    email: '',
-    sdtNguoiNhan: '',
-    diaChi: ''
-});
-
-// Bắt đầu chỉnh sửa thông tin khách hàng
-const startEditingCustomer = () => {
-    // Lưu dữ liệu ban đầu vào editedCustomer
-    editedCustomer.value = {
-        hoTen: store.hoaDonDetail.ho_ten || '',
-        email: store.hoaDonDetail.email || '',
-        sdtNguoiNhan: store.hoaDonDetail.sdt_nguoi_nhan || '',
-        diaChi: store.hoaDonDetail.dia_chi || ''
-    };
-    isEditingCustomer.value = true;
-};
-
-// Lưu thông tin khách hàng
-const saveCustomerInfo = () => {
-    if (confirm('Bạn có đồng ý sửa thông tin khách hàng không?')) {
-        store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, editedCustomer.value);
-        isEditingCustomer.value = false; // Thoát chế độ chỉnh sửa
-    }
-};
-
-// Hủy chỉnh sửa
-const cancelEditingCustomer = () => {
-    isEditingCustomer.value = false; // Thoát chế độ chỉnh sửa mà không lưu
 };
 
 // Trạng thái chỉnh sửa ghi chú
@@ -521,7 +814,6 @@ const saveNote = () => {
 const cancelEditingNote = () => {
     isEditingNote.value = false;
 };
-
 
 // Trạng thái popup thêm sản phẩm
 const showAddProductPopup = ref(false);
@@ -598,11 +890,11 @@ const addSelectedProducts = () => {
     store.addProductsToInvoice(store.hoaDonDetail.ma_hoa_don, selectedProducts);
     closeAddProductPopup();
 };
+
 // Xóa sản phẩm khỏi hóa đơn
 const removeProduct = async (item, index) => {
     if (confirm(`Bạn có chắc muốn xóa sản phẩm "${item.ten_san_pham}" khỏi hóa đơn không?`)) {
         try {
-            // Gọi API để xóa sản phẩm
             const response = await store.removeProductFromInvoice(
                 store.hoaDonDetail.ma_hoa_don,
                 item.id_chi_tiet_san_pham,
@@ -614,12 +906,8 @@ const removeProduct = async (item, index) => {
                 return;
             }
 
-            // Xóa sản phẩm khỏi danh sách hiển thị
             store.chiTietHoaDons.splice(index, 1);
-
-            // Cập nhật lại tổng tiền của hóa đơn
             await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
-
             toast.success('Xóa sản phẩm khỏi hóa đơn thành công');
         } catch (error) {
             console.error('Lỗi khi xóa sản phẩm:', error);
@@ -654,19 +942,18 @@ const closeQuantityPopup = () => {
     popupType.value = '';
     quantityChange.value = 0;
 };
+
 const updateQuantity = async () => {
     const index = currentIndex.value;
     const item = store.chiTietHoaDons[index];
     const change = quantityChange.value;
 
-    // Validate số lượng nhập vào
     if (change <= 0) {
         toast.error('Số lượng phải lớn hơn 0');
         return;
     }
 
     if (popupType.value === 'decrease') {
-        // Kiểm tra số lượng còn lại
         if (change > item.so_luong_con_lai) {
             toast.error(`Số lượng thêm không được vượt quá ${item.so_luong_con_lai}`);
             return;
@@ -676,7 +963,7 @@ const updateQuantity = async () => {
             const response = await store.updateProductQuantity(
                 store.hoaDonDetail.ma_hoa_don,
                 item.id_chi_tiet_san_pham,
-                change // Số lượng thêm
+                change
             );
 
             if (response.error) {
@@ -684,7 +971,6 @@ const updateQuantity = async () => {
                 return;
             }
 
-            // Cập nhật lại dữ liệu
             await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
             toast.success(`Đã thêm ${change} sản phẩm thành công`);
         } catch (error) {
@@ -692,25 +978,20 @@ const updateQuantity = async () => {
             toast.error('Có lỗi xảy ra khi thêm số lượng');
         }
     } else if (popupType.value === 'increase') {
-        // Kiểm tra số lượng hiện tại
         if (change >= item.so_luong) {
             toast.error(`Số lượng giảm không được vượt quá ${item.so_luong}`);
             return;
         }
-
         try {
             const response = await store.updateProductQuantity(
                 store.hoaDonDetail.ma_hoa_don,
                 item.id_chi_tiet_san_pham,
-                -change // Số lượng giảm
+                -change
             );
-
             if (response.error) {
                 toast.error('Cập nhật số lượng thất bại');
                 return;
             }
-
-            // Cập nhật lại dữ liệu
             await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
             toast.success(`Đã giảm ${change} sản phẩm thành công`);
         } catch (error) {
@@ -719,7 +1000,6 @@ const updateQuantity = async () => {
         }
     }
 
-    // Đóng popup sau khi xử lý
     closeQuantityPopup();
 };
 
@@ -743,6 +1023,7 @@ const revertToInitial = () => {
         store.revertToInitialStatus(store.hoaDonDetail.ma_hoa_don);
     }
 };
+
 onMounted(async () => {
     const maHoaDon = route.params.maHoaDon;
     if (maHoaDon) {
@@ -766,22 +1047,17 @@ onMounted(async () => {
 .order-header {
     background-color: #f8f9fa;
     padding: 10px;
-    border-bottom: 1px solid #ddd;
     margin-bottom: 20px;
 }
 
 .status-icons {
     display: flex;
     justify-content: flex-start;
-    /* Bắt đầu từ bên trái */
     gap: 40px;
-    /* Tăng khoảng cách giữa các trạng thái để dễ nhìn */
     margin-bottom: 20px;
     position: relative;
     flex-wrap: nowrap;
-    /* Đảm bảo không xuống dòng */
     overflow-x: auto;
-    /* Nếu danh sách quá dài, cho phép cuộn ngang */
     padding: 10px 0;
 }
 
@@ -791,23 +1067,16 @@ onMounted(async () => {
     position: relative;
     z-index: 1;
     min-width: 100px;
-    /* Đảm bảo mỗi trạng thái có chiều rộng tối thiểu */
 }
 
-/* Đường thẳng nối giữa các trạng thái */
 .status-icon:not(:last-child)::after {
     content: '';
     position: absolute;
     top: 12px;
-    /* Đặt đường thẳng ở giữa icon */
     left: 100%;
-    /* Bắt đầu từ bên phải của trạng thái hiện tại */
     width: 40px;
-    /* Chiều dài đường thẳng, khớp với gap */
     height: 2px;
-    /* Độ dày của đường thẳng */
-    background-color: #007bff;
-    /* Màu xanh cho đường thẳng */
+    background-color: #1890ff;
     z-index: 0;
 }
 
@@ -831,47 +1100,17 @@ onMounted(async () => {
 
 .info-box {
     background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
     padding: 15px;
     margin-bottom: 20px;
-    /* margin-right: 10px; */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     position: relative;
-}
-
-.info-box .btn.btn-primary,
-.info-box .btn.btn-secondary,
-.info-box .btn.btn-success {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 5px 10px;
-    font-size: 12px;
 }
 
 .info-box h5 {
     margin-top: 0;
-    color: #343a40;
-    font-weight: 500;
-}
-
-.table-custom {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.table-custom th,
-.table-custom td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-    vertical-align: middle;
-}
-
-.table-custom th {
-    background-color: #f8f9fa;
+    color: #1f1f1f;
     font-weight: 500;
 }
 
@@ -879,6 +1118,7 @@ onMounted(async () => {
     width: 50px;
     height: 50px;
     object-fit: cover;
+    margin-right: 10px;
 }
 
 .total-section {
@@ -887,187 +1127,21 @@ onMounted(async () => {
 }
 
 .notification {
-    background-color: #ffebee;
+    background-color: #fff1f0;
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 4px;
     text-align: center;
     margin-top: 20px;
-    color: #721c24;
+    color: #cf1322;
     font-weight: 500;
-}
-
-textarea.form-control[readonly] {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    resize: none;
 }
 
 .text-danger {
-    color: #dc3545;
+    color: #ff4d4f;
 }
 
 .text-success {
-    color: #28a745;
-}
-
-.mb-3 {
-    margin-bottom: 1rem;
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.form-control {
-    border-radius: 5px;
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-.form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
-}
-
-.btn-success {
-    margin-right: 55px;
-    padding: 5px 15px;
-}
-
-.btn-secondary {
-    margin-right: 5px;
-    padding: 5px 15px;
-}
-
-/* Popup */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 80%;
-    max-width: 900px;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-}
-
-.modal-content h2 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.search-input {
-    width: 300px;
-}
-
-.close-btn {
-    display: block;
-    margin: 20px auto 0;
-}
-
-.quantity-input {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.quantity-input button {
-    padding: 5px 10px;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-.quantity-input button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.quantity-input input {
-    width: 60px;
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    padding: 5px;
-}
-
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.pagination button {
-    padding: 5px 15px;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-.pagination button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.quantity-input {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.quantity-input button {
-    padding: 5px 10px;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-.quantity-input button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.quantity-input input {
-    width: 60px;
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    padding: 5px;
-}
-
-.btn-danger.btn-sm {
-    padding: 5px 10px;
-    font-size: 12px;
-    visibility: visible;
+    color: #52c41a;
 }
 
 .quantity-display {
@@ -1081,39 +1155,27 @@ textarea.form-control[readonly] {
     text-align: center;
 }
 
-.quantity-display button {
-    padding: 5px 10px;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
+.quantity-input {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-.quantity-display button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
+.modal-header {
+    margin-bottom: 20px;
 }
 
-.popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+.close-btn {
+    display: block;
+    margin: 20px auto 0;
+}
+
+.pagination {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-}
-
-.popup-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    width: 300px;
-    text-align: center;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .popup-input {
@@ -1123,34 +1185,42 @@ textarea.form-control[readonly] {
     gap: 10px;
 }
 
-.popup-input input {
-    width: 100px;
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-}
-
 .popup-actions {
     display: flex;
     gap: 10px;
     justify-content: center;
 }
 
-.btn-primary {
-    padding: 5px 10px;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
+.text-right {
+    text-align: right;
 }
 
-.btn-secondary {
-    padding: 5px 10px;
-    background: #6c757d;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
+/* Style cho drawer */
+:deep(.ant-drawer-body) {
+    padding: 20px;
+}
+
+:deep(.ant-form-item) {
+    margin-bottom: 16px;
+}
+
+:deep(.ant-select) {
+    width: 100%;
+}
+
+/* Đảm bảo select có chiều cao đồng bộ */
+:deep(.ant-select-selector) {
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+:deep(.ant-input-number) {
+    width: 100%;
+}
+
+/* Style cho bảng danh sách địa chỉ */
+:deep(.ant-table) {
+    margin-bottom: 20px;
 }
 </style>
