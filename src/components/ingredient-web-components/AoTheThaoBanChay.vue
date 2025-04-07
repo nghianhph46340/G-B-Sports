@@ -15,50 +15,54 @@
                 </button>
 
                 <a-carousel ref="carousel" autoplay dots-class="custom-dots">
-                    <div v-for="(slideGroup, groupIndex) in productSlides" :key="groupIndex">
-                        <div class="row products-grid">
-                            <div class="col product-card" v-for="(product, index) in slideGroup" :key="index"
-                                @mouseenter="activeProduct = product.id" @mouseleave="activeProduct = null">
-                                <div class="product-image-container">
-                                    <img class="product-image" :src="product.image" alt="Product image">
-                                    <div class="discount-badge" v-if="product.discountPercent">
-                                        -{{ product.discountPercent }}%
-                                    </div>
-                                    <div class="product-overlay" :class="{ 'active': activeProduct === product.id }">
-                                        <div class="overlay-buttons">
-                                            <router-link
-                                                :to="{ name: 'sanPhamDetail-BanHang', params: { id: product.id } }"
-                                                class="overlay-btn view-btn">
-                                                <eye-outlined />
-                                                <span>Xem</span>
-                                            </router-link>
-                                            <button class="overlay-btn cart-btn" @click="showProductDetail(product)">
-                                                <shopping-cart-outlined />
-                                                <span>Thêm</span>
-                                            </button>
+                    <template #default>
+                        <div v-for="(slideGroup, groupIndex) in productSlides" :key="groupIndex">
+                            <div class="row products-grid">
+                                <div class="col product-card" v-for="(product, index) in slideGroup" :key="index"
+                                    @mouseenter="activeProduct = product.id" @mouseleave="activeProduct = null">
+                                    <div class="product-image-container">
+                                        <img class="product-image" :src="product.image" alt="Product image">
+                                        <div class="discount-badge" v-if="product.discountPercent">
+                                            -{{ product.discountPercent }}%
+                                        </div>
+                                        <div class="product-overlay"
+                                            :class="{ 'active': activeProduct === product.id }">
+                                            <div class="overlay-buttons">
+                                                <router-link
+                                                    :to="{ name: 'sanPhamDetail-BanHang', params: { id: product.id } }"
+                                                    class="overlay-btn view-btn">
+                                                    <eye-outlined />
+                                                    <span>Xem</span>
+                                                </router-link>
+                                                <button class="overlay-btn cart-btn"
+                                                    @click="showProductDetail(product)">
+                                                    <shopping-cart-outlined />
+                                                    <span>Thêm</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="product-info">
-                                    <div class="product-price-row">
-                                        <span class="product-price">{{ product.price }}</span>
-                                        <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
+                                    <div class="product-info">
+                                        <div class="product-price-row">
+                                            <span class="product-price">{{ product.price }}</span>
+                                            <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
                                             }}</span>
-                                        <span class="product-discount" v-if="product.discount">{{ product.discount
+                                            <span class="product-discount" v-if="product.discount">{{ product.discount
                                             }}</span>
-                                    </div>
-                                    <h6 class="product-name">{{ product.name }}</h6>
-                                    <div class="product-meta">
-                                        <span class="product-brand">{{ product.brand }}</span>
-                                        <div class="product-rating">
-                                            <star-filled />
-                                            <span>{{ product.rating }} ({{ product.reviews }})</span>
+                                        </div>
+                                        <h6 class="product-name">{{ product.name }}</h6>
+                                        <div class="product-meta">
+                                            <span class="product-brand">{{ product.brand }}</span>
+                                            <div class="product-rating">
+                                                <star-filled />
+                                                <span>{{ product.rating }} ({{ product.reviews }})</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
                 </a-carousel>
             </div>
         </div>
@@ -84,7 +88,7 @@
                         <span class="current-price">{{ selectedProduct?.price }}</span>
                         <span class="old-price" v-if="selectedProduct?.oldPrice">{{ selectedProduct?.oldPrice }}</span>
                         <span class="discount-badge" v-if="selectedProduct?.discount">{{ selectedProduct?.discount
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="brand-section">
                         <span class="brand-label">Thương hiệu:</span>

@@ -221,7 +221,7 @@ const removeItem = (index) => {
 };
 
 const goShopping = () => {
-    router.push('/san-pham');
+    router.push('/home');
 };
 
 const proceedToCheckout = () => {
