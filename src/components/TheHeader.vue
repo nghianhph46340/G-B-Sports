@@ -41,7 +41,7 @@
                                 :class="{ 'icon-animated': animatedIcon === 'support' }" />
                         </div>
                         <span class="nav-text">{{ !store.changeLanguage.hoTro ? 'Hỗ trợ' : store.changeLanguage.hoTro
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="nav-item text-center" @click="chuyenTrang('/giohang-banhang')"
                         @mouseenter="animateIcon('cart')">
