@@ -7,12 +7,12 @@ const admin = [
             {
                 path: "",
                 name: "admin-home",
-                component: () => import('@/views/admin/BanHang/admin.vue')
+                component: () => import('@/views/admin/BCTK/BCTK.vue')
             },
             {
-                path: "baocaothongke",
-                name: "admin-bao-cao-thong-ke",
-                component: () => import('@/views/admin/BCTK/BCTK.vue')
+                path: "banhang",
+                name: "admin-ban-hang",
+                component: () => import('@/views/admin/BanHang/admin.vue')
             },
             {
                 path: "quanlysanpham",

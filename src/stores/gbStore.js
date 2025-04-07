@@ -1342,7 +1342,7 @@ export const useGbStore = defineStore('gbStore', {
         case '/admin/quanlykhachhang':
           this.indexMenu = ['11'];
           break;
-        case '/admin/baocaothongke':
+        case '/admin/banhang':
           this.indexMenu = ['2'];
           break;
         case '/admin/quanlyvoucher':
