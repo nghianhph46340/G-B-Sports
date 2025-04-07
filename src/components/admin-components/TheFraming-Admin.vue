@@ -59,7 +59,7 @@
                 </a-sub-menu>
                 <a-menu-item key="14">
                     <LogoutOutlined />
-                    <span>Đăng xuất</span>
+                    <span @click="store.logout()">Đăng xuất</span>
                 </a-menu-item>
             </a-menu>
         </a-layout-sider>

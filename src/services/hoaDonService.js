@@ -75,7 +75,7 @@ const getCTHD = async (maHoaDon) => {
 // Thay đổi trạng thái hóa đơn
 const changeTrangThai = async (maHoaDon, newTrangThai) => {
     try {
-        const { data } = await axiosInstance.post(qlhd + 'chuyen-trang-thai', null, {
+        const { data } = await axiosInstance.post(qlhd + 'chuyen_trang_thai', null, {
             params: { maHoaDon, newTrangThai }
         });
         return data;
@@ -85,10 +85,22 @@ const changeTrangThai = async (maHoaDon, newTrangThai) => {
     }
 };
 
+const quayLaiTrangThai = async (maHoaDon) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'quay_lai_trang_thai', null, {
+            params: { maHoaDon }
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API quay lại trạng thái ban đầu:', error);
+        return { error: true };
+    }
+};
+
 // Hủy hóa đơn
 const cancelHoaDon = async (maHoaDon) => {
     try {
-        const { data } = await axiosInstance.post(qlhd + 'cancel-order', null, {
+        const { data } = await axiosInstance.post(qlhd + 'cancel_order', null, {
             params: { maHoaDon }
         });
         return data;
@@ -98,6 +110,87 @@ const cancelHoaDon = async (maHoaDon) => {
     }
 };
 
+// Cập nhật thông tin khách hàng trong hóa đơn
+const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'update_ttkh', {
+            maHoaDon,
+            hoTen: ttkh.hoTen,
+            email: ttkh.email,
+            sdtNguoiNhan: ttkh.sdtNguoiNhan,
+            diaChi: ttkh.diaChi
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật thông tin khách hàng:', error);
+        return { error: true };
+    }
+};
+
+// Cập nhật ghi chú
+const updateNote = async (maHoaDon, ghiChu) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'update_note', {
+            maHoaDon,
+            ghiChu
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật ghi chú:', error);
+        return { error: true };
+    }
+};
+
+// Lấy danh sách chi tiết sản phẩm
+const getAllCTSP_HD = async (page = 0, size = 5, keyword = '') => {
+    try {
+        const params = new URLSearchParams();
+        params.append('page', page);
+        params.append('size', size);
+        if (keyword) params.append('keyword', keyword);
+        const { data } = await axiosInstance.get(qlhd + `ctsp_hd?${params.toString()}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API lấy danh sách chi tiết sản phẩm:', error);
+        return { error: true };
+    }
+};
+
+// Thêm sản phẩm vào hóa đơn
+const addProductsToInvoice = async (maHoaDon, products) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'addSP_HD', {
+            maHoaDon,
+            products
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API thêm sản phẩm vào hóa đơn:', error);
+        return { error: true };
+    }
+};
+const removeProductFromInvoice = async (maHoaDon, idCTSP, soLuong) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'removeSP_HD', null, {
+            params: { maHoaDon, idCTSP, soLuong }
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API xóa sản phẩm khỏi hóa đơn:', error);
+        return { error: true };
+    }
+};
+const updateProductQuantity = async (maHoaDon, idCTSP, quantityChange) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + 'update_soLuong', null, {
+            params: { maHoaDon, idCTSP, quantityChange }
+        });
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật số lượng sản phẩm:', error);
+        return { error: true };
+    }
+};
 export const hoaDonService = {
     getAllHoaDon,
     getListHoaDon,
@@ -106,5 +199,12 @@ export const hoaDonService = {
     searchHoaDon,
     getCTHD,
     changeTrangThai,
-    cancelHoaDon
+    cancelHoaDon,
+    updateTTKH_in_HD,
+    updateNote,
+    getAllCTSP_HD,
+    addProductsToInvoice,
+    removeProductFromInvoice,
+    updateProductQuantity,
+    quayLaiTrangThai
 };
