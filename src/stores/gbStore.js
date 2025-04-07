@@ -87,6 +87,7 @@ export const useGbStore = defineStore('gbStore', {
     userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
     isLoggedIn: localStorage.getItem('isLoggedIn') === 'true' || false,
     id_roles: localStorage.getItem('id_roles') || null, // Thêm id_roles vào state
+    userDetails: null,
 
 
     //Khách hàng
@@ -744,34 +745,29 @@ export const useGbStore = defineStore('gbStore', {
             toast.error(result.message || 'Đăng nhập thất bại!');
             return { error: true };
         }
-    
+
         // Kiểm tra dữ liệu trả về từ API đăng nhập
         if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
             console.error('Dữ liệu tài khoản không hợp lệ:', result);
             toast.error('Dữ liệu tài khoản không hợp lệ!');
             return { error: true };
         }
-    
         // Lưu thông tin cơ bản
         this.userInfo = result.taiKhoan;
         this.isLoggedIn = true;
         this.id_roles = result.id_roles;
-    
         // In thông tin tài khoản cơ bản
         console.log('Thông tin tài khoản (tai_khoan):', this.userInfo);
         console.log('ID Roles:', this.id_roles);
-    
         // Lưu vào sessionStorage
         sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('id_roles', result.id_roles);
-    
         if (loginData.rememberMe) {
             localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('id_roles', result.id_roles);
         }
-    
         // Lấy thông tin chi tiết
         try {
             const userDetails = await khachHangService.getUserDetail({
@@ -779,10 +775,8 @@ export const useGbStore = defineStore('gbStore', {
                 id_roles: result.id_roles
             });
             this.userDetails = userDetails;
-    
             // In thông tin chi tiết
             console.log('Thông tin chi tiết (userDetails):', this.userDetails);
-    
             sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
             if (loginData.rememberMe) {
                 localStorage.setItem('userDetails', JSON.stringify(userDetails));
@@ -791,42 +785,64 @@ export const useGbStore = defineStore('gbStore', {
             console.error('Lỗi khi lấy thông tin chi tiết:', error);
             toast.error('Không thể lấy thông tin chi tiết tài khoản!');
         }
-    
         toast.success(result.successMessage || 'Đăng nhập thành công!');
         return { success: true, id_roles: result.id_roles };
     },
     // Cập nhật restoreLoginState để kiểm tra cả sessionStorage
+    // Khôi phục trạng thái đăng nhập từ localStorage hoặc sessionStorage
     restoreLoginState() {
         let userInfo = localStorage.getItem('userInfo');
         let isLoggedIn = localStorage.getItem('isLoggedIn');
         let id_roles = localStorage.getItem('id_roles');
+        let userDetails = localStorage.getItem('userDetails');
 
         // Nếu không có trong localStorage, kiểm tra sessionStorage
         if (!userInfo || isLoggedIn !== 'true') {
             userInfo = sessionStorage.getItem('userInfo');
             isLoggedIn = sessionStorage.getItem('isLoggedIn');
             id_roles = sessionStorage.getItem('id_roles');
+            userDetails = sessionStorage.getItem('userDetails');
         }
 
         if (userInfo && isLoggedIn === 'true') {
             this.userInfo = JSON.parse(userInfo);
             this.isLoggedIn = true;
-            this.id_roles = id_roles;
+            this.id_roles = id_roles ? parseInt(id_roles) : null;
+            this.userDetails = userDetails ? JSON.parse(userDetails) : null;
+
+            // In thông tin để kiểm tra
+            console.log('Khôi phục trạng thái đăng nhập:');
+            console.log('User Info:', this.userInfo);
+            console.log('ID Roles:', this.id_roles);
+            console.log('User Details:', this.userDetails);
+        } else {
+            console.log('Không có dữ liệu đăng nhập để khôi phục.');
         }
     },
 
-    // Action để đăng xuất
-    logout() {
-        // Xóa dữ liệu trong localStorage và state
-        localStorage.removeItem('id_roles');
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('isLoggedIn');
-        this.userInfo = null;
-        this.isLoggedIn = false;
-        this.id_roles = null;
-        router.replace('/login-register/login');
-        toast.success('Đăng xuất thành công!');
-    },
+    // Đăng xuất
+        logout() {
+            // Xóa dữ liệu trong localStorage và sessionStorage
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('id_roles');
+            localStorage.removeItem('userDetails');
+            sessionStorage.removeItem('userInfo');
+            sessionStorage.removeItem('isLoggedIn');
+            sessionStorage.removeItem('id_roles');
+            sessionStorage.removeItem('userDetails');
+
+            // Reset trạng thái trong store
+            this.userInfo = null;
+            this.isLoggedIn = false;
+            this.id_roles = null;
+            this.userDetails = null;
+
+            // const router = useRouter();
+            // router.replace('/login-register/login');
+            toast.success('Đăng xuất thành công!');
+            window.location.href = '/login-register/login';
+        },
     //Import excel
     async importExcel(file) {
       try {

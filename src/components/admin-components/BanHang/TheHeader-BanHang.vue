@@ -642,14 +642,34 @@ const removeFromBill = (productId) => {
 // Hàm tạo mới một tab hóa đơn (Đã sửa)
 const add = async () => {
     try {
-        const response = await store.createHoaDon(1); // ID nhân viên
+        // Kiểm tra xem người dùng đã đăng nhập và có thông tin chi tiết không
+        if (!store.isLoggedIn || !store.userDetails) {
+            throw new Error('Người dùng chưa đăng nhập hoặc không có thông tin chi tiết!');
+        }
+
+        // Kiểm tra vai trò (chỉ nhân viên mới được tạo hóa đơn)
+        if (![1, 2, 3].includes(store.id_roles)) {
+            throw new Error('Chỉ nhân viên mới có thể tạo hóa đơn!');
+        }
+
+        // Lấy id_nhan_vien từ userDetails
+        const idNhanVien = store.userDetails.idNhanVien;
+        if (!idNhanVien) {
+            throw new Error('Không tìm thấy ID nhân viên!');
+        }
+
+        console.log('ID Nhân viên được sử dụng để tạo hóa đơn:', idNhanVien);
+        // Gọi API tạo hóa đơn với id_nhan_vien
+        const response = await store.createHoaDon(idNhanVien);
         if (!response || response.error) {
             throw new Error(response?.message || 'Không thể tạo hóa đơn');
         }
 
+        // Tăng index cho tab mới
         newTabIndex.value++;
         const newKey = `invoiceTab_${Date.now()}_${newTabIndex.value}`;
 
+        // Thêm tab mới vào danh sách
         panes.value.push({
             title: `Đơn ${panes.value.length + 1}`,
             key: newKey,
@@ -676,6 +696,7 @@ const add = async () => {
         activeKey.value = newKey;
     } catch (error) {
         console.error("Lỗi khi tạo hóa đơn:", error);
+        toast.error(error.message || 'Lỗi khi tạo hóa đơn!');
     }
 };
 // Hàm đóng tab hóa đơn (Đã sửa)
