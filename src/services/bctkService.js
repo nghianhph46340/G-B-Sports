@@ -40,19 +40,62 @@ const getTiLeTrangThai = async () => {
 };
 const topSanPhamBanChay = async () => {
     try {
-        const response = await axiosInstance.get('/admin/topSPBanChay');
+        const response = await axiosInstance.get('/admin/tiLeTrangThaiDonHang');
+        console.log("Dữ liệu trả về từ API:", response.data);
         return response.data;
     } catch (error) {
-        console.error('Lỗi trong topSanPhamBanChay:', error);
+        console.error("Lỗi khi lấy tỉ lệ trạng thái:", error);
         throw error;
     }
 };
-const topSanPhamBanCham = async () => {
+// const topSanPhamBanChay = async () => {
+//     try {
+//         const response = await axiosInstance.get('/admin/topSPBanChay');
+//         return response.data;
+//     } catch (error) {
+//         console.error('Lỗi trong topSanPhamBanChay:', error);
+//         throw error;
+//     }
+// };
+// thử nghiệm
+const getTopSanPhamBanChay = async (type = 'nam-nay', startDate = null, endDate = null) => {
     try {
-        const response = await axiosInstance.get('/admin/topSPBanCham');
+        let url = '/admin/topSPBanChay';
+        let params = { type };
+        if (type === 'tuy-chon') {
+            params.startDate = startDate;
+            params.endDate = endDate;
+        }
+        const response = await axiosInstance.get(url, { params });
+        console.log('API Response:', response.data);
         return response.data;
     } catch (error) {
-        console.error('Lỗi trong topSanPhamBanCham:', error);
+        console.error('Error in getTopSanPhamBanChay:', error);
+        throw error;
+    }
+};
+// const topSanPhamBanCham = async () => {
+//     try {
+//         const response = await axiosInstance.get('/admin/topSPBanCham');
+//         return response.data;
+//     } catch (error) {
+//         console.error('Lỗi trong topSanPhamBanCham:', error);
+//         throw error;
+//     }
+// };
+const getTopSanPhamBanCham = async (type = 'nam-nay', startDate = null, endDate = null) => {
+    try {
+        let url = '/admin/topSPBanCham';
+        let params = { type };
+        if (type === 'tuy-chon') {
+            params.startDate = startDate;
+            params.endDate = endDate;
+        }
+        const response = await axiosInstance.get(url, { params });
+        console.log('API Response (Bán chậm):', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error in getTopSanPhamBanCham:', error);
         throw error;
     }
 };
@@ -223,7 +266,12 @@ const getChartData = async (timeUnit) => {
 export const bctkService = {
     getSoLieu,
     getChartData,
-    topSanPhamBanChay,
-    topSanPhamBanCham,
+    // topSanPhamBanChay,
+    // topSanPhamBanCham,
+    getTiLeTrangThai,
+    getTopSanPhamBanChay,
+    getTopSanPhamBanCham,
+    // topSanPhamBanChay,
+    // topSanPhamBanCham,
     getTiLeTrangThai
 }
