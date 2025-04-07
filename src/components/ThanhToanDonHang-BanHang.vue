@@ -225,7 +225,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -456,27 +456,34 @@ const placing = ref(false);
 
 // Computed values for order summary
 const subtotal = computed(() => {
-    return orderItems.value.reduce((total, item) => total + (item.gia * item.so_luong), 0);
+    return orderItems.value.reduce((total, item) => {
+        // Đảm bảo giá và số lượng đều là số
+        const price = Number(item.gia || item.price || 0);
+        const quantity = Number(item.so_luong || item.quantity || 1);
+        return total + (price * quantity);
+    }, 0);
 });
 
 // Calculate discount based on applied vouchers
 const calculateDiscount = () => {
     let totalDiscount = 0;
+    const subTotal = Number(subtotal.value || 0);
 
     appliedCoupons.value.forEach(voucher => {
         let discountAmount = 0;
 
         if (voucher.loai === 'percent') {
             // Percentage discount
-            discountAmount = subtotal.value * (voucher.gia_tri / 100);
+            const percentValue = Number(voucher.gia_tri || 0);
+            discountAmount = subTotal * (percentValue / 100);
 
             // Cap discount at maximum value if set
-            if (voucher.gia_tri_toi_da && discountAmount > voucher.gia_tri_toi_da) {
-                discountAmount = voucher.gia_tri_toi_da;
+            if (voucher.gia_tri_toi_da && discountAmount > Number(voucher.gia_tri_toi_da)) {
+                discountAmount = Number(voucher.gia_tri_toi_da);
             }
         } else if (voucher.loai === 'fixed') {
             // Fixed amount discount
-            discountAmount = voucher.gia_tri;
+            discountAmount = Number(voucher.gia_tri || 0);
         }
 
         totalDiscount += discountAmount;
@@ -486,24 +493,29 @@ const calculateDiscount = () => {
 };
 
 const discount = computed(() => {
-    return calculateDiscount();
+    return Number(calculateDiscount() || 0);
 });
 
 const shippingFee = computed(() => {
     // Base shipping fee - free shipping for orders over 500,000 VND
-    let fee = subtotal.value > 500000 ? 0 : 30000;
+    const subTotal = Number(subtotal.value || 0);
+    let fee = subTotal > 500000 ? 0 : 30000;
 
     // Apply shipping vouchers
     const shippingVoucher = appliedCoupons.value.find(c => c.loai === 'shipping');
     if (shippingVoucher) {
-        fee = Math.max(0, fee - shippingVoucher.gia_tri);
+        const voucherValue = Number(shippingVoucher.gia_tri || 0);
+        fee = Math.max(0, fee - voucherValue);
     }
 
     return fee;
 });
 
 const grandTotal = computed(() => {
-    return subtotal.value - discount.value + shippingFee.value;
+    const subTotal = Number(subtotal.value || 0);
+    const disc = Number(discount.value || 0);
+    const shipping = Number(shippingFee.value || 0);
+    return subTotal - disc + shipping;
 });
 
 // Fetch customer data
@@ -838,14 +850,41 @@ onMounted(async () => {
     // Kiểm tra xem có sản phẩm mua ngay từ store không
     if (store.checkoutItems && store.checkoutItems.length > 0) {
         console.log('Đã nhận sản phẩm mua ngay từ store:', store.checkoutItems);
-        orderItems.value = [...store.checkoutItems];
+
+        // Xử lý và chuẩn hóa dữ liệu đơn hàng
+        orderItems.value = store.checkoutItems.map(item => {
+            // Đảm bảo các giá trị số đều được chuyển đổi đúng định dạng
+            const processedItem = {
+                ...item,
+                // Sử dụng gia hoặc price tùy theo field có sẵn
+                gia: Number(item.gia || item.price || 0),
+                price: Number(item.gia || item.price || 0),
+                so_luong: Number(item.so_luong || item.quantity || 1),
+                quantity: Number(item.so_luong || item.quantity || 1)
+            };
+
+            console.log('Đã xử lý sản phẩm:', processedItem);
+            return processedItem;
+        });
     }
     // Hoặc kiểm tra nếu có dữ liệu query từ route
     else if (route.query.data) {
         try {
             const productData = JSON.parse(atob(route.query.data));
             console.log('Đã nhận dữ liệu sản phẩm từ query params:', productData);
-            orderItems.value = Array.isArray(productData) ? productData : [productData];
+
+            // Xử lý và chuẩn hóa dữ liệu đơn hàng
+            const processedData = Array.isArray(productData) ? productData : [productData];
+            orderItems.value = processedData.map(item => {
+                return {
+                    ...item,
+                    // Đảm bảo các giá trị số đều được chuyển đổi đúng định dạng
+                    gia: Number(item.gia || item.price || 0),
+                    price: Number(item.gia || item.price || 0),
+                    so_luong: Number(item.so_luong || item.quantity || 1),
+                    quantity: Number(item.so_luong || item.quantity || 1)
+                };
+            });
         } catch (error) {
             console.error('Lỗi khi phân tích dữ liệu sản phẩm:', error);
             message.error('Không thể đọc thông tin sản phẩm');
