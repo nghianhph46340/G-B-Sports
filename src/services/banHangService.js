@@ -124,6 +124,16 @@ const phuongThucNhanHang = async(idHoaDon, phuongThucNhanHang) => {
     }
 }
 
+const getHoaDonByIdHoaDon = async(idHD) => {
+    try {
+        const { data } = await axiosInstance.get(banHang + `getHoaDonByIdHoaDon?idHD=${idHD}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API lấy hoá đơn theo id:', error);
+        return { error: true };
+    }
+}
+
 export const banHangService = {
     getAllHoaDonCTT,
     createHoaDon,
@@ -135,5 +145,6 @@ export const banHangService = {
     themSPHDMoi,
     trangThaiDonHang,
     phuongThucNhanHang,
-    xoaSPHD
+    xoaSPHD,
+    getHoaDonByIdHoaDon
 }

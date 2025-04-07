@@ -32,7 +32,7 @@
                                         <span class="product-quantity">SL: {{ product.so_luong || 1 }}</span>
                                     </div>
                                     <div class="info-right">
-                                        <span class="product-price">{{ formatCurrency(product.gia_sau_giam) }}</span>
+                                        <span class="product-price">{{ formatCurrency(product.gia_ban) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -115,7 +115,7 @@
                                             style="width: 80px;" />
                                     </a-space>
                                 </td>
-                                <td>{{ formatCurrency(item.gia_ban) }}</td>
+                                <td>{{ formatCurrency(item.gia_ban || item.gia_sau_giam) }}</td>
                                 <td>{{ formatCurrency(item.tong_tien) }}</td>
                                 <td>
                                     <a-button type="danger" shape="circle" size="small"
@@ -198,7 +198,7 @@
                                         <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
                                             :disabled="store.currentPage === 0">Trang trước</button>
                                         <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages
-                                            }}</span>
+                                        }}</span>
                                         <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
                                             :disabled="store.currentPage >= store.totalPages - 1">Trang sau</button>
                                     </div>
@@ -453,9 +453,25 @@ const performSearch = () => {
     console.log('Performing search for:', searchQuery.value);
 };
 
+const refreshHoaDon = async (idHoaDon) => {
+    try {
+        const hoaDonInfo = await store.getHoaDonByIdHoaDon(idHoaDon); // Hoặc API khác nếu bạn có
+        const currentTab = activeTabData.value;
+        if (hoaDonInfo && currentTab && currentTab.hd?.id_hoa_don === idHoaDon) {
+            currentTab.hd.tong_tien_truoc_giam = hoaDonInfo.tong_tien_truoc_giam || 0;
+            currentTab.hd.tong_tien_sau_giam = hoaDonInfo.tong_tien_sau_giam || 0;
+        }
+    } catch (error) {
+        console.error('Lỗi khi cập nhật thông tin hóa đơn:', error);
+        message.error('Không thể làm mới thông tin hóa đơn.');
+    }
+};
+
+
 // Thêm sản phẩm vào hóa đơn chi tiết của tab hiện tại
 const addToBill = async (product) => {
     const currentTab = activeTabData.value;
+    console.log("product", product);
     if (!currentTab || !currentTab.hd?.id_hoa_don) {
         message.error('Vui lòng chọn hoặc tạo một hóa đơn hợp lệ trước!');
         return;
@@ -484,10 +500,12 @@ const addToBill = async (product) => {
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
             kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban || item.gia_sau_giam,
+            gia_ban: item.gia_ban,
             tong_tien: item.don_gia,
             so_luong_ton_goc: item.so_luong_ton || 0
         }));
+        await refreshHoaDon(currentTab.hd.id_hoa_don);
+
 
         dropdownVisible.value = false;
         searchQuery.value = '';
@@ -518,15 +536,17 @@ const isPaymentDisabled = computed(() => {
 
 // Cập nhật tổng tiền khi số lượng thay đổi trong bảng hóa đơn
 const updateItemTotal = async (item) => {
-    const productInfo = allProducts.value.find(p => p.id === item.id_chi_tiet_san_pham);
+    const productInfo = allProducts.value.find(p => p.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
+    console.log('productInfo', productInfo);
     const hoadon = store.getAllSPHDArr;
     // Tìm sản phẩm chính xác bằng id_chi_tiet_san_pham thay vì chỉ id_hoa_don
     const sphd = hoadon.find(hd => hd.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
-
+    console.log('sphd', sphd);
+    console.log('item', item);
     // Kiểm tra số lượng tồn
-    if (productInfo && item.so_luong > productInfo.so_luong_ton) {
+    if (productInfo && item.so_luong > productInfo.so_luong) {
         message.warning(`Số lượng tồn của "${item.ten_san_pham}" không đủ (${productInfo.so_luong_ton}). Đã đặt lại số lượng tối đa.`);
-        item.so_luong = productInfo.so_luong_ton;
+        item.so_luong = productInfo.so_luong;
     }
     if (item.so_luong <= 0) {
         item.so_luong = 1;
@@ -574,11 +594,13 @@ const updateItemTotal = async (item) => {
                 mau_sac: hd.ten_mau_sac || hd.mau_sac || null,
                 kich_thuoc: hd.gia_tri || null,
                 so_luong: hd.so_luong,
-                gia_ban: hd.gia_sau_giam,
+                gia_ban: hd.gia_sau_giam || hd.gia_ban,
                 tong_tien: hd.don_gia,
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
+        await refreshHoaDon(item.id_hoa_don);
+
 
     } catch (error) {
         console.error('Lỗi khi cập nhật số lượng:', error);
@@ -898,6 +920,7 @@ onMounted(async () => {
 
         // Load danh sách sản phẩm
         allProducts.value = store.getAllCTSPKMList;
+        console.log('Danh sách sản phẩm:', allProducts.value);
 
     } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);

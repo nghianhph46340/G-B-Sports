@@ -12,90 +12,122 @@ import { khachHangService } from '@/services/khachHangService'
 import { banHangService } from '@/services/banHangService'
 import { bctkService } from '@/services/bctkService'
 export const useGbStore = defineStore('gbStore', {
-  state: () => {
-    return {
-      // Các state hiện tại
-      changeLanguage: {},
-      check: true,
-      language: 'EN',
-      status: false,
-      id: 0,
-      checkNoitification: true,
-      getAllSanPham: [],
-      getAllChiTietSanPham: [],
-      searchChiTietSanPham: [],
-      searchSanPham: [],
-      getCTSPBySanPhams: [],
-      checkRouter: '',
-      checkRoutePresent: '',
-      getImages: [],
-      indexMenu: ['1'],
-      searchs: '', // Dùng chung cho tìm kiếm
-      getAllNhanVienArr: [],
-      totalPages: 0, // Dùng chung cho phân trang
-      currentPage: 0, // Dùng chung cho phân trang
-      totalItems: 0, // Dùng chung cho phân trang
-      getAllHoaDonArr: [],
-      totalHoaDon: 0,
-      currentHoaDon: 0,
-      totalItemsHoaDon: 0,
-      hoaDonDetail: {},
-      chiTietHoaDons: [],
-      trangThaiHistory: [],
-      danhMucList: [],
-      thuongHieuList: [],
-      chatLieuList: [],
-      mauSacList: [],
-      sizeList: [],
-      nhanVienArr: [],
-      nhanVienSearch: [],
-      sanPhamById: {},
-      getAllKhachHangArr: [],
-      totalKhachHang: 0,
-      currentKhachHang: 0,
-      totalItemsKhachHang: 0,
-      listSanPhamBanHang: [],
-      getAllCTSPKMList: [],
-      getAllHoaDonCTTArr: [],
-      // State cho voucher
-      getAllVoucherArr: [],
-      voucherSearch: [],
-      voucherTotalPages: 0,
-      voucherCurrentPage: 0,
-      voucherTotalItems: 0,
-      voucherSearchs: '',
+  state: () => ({
+    // Các state hiện tại chung
+    changeLanguage: {},
+    check: true,
+    language: 'EN',
+    status: false,
+    id: 0,
+    checkNoitification: true,
+    checkRouter: '',
+    checkRoutePresent: '',
+    indexMenu: ['1'],
+    searchs: '', // Dùng chung cho tìm kiếm
+    //Sản phẩm
+    getAllSanPham: [],
+    getAllChiTietSanPham: [],
+    searchChiTietSanPham: [],
+    searchSanPham: [],
+    getCTSPBySanPhams: [],
+    getImages: [],
+    danhMucList: [],
+    thuongHieuList: [],
+    chatLieuList: [],
+    mauSacList: [],
+    sizeList: [],
+    sanPhamById: {},
+    // State cho chi tiết sản phẩm
+    cTSPBySanPhamFull: [],
+    filteredSanPhamList: [],
+    //Giỏ hàng và thanh toán
+    checkoutItems: [], //Dữ liệu sản phẩm mua ngay
+    justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
+    // Cập nhật cấu trúc cho tìm kiếm và lọc
+    currentFilter: null, // Bộ lọc hiện tại
 
-      // State cho khuyến mãi
-      getAllKhuyenMaiArr: [],
-      khuyenMaiSearch: [],
-      khuyenMaiTotalPages: 0, // Riêng cho khuyến mãi
-      khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
-      khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
-      khuyenMaiSearchs: '', // Riêng cho khuyến mãi
-      thongKe: {
-        doanhThu: 0,
-        tongDonHang: 0,
-        tongSanPham: 0,
-      },
-      // Thêm state cho filter
-      bctkFilter: {
-        type: 'hom-nay',
-        startDate: '',
-        endDate: '',
-      },
-      topSanPhamBanChay: [],
-      topSanPhamBanCham: [],
-      // State cho chi tiết sản phẩm
-      cTSPBySanPhamFull: [],
-      //Giỏ hàng và thanh toán
-      checkoutItems: [], //Dữ liệu sản phẩm mua ngay
-      justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
-    }
-  },
+    // Danh sách gốc
+    getAllSanPham: [], // Danh sách sản phẩm gốc
+    getAllChiTietSanPham: [], // Danh sách chi tiết sản phẩm gốc
+
+    // State cho tìm kiếm
+    searchKeyword: '', // Từ khóa tìm kiếm hiện tại
+    searchProductIds: [], // Lưu trữ ID của các sản phẩm tìm thấy
+    filterCriteria: {}, // Lưu trữ các tiêu chí lọc
+    filteredProductIds: [], // Lưu trữ ID của các sản phẩm đã lọc
+    finalProductIds: [], // ID sản phẩm cuối cùng sau khi kết hợp tìm kiếm và lọc
+    isSearching: false, // Đang trong trạng thái tìm kiếm?
+    isFiltering: false, // Đang trong trạng thái lọc?
+    debug: true, // Chế độ debug để ghi log chi tiết
+
+
+
+    //Nhân viên
+    getAllNhanVienArr: [],
+    totalPages: 0, // Dùng chung cho phân trang
+    currentPage: 0, // Dùng chung cho phân trang
+    totalItems: 0, // Dùng chung cho phân trang
+    nhanVienArr: [],
+    nhanVienSearch: [],
+
+
+    //Hóa đơn
+    getAllHoaDonArr: [],
+    totalHoaDon: 0,
+    currentHoaDon: 0,
+    totalItemsHoaDon: 0,
+    hoaDonDetail: {},
+    chiTietHoaDons: [],
+    trangThaiHistory: [],
+    getAllHoaDonCTTArr: [],
+
+
+    //Khách hàng
+    getAllKhachHangArr: [],
+    totalKhachHang: 0,
+    currentKhachHang: 0,
+    totalItemsKhachHang: 0,
+    listSanPhamBanHang: [],
+    getAllCTSPKMList: [],
+
+
+    // State cho voucher
+    getAllVoucherArr: [],
+    voucherSearch: [],
+    voucherTotalPages: 0,
+    voucherCurrentPage: 0,
+    voucherTotalItems: 0,
+    voucherSearchs: '',
+
+    // State cho khuyến mãi
+    getAllKhuyenMaiArr: [],
+    khuyenMaiSearch: [],
+    khuyenMaiTotalPages: 0, // Riêng cho khuyến mãi
+    khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
+    khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
+    khuyenMaiSearchs: '', // Riêng cho khuyến mãi
+
+    //Thống kê
+    thongKe: {
+      doanhThu: 0,
+      tongDonHang: 0,
+      tongSanPham: 0,
+    },
+    // Thêm state cho filter
+    bctkFilter: {
+      type: 'hom-nay',
+      startDate: '',
+      endDate: '',
+    },
+    topSanPhamBanChay: [],
+    topSanPhamBanCham: [],
+
+
+  }),
 
   ///Đầu mút2
   actions: {
-    // Thêm action cho BCTK
+    // BCTK
     async getSoLieu(type = null, startDate = null, endDate = null) {
       try {
         console.log('Store getSoLieu được gọi với:', { type, startDate, endDate })
@@ -152,6 +184,11 @@ export const useGbStore = defineStore('gbStore', {
       const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
       this.topSanPhamBanCham = topSanPhamBanCham
     },
+    //Kết thúc BCTK
+
+
+
+    //Nhân viên
     async layDanhSachNhanVien() {
       const nhanVienArr = await nhanVienService.layDanhSachNhanVien()
       this.nhanVienArr = nhanVienArr
@@ -348,7 +385,7 @@ export const useGbStore = defineStore('gbStore', {
         this.mauSacList = mauSacRespone
       }
     },
-    //Lấy danh sách size
+    //Lấy danh sách size    
     async getSizeList() {
       const sizeRespone = await sanPhamService.getSizeList()
       if (sizeRespone.error) {
@@ -390,6 +427,16 @@ export const useGbStore = defineStore('gbStore', {
       } else {
         this.cTSPBySanPhamFull = cTSPBySanPhamFull
         console.log(this.cTSPBySanPhamFull)
+      }
+    },
+    async getAllSanPhamNgaySua() {
+      const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua()
+      console.log(sanPhamNgaySua)
+      if (sanPhamNgaySua.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        this.getAllSanPham = sanPhamNgaySua
       }
     },
     ///////////-----------------Hóa đơn-------------------////////////
@@ -510,15 +557,30 @@ export const useGbStore = defineStore('gbStore', {
     },
     //Import excel
     async importExcel(file) {
-      const importExcelRespone = await sanPhamService.importSanPhamFromExcel(file)
-      if (importExcelRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        toast.success('Import dữ liệu thành công')
+      try {
+        console.log('Store processing file:', file);
+        console.log('File type:', file.type);
+        console.log('File name:', file.name);
+
+        // If we have a file from Ant Design Upload, make sure we're using the right reference
+        const fileToSend = file.originFileObj || file;
+
+        const importExcelRespone = await sanPhamService.importSanPhamFromExcel(fileToSend);
+
+        if (importExcelRespone.error) {
+          toast.error('Không lấy được dữ liệu');
+          return importExcelRespone; // Return the error response so we can handle it
+        } else {
+          toast.success('Import dữ liệu thành công');
+        }
+        return importExcelRespone;
+      } catch (error) {
+        console.error('Error in importExcel store method:', error);
+        toast.error('Lỗi khi xử lý file Excel');
+        throw error; // Rethrow to let the component handle it
       }
-      return importExcelRespone
     },
+
     //Save excel
     async saveExcelImport(data) {
       const saveExcelImportRespone = await sanPhamService.saveExcelImports(data)
@@ -531,16 +593,33 @@ export const useGbStore = defineStore('gbStore', {
       return saveExcelImportRespone
     },
 
-    async getAllSanPhamNgaySua() {
-      const sanPhamNgaySua = await sanPhamService.getAllSanPhamNgaySua()
-      console.log(sanPhamNgaySua)
-      if (sanPhamNgaySua.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        this.getAllSanPham = sanPhamNgaySua
+    // Xuất Excel với các tùy chọn
+    async exportExcel(productIds, fields) {
+      try {
+        console.log('Đang xuất Excel cho sản phẩm:', productIds);
+        console.log('Các trường được chọn:', fields);
+
+        const blob = await sanPhamService.exportExcel(productIds, fields);
+
+        // Tạo URL cho blob và tải xuống
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `san-pham-export-${new Date().getTime()}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast.success('Xuất Excel thành công');
+        return true;
+      } catch (error) {
+        console.error('Lỗi khi xuất Excel:', error);
+        toast.error('Không thể xuất Excel');
+        return false;
       }
     },
+    //Kết thúc Xuất Excel
+    //Khách hàng
     //Lấy danh sách khách hàng
     async getAllKhachHang(page = 0, size = 3, keyword = null, trangThai = null) {
       const khachHang = await khachHangService.getAllKhachHang(page, size, keyword, trangThai)
@@ -575,7 +654,7 @@ export const useGbStore = defineStore('gbStore', {
       this.totalItemsKhachHang = khachHang.totalElements || 0
     },
 
-    ///Code bán hàng tại quầy
+    ///=======Code bán hàng tại quầy=======///
     async getAllCTSPKM() {
       try {
         const response = await sanPhamService.getAllCTSPKM()
@@ -748,9 +827,33 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
 
+
+    async getHoaDonByIdHoaDon(idHD) {
+      try {
+        const result = await banHangService.getHoaDonByIdHoaDon(idHD);
+        if (!result || result.error) {
+          toast.error(result.message || 'Không lấy được hóa đơn');
+          return null;
+        }
+    
+        // Nếu API không có field `success`, thì dùng cách này:
+        if (!result.tong_tien_truoc_giam && !result.tong_tien_sau_giam) {
+          toast.error('Không tìm thấy thông tin hóa đơn hợp lệ!');
+          return null;
+        }
+    
+        return result;
+      } catch (error) {
+        console.error('Lỗi từ API:', error.response?.data || error.message);
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi lấy hoá đơn');
+        return null;
+      }
+    },
+    
+
     /////
 
-    // Action cho voucher
+    //================= Action cho voucher =================///
     async getAllVouchers(page = 0, size = 5) {
       try {
         const vouchers = await voucherService.getAllVouchers(page, size)
@@ -1126,7 +1229,7 @@ export const useGbStore = defineStore('gbStore', {
         return false
       }
     },
-
+    //================= Kết thúc khuyến mãi =================///
     getPath(path) {
       this.checkRouter = ''
       this.checkRouter = path
@@ -1218,17 +1321,31 @@ export const useGbStore = defineStore('gbStore', {
     },
     //Lấy danh sách sản phẩm
     async getAllSP() {
-      if (this.getAllChiTietSanPham.length === 0) {
-        const sanPhamRespone = await sanPhamService.getAllSanPham()
-        console.log(sanPhamRespone)
-        if (!sanPhamRespone || sanPhamRespone.error) {
-          toast.error('Không lấy được dữ liệu')
-          return
-        } else {
-          this.getAllSanPham = sanPhamRespone
+      try {
+        console.log('Đang tải danh sách sản phẩm');
+        const sanPhamResponse = await sanPhamService.getAllSanPham();
+
+        if (!sanPhamResponse || sanPhamResponse.error) {
+          console.error('Không lấy được dữ liệu sản phẩm');
+          this.getAllSanPham = [];
+          return [];
         }
-      } else {
-        toast.error('Bị lấy dữ liệu nhiều lần')
+
+        console.log('Đã tải', sanPhamResponse.length, 'sản phẩm');
+        this.getAllSanPham = sanPhamResponse;
+
+        // Reset trạng thái tìm kiếm và lọc nếu đang tải lại dữ liệu
+        if (this.isSearching || this.isFiltering) {
+          console.log('Tự động reset trạng thái tìm kiếm và lọc khi tải lại dữ liệu');
+          this.resetSearch();
+          this.resetFilter();
+        }
+
+        return sanPhamResponse;
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách sản phẩm:', error);
+        this.getAllSanPham = [];
+        return [];
       }
     },
     //Thêm sản phẩm
@@ -1257,21 +1374,39 @@ export const useGbStore = defineStore('gbStore', {
     },
     //Lấy danh sách chi tiết sản phẩm
     async getAllCTSP() {
-      const chiTietSanPhamRespone = await sanPhamService.getAllChiTietSanPham()
-      if (chiTietSanPhamRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      }
-      this.getAllChiTietSanPham = chiTietSanPhamRespone
       try {
-        const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
-          const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
-          ctsp.hinh_anh = (await images.length) > 0 ? images[0].hinh_anh : 'Không có ảnh chính' // Thêm trường hinh_anh vào object ctsp
-        })
-        this.getAllChiTietSanPham = await Promise.all(imagePromises)
-        this.getAllChiTietSanPham = chiTietSanPhamRespone
+        console.log('Đang tải danh sách chi tiết sản phẩm');
+        const chiTietSanPhamResponse = await sanPhamService.getAllChiTietSanPham();
+
+        if (!chiTietSanPhamResponse || chiTietSanPhamResponse.error) {
+          console.error('Không lấy được dữ liệu chi tiết sản phẩm');
+          this.getAllChiTietSanPham = [];
+          return [];
+        }
+
+        // Xử lý dữ liệu - thêm hình ảnh nếu cần
+        try {
+          const imagePromises = chiTietSanPhamResponse.map(async (ctsp) => {
+            if (ctsp.id_chi_tiet_san_pham) {
+              const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true);
+              ctsp.hinh_anh = (images && images.length > 0) ? images[0].hinh_anh : 'Không có ảnh chính';
+            }
+            return ctsp;
+          });
+
+          await Promise.all(imagePromises);
+        } catch (imageError) {
+          console.error('Lỗi khi tải hình ảnh:', imageError);
+        }
+
+        console.log('Đã tải', chiTietSanPhamResponse.length, 'chi tiết sản phẩm');
+        this.getAllChiTietSanPham = chiTietSanPhamResponse;
+
+        return chiTietSanPhamResponse;
       } catch (error) {
-        console.log(error)
+        console.error('Lỗi khi tải danh sách chi tiết sản phẩm:', error);
+        this.getAllChiTietSanPham = [];
+        return [];
       }
     },
     //Tìm kiếm chi tiết sản phẩm
@@ -1318,28 +1453,55 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     // Tìm kiếm sản phẩm
-    async searchSP(search) {
+    async searchSP(keyword) {
+      console.log('Đang tìm kiếm sản phẩm với từ khóa:', keyword);
+      if (!keyword || keyword.trim() === '') {
+        this.resetSearch();
+        return;
+      }
+
       try {
-        const sanPhamResponse = await sanPhamService.searchSanPham(search)
-        if (sanPhamResponse && sanPhamResponse.error) {
-          toast.error('Không lấy được dữ liệu sản phẩm')
-          this.searchSanPham = []
-          return
+        // Lưu từ khóa tìm kiếm
+        this.searchKeyword = keyword.trim().toLowerCase();
+
+        // Đảm bảo dữ liệu chi tiết sản phẩm đã được tải
+        if (!this.getAllChiTietSanPham || this.getAllChiTietSanPham.length === 0) {
+          console.log('Chưa có dữ liệu chi tiết sản phẩm, tải từ API');
+          await this.getAllCTSP();
         }
 
-        // Nếu không có dữ liệu hoặc mảng rỗng
-        if (!sanPhamResponse || !Array.isArray(sanPhamResponse) || sanPhamResponse.length === 0) {
-          console.log('Không có kết quả tìm kiếm sản phẩm')
-          this.searchSanPham = []
-          return
-        }
+        // Tìm kiếm trên chi tiết sản phẩm
+        const matchingProductIds = new Set();
 
-        // Xử lý dữ liệu sản phẩm nếu cần
-        this.searchSanPham = sanPhamResponse
-        console.log('Kết quả tìm kiếm sản phẩm:', this.searchSanPham)
+        this.getAllChiTietSanPham.forEach(ctsp => {
+          // Kết hợp tất cả thông tin có thể tìm kiếm
+          const searchableText = [
+            ctsp.ten_san_pham?.toLowerCase() || '',
+            ctsp.mo_ta?.toLowerCase() || '',
+            ctsp.ten_thuong_hieu?.toLowerCase() || '',
+            ctsp.ten_danh_muc?.toLowerCase() || '',
+            ctsp.ten_chat_lieu?.toLowerCase() || '',
+            ctsp.ten_mau_sac?.toLowerCase() || '',
+            ctsp.ten_size?.toLowerCase() || '',
+            `${ctsp.gia_ban || ''}`,
+            `${ctsp.gia_nhap || ''}`,
+            `${ctsp.so_luong_ton || ''}`
+          ].join(' ');
+
+          // Nếu nội dung có thể tìm kiếm chứa từ khóa
+          if (searchableText.includes(this.searchKeyword)) {
+            matchingProductIds.add(ctsp.id_san_pham);
+          }
+        });
+
+        // Cập nhật ID sản phẩm tìm thấy
+        this.searchProductIds = [...matchingProductIds];
+        console.log(`Tìm thấy ${this.searchProductIds.length} sản phẩm khớp với từ khóa "${keyword}"`);
+
+        // Cập nhật danh sách ID cuối cùng
+        this.updateFinalProductIds();
       } catch (error) {
-        console.log('Lỗi khi tìm kiếm sản phẩm:', error)
-        this.searchSanPham = []
+        console.error('Lỗi khi tìm kiếm sản phẩm:', error);
       }
     },
     getLangue(check) {
@@ -1386,6 +1548,305 @@ export const useGbStore = defineStore('gbStore', {
     closeNoitification() {
       this.checkNoitification = false
     },
+
+    // Action để áp dụng bộ lọc
+    async filterSanPham(filterCriteria) {
+      console.log('Đang lọc sản phẩm với tiêu chí:', filterCriteria);
+      this.filterCriteria = { ...filterCriteria };
+
+      try {
+        // Đảm bảo dữ liệu chi tiết sản phẩm đã được tải
+        if (!this.getAllChiTietSanPham || this.getAllChiTietSanPham.length === 0) {
+          console.warn('Không có dữ liệu chi tiết sản phẩm để lọc');
+          this.filteredProductIds = [];
+          return;
+        }
+
+        // Debug: Log 5 sản phẩm chi tiết đầu tiên để kiểm tra cấu trúc
+        if (this.debug) {
+          console.log('=== DEBUG: Mẫu chi tiết sản phẩm ===');
+          console.log(this.getAllChiTietSanPham.slice(0, 5));
+        }
+
+        // Khởi tạo Set để lưu trữ ID sản phẩm khớp
+        const matchingProductIds = new Set();
+
+        // Kiểm tra xem có tiêu chí lọc nào không
+        const hasFilterCriteria = (
+          (filterCriteria.id_danh_muc && filterCriteria.id_danh_muc.length > 0) ||
+          (filterCriteria.id_thuong_hieu && filterCriteria.id_thuong_hieu.length > 0) ||
+          (filterCriteria.id_chat_lieu && filterCriteria.id_chat_lieu.length > 0) ||
+          (filterCriteria.id_mau_sac && filterCriteria.id_mau_sac.length > 0) ||
+          (filterCriteria.id_size && filterCriteria.id_size.length > 0) ||
+          (filterCriteria.minPrice > 0) ||
+          (filterCriteria.maxPrice < 10000000)
+        );
+
+        // Nếu không có tiêu chí lọc, trả về tất cả sản phẩm
+        if (!hasFilterCriteria) {
+          console.log('Không có tiêu chí lọc, lấy tất cả sản phẩm');
+          this.filteredProductIds = this.getAllSanPham.map(sp => sp.id_san_pham);
+          return;
+        }
+
+        // Lọc chi tiết sản phẩm dựa trên tiêu chí
+        for (const ctsp of this.getAllChiTietSanPham) {
+          // Kiểm tra từng tiêu chí
+          let matches = true;
+
+          // Debug: Ghi log lọc đa tiêu chí
+          if (this.debug &&
+            ((filterCriteria.id_danh_muc && filterCriteria.id_danh_muc.includes(1)) ||
+              (filterCriteria.id_thuong_hieu && filterCriteria.id_thuong_hieu.includes(1)) ||
+              (filterCriteria.id_chat_lieu && filterCriteria.id_chat_lieu.includes(1)))) {
+            console.log('=== DEBUG: Chi tiết kiểm tra khớp với ID = 1 ===');
+            console.log('Sản phẩm đang kiểm tra:', ctsp.ten_san_pham);
+            console.log('ID danh mục:', ctsp.id_danh_muc, 'Tiêu chí:', filterCriteria.id_danh_muc);
+            console.log('ID thương hiệu:', ctsp.id_thuong_hieu, 'Tiêu chí:', filterCriteria.id_thuong_hieu);
+            console.log('ID chất liệu:', ctsp.id_chat_lieu, 'Tiêu chí:', filterCriteria.id_chat_lieu);
+          }
+
+          // Lọc danh mục - Kiểm tra xem id_danh_muc của sản phẩm có nằm trong danh sách các id đã chọn không
+          if (filterCriteria.id_danh_muc && filterCriteria.id_danh_muc.length > 0) {
+            const idDanhMucStr = String(ctsp.id_danh_muc);
+            const found = filterCriteria.id_danh_muc.some(id => String(id) === idDanhMucStr);
+            if (!found) {
+              matches = false;
+            }
+          }
+
+          // Lọc thương hiệu
+          if (matches && filterCriteria.id_thuong_hieu && filterCriteria.id_thuong_hieu.length > 0) {
+            const idThuongHieuStr = String(ctsp.id_thuong_hieu);
+            const found = filterCriteria.id_thuong_hieu.some(id => String(id) === idThuongHieuStr);
+            if (!found) {
+              matches = false;
+            }
+          }
+
+          // Lọc chất liệu
+          if (matches && filterCriteria.id_chat_lieu && filterCriteria.id_chat_lieu.length > 0) {
+            const idChatLieuStr = String(ctsp.id_chat_lieu);
+            const found = filterCriteria.id_chat_lieu.some(id => String(id) === idChatLieuStr);
+            if (!found) {
+              matches = false;
+            }
+          }
+
+          // Lọc màu sắc
+          if (matches && filterCriteria.id_mau_sac && filterCriteria.id_mau_sac.length > 0) {
+            const idMauSacStr = String(ctsp.id_mau_sac);
+            const found = filterCriteria.id_mau_sac.some(id => String(id) === idMauSacStr);
+            if (!found) {
+              matches = false;
+            }
+          }
+
+          // Lọc kích thước
+          if (matches && filterCriteria.id_size && filterCriteria.id_size.length > 0) {
+            const idSizeStr = String(ctsp.id_kich_thuoc);
+            const found = filterCriteria.id_size.some(id => String(id) === idSizeStr);
+            if (!found) {
+              matches = false;
+            }
+          }
+
+          // Lọc giá - vẫn giữ nguyên
+          if (matches && filterCriteria.minPrice > 0) {
+            // Chuyển đổi giá bán sang kiểu số nếu là chuỗi
+            const giaBan = typeof ctsp.gia_ban === 'string'
+              ? parseFloat(ctsp.gia_ban.replace(/[^\d]/g, ''))
+              : ctsp.gia_ban;
+
+            if (giaBan < filterCriteria.minPrice) {
+              matches = false;
+            }
+          }
+
+          if (matches && filterCriteria.maxPrice < 10000000) {
+            // Chuyển đổi giá bán sang kiểu số nếu là chuỗi
+            const giaBan = typeof ctsp.gia_ban === 'string'
+              ? parseFloat(ctsp.gia_ban.replace(/[^\d]/g, ''))
+              : ctsp.gia_ban;
+
+            if (giaBan > filterCriteria.maxPrice) {
+              matches = false;
+            }
+          }
+
+          // Nếu chi tiết sản phẩm khớp với tất cả tiêu chí, thêm ID của nó vào Set
+          if (matches) {
+            matchingProductIds.add(ctsp.id_san_pham);
+          }
+        }
+
+        // Cập nhật ID sản phẩm đã lọc
+        this.filteredProductIds = [...matchingProductIds];
+        console.log(`Lọc được ${this.filteredProductIds.length} sản phẩm khớp với tiêu chí`);
+      } catch (error) {
+        console.error('Lỗi khi lọc sản phẩm:', error);
+        this.filteredProductIds = [];
+      }
+    },
+
+    // Tạo thêm alias để tương thích với code cũ
+    async applyFilter(filterCriteria) {
+      // Gọi lại hàm filterSanPham để đảm bảo tương thích
+      return this.filterSanPham(filterCriteria);
+    },
+
+    // Reset bộ lọc
+    resetFilter() {
+      console.log('Đang reset trạng thái lọc...');
+      this.filterCriteria = {};
+      this.filteredProductIds = [];
+
+      // Nếu đang kết hợp tìm kiếm và lọc, cập nhật lại kết quả cuối cùng
+      if (this.searchProductIds.length > 0) {
+        console.log('Vẫn còn tìm kiếm, giữ lại kết quả tìm kiếm');
+      }
+    },
+
+    // Hàm cập nhật kết quả cuối cùng dựa trên trạng thái tìm kiếm và lọc
+    updateFinalProductIds() {
+      const isSearching = this.searchKeyword && this.searchProductIds.length > 0;
+      const isFiltering = Object.keys(this.filterCriteria).length > 0 && this.filteredProductIds.length > 0;
+
+      console.log(`Đang cập nhật danh sách cuối cùng. Tìm kiếm: ${isSearching}, Lọc: ${isFiltering}`);
+
+      if (isSearching && isFiltering) {
+        // Nếu đang tìm kiếm và lọc, lấy giao của 2 danh sách
+        this.finalProductIds = this.searchProductIds.filter(id =>
+          this.filteredProductIds.includes(id)
+        );
+        console.log('Kết hợp tìm kiếm và lọc:', this.finalProductIds.length);
+      } else if (isSearching) {
+        // Nếu chỉ tìm kiếm
+        this.finalProductIds = [...this.searchProductIds];
+        console.log('Chỉ tìm kiếm:', this.finalProductIds.length);
+      } else if (isFiltering) {
+        // Nếu chỉ lọc
+        this.finalProductIds = [...this.filteredProductIds];
+        console.log('Chỉ lọc:', this.finalProductIds.length);
+      } else {
+        // Nếu không có cả 2
+        this.finalProductIds = [];
+        console.log('Không có tìm kiếm hoặc lọc');
+      }
+    },
+
+    // Hàm reset trạng thái tìm kiếm
+    resetSearch() {
+      console.log('Đang reset trạng thái tìm kiếm...');
+      this.searchKeyword = '';
+      this.searchProductIds = [];
+
+      // Nếu đang kết hợp tìm kiếm và lọc, cập nhật lại kết quả cuối cùng
+      if (this.filteredProductIds.length > 0) {
+        console.log('Vẫn còn bộ lọc, giữ lại kết quả lọc');
+      }
+    },
+
+    // Thêm các phương thức tải dữ liệu danh mục, thương hiệu, chất liệu, màu sắc, kích thước
+    async getAllDM() {
+      try {
+        console.log('Đang tải danh sách danh mục...');
+        const response = await sanPhamService.getDanhMucList();
+
+        if (!response || response.error) {
+          console.error('Không lấy được dữ liệu danh mục');
+          return [];
+        }
+
+        console.log(`Đã tải ${response.length} danh mục`);
+        this.getAllDanhMuc = response;
+        return response;
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách danh mục:', error);
+        this.getAllDanhMuc = [];
+        return [];
+      }
+    },
+
+    async getAllTH() {
+      try {
+        console.log('Đang tải danh sách thương hiệu...');
+        const response = await sanPhamService.getThuongHieuList();
+
+        if (!response || response.error) {
+          console.error('Không lấy được dữ liệu thương hiệu');
+          return [];
+        }
+
+        console.log(`Đã tải ${response.length} thương hiệu`);
+        this.getAllThuongHieu = response;
+        return response;
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách thương hiệu:', error);
+        this.getAllThuongHieu = [];
+        return [];
+      }
+    },
+
+    async getAllCL() {
+      try {
+        console.log('Đang tải danh sách chất liệu...');
+        const response = await sanPhamService.getChatLieuList();
+
+        if (!response || response.error) {
+          console.error('Không lấy được dữ liệu chất liệu');
+          return [];
+        }
+
+        console.log(`Đã tải ${response.length} chất liệu`);
+        this.getAllChatLieu = response;
+        return response;
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách chất liệu:', error);
+        this.getAllChatLieu = [];
+        return [];
+      }
+    },
+
+    async getAllMS() {
+      try {
+        console.log('Đang tải danh sách màu sắc...');
+        const response = await sanPhamService.getMauSacList();
+
+        if (!response || response.error) {
+          console.error('Không lấy được dữ liệu màu sắc');
+          return [];
+        }
+
+        console.log(`Đã tải ${response.length} màu sắc`);
+        this.getAllMauSac = response;
+        return response;
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách màu sắc:', error);
+        this.getAllMauSac = [];
+        return [];
+      }
+    },
+
+    async getAllKT() {
+      try {
+        console.log('Đang tải danh sách kích thước...');
+        const response = await sanPhamService.getSizeList();
+
+        if (!response || response.error) {
+          console.error('Không lấy được dữ liệu kích thước');
+          return [];
+        }
+
+        console.log(`Đã tải ${response.length} kích thước`);
+        this.getAllKichThuoc = response;
+        return response;
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách kích thước:', error);
+        this.getAllKichThuoc = [];
+        return [];
+      }
+    },
   },
 
   persist: {
@@ -1397,5 +1858,58 @@ export const useGbStore = defineStore('gbStore', {
         paths: ['checkRouter', 'indexMenu', 'language', 'checkNoitification'],
       },
     ],
+  },
+
+  getters: {
+    /**
+     * Lấy danh sách sản phẩm đã được lọc và/hoặc tìm kiếm
+     * @returns {Array} Danh sách sản phẩm đã được lọc
+     */
+    getFilteredProducts() {
+      console.log('Đang lấy danh sách sản phẩm đã lọc/tìm kiếm...');
+
+      // Nếu không có tìm kiếm và không có lọc, trả về tất cả sản phẩm
+      const isSearching = this.searchKeyword && this.searchProductIds.length > 0;
+      const isFiltering = Object.keys(this.filterCriteria).length > 0;
+
+      if (!isSearching && !isFiltering) {
+        console.log('Không có tìm kiếm hoặc lọc, trả về tất cả sản phẩm:', this.getAllSanPham.length);
+        return this.getAllSanPham;
+      }
+
+      try {
+        // Format hàm trả về products đúng cấu trúc
+        const formatProducts = (productIds) => {
+          return productIds.length > 0
+            ? this.getAllSanPham.filter(product => productIds.includes(product.id_san_pham))
+            : [];
+        };
+
+        // Nếu chỉ đang tìm kiếm (không lọc)
+        if (isSearching && !isFiltering) {
+          const result = formatProducts(this.searchProductIds);
+          console.log('Chỉ tìm kiếm, không lọc. Kết quả:', result.length);
+          return result;
+        }
+
+        // Nếu chỉ đang lọc (không tìm kiếm)
+        if (!isSearching && isFiltering) {
+          const result = formatProducts(this.filteredProductIds);
+          console.log('Chỉ lọc, không tìm kiếm. Kết quả:', result.length);
+          return result;
+        }
+
+        // Nếu đang tìm kiếm và lọc, lấy giao của 2 danh sách
+        const intersectionIds = this.searchProductIds.filter(id =>
+          this.filteredProductIds.includes(id)
+        );
+        const result = formatProducts(intersectionIds);
+        console.log('Kết hợp tìm kiếm và lọc:', result.length);
+        return result;
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách sản phẩm đã lọc:', error);
+        return [];
+      }
+    },
   },
 })
