@@ -562,29 +562,74 @@ export const useGbStore = defineStore('gbStore', {
                 toast.error(result.message || 'Đăng nhập thất bại!');
                 return { error: true };
             }
-
-            // Lưu thông tin người dùng vào state
+        
+            // Kiểm tra dữ liệu trả về từ API đăng nhập
+            if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
+                console.error('Dữ liệu tài khoản không hợp lệ:', result);
+                toast.error('Dữ liệu tài khoản không hợp lệ!');
+                return { error: true };
+            }
+        
+            // Lưu thông tin cơ bản
             this.userInfo = result.taiKhoan;
             this.isLoggedIn = true;
-            this.id_roles = result.id_roles; // Lưu id_roles vào state
-            console.log('id đây nè: ',result.id_roles);
-            // Lưu vào localStorage nếu người dùng chọn "Ghi nhớ đăng nhập"
+            this.id_roles = result.id_roles;
+        
+            // In thông tin tài khoản cơ bản
+            console.log('Thông tin tài khoản (tai_khoan):', this.userInfo);
+            console.log('ID Roles:', this.id_roles);
+        
+            // Lưu vào sessionStorage
+            sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('id_roles', result.id_roles);
+        
             if (loginData.rememberMe) {
                 localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('id_roles', result.id_roles);
             }
+        
+            // Lấy thông tin chi tiết
+            try {
+                const userDetails = await khachHangService.getUserDetail({
+                    username: result.taiKhoan.ten_dang_nhap,
+                    id_roles: result.id_roles
+                });
+                this.userDetails = userDetails;
+        
+                // In thông tin chi tiết
+                console.log('Thông tin chi tiết (userDetails):', this.userDetails);
+        
+                sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
+                if (loginData.rememberMe) {
+                    localStorage.setItem('userDetails', JSON.stringify(userDetails));
+                }
+            } catch (error) {
+                console.error('Lỗi khi lấy thông tin chi tiết:', error);
+                toast.error('Không thể lấy thông tin chi tiết tài khoản!');
+            }
+        
             toast.success(result.successMessage || 'Đăng nhập thành công!');
             return { success: true, id_roles: result.id_roles };
         },
-
-        // Action để khôi phục trạng thái đăng nhập từ localStorage
+        // Cập nhật restoreLoginState để kiểm tra cả sessionStorage
         restoreLoginState() {
-            const userInfo = localStorage.getItem('userInfo');
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            let userInfo = localStorage.getItem('userInfo');
+            let isLoggedIn = localStorage.getItem('isLoggedIn');
+            let id_roles = localStorage.getItem('id_roles');
+
+            // Nếu không có trong localStorage, kiểm tra sessionStorage
+            if (!userInfo || isLoggedIn !== 'true') {
+                userInfo = sessionStorage.getItem('userInfo');
+                isLoggedIn = sessionStorage.getItem('isLoggedIn');
+                id_roles = sessionStorage.getItem('id_roles');
+            }
+
             if (userInfo && isLoggedIn === 'true') {
                 this.userInfo = JSON.parse(userInfo);
                 this.isLoggedIn = true;
+                this.id_roles = id_roles;
             }
         },
 

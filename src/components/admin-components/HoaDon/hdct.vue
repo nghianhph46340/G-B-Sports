@@ -49,10 +49,18 @@
                         </a-button>
                     </a-form>
                     <a-form :inline="true">
-                        <a-button type="text" html-type="submit">
+                        <a-button type="text" @click="openPrintConfirm">
                             Xuất hóa đơn
                         </a-button>
                     </a-form>
+                    <a-modal v-model:open="showPrintConfirm" title="Xác nhận xuất hóa đơn" @ok="confirmPrint(true)"
+                        @cancel="confirmPrint(false)">
+                        <p>Bạn muốn xuất hóa đơn này phải không?</p>
+                        <template #footer>
+                            <a-button key="cancel" @click="confirmPrint(false)">Không</a-button>
+                            <a-button key="ok" type="primary" @click="confirmPrint(true)">Đúng</a-button>
+                        </template>
+                    </a-modal>
                 </div>
             </div>
 
@@ -66,13 +74,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai_thanh_toan || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDate(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -152,7 +160,7 @@
                                         formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
                                             (store.hoaDonDetail.phi_van_chuyen || 0) -
                                             (store.hoaDonDetail.tong_tien_sau_giam ||
-                                        0)) }} VNĐ</p>
+                                                0)) }} VNĐ</p>
                                 </a-col>
                             </a-row>
                             <a-row>
@@ -343,14 +351,19 @@
                         <template v-if="column.key === 'gia_ban'">
                             {{ formatCurrency(record.gia_ban || 0) }}
                         </template>
+                        <template v-if="column.key === 'so_luong'">
+                            <!-- Tính số lượng khả dụng -->
+                            {{ record.so_luong }} (Khả dụng: {{ calculateSoLuongTon(record) }})
+                        </template>
                         <template v-if="column.key === 'so_luong_mua'">
                             <div class="quantity-input">
                                 <a-button @click="decreaseQuantityPopup(index)"
                                     :disabled="quantities[index] <= 0">-</a-button>
-                                <a-input-number v-model:value="quantities[index]" :min="0" :max="record.so_luong"
-                                    @change="validateQuantity(index, record.so_luong)" />
+                                <a-input-number type="number" v-model:value="quantities[index]" :min="0"
+                                    :max="calculateSoLuongTon(record)"
+                                    @change="validateQuantity(index, calculateSoLuongTon(record))" />
                                 <a-button @click="increaseQuantityPopup(index)"
-                                    :disabled="quantities[index] >= record.so_luong">+</a-button>
+                                    :disabled="quantities[index] >= calculateSoLuongTon(record)">+</a-button>
                             </div>
                         </template>
                     </template>
@@ -369,11 +382,13 @@
             </a-modal>
 
             <!-- Popup chỉnh sửa số lượng -->
-            <a-modal v-model:visible="showQuantityPopup"
+            <a-modal v-model:visible="showQuantityPopup" width="350px" class="text-center"
                 :title="popupType === 'increase' ? 'Giảm số lượng' : 'Thêm số lượng'" :footer="null">
                 <div class="popup-input">
-                    <label>Số lượng:</label>
-                    <a-input-number v-model:value="quantityChange" :min="0" />
+                    <label>Số lượng (Khả dụng: {{ currentProduct ? calculateSoLuongTon(currentProduct) : 0 }}):</label>
+                    <label style="width: 100px;">Số lượng:</label>
+                    <a-input-number style="width: 150px;" type="number" v-model:value="quantityChange" :min="0"
+                        :max="popupType === 'increase' ? currentProduct.so_luong : calculateSoLuongTon(currentProduct)" />
                 </div>
                 <div class="popup-actions">
                     <a-button type="primary" @click="updateQuantity">
@@ -400,6 +415,10 @@ import { useGbStore } from '@/stores/gbStore';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 import axios from 'axios';
+import { jsPDF } from 'jspdf';
+import '../../../config/fonts/Roboto-normal'
+import '../../../config/fonts/Roboto-bold'
+import logo from '../../../images/logo/logo2.png';
 
 // Ant Design Vue components
 import { Row as ARow, Col as ACol, Button as AButton, Divider as ADivider, Form as AForm, FormItem as AFormItem, Input as AInput, Textarea as ATextarea, Table as ATable, Modal as AModal, InputNumber as AInputNumber, Spin as ASpin } from 'ant-design-vue';
@@ -450,13 +469,13 @@ const storePickupStatusSteps = [
     { name: 'Đã hủy', backendStatus: 'Đã hủy', icon: 'fas fa-times-circle' }
 ];
 
-// Computed property để quyết định danh sách trạng thái
-const computedStatusSteps = computed(() => {
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
-        return storePickupStatusSteps;
-    }
-    return defaultStatusSteps;
-});
+// // Computed property để quyết định danh sách trạng thái
+// const computedStatusSteps = computed(() => {
+//     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+//         return storePickupStatusSteps;
+//     }
+//     return defaultStatusSteps;
+// });
 
 // Address table columns
 const addressColumns = [
@@ -691,9 +710,6 @@ const cannotCancel = computed(() => {
 
 const cannotEditProduct = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
-    if (store.hoaDonDetail.size === 1) {
-        toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm!');
-    }
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
         return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
     }
@@ -820,6 +836,22 @@ const showAddProductPopup = ref(false);
 const searchKeyword = ref('');
 const quantities = ref([]);
 
+// Tính số lượng tồn (khả dụng)
+const calculateSoLuongTon = (record) => {
+    const productInList = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === record.id_chi_tiet_san_pham);
+    const soLuongBanDau = productInList ? productInList.so_luong : record.so_luong;
+
+    const hdct = store.chiTietHoaDons.find(item => item.id_chi_tiet_san_pham === record.id_chi_tiet_san_pham);
+    const soLuongHienCo = hdct ? hdct.so_luong : 0;
+
+    const soLuongTon = (soLuongBanDau || 0) - soLuongHienCo;
+    console.log('record.id_chi_tiet_san_pham:', record.id_chi_tiet_san_pham, 'soLuongBanDau:', soLuongBanDau, 'soLuongHienCo:', soLuongHienCo, 'soLuongTon:', soLuongTon);
+    return Math.max(soLuongTon, 0);
+};
+// Tính tổng số lượng sản phẩm trong hóa đơn
+const calculateTotalQuantity = () => {
+    return store.chiTietHoaDons.reduce((total, item) => total + (item.so_luong || 0), 0);
+};
 // Hiển thị popup thêm sản phẩm
 const showAddProductPopupFn = async () => {
     await store.getAllCTSP_HD(0, 5, '');
@@ -850,7 +882,8 @@ const changePage = async (page) => {
 
 // Tăng số lượng trong Popup
 const increaseQuantityPopup = (index) => {
-    if (quantities.value[index] < store.listCTSP_HD[index].so_luong) {
+    const max = calculateSoLuongTon(store.listCTSP_HD[index]);
+    if (quantities.value[index] < max) {
         quantities.value[index]++;
     }
 };
@@ -886,6 +919,15 @@ const addSelectedProducts = () => {
         toast.error('Vui lòng chọn ít nhất một sản phẩm để thêm!');
         return;
     }
+    // Validate số lượng trước khi gửi API
+    for (const product of selectedProducts) {
+        const ctsp = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === product.idCTSP);
+        const soLuongTon = calculateSoLuongTon(ctsp);
+        if (product.soLuongMua > soLuongTon) {
+            toast.error(`Số lượng sản phẩm ${ctsp.ten_san_pham} vượt quá số lượng khả dụng (${soLuongTon})`);
+            return;
+        }
+    }
 
     store.addProductsToInvoice(store.hoaDonDetail.ma_hoa_don, selectedProducts);
     closeAddProductPopup();
@@ -893,6 +935,11 @@ const addSelectedProducts = () => {
 
 // Xóa sản phẩm khỏi hóa đơn
 const removeProduct = async (item, index) => {
+    // Validate: Không cho phép xóa nếu chỉ còn 1 sản phẩm trong hóa đơn
+    if (store.chiTietHoaDons.length === 1) {
+        toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm!');
+        return;
+    }
     if (confirm(`Bạn có chắc muốn xóa sản phẩm "${item.ten_san_pham}" khỏi hóa đơn không?`)) {
         try {
             const response = await store.removeProductFromInvoice(
@@ -921,21 +968,37 @@ const showQuantityPopup = ref(false);
 const popupType = ref('');
 const currentIndex = ref(null);
 const quantityChange = ref(0);
+const currentProduct = ref(null);
 
-const showIncreasePopup = (index) => {
+// Hiển thị popup tăng số lượng
+const showIncreasePopup = async (index) => {
     currentIndex.value = index;
     popupType.value = 'increase';
     quantityChange.value = 0;
+    currentProduct.value = store.chiTietHoaDons[index];
+
+    if (!store.listCTSP_HD || store.listCTSP_HD.length === 0) {
+        await store.getAllCTSP_HD(0, 5, '');
+    }
+
     showQuantityPopup.value = true;
 };
 
-const showDecreasePopup = (index) => {
+// Hiển thị popup giảm số lượng
+const showDecreasePopup = async (index) => {
     currentIndex.value = index;
     popupType.value = 'decrease';
     quantityChange.value = 0;
+    currentProduct.value = store.chiTietHoaDons[index];
+
+    if (!store.listCTSP_HD || store.listCTSP_HD.length === 0) {
+        await store.getAllCTSP_HD(0, 5, '');
+    }
+
     showQuantityPopup.value = true;
 };
 
+// Đóng popup chỉnh sửa số lượng
 const closeQuantityPopup = () => {
     showQuantityPopup.value = false;
     currentIndex.value = null;
@@ -954,8 +1017,10 @@ const updateQuantity = async () => {
     }
 
     if (popupType.value === 'decrease') {
-        if (change > item.so_luong_con_lai) {
-            toast.error(`Số lượng thêm không được vượt quá ${item.so_luong_con_lai}`);
+        const soLuongTon = calculateSoLuongTon(item);
+        console.log('soLuongTon', soLuongTon);
+        if (change > soLuongTon) {
+            toast.error(`Số lượng thêm không được vượt quá ${soLuongTon}`);
             return;
         }
 
@@ -978,6 +1043,14 @@ const updateQuantity = async () => {
             toast.error('Có lỗi xảy ra khi thêm số lượng');
         }
     } else if (popupType.value === 'increase') {
+        // Giảm số lượng
+        const totalQuantity = calculateTotalQuantity();
+        const newQuantity = totalQuantity - change;
+        // Validate: Tổng số lượng sau khi giảm phải >= 1
+        if (newQuantity < 1) {
+            toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm với số lượng tối thiểu là 1!');
+            return;
+        }
         if (change >= item.so_luong) {
             toast.error(`Số lượng giảm không được vượt quá ${item.so_luong}`);
             return;
@@ -1022,6 +1095,117 @@ const revertToInitial = () => {
     if (confirm('Bạn có chắc muốn quay lại trạng thái "Chờ xác nhận" không?')) {
         store.revertToInitialStatus(store.hoaDonDetail.ma_hoa_don);
     }
+};
+// Trạng thái modal xác nhận in hóa đơn
+const showPrintConfirm = ref(false);
+
+// Hàm mở modal xác nhận in
+const openPrintConfirm = () => {
+    showPrintConfirm.value = true;
+};
+
+// Hàm xử lý xác nhận in
+const confirmPrint = (shouldPrint) => {
+    showPrintConfirm.value = false;
+    if (shouldPrint) {
+        printInvoice();
+    }
+};
+const printInvoice = () => {
+    const doc = new jsPDF();
+    // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
+    doc.setFont("Roboto");
+    // Thêm logo
+    const logoWidth = 30; // Chiều rộng logo (mm)
+    const logoHeight = 20; // Chiều cao logo (mm)
+    const pageWidth = doc.internal.pageSize.getWidth(); // Chiều rộng trang A4 (210mm)
+    const logoX = (pageWidth - logoWidth) / 2; // Căn giữa logo theo chiều ngang
+    doc.addImage(logo, 'PNG', logoX, 10, logoWidth, logoHeight); // Thêm logo vào PDF
+    // Tiêu đề "HÓA ĐƠN BÁN HÀNG"
+    doc.setFontSize(18);
+    doc.setFont("Roboto", "bold");
+    doc.text("HÓA ĐƠN BÁN HÀNG", 105, 50, { align: "center" });
+    // Thông tin cửa hàng
+    doc.setFontSize(16);
+    doc.setFont("Roboto", "bold");
+    doc.text("G&B SPORTS", 105, 60, { align: "center" });
+    doc.setFontSize(10);
+    doc.setFont("Roboto", "normal");
+    doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 68, { align: "center" });
+    doc.text("Điện thoại: 0123456789", 105, 74, { align: "center" });
+    // Vẽ đường kẻ ngang
+    doc.setLineWidth(0.5);
+    doc.line(20, 78, 190, 78);
+    // Thông tin hóa đơn
+    doc.setFontSize(12);
+    doc.setFont("Roboto", "normal");
+    doc.text(`Mã hóa đơn: ${store.hoaDonDetail.ma_hoa_don || 'N/A'}`, 20, 86);
+    doc.text(`Ngày: ${formatDate(store.hoaDonDetail.ngay_tao)}`, 20, 94);
+    doc.text(`Tên khách hàng: ${store.hoaDonDetail.ho_ten || 'Khách lẻ'}`, 20, 102);
+    // Danh sách sản phẩm
+    let y = 110;
+    doc.setFontSize(12);
+    doc.setFont("Roboto", "bold");
+    doc.text("Sản phẩm", 20, y);
+    // Tiêu đề bảng
+    y += 10;
+    doc.setFontSize(10);
+    doc.setFont("Roboto", "bold");
+    doc.text("Số lượng", 100, y, { align: "center" });
+    doc.text("Đơn giá", 130, y, { align: "center" });
+    doc.text("Thành tiền", 170, y, { align: "center" });
+    // Vẽ đường kẻ ngang dưới tiêu đề bảng
+    y += 2;
+    doc.setLineWidth(0.2);
+    doc.line(20, y, 190, y);
+    // Danh sách sản phẩm
+    y += 6;
+    doc.setFontSize(10);
+    doc.setFont("Roboto", "normal");
+    store.chiTietHoaDons.forEach((item, index) => {
+        // Tên sản phẩm
+        const productName = `${index + 1}. ${item.ten_san_pham} (${item.ten_mau_sac} - ${item.kich_thuoc})`;
+        const productLines = doc.splitTextToSize(productName, 80); // Chia nhỏ nếu tên quá dài
+        doc.text(productLines, 20, y);
+
+        // Số lượng
+        doc.text(`${item.so_luong}`, 100, y, { align: "center" });
+
+        // Đơn giá
+        doc.text(`${formatCurrency(item.gia_ban)} VNĐ`, 130, y, { align: "center" });
+
+        // Thành tiền
+        const thanhTien = item.so_luong * item.gia_ban;
+        doc.text(`${formatCurrency(thanhTien)} VNĐ`, 170, y, { align: "center" });
+
+        // Tăng y dựa trên số dòng của tên sản phẩm
+        y += productLines.length * 6 + 4;
+    });
+    // Vẽ đường kẻ ngang sau danh sách sản phẩm
+    doc.setLineWidth(0.2);
+    doc.line(20, y, 190, y);
+    // Tổng tiền
+    y += 10;
+    doc.setFontSize(12);
+    doc.setFont("Roboto", "normal");
+    doc.text(`Tổng tiền hàng: ${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 20, y);
+    y += 6;
+    const giamGia = (store.hoaDonDetail.tong_tien_truoc_giam || 0) +
+        (store.hoaDonDetail.phi_van_chuyen || 0) -
+        (store.hoaDonDetail.tong_tien_sau_giam || 0);
+    doc.text(`Giảm giá: ${formatCurrency(giamGia)} VNĐ`, 20, y);
+    y += 6;
+    doc.text(`Phí vận chuyển: ${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 20, y);
+    y += 6;
+    doc.setFont("Roboto", "bold");
+    doc.text(`Thành tiền: ${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 20, y);
+    // Chân trang
+    y += 10;
+    doc.setFontSize(10);
+    doc.setFont("Roboto", "normal");
+    doc.text("Cảm ơn Quý Khách, hẹn gặp lại!", 105, y, { align: "center" });
+    // Lưu file PDF
+    doc.save(`HoaDon_${store.hoaDonDetail.ma_hoa_don}.pdf`);
 };
 
 onMounted(async () => {
