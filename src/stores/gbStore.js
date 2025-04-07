@@ -238,9 +238,72 @@ export const useGbStore = defineStore('gbStore', {
       const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
       this.topSanPhamBanChay = topSanPhamBanChay
     },
-    async getTopSanPhamBanCham() {
-      const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
-      this.topSanPhamBanCham = topSanPhamBanCham
+
+    // Hàm format tên trạng thái (nếu chưa có)
+    formatTrangThai(trangThai) {
+      switch (trangThai) {
+        case "CHO_XAC_NHAN": return "Chờ xác nhận";
+        case "DA_XAC_NHAN": return "Đã xác nhận";
+        case "DA_CAP_NHAT": return "Đã cập nhật";
+        case "DANG_GIAO": return "Đang giao";
+        case "HOAN_THANH": return "Hoàn thành";
+        case "DA_HUY": return "Đã hủy";
+        default: return trangThai;
+      }
+    },
+    // async getTopSanPhamBanChay() {
+    //   const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
+    //   this.topSanPhamBanChay = topSanPhamBanChay
+    // },
+    // thử nghiệm
+    async getTopSanPhamBanChay(type = 'nam-nay', startDate = null, endDate = null) {
+      try {
+        console.log('Store params:', { type, startDate, endDate });
+        // Đảm bảo luôn có type
+        const response = await bctkService.getTopSanPhamBanChay(type || 'nam-nay', startDate, endDate);
+
+        if (response && Array.isArray(response)) {
+          this.topSanPhamBanChay = response.map((item, index) => ({
+            stt: index + 1,
+            ma_san_pham: item.ma_san_pham || '',
+            ten_san_pham: item.ten_san_pham || '',
+            so_luong: item.so_luong || 0,
+            gia_ban: item.gia_ban || 0
+          }));
+        } else {
+          console.warn('Invalid response format:', response);
+          this.topSanPhamBanChay = [];
+        }
+        return this.topSanPhamBanChay;
+      } catch (error) {
+        console.error('Store error:', error);
+        this.topSanPhamBanChay = [];
+        throw error;
+      }
+    },
+    // async getTopSanPhamBanCham() {
+    //   const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
+    //   this.topSanPhamBanCham = topSanPhamBanCham
+    // },
+    async getTopSanPhamBanCham(type = 'nam-nay', startDate = null, endDate = null) {
+      try {
+        const response = await bctkService.getTopSanPhamBanCham(type, startDate, endDate);
+        if (response && Array.isArray(response)) {
+          this.topSanPhamBanCham = response.map((item, index) => ({
+            stt: index + 1,
+            ma_san_pham: item.ma_san_pham || '',
+            ten_san_pham: item.ten_san_pham || '',
+            so_luong: item.so_luong || 0,
+            gia_ban: item.gia_ban || 0
+          }));
+        } else {
+          console.warn('Invalid response format for topSanPhamBanCham:', response);
+          this.topSanPhamBanCham = [];
+        }
+      } catch (error) {
+        console.error('Error in getTopSanPhamBanCham:', error);
+        this.topSanPhamBanCham = [];
+      }
     },
     //Kết thúc BCTK
 
