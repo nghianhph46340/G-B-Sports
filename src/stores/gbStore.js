@@ -549,11 +549,11 @@ export const useGbStore = defineStore('gbStore', {
         return
       }
       if (!khachHang.danhSachKhachHang || khachHang.danhSachKhachHang.length === 0) {
-        this.getAllKhachHangArr = [];
-        this.diaChiMap = {};
-        this.totalKhachHang = 0;
-        this.currentKhachHang = 0;
-        this.totalItemsKhachHang = 0;
+        this.getAllKhachHangArr = []
+        this.diaChiMap = {}
+        this.totalKhachHang = 0
+        this.currentKhachHang = 0
+        this.totalItemsKhachHang = 0
         // Hiển thị thông báo tùy thuộc vào điều kiện lọc
         if (trangThai && keyword) {
           toast.error(
@@ -622,14 +622,16 @@ export const useGbStore = defineStore('gbStore', {
     async deleteHoaDon(idHoaDon) {
       try {
         const hoaDon = await banHangService.deleteHoaDon(idHoaDon)
-        if (hoaDon.error) {
-          toast.error('Không xóa được hoá đơn')
-          return
+        if (!hoaDon.success) {
+          // Kiểm tra success thay vì error
+          toast.error(hoaDon.message || 'Không xóa được hoá đơn')
+          return { error: true, message: hoaDon.message }
         }
         return hoaDon
       } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra')
+        const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra'
+        console.error('Lỗi khi xóa hóa đơn:', error)
+        toast.error(errorMessage)
         throw error
       }
     },
@@ -663,15 +665,15 @@ export const useGbStore = defineStore('gbStore', {
     },
     async themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan) {
       try {
-        const hoaDon = await banHangService.themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan)
-        if (hoaDon.error) {
-          toast.error('Không thêm được sản phẩm vào hoá đơn')
-          return
+        const result = await banHangService.themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan)
+        if (result.error) {
+          toast.error(result.message || 'Không thêm được sản phẩm vào hoá đơn')
+          return null
         }
-        return hoaDon
+        return result
       } catch (error) {
         console.error(error)
-        toast.error('Có lị xảy ra')
+        toast.error('Có lỗi xảy ra khi thêm sản phẩm')
         throw error
       }
     },
@@ -728,6 +730,21 @@ export const useGbStore = defineStore('gbStore', {
       } catch (error) {
         console.error(error)
         toast.error('Có lỗi xảy ra')
+      }
+    },
+
+    async xoaSPHD(idHoaDon, idCTSP) {
+      try {
+        const result = await banHangService.xoaSPHD(idHoaDon, idCTSP)
+        if (!result.success) {
+          toast.error(result.message || 'Không xóa được sản phẩm khỏi hóa đơn')
+          return null
+        }
+        return result.data // Trả về dữ liệu HoaDon
+      } catch (error) {
+        console.error('Lỗi từ API:', error.response?.data || error.message)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm')
+        return null
       }
     },
 
@@ -1128,38 +1145,38 @@ export const useGbStore = defineStore('gbStore', {
           this.indexMenu = ['3']
           break
         case '/admin/quanlynhanvien':
-          this.indexMenu = ['10'];
-          break;
+          this.indexMenu = ['10']
+          break
         case '/admin/quanlyhoadon':
-          this.indexMenu = ['8'];
-          break;
+          this.indexMenu = ['8']
+          break
         case '/admin/quanlysanpham/add':
-          this.indexMenu = ['3'];
-          break;
+          this.indexMenu = ['3']
+          break
         case '/admin/quanlysanpham/sua':
-          this.indexMenu = ['3'];
-          break;
+          this.indexMenu = ['3']
+          break
         case '/admin/quanlykhachhang':
-          this.indexMenu = ['11'];
-          break;
+          this.indexMenu = ['11']
+          break
         case '/admin/baocaothongke':
-          this.indexMenu = ['2'];
-          break;
+          this.indexMenu = ['2']
+          break
         case '/admin/quanlyvoucher':
-          this.indexMenu = ['12'];
-          break;
+          this.indexMenu = ['12']
+          break
         case '/admin/quanlykhuyenmai':
-          this.indexMenu = ['13'];
-          break;
+          this.indexMenu = ['13']
+          break
         case '/admin/quanlysanpham/sanpham':
-          this.indexMenu = ['4'];
-          break;
+          this.indexMenu = ['4']
+          break
         case '/admin/quanlysanpham/thuoctinh':
-          this.indexMenu = ['7'];
-          break;
+          this.indexMenu = ['7']
+          break
         case '/admin/quanlysanpham/chitietsanpham':
-          this.indexMenu = ['5'];
-          break;
+          this.indexMenu = ['5']
+          break
         default:
           this.indexMenu = ['1']
           break
@@ -1369,7 +1386,6 @@ export const useGbStore = defineStore('gbStore', {
     closeNoitification() {
       this.checkNoitification = false
     },
-
   },
 
   persist: {

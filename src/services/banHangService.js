@@ -32,15 +32,16 @@ const updateHoaDon = async() => {
     }
 }
 
-const deleteHoaDon = async(idHoaDon) => {
+const deleteHoaDon = async (idHoaDon) => {
     try {
-        const { data } = await axiosInstance.get(banHang + `deleteHoaDon?idHoaDon=` + idHoaDon);
+        const { data } = await axiosInstance.delete(`banhang/deleteHoaDon?idHoaDon=${idHoaDon}`);
+        console.log('Response từ API:', data); // Kiểm tra response
         return data;
     } catch (error) {
-        console.error('Lỗi API xóa hoá đơn:', error);
-        return { error: true };
+        console.error('Lỗi API xóa hoá đơn:', error.response?.data || error.message);
+        throw error;
     }
-}
+};
 
 const getAllSPHD = async(idHoaDon) => {
     try {
@@ -61,15 +62,17 @@ const addSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
         return { error: true };
     }
 }
-const themSPHDMoi = async(idHoaDon, idCTSP, soLuong, giaBan) => {
+const themSPHDMoi = async (idHoaDon, idCTSP, soLuong, giaBan) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `themSPHDMoi?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}&giaBan=${giaBan}`);
+        const { data } = await axiosInstance.post(
+            banHang + `themSPHDMoi?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}&giaBan=${giaBan}`
+        );
         return data;
     } catch (error) {
-        console.error('Lỗi API thêm sp mới hoá đơn:', error);
-        return { error: true };
+        console.error('Lỗi API thêm sp mới hoá đơn:', error.response?.data || error.message);
+        return { error: true, message: error.response?.data || 'Có lỗi xảy ra' };
     }
-}
+};
 
 const giamSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
     try {
@@ -80,6 +83,26 @@ const giamSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
         return { error: true };
     }
 }
+
+const xoaSPHD = async (idHoaDon, idCTSP) => {
+    try {
+        const response = await axiosInstance.delete(
+            banHang + `xoaSPHD?idHoaDon=${idHoaDon}&idChiTietSanPham=${idCTSP}`
+        );
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            console.error('Lỗi từ server:', error.response.status, error.response.data);
+            return { success: false, message: error.response.data.message || 'Có lỗi xảy ra' };
+        } else if (error.request) {
+            console.error('Không nhận được phản hồi:', error.message);
+            return { success: false, message: 'Lỗi mạng hoặc server không phản hồi' };
+        } else {
+            console.error('Lỗi khác:', error.message);
+            return { success: false, message: 'Có lỗi xảy ra' };
+        }
+    }
+};
 
 const trangThaiDonHang = async(idHoaDon) => {
     try {
@@ -111,5 +134,6 @@ export const banHangService = {
     giamSPHD,
     themSPHDMoi,
     trangThaiDonHang,
-    phuongThucNhanHang
+    phuongThucNhanHang,
+    xoaSPHD
 }
