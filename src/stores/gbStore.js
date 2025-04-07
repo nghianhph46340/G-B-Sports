@@ -77,6 +77,13 @@ export const useGbStore = defineStore('gbStore', {
     chiTietHoaDons: [],
     trangThaiHistory: [],
     getAllHoaDonCTTArr: [],
+    listCTSP_HD: [],
+
+
+    // Đăng ký đăng nhập // Thêm state để lưu thông tin người dùng
+    userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
+    isLoggedIn: localStorage.getItem('isLoggedIn') === 'true' || false,
+    id_roles: localStorage.getItem('id_roles') || null, // Thêm id_roles vào state
 
     //Khách hàng
     getAllKhachHangArr: [],
@@ -600,8 +607,21 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
-    // Thêm action để hủy hóa đơn
-    async cancelHoaDon(maHoaDon) {
+    async revertToInitialStatus(maHoaDon) {// Quay lại trạng thái Chờ xác nhận
+        try {
+            const response = await hoaDonService.quayLaiTrangThai(maHoaDon);
+            if (response.error) {
+                toast.error('Quay lại trạng thái ban đầu thất bại');
+                return;
+            }
+            toast.success('Đã quay lại trạng thái ban đầu thành công');
+            await this.getHoaDonDetail(maHoaDon);
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi quay lại trạng thái ban đầu');
+        }
+    },
+    async cancelHoaDon(maHoaDon) {// Thêm action để hủy hóa đơn
       try {
         const response = await hoaDonService.cancelHoaDon(maHoaDon)
         if (response.error) {
@@ -614,6 +634,200 @@ export const useGbStore = defineStore('gbStore', {
         console.error(error)
         toast.error('Có lỗi xảy ra')
       }
+    },
+    async updateCustomerInfo(maHoaDon, ttkh) {
+        try {
+            const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, ttkh);
+            if (response.error) {
+                toast.error('Cập nhật thông tin khách hàng thất bại');
+                return;
+            }
+            toast.success('Cập nhật thông tin khách hàng thành công');
+            await this.getHoaDonDetail(maHoaDon);
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi cập nhật thông tin khách hàng');
+        }
+    },
+    async updateNote(maHoaDon, ghiChu) {
+        try {
+            const response = await hoaDonService.updateNote(maHoaDon, ghiChu);
+            if (response.error) {
+                toast.error('Cập nhật ghi chú thất bại');
+                return;
+            }
+            toast.success('Cập nhật ghi chú thành công');
+            await this.getHoaDonDetail(maHoaDon);
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi cập nhật ghi chú');
+        }
+    },
+    async getAllCTSP_HD(page = 0, size = 5, keyword = '') {
+        try {
+            const response = await hoaDonService.getAllCTSP_HD(page, size, keyword);
+            if (response.error) {
+                toast.error('Không lấy được danh sách sản phẩm');
+                return;
+            }
+            this.listCTSP_HD = response.content || [];
+            this.totalPages = response.totalPages || 0;
+            this.currentPage = page;
+            this.totalItems = response.totalElements || 0;
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');
+        }
+    },
+    async addProductsToInvoice(maHoaDon, products) {
+        try {
+            const response = await hoaDonService.addProductsToInvoice(maHoaDon, products);
+            if (response.error) {
+                toast.error('Thêm sản phẩm vào hóa đơn thất bại');
+                return;
+            }
+            toast.success('Thêm sản phẩm vào hóa đơn thành công');
+            await this.getHoaDonDetail(maHoaDon);
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi thêm sản phẩm');
+        }
+    },
+    async removeProductFromInvoice(maHoaDon, idCTSP, soLuong) {
+        try {
+            const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong);
+            if (response.error) {
+                return { error: true };
+            }
+            return response;
+        } catch (error) {
+            console.error('Lỗi khi xóa sản phẩm khỏi hóa đơn:', error);
+            return { error: true };
+        }
+    },
+    async updateProductQuantity(maHoaDon, idCTSP, quantityChange) {
+        try {
+            const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange);
+            if (response.error) {
+                return { error: true };
+            }
+            return response;
+        } catch (error) {
+            console.error('Lỗi khi cập nhật số lượng sản phẩm:', error);
+            return { error: true };
+        }
+    },
+    ///////////////////////////Đăng ký tài khoản khách hàng + đăng nhập /////////////////////////////////////////
+    async registerKhachHang(registerData) {
+        const result = await khachHangService.registerKhachHang(registerData);
+        if (result.error) {
+            if (result.fieldErrors) {
+                return {
+                    error: true,
+                    fieldErrors: result.fieldErrors
+                };
+            }
+            toast.error(result.message || 'Đăng ký tài khoản thất bại!');
+            return { error: true };
+        }
+        toast.success(result.successMessage || 'Đăng ký tài khoản thành công!');
+        return { success: true, khachHang: result.khachHang };
+    },
+    // Thêm action login
+    async login(loginData) {
+        const result = await khachHangService.login(loginData);
+        if (result.error) {
+            if (result.fieldErrors) {
+                return {
+                    error: true,
+                    fieldErrors: result.fieldErrors
+                };
+            }
+            toast.error(result.message || 'Đăng nhập thất bại!');
+            return { error: true };
+        }
+    
+        // Kiểm tra dữ liệu trả về từ API đăng nhập
+        if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
+            console.error('Dữ liệu tài khoản không hợp lệ:', result);
+            toast.error('Dữ liệu tài khoản không hợp lệ!');
+            return { error: true };
+        }
+    
+        // Lưu thông tin cơ bản
+        this.userInfo = result.taiKhoan;
+        this.isLoggedIn = true;
+        this.id_roles = result.id_roles;
+    
+        // In thông tin tài khoản cơ bản
+        console.log('Thông tin tài khoản (tai_khoan):', this.userInfo);
+        console.log('ID Roles:', this.id_roles);
+    
+        // Lưu vào sessionStorage
+        sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
+        sessionStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('id_roles', result.id_roles);
+    
+        if (loginData.rememberMe) {
+            localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('id_roles', result.id_roles);
+        }
+    
+        // Lấy thông tin chi tiết
+        try {
+            const userDetails = await khachHangService.getUserDetail({
+                username: result.taiKhoan.ten_dang_nhap,
+                id_roles: result.id_roles
+            });
+            this.userDetails = userDetails;
+    
+            // In thông tin chi tiết
+            console.log('Thông tin chi tiết (userDetails):', this.userDetails);
+    
+            sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
+            if (loginData.rememberMe) {
+                localStorage.setItem('userDetails', JSON.stringify(userDetails));
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy thông tin chi tiết:', error);
+            toast.error('Không thể lấy thông tin chi tiết tài khoản!');
+        }
+    
+        toast.success(result.successMessage || 'Đăng nhập thành công!');
+        return { success: true, id_roles: result.id_roles };
+    },
+    // Cập nhật restoreLoginState để kiểm tra cả sessionStorage
+    restoreLoginState() {
+        let userInfo = localStorage.getItem('userInfo');
+        let isLoggedIn = localStorage.getItem('isLoggedIn');
+        let id_roles = localStorage.getItem('id_roles');
+
+        // Nếu không có trong localStorage, kiểm tra sessionStorage
+        if (!userInfo || isLoggedIn !== 'true') {
+            userInfo = sessionStorage.getItem('userInfo');
+            isLoggedIn = sessionStorage.getItem('isLoggedIn');
+            id_roles = sessionStorage.getItem('id_roles');
+        }
+
+        if (userInfo && isLoggedIn === 'true') {
+            this.userInfo = JSON.parse(userInfo);
+            this.isLoggedIn = true;
+            this.id_roles = id_roles;
+        }
+    },
+
+    // Action để đăng xuất
+    logout() {
+        // Xóa dữ liệu trong localStorage và state
+        localStorage.removeItem('id_roles');
+        localStorage.removeItem('userInfo');
+        localStorage.removeItem('isLoggedIn');
+        this.userInfo = null;
+        this.isLoggedIn = false;
+        this.id_roles = null;
+        router.replace('/login-register/login');
+        toast.success('Đăng xuất thành công!');
     },
     //Import excel
     async importExcel(file) {

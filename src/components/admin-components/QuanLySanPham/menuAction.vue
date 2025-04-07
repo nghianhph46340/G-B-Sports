@@ -266,7 +266,7 @@
                                         (item.mauSac.ma_mau_sac + ' ' + item.mauSac.ten_mau_sac) : '(Thiếu dữ liệu)' }}
                                 </td>
                                 <td :class="{ 'cell-error': !item.kichThuoc.gia_tri }">
-                                    {{ (item.kichThuoc.gia_tri && item.kichThuoc.don_vi) ?
+                                    {{ (item.kichThuoc.gia_tri) ?
                                         (item.kichThuoc.gia_tri + ' ' + item.kichThuoc.don_vi) : '(Thiếu dữ liệu)' }}
                                 </td>
                                 <td>
@@ -720,6 +720,18 @@ const saveExcelImport = async () => {
             ? importExcelData.value.filter(item => !hasRowError(item))
             : importExcelData.value;
 
+        // Log dữ liệu sẽ được lưu
+        console.log('Dữ liệu sẽ được lưu vào CSDL:', dataToSave);
+        console.log('Số lượng dòng dữ liệu hợp lệ:', dataToSave.length);
+
+        // Log thông tin thêm về dữ liệu
+        const categoryCounts = {};
+        dataToSave.forEach(item => {
+            const category = item.sanPham.danhMuc.ten_danh_muc;
+            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+        });
+        console.log('Phân loại sản phẩm theo danh mục:', categoryCounts);
+
         const result = await store.saveExcelImport(dataToSave);
         console.log('Kết quả lưu dữ liệu:', result);
 
@@ -820,10 +832,24 @@ const handleExportExcel = async () => {
             return;
         }
 
+        // Log dữ liệu sẽ xuất ra Excel
+        console.log('Dữ liệu xuất Excel:');
+        console.log('- Các trường được chọn:', selectedFields);
+        console.log('- ID sản phẩm xuất:', productIds);
+
+        if (exportSelection.value === 'all') {
+            console.log('- Toàn bộ sản phẩm sẽ được xuất');
+        } else if (exportSelection.value === 'filtered') {
+            console.log('- Sản phẩm được lọc sẽ xuất:', store.getFilteredProducts);
+        } else if (exportSelection.value === 'selected') {
+            console.log('- Sản phẩm được chọn sẽ xuất:', selectedRows.value);
+        }
+
         // Gọi hàm xuất Excel
         const result = await store.exportExcel(productIds, selectedFields);
 
         if (result) {
+            console.log('Kết quả xuất Excel:', result);
             message.success('Xuất Excel thành công!');
             exportModalVisible.value = false;
         }
@@ -944,6 +970,15 @@ const validateAndPreview = async () => {
         const result = await store.importExcel(selectedFile.value);
 
         if (result && result.length > 0) {
+            // Log dữ liệu từ file Excel
+            console.log('Dữ liệu từ file Excel:', result);
+            console.log('Tổng số dòng dữ liệu:', result.length);
+
+            // Log chi tiết hơn về một dòng dữ liệu mẫu
+            if (result.length > 0) {
+                console.log('Cấu trúc dữ liệu mẫu (dòng đầu tiên):', result[0]);
+            }
+
             importExcelData.value = result;
             importExcelModal.value = true;
             openModalImportExcel.value = false;

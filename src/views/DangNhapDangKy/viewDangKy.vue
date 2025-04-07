@@ -35,6 +35,16 @@
                         <span class="error-message" v-if="errors.fullName">{{ errors.fullName }}</span>
                     </div>
 
+                    <!-- Ngày sinh -->
+                    <div class="form-group">
+                        <label for="birthDate">
+                            <i class="fas fa-birthday-cake"></i> Ngày sinh
+                        </label>
+                        <input type="date" id="birthDate" v-model="form.birthDate" class="form-control" required
+                            @blur="validateBirthDate" />
+                        <span class="error-message" v-if="errors.birthDate">{{ errors.birthDate }}</span>
+                    </div>
+
                     <!-- Số điện thoại -->
                     <div class="form-group">
                         <label for="phone">
@@ -57,13 +67,14 @@
                                 <span class="ms-1">Nam</span>
                             </label>
                             <label class="gender-option">
-                                <input type="radio" v-model="form.gender" value="Nữ">
+                                <input type="radio" v-model="form.gender" value="Nữ" required>
                                 <span class="ms-1">Nữ</span>
                             </label>
                             <label class="gender-option">
-                                <input type="radio" v-model="form.gender" value="Khác">
+                                <input type="radio" v-model="form.gender" value="Khác" required>
                                 <span class="ms-1">Khác</span>
                             </label>
+                            <span class="error-message" v-if="errors.gender">{{ errors.gender }}</span>
                         </div>
                     </div>
 
@@ -130,8 +141,10 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue';
+import { useGbStore } from '@/stores/gbStore';
 
 const router = useRouter();
+const gbStore = useGbStore();
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 const isLoading = ref(false);
@@ -156,7 +169,8 @@ const errors = ref({
     fullName: '',
     phone: '',
     birthDate: '',
-    address: '',
+    // address: '',
+    gender: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -183,14 +197,40 @@ const validatePhone = () => {
     }
 };
 
+const validateGender = () => {
+    if (form.value.gender === '') {
+        errors.value.gender = 'Vui lòng chọn giới tính';
+    } else {
+        errors.value.gender = '';
+    }
+}
+
 const validateBirthDate = () => {
     const today = new Date();
     const birthDate = new Date(form.value.birthDate);
-    const age = today.getFullYear() - birthDate.getFullYear();
+    if (isNaN(birthDate.getTime())) {
+        errors.value.birthDate = 'Ngày sinh không hợp lệ';
+        return;
+    }
+    // Tính tuổi chính xác
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const dayDiff = today.getDate() - birthDate.getDate();
 
+    // Nếu chưa đến tháng sinh nhật, hoặc đến tháng sinh nhật nhưng chưa đến ngày, thì giảm tuổi đi 1
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+        age--;
+    }
+    if (age < 0) {
+        errors.value.birthDate = 'Bạn đến từ tương lai à???';
+        return;
+    }
     if (age < 14) {
         errors.value.birthDate = 'Bạn phải đủ 14 tuổi để đăng ký';
-    } else {
+    } else if (age > 100) {
+        errors.value.birthDate = 'Hội người cao tuổi';
+    }
+    else {
         errors.value.birthDate = '';
     }
 };
@@ -241,24 +281,48 @@ const handleRegister = async () => {
     validateFullName();
     validatePhone();
     validateBirthDate();
-    validateAddress();
+    // validateAddress();
     validateEmail();
     validatePassword();
     validateConfirmPassword();
+    validateGender();
 
     // Check if there are any errors
     if (hasErrors.value) {
         toast.error('Vui lòng kiểm tra lại thông tin đăng ký!');
+        console.log('Errors:', hasErrors.value);
         return;
     }
 
     try {
         isLoading.value = true;
         // Xử lý logic đăng ký ở đây
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        toast.success('Đăng ký thành công!');
-        router.push('/dang-nhap');
+        const registerData = {
+            fullName: form.value.fullName,
+            phone: form.value.phone,
+            gender: form.value.gender ? form.value.gender : 'Nam',
+            birthDate: form.value.birthDate ? new Date(form.value.birthDate).toISOString() : null,
+            email: form.value.email,
+            password: form.value.password,
+            confirmPassword: form.value.confirmPassword
+        };
+        // Gọi action registerKhachHang từ store
+        console.log('Register data:', registerData); // Kiểm tra dữ liệu gửi lên
+        const result = await gbStore.registerKhachHang(registerData);
+        console.log('Register result:', result);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (result.error) {
+            if (result.fieldErrors) {
+                console.log('Field errors:', result.fieldErrors); // Kiểm tra lỗi từ backend
+                Object.keys(result.fieldErrors).forEach((field) => {
+                    errors.value[field] = result.fieldErrors[field];
+                });
+                toast.error('Vui lòng kiểm tra lại thông tin!');
+            }
+            return;
+        }
+        // toast.success('Đăng ký thành công!');
+        router.push('/login-register/login');
     } catch (error) {
         toast.error('Đăng ký thất bại. Vui lòng thử lại!');
     } finally {

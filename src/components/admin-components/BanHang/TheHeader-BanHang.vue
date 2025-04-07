@@ -457,7 +457,6 @@ const refreshHoaDon = async (idHoaDon) => {
     try {
         await store.getHoaDonByIdHoaDon(idHoaDon); // Hoặc API khác nếu bạn có
         const hoaDonInfo = store.getHDBIDHD;
-        console.log('Thống tin hóa đơn:', hoaDonInfo);
         const currentTab = activeTabData.value;
         if (hoaDonInfo && currentTab && currentTab.hd?.id_hoa_don === idHoaDon) {
             currentTab.hd.tong_tien_truoc_giam = hoaDonInfo.tong_tien_truoc_giam || 0;
@@ -556,9 +555,10 @@ const isPaymentDisabled = computed(() => {
 // Cập nhật tổng tiền khi số lượng thay đổi trong bảng hóa đơn
 const updateItemTotal = async (item) => {
     const productInfo = allProducts.value.find(p => p.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
-    const hoadon = store.getAllSPHDArr;
     // Tìm sản phẩm chính xác bằng id_chi_tiet_san_pham thay vì chỉ id_hoa_don
-    const sphd = hoadon.find(hd => hd.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
+    await store.getHoaDonByIdHoaDon(item.id_hoa_don);
+    const sphd = store.getHDBIDHD;
+    console.log("sphd", sphd)
     // Kiểm tra số lượng tồn
     if (productInfo && item.so_luong > productInfo.so_luong) {
         message.warning(`Số lượng tồn của "${item.ten_san_pham}" không đủ (${productInfo.so_luong_ton}). Đã đặt lại số lượng tối đa.`);
@@ -572,6 +572,7 @@ const updateItemTotal = async (item) => {
         // Nếu sphd tồn tại (sản phẩm đã có trong hóa đơn)
         if (sphd) {
             if (sphd.so_luong > item.so_luong) {
+                console.log("vào giảm số lượng")
                 // Giảm số lượng
                 await store.giamSPHD(
                     item.id_hoa_don,
@@ -579,8 +580,8 @@ const updateItemTotal = async (item) => {
                     sphd.so_luong - item.so_luong,
                     item.gia_ban
                 );
-                console.log(sphd.so_luong - item.so_luong, item.id_hoa_don, item.id_chi_tiet_san_pham, item.gia_ban);
             } else if (sphd.so_luong < item.so_luong) {
+                console.log("vào tăng số lượng")
                 // Tăng số lượng
                 await store.addSPHD(
                     item.id_hoa_don,
@@ -588,7 +589,6 @@ const updateItemTotal = async (item) => {
                     item.so_luong - sphd.so_luong,
                     item.gia_ban
                 );
-                console.log(sphd.so_luong - item.so_luong, item.id_hoa_don, item.id_chi_tiet_san_pham, item.gia_ban);
             }
         } else {
             // Nếu sản phẩm chưa có trong hóa đơn (trường hợp bất ngờ), thêm mới
@@ -612,12 +612,12 @@ const updateItemTotal = async (item) => {
                 mau_sac: hd.ten_mau_sac || hd.mau_sac || null,
                 kich_thuoc: hd.gia_tri || null,
                 so_luong: hd.so_luong,
-                gia_ban: hd.gia_sau_giam || hd.gia_ban,
+                gia_ban: hd.gia_ban,
                 tong_tien: hd.don_gia,
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
-
+        console.log("id hoá đơn truyền vào ", item.id_hoa_don)
         await refreshHoaDon(item.id_hoa_don);
 
     } catch (error) {
@@ -1196,7 +1196,7 @@ watch(() => searchQuery, (newVal) => {
 /* Overriding Ant Design styles for dark theme */
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab) {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgb(235, 235, 235);
     border: none;
     color: black !important;
 }
@@ -1204,12 +1204,12 @@ watch(() => searchQuery, (newVal) => {
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab-active) {
     background-color: #1890ff;
-    color: black !important;
+    color: white !important;
 }
 
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
-    color: black !important;
+    color: white !important;
     text-shadow: none !important;
 }
 
