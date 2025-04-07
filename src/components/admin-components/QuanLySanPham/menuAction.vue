@@ -125,14 +125,15 @@
             </a-button>
             <!-- Modal nhập excel -->
             <a-modal v-model:open="openModalImportExcel" title="Nhập excel">
-                <a-upload :file-list="fileList" :remove="handleRemove" :before-upload="beforeUpload" :max-count="1"
-                    accept=".xlsx,.xls" @change="handleFileChange">
-                    <a-button>
+                <div class="upload-container">
+                    <input type="file" ref="fileInput" style="display: none" accept=".xlsx,.xls"
+                        @change="handleManualFileChange" />
+                    <a-button @click="triggerFileSelect">
                         <upload-outlined />
                         Chọn file Excel
                     </a-button>
-                </a-upload>
-                <p v-if="selectedFile">File đã chọn: {{ selectedFile.name }}</p>
+                    <p v-if="selectedFile">File đã chọn: {{ selectedFile.name }}</p>
+                </div>
                 <template #footer>
                     <a-button key="back" @click="openModalImportExcel = false">Hủy</a-button>
                     <a-button key="submit" type="primary" :loading="uploadLoading" :disabled="!selectedFile"
@@ -544,7 +545,50 @@ const handleFileChange = (info) => {
     }
 };
 
-const handleImportExcel = async () => {
+// Thêm hàm mới để trigger file select
+const fileInput = ref(null);
+
+const triggerFileSelect = () => {
+    fileInput.value.click();
+};
+
+const handleManualFileChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Kiểm tra file type
+    const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.type === 'application/vnd.ms-excel' ||
+        file.name.endsWith('.xlsx') ||
+        file.name.endsWith('.xls');
+
+    if (!isExcel) {
+        message.error('Vui lòng chỉ tải lên file Excel (.xlsx hoặc .xls)');
+        event.target.value = ''; // Reset input
+        return;
+    }
+
+    // Kiểm tra kích thước file (dưới 5MB)
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    if (!isLt5M) {
+        message.error('File phải nhỏ hơn 5MB!');
+        event.target.value = ''; // Reset input
+        return;
+    }
+
+    console.log('File được chọn thủ công:', file);
+    console.log('File type:', file.type);
+    console.log('File size:', file.size);
+
+    selectedFile.value = file;
+};
+
+const handleImportExcel = async (event) => {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     if (!selectedFile.value) {
         message.error('Vui lòng chọn file Excel!');
         return;
@@ -553,22 +597,23 @@ const handleImportExcel = async () => {
     uploadLoading.value = true;
 
     try {
-        // Fix: Correctly access the actual file object
-        // Ant Design Upload component stores the actual file in originFileObj
-        const file = selectedFile.value.originFileObj || selectedFile.value;
-
-        console.log('File được upload:', file);
-        console.log('File type:', file.type);
-        console.log('File size:', file.size);
+        console.log('File được upload:', selectedFile.value);
+        console.log('File type:', selectedFile.value.type);
+        console.log('File size:', selectedFile.value.size);
 
         // Make sure we're passing a raw File object to the service
-        const result = await store.importExcel(file);
+        const result = await store.importExcel(selectedFile.value);
 
         console.table(result);
         message.success('Import dữ liệu thành công!');
         openModalImportExcel.value = false;
+
+        // Reset file input
+        if (fileInput.value) {
+            fileInput.value.value = '';
+        }
+
         selectedFile.value = null;
-        fileList.value = [];
         importExcelModal.value = true;
         importExcelData.value = result;
 
