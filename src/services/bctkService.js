@@ -38,6 +38,16 @@ const getTiLeTrangThai = async () => {
         throw error;
     }
 };
+const topSanPhamBanChay = async () => {
+    try {
+        const response = await axiosInstance.get('/admin/tiLeTrangThaiDonHang');
+        console.log("Dữ liệu trả về từ API:", response.data);
+        return response.data;
+    } catch (error) {
+        console.error("Lỗi khi lấy tỉ lệ trạng thái:", error);
+        throw error;
+    }
+};
 // const topSanPhamBanChay = async () => {
 //     try {
 //         const response = await axiosInstance.get('/admin/topSPBanChay');
@@ -260,5 +270,8 @@ export const bctkService = {
     // topSanPhamBanCham,
     getTiLeTrangThai,
     getTopSanPhamBanChay,
-    getTopSanPhamBanCham
+    getTopSanPhamBanCham,
+    // topSanPhamBanChay,
+    // topSanPhamBanCham,
+    getTiLeTrangThai
 }

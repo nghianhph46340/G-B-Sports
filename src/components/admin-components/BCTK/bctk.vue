@@ -151,7 +151,7 @@
                                     {{ getTopRank(index + 1) }}
                                 </a-tag>
                             </template>
-                            <template v-else-if="column.key === 'tong_tien_sau_giam'">
+                            <template v-else-if="column.key === 'gia_ban'">
                                 {{ formatCurrency(text) }}
                             </template>
                         </template>
@@ -652,6 +652,10 @@ onMounted(async () => {
             gbStore.getTopSanPhamBanChay('nam-nay'),
             gbStore.getTopSanPhamBanCham('nam-nay')
         ]);
+
+        // Cập nhật dữ liệu
+        topSellingProducts.value = gbStore.topSanPhamBanChay;
+        topSlowProducts.value = gbStore.topSanPhamBanCham;
     } catch (error) {
         console.error('Lỗi trong onMounted:', error);
     }

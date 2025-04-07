@@ -234,6 +234,23 @@ export const useGbStore = defineStore('gbStore', {
         default: return trangThai;
       }
     },
+    async getTopSanPhamBanChay() {
+      const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
+      this.topSanPhamBanChay = topSanPhamBanChay
+    },
+
+    // Hàm format tên trạng thái (nếu chưa có)
+    formatTrangThai(trangThai) {
+      switch (trangThai) {
+        case "CHO_XAC_NHAN": return "Chờ xác nhận";
+        case "DA_XAC_NHAN": return "Đã xác nhận";
+        case "DA_CAP_NHAT": return "Đã cập nhật";
+        case "DANG_GIAO": return "Đang giao";
+        case "HOAN_THANH": return "Hoàn thành";
+        case "DA_HUY": return "Đã hủy";
+        default: return trangThai;
+      }
+    },
     // async getTopSanPhamBanChay() {
     //   const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
     //   this.topSanPhamBanChay = topSanPhamBanChay
