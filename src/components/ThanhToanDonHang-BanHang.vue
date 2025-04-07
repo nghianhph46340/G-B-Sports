@@ -52,7 +52,8 @@
                 <div class="section-box">
                     <h2 class="section-title">Thông tin giao hàng</h2>
                     <div class="customer-info">
-                        <a-form :model="customer" layout="vertical" class="shipping-form">
+                        <a-form :model="customer" layout="vertical" class="shipping-form" ref="customerForm"
+                            :rules="validationRules">
                             <div class="form-row">
                                 <a-form-item label="Họ tên người nhận" name="ho_ten" required class="form-item">
                                     <a-input v-model:value="customer.ho_ten" placeholder="Nhập họ tên người nhận" />
@@ -123,7 +124,7 @@
                                     </div>
                                     <div class="payment-info">
                                         <p class="payment-name">Thanh toán khi nhận hàng (COD)</p>
-                                        <p class="payment-desc">Thanh toán bằng tiền mặt khi nhận hàng</p>
+                                        <p class="payment-desc">Thanh toán khi nhận hàng</p>
                                     </div>
                                 </div>
                             </a-radio>
@@ -157,11 +158,11 @@
                                 </a-radio>
                             </div>
                             <div class="online-method-item">
-                                <a-radio value="zalopay" class="online-radio">
+                                <a-radio value="payos" class="online-radio">
                                     <div class="online-content">
-                                        <img src="https://upload.wikimedia.org/wikipedia/vi/thumb/5/5c/ZaloPay_logo.svg/2560px-ZaloPay_logo.svg.png"
-                                            alt="ZaloPay" class="online-logo" />
-                                        <span>ZaloPay</span>
+                                        <img src="../images/icon/depositphotos_593773014-stock-illustration-ruble-money-icon-shadow-russian-899359828.jpg"
+                                            alt="Payos" class="online-logo" />
+                                        <span>PayOs</span>
                                     </div>
                                 </a-radio>
                             </div>
@@ -225,7 +226,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -353,7 +354,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { message } from 'ant-design-vue';
+import { message, Form } from 'ant-design-vue';
 import axios from 'axios';
 import { thanhToanService } from '@/services/thanhToan';
 import {
@@ -453,6 +454,38 @@ const loadingWards = ref(false);
 
 // Order placement
 const placing = ref(false);
+
+// Form validation
+const customerForm = ref(null);
+
+// Validation rules
+const validationRules = {
+    ho_ten: [
+        { required: true, message: 'Vui lòng nhập họ tên người nhận', trigger: 'blur' },
+        { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự', trigger: 'blur' }
+    ],
+    so_dien_thoai: [
+        { required: true, message: 'Vui lòng nhập số điện thoại', trigger: 'blur' },
+        { pattern: /^(0[3|5|7|8|9])+([0-9]{8})$/, message: 'Số điện thoại không hợp lệ', trigger: 'blur' }
+    ],
+    email: [
+        { required: true, message: 'Vui lòng nhập email', trigger: 'blur' },
+        { type: 'email', message: 'Email không hợp lệ', trigger: 'blur' }
+    ],
+    tinh_thanh: [
+        { required: true, message: 'Vui lòng chọn Tỉnh/Thành phố', trigger: 'change' }
+    ],
+    quan_huyen: [
+        { required: true, message: 'Vui lòng chọn Quận/Huyện', trigger: 'change' }
+    ],
+    xa_phuong: [
+        { required: true, message: 'Vui lòng chọn Phường/Xã', trigger: 'change' }
+    ],
+    dia_chi_cu_the: [
+        { required: true, message: 'Vui lòng nhập địa chỉ cụ thể', trigger: 'blur' },
+        { min: 5, message: 'Địa chỉ phải có ít nhất 5 ký tự', trigger: 'blur' }
+    ]
+};
 
 // Computed values for order summary
 const subtotal = computed(() => {
@@ -764,17 +797,12 @@ const removeCoupon = (index) => {
     message.success('Đã xóa mã giảm giá');
 };
 
-// Place order
+// Place order - updated with form validation
 const placeOrder = async () => {
-    // Validate form
-    if (!customer.value.ho_ten || !customer.value.so_dien_thoai || !customer.value.email ||
-        !customer.value.tinh_thanh || !customer.value.quan_huyen ||
-        !customer.value.xa_phuong || !customer.value.dia_chi_cu_the) {
-        message.warning('Vui lòng điền đầy đủ thông tin giao hàng');
-        return;
-    }
-
     try {
+        // Validate form
+        await customerForm.value.validate();
+
         placing.value = true;
 
         // Calculate and log the complete invoice
@@ -785,7 +813,7 @@ const placeOrder = async () => {
 
         // Handle different payment methods
         if (selectedPaymentMethod.value === 'online') {
-            if (selectedOnlineMethod.value === 'zalopay') {
+            if (selectedOnlineMethod.value === 'payos') {
                 // Xử lý thanh toán ZaloPay
                 await thanhToanService.handlePayOSPayment(orderData);
             } else if (selectedOnlineMethod.value === 'vnpay') {
@@ -814,8 +842,15 @@ const placeOrder = async () => {
 
         placing.value = false;
     } catch (error) {
-        console.error('Error placing order:', error);
-        message.error('Không thể đặt hàng. Vui lòng thử lại sau.');
+        console.error('Lỗi khi đặt hàng:', error);
+
+        // Hiển thị lỗi từ validation (nếu có)
+        if (error.errorFields) {
+            message.error('Vui lòng điền đầy đủ thông tin giao hàng');
+        } else {
+            message.error('Không thể đặt hàng. Vui lòng thử lại sau.');
+        }
+
         placing.value = false;
     }
 };
