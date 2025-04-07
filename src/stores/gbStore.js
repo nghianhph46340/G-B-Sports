@@ -37,15 +37,6 @@ export const useGbStore = defineStore('gbStore', {
     mauSacList: [],
     sizeList: [],
     sanPhamById: {},
-     // State cho tìm kiếm
-     searchKeyword: '', // Từ khóa tìm kiếm hiện tại
-     searchProductIds: [], // Lưu trữ ID của các sản phẩm tìm thấy
-     filterCriteria: {}, // Lưu trữ các tiêu chí lọc
-     filteredProductIds: [], // Lưu trữ ID của các sản phẩm đã lọc
-     finalProductIds: [], // ID sản phẩm cuối cùng sau khi kết hợp tìm kiếm và lọc
-     isSearching: false, // Đang trong trạng thái tìm kiếm?
-     isFiltering: false, // Đang trong trạng thái lọc?
-     debug: true, // Chế độ debug để ghi log chi tiết
     // State cho chi tiết sản phẩm
     cTSPBySanPhamFull: [],
     filteredSanPhamList: [],
@@ -54,6 +45,22 @@ export const useGbStore = defineStore('gbStore', {
     justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
     // Cập nhật cấu trúc cho tìm kiếm và lọc
     currentFilter: null, // Bộ lọc hiện tại
+
+    // Danh sách gốc
+    getAllSanPham: [], // Danh sách sản phẩm gốc
+    getAllChiTietSanPham: [], // Danh sách chi tiết sản phẩm gốc
+
+    // State cho tìm kiếm
+    searchKeyword: '', // Từ khóa tìm kiếm hiện tại
+    searchProductIds: [], // Lưu trữ ID của các sản phẩm tìm thấy
+    filterCriteria: {}, // Lưu trữ các tiêu chí lọc
+    filteredProductIds: [], // Lưu trữ ID của các sản phẩm đã lọc
+    finalProductIds: [], // ID sản phẩm cuối cùng sau khi kết hợp tìm kiếm và lọc
+    isSearching: false, // Đang trong trạng thái tìm kiếm?
+    isFiltering: false, // Đang trong trạng thái lọc?
+    debug: true, // Chế độ debug để ghi log chi tiết
+
+
 
     //Nhân viên
     getAllNhanVienArr: [],
@@ -91,37 +98,35 @@ export const useGbStore = defineStore('gbStore', {
     voucherCurrentPage: 0,
     voucherTotalItems: 0,
     voucherSearchs: '',
-      // State cho khuyến mãi
-      getAllKhuyenMaiArr: [],
-      khuyenMaiSearch: [],
-      khuyenMaiTotalPages: 0, // Riêng cho khuyến mãi
-      khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
-      khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
-      khuyenMaiSearchs: '', // Riêng cho khuyến mãi
-      thongKe: {
-        doanhThu: 0,
-        tongDonHang: 0,
-        tongSanPham: 0
-      },
-      // Thêm state cho filter
-      bctkFilter: {
-        type: 'hom-nay',
-        startDate: '',
-        endDate: ''
-      },
-      // tỉ lệ trạng thái đơn hàng
-      tiLeTrangThai: [],
-      loading: false,
-      error: null,
-      // top sản phẩm bán chạy
-      topSanPhamBanChay: [],
-      topSanPhamBanCham: [],
-      // State cho chi tiết sản phẩm
-      cTSPBySanPhamFull: [],
-      //Giỏ hàng và thanh toán
-      checkoutItems: [], //Dữ liệu sản phẩm mua ngay
-      justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
-  
+
+    // State cho khuyến mãi
+    getAllKhuyenMaiArr: [],
+    khuyenMaiSearch: [],
+    khuyenMaiTotalPages: 0, // Riêng cho khuyến mãi
+    khuyenMaiCurrentPage: 0, // Riêng cho khuyến mãi
+    khuyenMaiTotalItems: 0, // Riêng cho khuyến mãi
+    khuyenMaiSearchs: '', // Riêng cho khuyến mãi
+
+    //Thống kê
+    thongKe: {
+      doanhThu: 0,
+      tongDonHang: 0,
+      tongSanPham: 0,
+    },
+    // Thêm state cho filter
+    bctkFilter: {
+      type: 'hom-nay',
+      startDate: '',
+      endDate: '',
+    },
+    topSanPhamBanChay: [],
+    topSanPhamBanCham: [],
+    // tỉ lệ trạng thái đơn hàng
+    tiLeTrangThai: [],
+    loading: false,
+    error: null,
+
+
   }),
 
   ///Đầu mút2

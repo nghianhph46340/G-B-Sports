@@ -224,6 +224,6 @@ export const bctkService = {
     getSoLieu,
     getChartData,
     topSanPhamBanChay,
-    topSanPhamBanCham, 
+    topSanPhamBanCham,
     getTiLeTrangThai
 }
