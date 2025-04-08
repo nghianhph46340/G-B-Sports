@@ -522,6 +522,7 @@ const addToBill = async (product) => {
         if (!result) return;
 
         await store.getAllSPHD(currentTab.hd.id_hoa_don);
+        console.log("store.getAllSPHDArr: ", store.getAllSPHDArr);
         currentTab.items.value = store.getAllSPHDArr.map(item => ({
             id_hoa_don: item.id_hoa_don,
             id_chi_tiet_san_pham: item.id_chi_tiet_san_pham,
@@ -534,7 +535,7 @@ const addToBill = async (product) => {
             tong_tien: item.don_gia,
             so_luong_ton_goc: item.so_luong_ton || 0
         }));
-
+        console.log("currentTab.items.value");
         console.log(currentTab.items.value);
         await refreshHoaDon(currentTab.hd.id_hoa_don);
 
