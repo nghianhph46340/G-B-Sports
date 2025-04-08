@@ -455,8 +455,8 @@ const defaultStatusSteps = [
     { name: 'Đơn hàng đã đặt', backendStatus: 'Chờ xác nhận', icon: 'fas fa-file-alt' },
     { name: 'Đã xác nhận', backendStatus: 'Đã xác nhận', icon: 'fas fa-check' },
     { name: 'Đã cập nhật', backendStatus: 'Đã cập nhật', icon: 'fas fa-edit' },
+    { name: 'Đang đóng gói', backendStatus: 'Chờ đóng gói', icon: 'fas fa-truck' },
     { name: 'Đã giao cho ĐVVC', backendStatus: 'Đang giao', icon: 'fas fa-truck' },
-    { name: 'Đã nhận hàng', backendStatus: 'Đã nhận hàng', icon: 'fas fa-box' },
     { name: 'Hoàn thành', backendStatus: 'Hoàn thành', icon: 'fas fa-check-circle' },
     { name: 'Đã hủy', backendStatus: 'Đã hủy', icon: 'fas fa-times-circle' }
 ];
@@ -710,18 +710,41 @@ const cannotCancel = computed(() => {
 
 const cannotEditProduct = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
-        return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
+    if (!trangThai) return true;
+
+    // Nếu trạng thái là "Đã cập nhật", kiểm tra trạng thái trước đó
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận';
     }
-    return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+
+    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+        return !['Chờ xác nhận'].includes(effectiveStatus);
+    }
+
+    return !['Chờ xác nhận', 'Đã xác nhận', 'Chờ đóng gói'].includes(effectiveStatus);
 });
 
 const cannotEdit = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
-        return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
+    if (!trangThai) return true;
+
+    // Nếu trạng thái là "Đã cập nhật", kiểm tra trạng thái trước đó
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận';
     }
-    return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+
+    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+        return !['Chờ xác nhận'].includes(effectiveStatus);
+    }
+    return !['Chờ xác nhận', 'Đã xác nhận', 'Chờ đóng gói'].includes(effectiveStatus);
 });
 
 const nextStatusText = computed(() => {
@@ -730,15 +753,23 @@ const nextStatusText = computed(() => {
 
     if (!phuongThucNhanHang || !trangThai) return 'Chuyển trạng thái';
 
-    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
-        return trangThai === 'Chờ xác nhận' ? 'Hoàn thành' : 'Hoàn thành';
+    // Xác định trạng thái trước "Đã cập nhật" (nếu trạng thái hiện tại là "Đã cập nhật")
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận'; // Mặc định là "Chờ xác nhận" nếu không tìm thấy
     }
 
-    switch (trangThai) {
+    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
+        if (effectiveStatus === 'Chờ xác nhận') return 'Hoàn thành';
+        return 'Hoàn thành';
+    }
+
+    switch (effectiveStatus) {
         case 'Chờ xác nhận':
             return 'Xác nhận đơn hàng';
-        case 'Đã cập nhật': // Chỉ xử lý "Đã cập nhật" sau "Chờ xác nhận"
-            return 'Xác nhận đơn hàng'; // Vẫn chuyển sang "Đã xác nhận"
         case 'Đã xác nhận':
             return 'Chuẩn bị hàng';
         case 'Chờ đóng gói':
@@ -756,15 +787,23 @@ const nextStatusValue = computed(() => {
 
     if (!phuongThucNhanHang || !trangThai) return '';
 
-    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
-        return trangThai === 'Chờ xác nhận' ? 'Hoàn thành' : 'Hoàn thành';
+    // Xác định trạng thái trước "Đã cập nhật"
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận'; // Mặc định là "Chờ xác nhận" nếu không tìm thấy
     }
 
-    switch (trangThai) {
+    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
+        if (effectiveStatus === 'Chờ xác nhận') return 'Hoàn thành';
+        return 'Hoàn thành';
+    }
+
+    switch (effectiveStatus) {
         case 'Chờ xác nhận':
             return 'Đã xác nhận';
-        case 'Đã cập nhật': // Chỉ xử lý "Đã cập nhật" sau "Chờ xác nhận"
-            return 'Đã xác nhận'; // Vẫn chuyển sang "Đã xác nhận"
         case 'Đã xác nhận':
             return 'Chờ đóng gói';
         case 'Chờ đóng gói':
