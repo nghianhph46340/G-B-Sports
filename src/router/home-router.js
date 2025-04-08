@@ -30,6 +30,12 @@ const home = [
                 path: "tracuudonhang-banhang",
                 name: "tracuudonhang-banhang",
                 component: () => import('@/views/web/traCuuDonHang-BanHang.vue')
+            },
+            {
+                path: "payment-callback",
+                name: "payment-callback",
+                component: () => import('@/views/web/PaymentCallback.vue'),
+                meta: { scrollToTop: true }
             }
         ]
     }
