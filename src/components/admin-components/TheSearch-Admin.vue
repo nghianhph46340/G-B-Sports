@@ -1,5 +1,5 @@
 <template>
-    <div class="container-fluid" style="width: 80%;">
+    <div class="container-fluid" style="width: 70%;">
         <form class="d-flex align-items-center justify-content-start" role="search" @submit.prevent="handleSearch">
             <SearchOutlined class="icon-search" @click="handleSearch" />
             <input class="form-control me-2" v-model="searchInput" type="search" placeholder="Bạn muốn tìm gì?"

@@ -60,8 +60,6 @@ export const useGbStore = defineStore('gbStore', {
     isFiltering: false, // Đang trong trạng thái lọc?
     debug: true, // Chế độ debug để ghi log chi tiết
 
-
-
     //Nhân viên
     getAllNhanVienArr: [],
     totalPages: 0, // Dùng chung cho phân trang
@@ -69,7 +67,6 @@ export const useGbStore = defineStore('gbStore', {
     totalItems: 0, // Dùng chung cho phân trang
     nhanVienArr: [],
     nhanVienSearch: [],
-
 
     //Hóa đơn
     getAllHoaDonArr: [],
@@ -89,7 +86,6 @@ export const useGbStore = defineStore('gbStore', {
     id_roles: localStorage.getItem('id_roles') || null, // Thêm id_roles vào state
     userDetails: null,
 
-
     //Khách hàng
     getAllKhachHangArr: [],
     totalKhachHang: 0,
@@ -97,7 +93,6 @@ export const useGbStore = defineStore('gbStore', {
     totalItemsKhachHang: 0,
     listSanPhamBanHang: [],
     getAllCTSPKMList: [],
-
 
     // State cho voucher
     getAllVoucherArr: [],
@@ -133,8 +128,6 @@ export const useGbStore = defineStore('gbStore', {
     tiLeTrangThai: [],
     loading: false,
     error: null,
-
-
   }),
 
   ///Đầu mút2
@@ -190,44 +183,72 @@ export const useGbStore = defineStore('gbStore', {
     },
     async fetchTiLeTrangThai() {
       try {
-        this.loading = true;
-        const data = await bctkService.getTiLeTrangThai();
-        console.log('Dữ liệu thô từ API:', data);
+        this.loading = true
+        const data = await bctkService.getTiLeTrangThai()
+        console.log('Dữ liệu thô từ API:', data)
 
         if (!data || !Array.isArray(data)) {
-          console.error('Định dạng dữ liệu không hợp lệ');
-          this.tiLeTrangThai = [];
-          return;
+          console.error('Định dạng dữ liệu không hợp lệ')
+          this.tiLeTrangThai = []
+          return
         }
 
         // Chuyển đổi từ dữ liệu API sang định dạng frontend cần
-        this.tiLeTrangThai = data.map(item => ({
+        this.tiLeTrangThai = data.map((item) => ({
           trangThai: this.formatTrangThai(item.trangThaiDonHang || 'Unknown'),
           soLuong: parseFloat(item.tiLeTrangThaiDonHang || 0), // Lấy phần trăm
-          tiLe: parseFloat(item.tiLeTrangThaiDonHang || 0)
-        }));
+          tiLe: parseFloat(item.tiLeTrangThaiDonHang || 0),
+        }))
 
         // Thêm dữ liệu mẫu nếu không có
         if (this.tiLeTrangThai.length === 0) {
-          this.tiLeTrangThai = [{
-            trangThai: 'Không có dữ liệu',
-            soLuong: 100,
-            tiLe: 100
-          }];
+          this.tiLeTrangThai = [
+            {
+              trangThai: 'Không có dữ liệu',
+              soLuong: 100,
+              tiLe: 100,
+            },
+          ]
         }
 
-        console.log('Dữ liệu đã xử lý:', this.tiLeTrangThai);
+        console.log('Dữ liệu đã xử lý:', this.tiLeTrangThai)
       } catch (error) {
-        console.error('Lỗi trong fetchTiLeTrangThai:', error);
-        this.error = error.message;
-        this.tiLeTrangThai = [{
-          trangThai: 'Lỗi',
-          soLuong: 100,
-          tiLe: 100
-        }];
+        console.error('Lỗi trong fetchTiLeTrangThai:', error)
+        this.error = error.message
+        this.tiLeTrangThai = [
+          {
+            trangThai: 'Lỗi',
+            soLuong: 100,
+            tiLe: 100,
+          },
+        ]
       } finally {
-        this.loading = false;
+        this.loading = false
       }
+    },
+
+    // Hàm format tên trạng thái (nếu chưa có)
+    formatTrangThai(trangThai) {
+      switch (trangThai) {
+        case 'CHO_XAC_NHAN':
+          return 'Chờ xác nhận'
+        case 'DA_XAC_NHAN':
+          return 'Đã xác nhận'
+        case 'DA_CAP_NHAT':
+          return 'Đã cập nhật'
+        case 'DANG_GIAO':
+          return 'Đang giao'
+        case 'HOAN_THANH':
+          return 'Hoàn thành'
+        case 'DA_HUY':
+          return 'Đã hủy'
+        default:
+          return trangThai
+      }
+    },
+    async getTopSanPhamBanChay() {
+      const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
+      this.topSanPhamBanChay = topSanPhamBanChay
     },
 
     // Hàm format tên trạng thái (nếu chưa có)
@@ -242,17 +263,61 @@ export const useGbStore = defineStore('gbStore', {
         default: return trangThai;
       }
     },
-    async getTopSanPhamBanChay() {
-      const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
-      this.topSanPhamBanChay = topSanPhamBanChay
+    // async getTopSanPhamBanChay() {
+    //   const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
+    //   this.topSanPhamBanChay = topSanPhamBanChay
+    // },
+    // thử nghiệm
+    async getTopSanPhamBanChay(type = 'nam-nay', startDate = null, endDate = null) {
+      try {
+        console.log('Store params:', { type, startDate, endDate });
+        // Đảm bảo luôn có type
+        const response = await bctkService.getTopSanPhamBanChay(type || 'nam-nay', startDate, endDate);
+
+        if (response && Array.isArray(response)) {
+          this.topSanPhamBanChay = response.map((item, index) => ({
+            stt: index + 1,
+            ma_san_pham: item.ma_san_pham || '',
+            ten_san_pham: item.ten_san_pham || '',
+            so_luong: item.so_luong || 0,
+            gia_ban: item.gia_ban || 0
+          }));
+        } else {
+          console.warn('Invalid response format:', response);
+          this.topSanPhamBanChay = [];
+        }
+        return this.topSanPhamBanChay;
+      } catch (error) {
+        console.error('Store error:', error);
+        this.topSanPhamBanChay = [];
+        throw error;
+      }
     },
-    async getTopSanPhamBanCham() {
-      const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
-      this.topSanPhamBanCham = topSanPhamBanCham
+    // async getTopSanPhamBanCham() {
+    //   const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
+    //   this.topSanPhamBanCham = topSanPhamBanCham
+    // },
+    async getTopSanPhamBanCham(type = 'nam-nay', startDate = null, endDate = null) {
+      try {
+        const response = await bctkService.getTopSanPhamBanCham(type, startDate, endDate);
+        if (response && Array.isArray(response)) {
+          this.topSanPhamBanCham = response.map((item, index) => ({
+            stt: index + 1,
+            ma_san_pham: item.ma_san_pham || '',
+            ten_san_pham: item.ten_san_pham || '',
+            so_luong: item.so_luong || 0,
+            gia_ban: item.gia_ban || 0
+          }));
+        } else {
+          console.warn('Invalid response format for topSanPhamBanCham:', response);
+          this.topSanPhamBanCham = [];
+        }
+      } catch (error) {
+        console.error('Error in getTopSanPhamBanCham:', error);
+        this.topSanPhamBanCham = [];
+      }
     },
     //Kết thúc BCTK
-
-
 
     //Nhân viên
     async layDanhSachNhanVien() {
@@ -451,7 +516,7 @@ export const useGbStore = defineStore('gbStore', {
         this.mauSacList = mauSacRespone
       }
     },
-    //Lấy danh sách size    
+    //Lấy danh sách size
     async getSizeList() {
       const sizeRespone = await sanPhamService.getSizeList()
       if (sizeRespone.error) {
@@ -607,18 +672,18 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     async revertToInitialStatus(maHoaDon) {// Quay lại trạng thái Chờ xác nhận
-        try {
-            const response = await hoaDonService.quayLaiTrangThai(maHoaDon);
-            if (response.error) {
-                toast.error('Quay lại trạng thái ban đầu thất bại');
-                return;
-            }
-            toast.success('Đã quay lại trạng thái ban đầu thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi quay lại trạng thái ban đầu');
+      try {
+        const response = await hoaDonService.quayLaiTrangThai(maHoaDon);
+        if (response.error) {
+          toast.error('Quay lại trạng thái ban đầu thất bại');
+          return;
         }
+        toast.success('Đã quay lại trạng thái ban đầu thành công');
+        await this.getHoaDonDetail(maHoaDon);
+      } catch (error) {
+        console.error(error);
+        toast.error('Có lỗi xảy ra khi quay lại trạng thái ban đầu');
+      }
     },
     async cancelHoaDon(maHoaDon) {// Thêm action để hủy hóa đơn
       try {
@@ -635,237 +700,237 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     async updateCustomerInfo(maHoaDon, ttkh) {
-        try {
-            const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, ttkh);
-            if (response.error) {
-                toast.error('Cập nhật thông tin khách hàng thất bại');
-                return;
-            }
-            toast.success('Cập nhật thông tin khách hàng thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi cập nhật thông tin khách hàng');
+      try {
+        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, ttkh);
+        if (response.error) {
+          toast.error('Cập nhật thông tin khách hàng thất bại');
+          return;
         }
+        toast.success('Cập nhật thông tin khách hàng thành công');
+        await this.getHoaDonDetail(maHoaDon);
+      } catch (error) {
+        console.error(error);
+        toast.error('Có lỗi xảy ra khi cập nhật thông tin khách hàng');
+      }
     },
     async updateNote(maHoaDon, ghiChu) {
-        try {
-            const response = await hoaDonService.updateNote(maHoaDon, ghiChu);
-            if (response.error) {
-                toast.error('Cập nhật ghi chú thất bại');
-                return;
-            }
-            toast.success('Cập nhật ghi chú thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi cập nhật ghi chú');
+      try {
+        const response = await hoaDonService.updateNote(maHoaDon, ghiChu);
+        if (response.error) {
+          toast.error('Cập nhật ghi chú thất bại');
+          return;
         }
+        toast.success('Cập nhật ghi chú thành công');
+        await this.getHoaDonDetail(maHoaDon);
+      } catch (error) {
+        console.error(error);
+        toast.error('Có lỗi xảy ra khi cập nhật ghi chú');
+      }
     },
     async getAllCTSP_HD(page = 0, size = 5, keyword = '') {
-        try {
-            const response = await hoaDonService.getAllCTSP_HD(page, size, keyword);
-            if (response.error) {
-                toast.error('Không lấy được danh sách sản phẩm');
-                return;
-            }
-            this.listCTSP_HD = response.content || [];
-            this.totalPages = response.totalPages || 0;
-            this.currentPage = page;
-            this.totalItems = response.totalElements || 0;
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');
+      try {
+        const response = await hoaDonService.getAllCTSP_HD(page, size, keyword);
+        if (response.error) {
+          toast.error('Không lấy được danh sách sản phẩm');
+          return;
         }
+        this.listCTSP_HD = response.content || [];
+        this.totalPages = response.totalPages || 0;
+        this.currentPage = page;
+        this.totalItems = response.totalElements || 0;
+      } catch (error) {
+        console.error(error);
+        toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');
+      }
     },
     async addProductsToInvoice(maHoaDon, products) {
-        try {
-            const response = await hoaDonService.addProductsToInvoice(maHoaDon, products);
-            if (response.error) {
-                toast.error('Thêm sản phẩm vào hóa đơn thất bại');
-                return;
-            }
-            toast.success('Thêm sản phẩm vào hóa đơn thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi thêm sản phẩm');
+      try {
+        const response = await hoaDonService.addProductsToInvoice(maHoaDon, products);
+        if (response.error) {
+          toast.error('Thêm sản phẩm vào hóa đơn thất bại');
+          return;
         }
+        toast.success('Thêm sản phẩm vào hóa đơn thành công');
+        await this.getHoaDonDetail(maHoaDon);
+      } catch (error) {
+        console.error(error);
+        toast.error('Có lỗi xảy ra khi thêm sản phẩm');
+      }
     },
     async removeProductFromInvoice(maHoaDon, idCTSP, soLuong) {
-        try {
-            const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong);
-            if (response.error) {
-                return { error: true };
-            }
-            return response;
-        } catch (error) {
-            console.error('Lỗi khi xóa sản phẩm khỏi hóa đơn:', error);
-            return { error: true };
+      try {
+        const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong);
+        if (response.error) {
+          return { error: true };
         }
+        return response;
+      } catch (error) {
+        console.error('Lỗi khi xóa sản phẩm khỏi hóa đơn:', error);
+        return { error: true };
+      }
     },
     async updateProductQuantity(maHoaDon, idCTSP, quantityChange) {
-        try {
-            const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange);
-            if (response.error) {
-                return { error: true };
-            }
-            return response;
-        } catch (error) {
-            console.error('Lỗi khi cập nhật số lượng sản phẩm:', error);
-            return { error: true };
+      try {
+        const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange);
+        if (response.error) {
+          return { error: true };
         }
+        return response;
+      } catch (error) {
+        console.error('Lỗi khi cập nhật số lượng sản phẩm:', error);
+        return { error: true };
+      }
     },
     ///////////////////////////Đăng ký tài khoản khách hàng + đăng nhập /////////////////////////////////////////
     async registerKhachHang(registerData) {
-        const result = await khachHangService.registerKhachHang(registerData);
-        if (result.error) {
-            if (result.fieldErrors) {
-                return {
-                    error: true,
-                    fieldErrors: result.fieldErrors
-                };
-            }
-            toast.error(result.message || 'Đăng ký tài khoản thất bại!');
-            return { error: true };
+      const result = await khachHangService.registerKhachHang(registerData);
+      if (result.error) {
+        if (result.fieldErrors) {
+          return {
+            error: true,
+            fieldErrors: result.fieldErrors
+          };
         }
-        toast.success(result.successMessage || 'Đăng ký tài khoản thành công!');
-        return { success: true, khachHang: result.khachHang };
+        toast.error(result.message || 'Đăng ký tài khoản thất bại!');
+        return { error: true };
+      }
+      toast.success(result.successMessage || 'Đăng ký tài khoản thành công!');
+      return { success: true, khachHang: result.khachHang };
     },
     // Thêm action login
     async login(loginData) {
-        const result = await khachHangService.login(loginData);
-        if (result.error) {
-            if (result.fieldErrors) {
-                return {
-                    error: true,
-                    fieldErrors: result.fieldErrors
-                };
-            }
-            toast.error(result.message || 'Đăng nhập thất bại!');
-            return { error: true };
+      const result = await khachHangService.login(loginData);
+      if (result.error) {
+        if (result.fieldErrors) {
+          return {
+            error: true,
+            fieldErrors: result.fieldErrors
+          };
         }
+        toast.error(result.message || 'Đăng nhập thất bại!');
+        return { error: true };
+      }
 
-        // Kiểm tra dữ liệu trả về từ API đăng nhập
-        if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
-            console.error('Dữ liệu tài khoản không hợp lệ:', result);
-            toast.error('Dữ liệu tài khoản không hợp lệ!');
-            return { error: true };
-        }
-        // Lưu thông tin cơ bản
-        this.userInfo = result.taiKhoan;
-        this.isLoggedIn = true;
-        this.id_roles = result.id_roles;
-        // In thông tin tài khoản cơ bản
-        console.log('Thông tin tài khoản (tai_khoan):', this.userInfo);
-        console.log('ID Roles:', this.id_roles);
-        // Lưu vào sessionStorage
-        sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
-        sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('id_roles', result.id_roles);
+      // Kiểm tra dữ liệu trả về từ API đăng nhập
+      if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
+        console.error('Dữ liệu tài khoản không hợp lệ:', result);
+        toast.error('Dữ liệu tài khoản không hợp lệ!');
+        return { error: true };
+      }
+      // Lưu thông tin cơ bản
+      this.userInfo = result.taiKhoan;
+      this.isLoggedIn = true;
+      this.id_roles = result.id_roles;
+      // In thông tin tài khoản cơ bản
+      console.log('Thông tin tài khoản (tai_khoan):', this.userInfo);
+      console.log('ID Roles:', this.id_roles);
+      // Lưu vào sessionStorage
+      sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
+      sessionStorage.setItem('isLoggedIn', 'true');
+      sessionStorage.setItem('id_roles', result.id_roles);
+      if (loginData.rememberMe) {
+        localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('id_roles', result.id_roles);
+      }
+      // Lấy thông tin chi tiết
+      try {
+        const userDetails = await khachHangService.getUserDetail({
+          username: result.taiKhoan.ten_dang_nhap,
+          id_roles: result.id_roles
+        });
+        this.userDetails = userDetails;
+        // In thông tin chi tiết
+        console.log('Thông tin chi tiết (userDetails):', this.userDetails);
+        sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
         if (loginData.rememberMe) {
-            localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('id_roles', result.id_roles);
+          localStorage.setItem('userDetails', JSON.stringify(userDetails));
         }
-        // Lấy thông tin chi tiết
-        try {
-            const userDetails = await khachHangService.getUserDetail({
-                username: result.taiKhoan.ten_dang_nhap,
-                id_roles: result.id_roles
-            });
-            this.userDetails = userDetails;
-            // In thông tin chi tiết
-            console.log('Thông tin chi tiết (userDetails):', this.userDetails);
-            sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
-            if (loginData.rememberMe) {
-                localStorage.setItem('userDetails', JSON.stringify(userDetails));
-            }
-        } catch (error) {
-            console.error('Lỗi khi lấy thông tin chi tiết:', error);
-            toast.error('Không thể lấy thông tin chi tiết tài khoản!');
-        }
-        toast.success(result.successMessage || 'Đăng nhập thành công!');
-        return { success: true, id_roles: result.id_roles };
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin chi tiết:', error);
+        toast.error('Không thể lấy thông tin chi tiết tài khoản!');
+      }
+      toast.success(result.successMessage || 'Đăng nhập thành công!');
+      return { success: true, id_roles: result.id_roles };
     },
     // Cập nhật restoreLoginState để kiểm tra cả sessionStorage
     // Khôi phục trạng thái đăng nhập từ localStorage hoặc sessionStorage
     restoreLoginState() {
-        let userInfo = localStorage.getItem('userInfo');
-        let isLoggedIn = localStorage.getItem('isLoggedIn');
-        let id_roles = localStorage.getItem('id_roles');
-        let userDetails = localStorage.getItem('userDetails');
+      let userInfo = localStorage.getItem('userInfo');
+      let isLoggedIn = localStorage.getItem('isLoggedIn');
+      let id_roles = localStorage.getItem('id_roles');
+      let userDetails = localStorage.getItem('userDetails');
 
-        // Nếu không có trong localStorage, kiểm tra sessionStorage
-        if (!userInfo || isLoggedIn !== 'true') {
-            userInfo = sessionStorage.getItem('userInfo');
-            isLoggedIn = sessionStorage.getItem('isLoggedIn');
-            id_roles = sessionStorage.getItem('id_roles');
-            userDetails = sessionStorage.getItem('userDetails');
-        }
+      // Nếu không có trong localStorage, kiểm tra sessionStorage
+      if (!userInfo || isLoggedIn !== 'true') {
+        userInfo = sessionStorage.getItem('userInfo');
+        isLoggedIn = sessionStorage.getItem('isLoggedIn');
+        id_roles = sessionStorage.getItem('id_roles');
+        userDetails = sessionStorage.getItem('userDetails');
+      }
 
-        if (userInfo && isLoggedIn === 'true') {
-            this.userInfo = JSON.parse(userInfo);
-            this.isLoggedIn = true;
-            this.id_roles = id_roles ? parseInt(id_roles) : null;
-            this.userDetails = userDetails ? JSON.parse(userDetails) : null;
+      if (userInfo && isLoggedIn === 'true') {
+        this.userInfo = JSON.parse(userInfo);
+        this.isLoggedIn = true;
+        this.id_roles = id_roles ? parseInt(id_roles) : null;
+        this.userDetails = userDetails ? JSON.parse(userDetails) : null;
 
-            // In thông tin để kiểm tra
-            console.log('Khôi phục trạng thái đăng nhập:');
-            console.log('User Info:', this.userInfo);
-            console.log('ID Roles:', this.id_roles);
-            console.log('User Details:', this.userDetails);
-        } else {
-            console.log('Không có dữ liệu đăng nhập để khôi phục.');
-        }
+        // In thông tin để kiểm tra
+        console.log('Khôi phục trạng thái đăng nhập:');
+        console.log('User Info:', this.userInfo);
+        console.log('ID Roles:', this.id_roles);
+        console.log('User Details:', this.userDetails);
+      } else {
+        console.log('Không có dữ liệu đăng nhập để khôi phục.');
+      }
     },
 
     // Đăng xuất
-        logout() {
-            // Xóa dữ liệu trong localStorage và sessionStorage
-            localStorage.removeItem('userInfo');
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('id_roles');
-            localStorage.removeItem('userDetails');
-            sessionStorage.removeItem('userInfo');
-            sessionStorage.removeItem('isLoggedIn');
-            sessionStorage.removeItem('id_roles');
-            sessionStorage.removeItem('userDetails');
+    logout() {
+      // Xóa dữ liệu trong localStorage và sessionStorage
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('id_roles');
+      localStorage.removeItem('userDetails');
+      sessionStorage.removeItem('userInfo');
+      sessionStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('id_roles');
+      sessionStorage.removeItem('userDetails');
 
-            // Reset trạng thái trong store
-            this.userInfo = null;
-            this.isLoggedIn = false;
-            this.id_roles = null;
-            this.userDetails = null;
+      // Reset trạng thái trong store
+      this.userInfo = null;
+      this.isLoggedIn = false;
+      this.id_roles = null;
+      this.userDetails = null;
 
-            // const router = useRouter();
-            // router.replace('/login-register/login');
-            toast.success('Đăng xuất thành công!');
-            window.location.href = '/login-register/login';
-        },
+      // const router = useRouter();
+      // router.replace('/login-register/login');
+      toast.success('Đăng xuất thành công!');
+      window.location.href = '/login-register/login';
+    },
     //Import excel
     async importExcel(file) {
       try {
-        console.log('Store processing file:', file);
-        console.log('File type:', file.type);
-        console.log('File name:', file.name);
+        console.log('Store processing file:', file)
+        console.log('File type:', file.type)
+        console.log('File name:', file.name)
 
         // If we have a file from Ant Design Upload, make sure we're using the right reference
-        const fileToSend = file.originFileObj || file;
+        const fileToSend = file.originFileObj || file
 
-        const importExcelRespone = await sanPhamService.importSanPhamFromExcel(fileToSend);
+        const importExcelRespone = await sanPhamService.importSanPhamFromExcel(fileToSend)
 
         if (importExcelRespone.error) {
-          toast.error('Không lấy được dữ liệu');
-          return importExcelRespone; // Return the error response so we can handle it
+          toast.error('Không lấy được dữ liệu')
+          return importExcelRespone // Return the error response so we can handle it
         } else {
-          toast.success('Import dữ liệu thành công');
+          toast.success('Import dữ liệu thành công')
         }
-        return importExcelRespone;
+        return importExcelRespone
       } catch (error) {
-        console.error('Error in importExcel store method:', error);
-        toast.error('Lỗi khi xử lý file Excel');
-        throw error; // Rethrow to let the component handle it
+        console.error('Error in importExcel store method:', error)
+        toast.error('Lỗi khi xử lý file Excel')
+        throw error // Rethrow to let the component handle it
       }
     },
 
@@ -884,62 +949,171 @@ export const useGbStore = defineStore('gbStore', {
     // Xuất Excel với các tùy chọn
     async exportExcel(productIds, fields) {
       try {
-        console.log('Đang xuất Excel cho sản phẩm:', productIds);
-        console.log('Các trường được chọn:', fields);
+        console.log('Đang xuất Excel cho sản phẩm:', productIds)
+        console.log('Các trường được chọn:', fields)
 
-        const blob = await sanPhamService.exportExcel(productIds, fields);
+        const blob = await sanPhamService.exportExcel(productIds, fields)
 
         // Tạo URL cho blob và tải xuống
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `san-pham-export-${new Date().getTime()}.xlsx`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `san-pham-export-${new Date().getTime()}.xlsx`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
 
-        toast.success('Xuất Excel thành công');
-        return true;
+        toast.success('Xuất Excel thành công')
+        return true
       } catch (error) {
-        console.error('Lỗi khi xuất Excel:', error);
-        toast.error('Không thể xuất Excel');
-        return false;
+        console.error('Lỗi khi xuất Excel:', error)
+        toast.error('Không thể xuất Excel')
+        return false
       }
     },
     //Kết thúc Xuất Excel
     //Khách hàng
-    //Lấy danh sách khách hàng
-    async getAllKhachHang(page = 0, size = 3, keyword = null, trangThai = null) {
-      const khachHang = await khachHangService.getAllKhachHang(page, size, keyword, trangThai)
-      if (khachHang.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      }
-      if (!khachHang.danhSachKhachHang || khachHang.danhSachKhachHang.length === 0) {
+    // Lấy danh sách khách hàng
+    async getAllKhachHang(page = 0, size = 5, keyword = null, trangThai = null, updatedId = null) {
+      try {
+        const khachHang = await khachHangService.getAllKhachHang(page, size, keyword, trangThai, updatedId);
+        if (khachHang.error) {
+
+          this.getAllKhachHangArr = [];
+          this.diaChiMap = {};
+          this.totalKhachHang = 0;
+          this.currentKhachHang = 0;
+          this.totalItemsKhachHang = 0;
+          return;
+        }
+        if (!khachHang.danhSachKhachHang || khachHang.danhSachKhachHang.length === 0) {
+          this.getAllKhachHangArr = [];
+          this.diaChiMap = {};
+          this.totalKhachHang = 0;
+          this.currentKhachHang = 0;
+          this.totalItemsKhachHang = 0;
+          return;
+        }
+
+        this.getAllKhachHangArr = khachHang.danhSachKhachHang || [];
+        this.diaChiMap = khachHang.diaChiMap || {};
+        this.totalKhachHang = khachHang.totalPages || 0;
+        this.currentKhachHang = page;
+        this.totalItemsKhachHang = khachHang.totalElements || 0;
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách khách hàng:', error);
+        toast.error('Có lỗi xảy ra khi lấy danh sách khách hàng');
         this.getAllKhachHangArr = [];
         this.diaChiMap = {};
         this.totalKhachHang = 0;
         this.currentKhachHang = 0;
         this.totalItemsKhachHang = 0;
-        // Hiển thị thông báo tùy thuộc vào điều kiện lọc
-        if (trangThai && keyword) {
-          toast.error(
-            `Không tìm thấy khách hàng nào với trạng thái "${trangThai}" và từ khóa "${keyword}"`,
-          )
-        } else if (trangThai) {
-          toast.error(`Không tìm thấy khách hàng nào với trạng thái "${trangThai}"`)
-        } else if (keyword) {
-          toast.error(`Không tìm thấy khách hàng nào với từ khóa "${keyword}"`)
-        }
-        return
       }
+    },
 
-      // Nếu có dữ liệu thì gán như bình thường
-      this.getAllKhachHangArr = khachHang.danhSachKhachHang
-      this.diaChiMap = khachHang.diaChiMap || {}
-      this.totalKhachHang = khachHang.totalPages || 0
-      this.currentKhachHang = page
-      this.totalItemsKhachHang = khachHang.totalElements || 0
+    // Thêm khách hàng
+    async themKhachHang(khachHangData) {
+      try {
+        const response = await khachHangService.themKhachHang(khachHangData);
+        if (response.error) {
+          toast.error(response.message || 'Có lỗi xảy ra khi thêm khách hàng');
+          return null;
+        }
+
+        await this.getAllKhachHang(this.currentKhachHang, 3); // Làm mới danh sách sau khi thêm
+        return response.khachHang; // Trả về thông tin khách hàng vừa thêm
+      } catch (error) {
+        console.error('Lỗi khi thêm khách hàng:', error);
+        toast.error('Có lỗi xảy ra khi thêm khách hàng');
+        return null;
+      }
+    },
+
+    // Lấy thông tin khách hàng để chỉnh sửa
+    async getKhachHangByIdForEdit(id) {
+      try {
+        const response = await khachHangService.getKhachHangByIdForEdit(id);
+        if (response.error) {
+          toast.error(response.message || 'Không lấy được thông tin khách hàng');
+          return null;
+        }
+        return response.khachHang;
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin khách hàng:', error);
+        toast.error('Có lỗi xảy ra khi lấy thông tin khách hàng');
+        return null;
+      }
+    },
+
+    async suaKhachHang(khachHangData) {
+      try {
+        const response = await khachHangService.suaKhachHang(khachHangData);
+        if (response.error) {
+          toast.error(response.message || 'Có lỗi xảy ra khi cập nhật khách hàng');
+          return false;
+        }
+
+        await this.getAllKhachHang(0, 3, this.searchs, this.selectedTrangThai, khachHangData.idKhachHang);
+        this.successMessage = 'Cập nhật khách hàng thành công!';
+        return true;
+      } catch (error) {
+        console.error('Lỗi khi cập nhật khách hàng:', error);
+        toast.error('Có lỗi xảy ra khi cập nhật khách hàng');
+        return false;
+      }
+    },
+
+    // Lấy chi tiết khách hàng
+    async getKhachHangDetail(id) {
+      try {
+        const response = await khachHangService.getKhachHangDetail(id);
+        if (response.error) {
+          toast.error(response.message || 'Không lấy được chi tiết khách hàng');
+          return null;
+        }
+        return {
+          khachHang: response.khachHang,
+          diaChiList: response.diaChiList, // Trả về danh sách địa chỉ đầy đủ
+          matKhau: response.matKhau,
+        }; // Trả về chi tiết khách hàng
+      } catch (error) {
+        console.error('Lỗi khi lấy chi tiết khách hàng:', error);
+        toast.error('Có lỗi xảy ra khi lấy chi tiết khách hàng');
+        return null;
+      }
+    },
+
+
+    // Thay đổi trạng thái khách hàng
+    async changeTrangThaiKhachHang(idKhachHang) {
+      try {
+        // Cập nhật UI trước khi gọi API
+        const khachHang = this.getAllKhachHangArr.find((kh) => kh.idKhachHang === idKhachHang);
+        if (khachHang) {
+          khachHang.trangThai = khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động';
+        }
+
+        const response = await khachHangService.changeTrangThai(idKhachHang);
+        if (response.error) {
+          toast.error(response.message || 'Có lỗi xảy ra khi thay đổi trạng thái');
+          // Revert trạng thái nếu lỗi
+          if (khachHang) {
+            khachHang.trangThai = khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động';
+          }
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Lỗi khi thay đổi trạng thái khách hàng:', error);
+        toast.error('Có lỗi xảy ra khi thay đổi trạng thái');
+        // Revert trạng thái nếu lỗi
+        const khachHang = this.getAllKhachHangArr.find((kh) => kh.idKhachHang === idKhachHang);
+        if (khachHang) {
+          khachHang.trangThai = khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động';
+        }
+        return false;
+      }
     },
 
     ///=======Code bán hàng tại quầy=======///
@@ -989,14 +1163,16 @@ export const useGbStore = defineStore('gbStore', {
     async deleteHoaDon(idHoaDon) {
       try {
         const hoaDon = await banHangService.deleteHoaDon(idHoaDon)
-        if (hoaDon.error) {
-          toast.error('Không xóa được hoá đơn')
-          return
+        if (!hoaDon.success) {
+          // Kiểm tra success thay vì error
+          toast.error(hoaDon.message || 'Không xóa được hoá đơn')
+          return { error: true, message: hoaDon.message }
         }
         return hoaDon
       } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra')
+        const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra'
+        console.error('Lỗi khi xóa hóa đơn:', error)
+        toast.error(errorMessage)
         throw error
       }
     },
@@ -1030,15 +1206,15 @@ export const useGbStore = defineStore('gbStore', {
     },
     async themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan) {
       try {
-        const hoaDon = await banHangService.themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan)
-        if (hoaDon.error) {
-          toast.error('Không thêm được sản phẩm vào hoá đơn')
-          return
+        const result = await banHangService.themSPHDMoi(idHoaDon, idCTSP, soLuong, giaBan)
+        if (result.error) {
+          toast.error(result.message || 'Không thêm được sản phẩm vào hoá đơn')
+          return null
         }
-        return hoaDon
+        return result
       } catch (error) {
         console.error(error)
-        toast.error('Có lị xảy ra')
+        toast.error('Có lỗi xảy ra khi thêm sản phẩm')
         throw error
       }
     },
@@ -1095,6 +1271,36 @@ export const useGbStore = defineStore('gbStore', {
       } catch (error) {
         console.error(error)
         toast.error('Có lỗi xảy ra')
+      }
+    },
+
+    async xoaSPHD(idHoaDon, idCTSP) {
+      try {
+        const result = await banHangService.xoaSPHD(idHoaDon, idCTSP)
+        if (!result.success) {
+          toast.error(result.message || 'Không xóa được sản phẩm khỏi hóa đơn')
+          return null
+        }
+        return result.data // Trả về dữ liệu HoaDon
+      } catch (error) {
+        console.error('Lỗi từ API:', error.response?.data || error.message)
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm')
+        return null
+      }
+    },
+
+    async getHoaDonByIdHoaDon(idHD) {
+      try {
+        const hoaDon = await banHangService.getHoaDonByIdHoaDon(idHD)
+        if (hoaDon.error) {
+          toast.error('Không lấy được dữ liệu hoa đơn bai id hoá đơn')
+          return
+        }
+        this.getHDBIDHD = hoaDon
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lị xảy ra')
+        throw error
       }
     },
 
@@ -1495,38 +1701,38 @@ export const useGbStore = defineStore('gbStore', {
           this.indexMenu = ['3']
           break
         case '/admin/quanlynhanvien':
-          this.indexMenu = ['10'];
-          break;
+          this.indexMenu = ['10']
+          break
         case '/admin/quanlyhoadon':
-          this.indexMenu = ['8'];
-          break;
+          this.indexMenu = ['8']
+          break
         case '/admin/quanlysanpham/add':
-          this.indexMenu = ['3'];
-          break;
+          this.indexMenu = ['3']
+          break
         case '/admin/quanlysanpham/sua':
-          this.indexMenu = ['3'];
-          break;
+          this.indexMenu = ['3']
+          break
         case '/admin/quanlykhachhang':
-          this.indexMenu = ['11'];
-          break;
+          this.indexMenu = ['11']
+          break
         case '/admin/baocaothongke':
-          this.indexMenu = ['2'];
-          break;
+          this.indexMenu = ['2']
+          break
         case '/admin/quanlyvoucher':
-          this.indexMenu = ['12'];
-          break;
+          this.indexMenu = ['12']
+          break
         case '/admin/quanlykhuyenmai':
-          this.indexMenu = ['13'];
-          break;
+          this.indexMenu = ['13']
+          break
         case '/admin/quanlysanpham/sanpham':
-          this.indexMenu = ['4'];
-          break;
+          this.indexMenu = ['4']
+          break
         case '/admin/quanlysanpham/thuoctinh':
-          this.indexMenu = ['7'];
-          break;
+          this.indexMenu = ['7']
+          break
         case '/admin/quanlysanpham/chitietsanpham':
-          this.indexMenu = ['5'];
-          break;
+          this.indexMenu = ['5']
+          break
         default:
           this.indexMenu = ['1']
           break
@@ -1569,30 +1775,30 @@ export const useGbStore = defineStore('gbStore', {
     //Lấy danh sách sản phẩm
     async getAllSP() {
       try {
-        console.log('Đang tải danh sách sản phẩm');
-        const sanPhamResponse = await sanPhamService.getAllSanPham();
+        console.log('Đang tải danh sách sản phẩm')
+        const sanPhamResponse = await sanPhamService.getAllSanPham()
 
         if (!sanPhamResponse || sanPhamResponse.error) {
-          console.error('Không lấy được dữ liệu sản phẩm');
-          this.getAllSanPham = [];
-          return [];
+          console.error('Không lấy được dữ liệu sản phẩm')
+          this.getAllSanPham = []
+          return []
         }
 
-        console.log('Đã tải', sanPhamResponse.length, 'sản phẩm');
-        this.getAllSanPham = sanPhamResponse;
+        console.log('Đã tải', sanPhamResponse.length, 'sản phẩm')
+        this.getAllSanPham = sanPhamResponse
 
         // Reset trạng thái tìm kiếm và lọc nếu đang tải lại dữ liệu
         if (this.isSearching || this.isFiltering) {
-          console.log('Tự động reset trạng thái tìm kiếm và lọc khi tải lại dữ liệu');
-          this.resetSearch();
-          this.resetFilter();
+          console.log('Tự động reset trạng thái tìm kiếm và lọc khi tải lại dữ liệu')
+          this.resetSearch()
+          this.resetFilter()
         }
 
-        return sanPhamResponse;
+        return sanPhamResponse
       } catch (error) {
-        console.error('Lỗi khi tải danh sách sản phẩm:', error);
-        this.getAllSanPham = [];
-        return [];
+        console.error('Lỗi khi tải danh sách sản phẩm:', error)
+        this.getAllSanPham = []
+        return []
       }
     },
     //Thêm sản phẩm
@@ -1622,38 +1828,39 @@ export const useGbStore = defineStore('gbStore', {
     //Lấy danh sách chi tiết sản phẩm
     async getAllCTSP() {
       try {
-        console.log('Đang tải danh sách chi tiết sản phẩm');
-        const chiTietSanPhamResponse = await sanPhamService.getAllChiTietSanPham();
+        console.log('Đang tải danh sách chi tiết sản phẩm')
+        const chiTietSanPhamResponse = await sanPhamService.getAllChiTietSanPham()
 
         if (!chiTietSanPhamResponse || chiTietSanPhamResponse.error) {
-          console.error('Không lấy được dữ liệu chi tiết sản phẩm');
-          this.getAllChiTietSanPham = [];
-          return [];
+          console.error('Không lấy được dữ liệu chi tiết sản phẩm')
+          this.getAllChiTietSanPham = []
+          return []
         }
 
         // Xử lý dữ liệu - thêm hình ảnh nếu cần
         try {
           const imagePromises = chiTietSanPhamResponse.map(async (ctsp) => {
             if (ctsp.id_chi_tiet_san_pham) {
-              const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true);
-              ctsp.hinh_anh = (images && images.length > 0) ? images[0].hinh_anh : 'Không có ảnh chính';
+              const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
+              ctsp.hinh_anh =
+                images && images.length > 0 ? images[0].hinh_anh : 'Không có ảnh chính'
             }
-            return ctsp;
-          });
+            return ctsp
+          })
 
-          await Promise.all(imagePromises);
+          await Promise.all(imagePromises)
         } catch (imageError) {
-          console.error('Lỗi khi tải hình ảnh:', imageError);
+          console.error('Lỗi khi tải hình ảnh:', imageError)
         }
 
-        console.log('Đã tải', chiTietSanPhamResponse.length, 'chi tiết sản phẩm');
-        this.getAllChiTietSanPham = chiTietSanPhamResponse;
+        console.log('Đã tải', chiTietSanPhamResponse.length, 'chi tiết sản phẩm')
+        this.getAllChiTietSanPham = chiTietSanPhamResponse
 
-        return chiTietSanPhamResponse;
+        return chiTietSanPhamResponse
       } catch (error) {
-        console.error('Lỗi khi tải danh sách chi tiết sản phẩm:', error);
-        this.getAllChiTietSanPham = [];
-        return [];
+        console.error('Lỗi khi tải danh sách chi tiết sản phẩm:', error)
+        this.getAllChiTietSanPham = []
+        return []
       }
     },
     //Tìm kiếm chi tiết sản phẩm
@@ -1701,26 +1908,26 @@ export const useGbStore = defineStore('gbStore', {
     },
     // Tìm kiếm sản phẩm
     async searchSP(keyword) {
-      console.log('Đang tìm kiếm sản phẩm với từ khóa:', keyword);
+      console.log('Đang tìm kiếm sản phẩm với từ khóa:', keyword)
       if (!keyword || keyword.trim() === '') {
-        this.resetSearch();
-        return;
+        this.resetSearch()
+        return
       }
 
       try {
         // Lưu từ khóa tìm kiếm
-        this.searchKeyword = keyword.trim().toLowerCase();
+        this.searchKeyword = keyword.trim().toLowerCase()
 
         // Đảm bảo dữ liệu chi tiết sản phẩm đã được tải
         if (!this.getAllChiTietSanPham || this.getAllChiTietSanPham.length === 0) {
-          console.log('Chưa có dữ liệu chi tiết sản phẩm, tải từ API');
-          await this.getAllCTSP();
+          console.log('Chưa có dữ liệu chi tiết sản phẩm, tải từ API')
+          await this.getAllCTSP()
         }
 
         // Tìm kiếm trên chi tiết sản phẩm
-        const matchingProductIds = new Set();
+        const matchingProductIds = new Set()
 
-        this.getAllChiTietSanPham.forEach(ctsp => {
+        this.getAllChiTietSanPham.forEach((ctsp) => {
           // Kết hợp tất cả thông tin có thể tìm kiếm
           const searchableText = [
             ctsp.ten_san_pham?.toLowerCase() || '',
@@ -1732,23 +1939,25 @@ export const useGbStore = defineStore('gbStore', {
             ctsp.ten_size?.toLowerCase() || '',
             `${ctsp.gia_ban || ''}`,
             `${ctsp.gia_nhap || ''}`,
-            `${ctsp.so_luong_ton || ''}`
-          ].join(' ');
+            `${ctsp.so_luong_ton || ''}`,
+          ].join(' ')
 
           // Nếu nội dung có thể tìm kiếm chứa từ khóa
           if (searchableText.includes(this.searchKeyword)) {
-            matchingProductIds.add(ctsp.id_san_pham);
+            matchingProductIds.add(ctsp.id_san_pham)
           }
-        });
+        })
 
         // Cập nhật ID sản phẩm tìm thấy
-        this.searchProductIds = [...matchingProductIds];
-        console.log(`Tìm thấy ${this.searchProductIds.length} sản phẩm khớp với từ khóa "${keyword}"`);
+        this.searchProductIds = [...matchingProductIds]
+        console.log(
+          `Tìm thấy ${this.searchProductIds.length} sản phẩm khớp với từ khóa "${keyword}"`,
+        )
 
         // Cập nhật danh sách ID cuối cùng
-        this.updateFinalProductIds();
+        this.updateFinalProductIds()
       } catch (error) {
-        console.error('Lỗi khi tìm kiếm sản phẩm:', error);
+        console.error('Lỗi khi tìm kiếm sản phẩm:', error)
       }
     },
     getLangue(check) {
@@ -1798,300 +2007,320 @@ export const useGbStore = defineStore('gbStore', {
 
     // Action để áp dụng bộ lọc
     async filterSanPham(filterCriteria) {
-      console.log('Đang lọc sản phẩm với tiêu chí:', filterCriteria);
-      this.filterCriteria = { ...filterCriteria };
+      console.log('Đang lọc sản phẩm với tiêu chí:', filterCriteria)
+      this.filterCriteria = { ...filterCriteria }
 
       try {
         // Đảm bảo dữ liệu chi tiết sản phẩm đã được tải
         if (!this.getAllChiTietSanPham || this.getAllChiTietSanPham.length === 0) {
-          console.warn('Không có dữ liệu chi tiết sản phẩm để lọc');
-          this.filteredProductIds = [];
-          return;
+          console.warn('Không có dữ liệu chi tiết sản phẩm để lọc')
+          this.filteredProductIds = []
+          return
         }
 
         // Debug: Log 5 sản phẩm chi tiết đầu tiên để kiểm tra cấu trúc
         if (this.debug) {
-          console.log('=== DEBUG: Mẫu chi tiết sản phẩm ===');
-          console.log(this.getAllChiTietSanPham.slice(0, 5));
+          console.log('=== DEBUG: Mẫu chi tiết sản phẩm ===')
+          console.log(this.getAllChiTietSanPham.slice(0, 5))
         }
 
         // Khởi tạo Set để lưu trữ ID sản phẩm khớp
-        const matchingProductIds = new Set();
+        const matchingProductIds = new Set()
 
         // Kiểm tra xem có tiêu chí lọc nào không
-        const hasFilterCriteria = (
+        const hasFilterCriteria =
           (filterCriteria.id_danh_muc && filterCriteria.id_danh_muc.length > 0) ||
           (filterCriteria.id_thuong_hieu && filterCriteria.id_thuong_hieu.length > 0) ||
           (filterCriteria.id_chat_lieu && filterCriteria.id_chat_lieu.length > 0) ||
           (filterCriteria.id_mau_sac && filterCriteria.id_mau_sac.length > 0) ||
           (filterCriteria.id_size && filterCriteria.id_size.length > 0) ||
-          (filterCriteria.minPrice > 0) ||
-          (filterCriteria.maxPrice < 10000000)
-        );
+          filterCriteria.minPrice > 0 ||
+          filterCriteria.maxPrice < 10000000
 
         // Nếu không có tiêu chí lọc, trả về tất cả sản phẩm
         if (!hasFilterCriteria) {
-          console.log('Không có tiêu chí lọc, lấy tất cả sản phẩm');
-          this.filteredProductIds = this.getAllSanPham.map(sp => sp.id_san_pham);
-          return;
+          console.log('Không có tiêu chí lọc, lấy tất cả sản phẩm')
+          this.filteredProductIds = this.getAllSanPham.map((sp) => sp.id_san_pham)
+          return
         }
 
         // Lọc chi tiết sản phẩm dựa trên tiêu chí
         for (const ctsp of this.getAllChiTietSanPham) {
           // Kiểm tra từng tiêu chí
-          let matches = true;
+          let matches = true
 
           // Debug: Ghi log lọc đa tiêu chí
-          if (this.debug &&
+          if (
+            this.debug &&
             ((filterCriteria.id_danh_muc && filterCriteria.id_danh_muc.includes(1)) ||
               (filterCriteria.id_thuong_hieu && filterCriteria.id_thuong_hieu.includes(1)) ||
-              (filterCriteria.id_chat_lieu && filterCriteria.id_chat_lieu.includes(1)))) {
-            console.log('=== DEBUG: Chi tiết kiểm tra khớp với ID = 1 ===');
-            console.log('Sản phẩm đang kiểm tra:', ctsp.ten_san_pham);
-            console.log('ID danh mục:', ctsp.id_danh_muc, 'Tiêu chí:', filterCriteria.id_danh_muc);
-            console.log('ID thương hiệu:', ctsp.id_thuong_hieu, 'Tiêu chí:', filterCriteria.id_thuong_hieu);
-            console.log('ID chất liệu:', ctsp.id_chat_lieu, 'Tiêu chí:', filterCriteria.id_chat_lieu);
+              (filterCriteria.id_chat_lieu && filterCriteria.id_chat_lieu.includes(1)))
+          ) {
+            console.log('=== DEBUG: Chi tiết kiểm tra khớp với ID = 1 ===')
+            console.log('Sản phẩm đang kiểm tra:', ctsp.ten_san_pham)
+            console.log('ID danh mục:', ctsp.id_danh_muc, 'Tiêu chí:', filterCriteria.id_danh_muc)
+            console.log(
+              'ID thương hiệu:',
+              ctsp.id_thuong_hieu,
+              'Tiêu chí:',
+              filterCriteria.id_thuong_hieu,
+            )
+            console.log(
+              'ID chất liệu:',
+              ctsp.id_chat_lieu,
+              'Tiêu chí:',
+              filterCriteria.id_chat_lieu,
+            )
           }
 
           // Lọc danh mục - Kiểm tra xem id_danh_muc của sản phẩm có nằm trong danh sách các id đã chọn không
           if (filterCriteria.id_danh_muc && filterCriteria.id_danh_muc.length > 0) {
-            const idDanhMucStr = String(ctsp.id_danh_muc);
-            const found = filterCriteria.id_danh_muc.some(id => String(id) === idDanhMucStr);
+            const idDanhMucStr = String(ctsp.id_danh_muc)
+            const found = filterCriteria.id_danh_muc.some((id) => String(id) === idDanhMucStr)
             if (!found) {
-              matches = false;
+              matches = false
             }
           }
 
           // Lọc thương hiệu
-          if (matches && filterCriteria.id_thuong_hieu && filterCriteria.id_thuong_hieu.length > 0) {
-            const idThuongHieuStr = String(ctsp.id_thuong_hieu);
-            const found = filterCriteria.id_thuong_hieu.some(id => String(id) === idThuongHieuStr);
+          if (
+            matches &&
+            filterCriteria.id_thuong_hieu &&
+            filterCriteria.id_thuong_hieu.length > 0
+          ) {
+            const idThuongHieuStr = String(ctsp.id_thuong_hieu)
+            const found = filterCriteria.id_thuong_hieu.some((id) => String(id) === idThuongHieuStr)
             if (!found) {
-              matches = false;
+              matches = false
             }
           }
 
           // Lọc chất liệu
           if (matches && filterCriteria.id_chat_lieu && filterCriteria.id_chat_lieu.length > 0) {
-            const idChatLieuStr = String(ctsp.id_chat_lieu);
-            const found = filterCriteria.id_chat_lieu.some(id => String(id) === idChatLieuStr);
+            const idChatLieuStr = String(ctsp.id_chat_lieu)
+            const found = filterCriteria.id_chat_lieu.some((id) => String(id) === idChatLieuStr)
             if (!found) {
-              matches = false;
+              matches = false
             }
           }
 
           // Lọc màu sắc
           if (matches && filterCriteria.id_mau_sac && filterCriteria.id_mau_sac.length > 0) {
-            const idMauSacStr = String(ctsp.id_mau_sac);
-            const found = filterCriteria.id_mau_sac.some(id => String(id) === idMauSacStr);
+            const idMauSacStr = String(ctsp.id_mau_sac)
+            const found = filterCriteria.id_mau_sac.some((id) => String(id) === idMauSacStr)
             if (!found) {
-              matches = false;
+              matches = false
             }
           }
 
           // Lọc kích thước
           if (matches && filterCriteria.id_size && filterCriteria.id_size.length > 0) {
-            const idSizeStr = String(ctsp.id_kich_thuoc);
-            const found = filterCriteria.id_size.some(id => String(id) === idSizeStr);
+            const idSizeStr = String(ctsp.id_kich_thuoc)
+            const found = filterCriteria.id_size.some((id) => String(id) === idSizeStr)
             if (!found) {
-              matches = false;
+              matches = false
             }
           }
 
           // Lọc giá - vẫn giữ nguyên
           if (matches && filterCriteria.minPrice > 0) {
             // Chuyển đổi giá bán sang kiểu số nếu là chuỗi
-            const giaBan = typeof ctsp.gia_ban === 'string'
-              ? parseFloat(ctsp.gia_ban.replace(/[^\d]/g, ''))
-              : ctsp.gia_ban;
+            const giaBan =
+              typeof ctsp.gia_ban === 'string'
+                ? parseFloat(ctsp.gia_ban.replace(/[^\d]/g, ''))
+                : ctsp.gia_ban
 
             if (giaBan < filterCriteria.minPrice) {
-              matches = false;
+              matches = false
             }
           }
 
           if (matches && filterCriteria.maxPrice < 10000000) {
             // Chuyển đổi giá bán sang kiểu số nếu là chuỗi
-            const giaBan = typeof ctsp.gia_ban === 'string'
-              ? parseFloat(ctsp.gia_ban.replace(/[^\d]/g, ''))
-              : ctsp.gia_ban;
+            const giaBan =
+              typeof ctsp.gia_ban === 'string'
+                ? parseFloat(ctsp.gia_ban.replace(/[^\d]/g, ''))
+                : ctsp.gia_ban
 
             if (giaBan > filterCriteria.maxPrice) {
-              matches = false;
+              matches = false
             }
           }
 
           // Nếu chi tiết sản phẩm khớp với tất cả tiêu chí, thêm ID của nó vào Set
           if (matches) {
-            matchingProductIds.add(ctsp.id_san_pham);
+            matchingProductIds.add(ctsp.id_san_pham)
           }
         }
 
         // Cập nhật ID sản phẩm đã lọc
-        this.filteredProductIds = [...matchingProductIds];
-        console.log(`Lọc được ${this.filteredProductIds.length} sản phẩm khớp với tiêu chí`);
+        this.filteredProductIds = [...matchingProductIds]
+        console.log(`Lọc được ${this.filteredProductIds.length} sản phẩm khớp với tiêu chí`)
       } catch (error) {
-        console.error('Lỗi khi lọc sản phẩm:', error);
-        this.filteredProductIds = [];
+        console.error('Lỗi khi lọc sản phẩm:', error)
+        this.filteredProductIds = []
       }
     },
 
     // Tạo thêm alias để tương thích với code cũ
     async applyFilter(filterCriteria) {
       // Gọi lại hàm filterSanPham để đảm bảo tương thích
-      return this.filterSanPham(filterCriteria);
+      return this.filterSanPham(filterCriteria)
     },
 
     // Reset bộ lọc
     resetFilter() {
-      console.log('Đang reset trạng thái lọc...');
-      this.filterCriteria = {};
-      this.filteredProductIds = [];
+      console.log('Đang reset trạng thái lọc...')
+      this.filterCriteria = {}
+      this.filteredProductIds = []
 
       // Nếu đang kết hợp tìm kiếm và lọc, cập nhật lại kết quả cuối cùng
       if (this.searchProductIds.length > 0) {
-        console.log('Vẫn còn tìm kiếm, giữ lại kết quả tìm kiếm');
+        console.log('Vẫn còn tìm kiếm, giữ lại kết quả tìm kiếm')
       }
     },
 
     // Hàm cập nhật kết quả cuối cùng dựa trên trạng thái tìm kiếm và lọc
     updateFinalProductIds() {
-      const isSearching = this.searchKeyword && this.searchProductIds.length > 0;
-      const isFiltering = Object.keys(this.filterCriteria).length > 0 && this.filteredProductIds.length > 0;
+      const isSearching = this.searchKeyword && this.searchProductIds.length > 0
+      const isFiltering =
+        Object.keys(this.filterCriteria).length > 0 && this.filteredProductIds.length > 0
 
-      console.log(`Đang cập nhật danh sách cuối cùng. Tìm kiếm: ${isSearching}, Lọc: ${isFiltering}`);
+      console.log(
+        `Đang cập nhật danh sách cuối cùng. Tìm kiếm: ${isSearching}, Lọc: ${isFiltering}`,
+      )
 
       if (isSearching && isFiltering) {
         // Nếu đang tìm kiếm và lọc, lấy giao của 2 danh sách
-        this.finalProductIds = this.searchProductIds.filter(id =>
-          this.filteredProductIds.includes(id)
-        );
-        console.log('Kết hợp tìm kiếm và lọc:', this.finalProductIds.length);
+        this.finalProductIds = this.searchProductIds.filter((id) =>
+          this.filteredProductIds.includes(id),
+        )
+        console.log('Kết hợp tìm kiếm và lọc:', this.finalProductIds.length)
       } else if (isSearching) {
         // Nếu chỉ tìm kiếm
-        this.finalProductIds = [...this.searchProductIds];
-        console.log('Chỉ tìm kiếm:', this.finalProductIds.length);
+        this.finalProductIds = [...this.searchProductIds]
+        console.log('Chỉ tìm kiếm:', this.finalProductIds.length)
       } else if (isFiltering) {
         // Nếu chỉ lọc
-        this.finalProductIds = [...this.filteredProductIds];
-        console.log('Chỉ lọc:', this.finalProductIds.length);
+        this.finalProductIds = [...this.filteredProductIds]
+        console.log('Chỉ lọc:', this.finalProductIds.length)
       } else {
         // Nếu không có cả 2
-        this.finalProductIds = [];
-        console.log('Không có tìm kiếm hoặc lọc');
+        this.finalProductIds = []
+        console.log('Không có tìm kiếm hoặc lọc')
       }
     },
 
     // Hàm reset trạng thái tìm kiếm
     resetSearch() {
-      console.log('Đang reset trạng thái tìm kiếm...');
-      this.searchKeyword = '';
-      this.searchProductIds = [];
+      console.log('Đang reset trạng thái tìm kiếm...')
+      this.searchKeyword = ''
+      this.searchProductIds = []
 
       // Nếu đang kết hợp tìm kiếm và lọc, cập nhật lại kết quả cuối cùng
       if (this.filteredProductIds.length > 0) {
-        console.log('Vẫn còn bộ lọc, giữ lại kết quả lọc');
+        console.log('Vẫn còn bộ lọc, giữ lại kết quả lọc')
       }
     },
 
     // Thêm các phương thức tải dữ liệu danh mục, thương hiệu, chất liệu, màu sắc, kích thước
     async getAllDM() {
       try {
-        console.log('Đang tải danh sách danh mục...');
-        const response = await sanPhamService.getDanhMucList();
+        console.log('Đang tải danh sách danh mục...')
+        const response = await sanPhamService.getDanhMucList()
 
         if (!response || response.error) {
-          console.error('Không lấy được dữ liệu danh mục');
-          return [];
+          console.error('Không lấy được dữ liệu danh mục')
+          return []
         }
 
-        console.log(`Đã tải ${response.length} danh mục`);
-        this.getAllDanhMuc = response;
-        return response;
+        console.log(`Đã tải ${response.length} danh mục`)
+        this.getAllDanhMuc = response
+        return response
       } catch (error) {
-        console.error('Lỗi khi tải danh sách danh mục:', error);
-        this.getAllDanhMuc = [];
-        return [];
+        console.error('Lỗi khi tải danh sách danh mục:', error)
+        this.getAllDanhMuc = []
+        return []
       }
     },
 
     async getAllTH() {
       try {
-        console.log('Đang tải danh sách thương hiệu...');
-        const response = await sanPhamService.getThuongHieuList();
+        console.log('Đang tải danh sách thương hiệu...')
+        const response = await sanPhamService.getThuongHieuList()
 
         if (!response || response.error) {
-          console.error('Không lấy được dữ liệu thương hiệu');
-          return [];
+          console.error('Không lấy được dữ liệu thương hiệu')
+          return []
         }
 
-        console.log(`Đã tải ${response.length} thương hiệu`);
-        this.getAllThuongHieu = response;
-        return response;
+        console.log(`Đã tải ${response.length} thương hiệu`)
+        this.getAllThuongHieu = response
+        return response
       } catch (error) {
-        console.error('Lỗi khi tải danh sách thương hiệu:', error);
-        this.getAllThuongHieu = [];
-        return [];
+        console.error('Lỗi khi tải danh sách thương hiệu:', error)
+        this.getAllThuongHieu = []
+        return []
       }
     },
 
     async getAllCL() {
       try {
-        console.log('Đang tải danh sách chất liệu...');
-        const response = await sanPhamService.getChatLieuList();
+        console.log('Đang tải danh sách chất liệu...')
+        const response = await sanPhamService.getChatLieuList()
 
         if (!response || response.error) {
-          console.error('Không lấy được dữ liệu chất liệu');
-          return [];
+          console.error('Không lấy được dữ liệu chất liệu')
+          return []
         }
 
-        console.log(`Đã tải ${response.length} chất liệu`);
-        this.getAllChatLieu = response;
-        return response;
+        console.log(`Đã tải ${response.length} chất liệu`)
+        this.getAllChatLieu = response
+        return response
       } catch (error) {
-        console.error('Lỗi khi tải danh sách chất liệu:', error);
-        this.getAllChatLieu = [];
-        return [];
+        console.error('Lỗi khi tải danh sách chất liệu:', error)
+        this.getAllChatLieu = []
+        return []
       }
     },
 
     async getAllMS() {
       try {
-        console.log('Đang tải danh sách màu sắc...');
-        const response = await sanPhamService.getMauSacList();
+        console.log('Đang tải danh sách màu sắc...')
+        const response = await sanPhamService.getMauSacList()
 
         if (!response || response.error) {
-          console.error('Không lấy được dữ liệu màu sắc');
-          return [];
+          console.error('Không lấy được dữ liệu màu sắc')
+          return []
         }
 
-        console.log(`Đã tải ${response.length} màu sắc`);
-        this.getAllMauSac = response;
-        return response;
+        console.log(`Đã tải ${response.length} màu sắc`)
+        this.getAllMauSac = response
+        return response
       } catch (error) {
-        console.error('Lỗi khi tải danh sách màu sắc:', error);
-        this.getAllMauSac = [];
-        return [];
+        console.error('Lỗi khi tải danh sách màu sắc:', error)
+        this.getAllMauSac = []
+        return []
       }
     },
 
     async getAllKT() {
       try {
-        console.log('Đang tải danh sách kích thước...');
-        const response = await sanPhamService.getSizeList();
+        console.log('Đang tải danh sách kích thước...')
+        const response = await sanPhamService.getSizeList()
 
         if (!response || response.error) {
-          console.error('Không lấy được dữ liệu kích thước');
-          return [];
+          console.error('Không lấy được dữ liệu kích thước')
+          return []
         }
 
-        console.log(`Đã tải ${response.length} kích thước`);
-        this.getAllKichThuoc = response;
-        return response;
+        console.log(`Đã tải ${response.length} kích thước`)
+        this.getAllKichThuoc = response
+        return response
       } catch (error) {
-        console.error('Lỗi khi tải danh sách kích thước:', error);
-        this.getAllKichThuoc = [];
-        return [];
+        console.error('Lỗi khi tải danh sách kích thước:', error)
+        this.getAllKichThuoc = []
+        return []
       }
     },
   },
@@ -2113,49 +2342,52 @@ export const useGbStore = defineStore('gbStore', {
      * @returns {Array} Danh sách sản phẩm đã được lọc
      */
     getFilteredProducts() {
-      console.log('Đang lấy danh sách sản phẩm đã lọc/tìm kiếm...');
+      console.log('Đang lấy danh sách sản phẩm đã lọc/tìm kiếm...')
 
       // Nếu không có tìm kiếm và không có lọc, trả về tất cả sản phẩm
-      const isSearching = this.searchKeyword && this.searchProductIds.length > 0;
-      const isFiltering = Object.keys(this.filterCriteria).length > 0;
+      const isSearching = this.searchKeyword && this.searchProductIds.length > 0
+      const isFiltering = Object.keys(this.filterCriteria).length > 0
 
       if (!isSearching && !isFiltering) {
-        console.log('Không có tìm kiếm hoặc lọc, trả về tất cả sản phẩm:', this.getAllSanPham.length);
-        return this.getAllSanPham;
+        console.log(
+          'Không có tìm kiếm hoặc lọc, trả về tất cả sản phẩm:',
+          this.getAllSanPham.length,
+        )
+        return this.getAllSanPham
       }
 
       try {
         // Format hàm trả về products đúng cấu trúc
         const formatProducts = (productIds) => {
           return productIds.length > 0
-            ? this.getAllSanPham.filter(product => productIds.includes(product.id_san_pham))
-            : [];
-        };
+            ? this.getAllSanPham.filter((product) => productIds.includes(product.id_san_pham))
+            : []
+        }
 
         // Nếu chỉ đang tìm kiếm (không lọc)
         if (isSearching && !isFiltering) {
-          const result = formatProducts(this.searchProductIds);
-          console.log('Chỉ tìm kiếm, không lọc. Kết quả:', result.length);
-          return result;
+          const result = formatProducts(this.searchProductIds)
+          console.log('Chỉ tìm kiếm, không lọc. Kết quả:', result.length)
+          return result
         }
 
         // Nếu chỉ đang lọc (không tìm kiếm)
         if (!isSearching && isFiltering) {
-          const result = formatProducts(this.filteredProductIds);
-          console.log('Chỉ lọc, không tìm kiếm. Kết quả:', result.length);
-          return result;
+          const result = formatProducts(this.filteredProductIds)
+          console.log('Chỉ lọc, không tìm kiếm. Kết quả:', result.length)
+          return result
         }
 
         // Nếu đang tìm kiếm và lọc, lấy giao của 2 danh sách
-        const intersectionIds = this.searchProductIds.filter(id =>
-          this.filteredProductIds.includes(id)
-        );
-        const result = formatProducts(intersectionIds);
-        console.log('Kết hợp tìm kiếm và lọc:', result.length);
-        return result;
+        const intersectionIds = this.searchProductIds.filter((id) =>
+          this.filteredProductIds.includes(id),
+        )
+        const result = formatProducts(intersectionIds)
+        console.log('Kết hợp tìm kiếm và lọc:', result.length)
+        return result
       } catch (error) {
-        console.error('Lỗi khi lấy danh sách sản phẩm đã lọc:', error);
-        return [];
+        console.error('Lỗi khi lấy danh sách sản phẩm đã lọc:', error)
+        return []
       }
     },
   },
