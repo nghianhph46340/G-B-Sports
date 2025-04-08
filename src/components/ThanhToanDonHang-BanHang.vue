@@ -849,7 +849,7 @@ const calculateOrderTotals = () => {
                 id_chi_tiet_san_pham: item.id,
             },
             so_luong: item.so_luong,
-            don_gia: item.gia
+            don_gia: item.gia * item.so_luong
         })),
 
 
@@ -898,16 +898,38 @@ const placeOrder = async () => {
         // Handle different payment methods
         if (selectedPaymentMethod.value === 'online') {
             if (selectedOnlineMethod.value === 'payos') {
-                // Xử lý thanh toán PayOS
+                try {
+                    // Tạo hóa đơn trong hệ thống trước khi chuyển hướng thanh toán
+                    const response = await banHangOnlineService.createOrder(hoaDon);
+                    const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                    console.log('Response từ server:', response);
+                    console.log('Response chi tiết từ server:', responseChiTiet);
+
+                    // Lưu mã hóa đơn vào localStorage để kiểm tra sau khi thanh toán
+                    if (response && response.ma_hoa_don) {
+                        localStorage.setItem('pendingOrderCode', response.ma_hoa_don);
+                    }
+
+                    // Đặt URL callback để xử lý sau khi thanh toán
+                    const returnUrl = window.location.origin + '/payment-callback';
+                    orderData.payment_info.returnUrl = returnUrl;
+
+                    // Chuyển đến trang thanh toán PayOS
+                    await thanhToanService.handlePayOSPayment(orderData.payment_info);
+
+                    // Lưu ý: Code sau đây sẽ không chạy ngay lập tức vì người dùng sẽ bị chuyển hướng
+                    // Xử lý callback sẽ được thực hiện ở trang payment-callback
+                } catch (error) {
+                    console.error('Lỗi khi xử lý thanh toán PayOS:', error);
+                    message.error('Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau.');
+                }
+            } else if (selectedOnlineMethod.value === 'vnpay') {
+                // Redirect to VNPAY payment gateway
+                message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
                 const response = await banHangOnlineService.createOrder(hoaDon);
                 const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);
-                await thanhToanService.handlePayOSPayment(orderData.payment_info);
-            } else if (selectedOnlineMethod.value === 'vnpay') {
-                // Redirect to VNPAY payment gateway
-                message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
-
                 // Implement VNPAY payment logic here
             } else if (selectedOnlineMethod.value === 'momo') {
                 // Redirect to Momo payment gateway

@@ -21,7 +21,7 @@
                         <a-radio :value="false">Nữ</a-radio>
                     </a-radio-group>
                 </a-form-item> -->
-                <a-form-item label="Giá chung" name="gia_chung">
+                <a-form-item label="Giá" name="gia_chung">
                     <div class="d-flex align-items-center gap-2">
                         <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
                             :un-checked-children="'Giá riêng'" @change="handlePriceChange" />
@@ -161,7 +161,7 @@
                                 </a-form-item>
                             </div>
                             <div class="col-md-6">
-                                <a-form-item label="Giá bán" :rules="[
+                                <a-form-item label="Giá sản phẩm" :rules="[
                                     { required: true, message: 'Vui lòng nhập giá bán!' },
                                     {
                                         validator: (_, value) => {
