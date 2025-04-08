@@ -226,7 +226,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -369,11 +369,11 @@ import {
     CloseOutlined
 } from '@ant-design/icons-vue';
 import { useGbStore } from '@/stores/gbStore';
+import { banHangOnlineService } from '@/services/banHangOnlineService';
 
 const router = useRouter();
 const route = useRoute();
 const store = useGbStore();
-
 // Timeline status
 const currentStatus = ref(2); // 1: Cart, 2: Checkout, 3: Order, 4: Complete
 
@@ -797,6 +797,81 @@ const removeCoupon = (index) => {
     message.success('Đã xóa mã giảm giá');
 };
 
+// Thêm vào sau các biến ref khác
+const generatedInvoice = ref(null); // Lưu trữ đối tượng hóa đơn đã tạo
+
+// Calculate complete order totals and create full invoice object
+const calculateOrderTotals = () => {
+    // Tạo đối tượng hóa đơn đầy đủ với tất cả thông tin cần thiết
+    const currentDate = new Date();
+
+    const invoice = {
+        // Thông tin đơn hàng
+        hoaDon: {
+            trang_thai: 'Chờ xác nhận',
+            voucher: {
+                id: 1
+            },
+            sdt_nguoi_nhan: customer.value.so_dien_thoai,
+            dia_chi: customer.value.dia_chi_cu_the + ', ' + customer.value.xa_phuong + ', ' + customer.value.quan_huyen + ', ' + customer.value.tinh_thanh,
+            email: customer.value.email,
+            tong_tien_truoc_giam: subtotal.value,
+            tong_tien_sau_giam: grandTotal.value,
+            phi_van_chuyen: shippingFee.value,
+            tong_tien_thanh_toan: grandTotal.value,
+            ho_ten: customer.value.ho_ten,
+            ghi_chu: orderNote.value,
+            hinh_thuc_thanh_toan: selectedPaymentMethod.value === 'online' ? 'Chuyển khoản' : 'Tiền mặt',
+            // Thông tin thanh toán
+            phuong_thuc_thanh_toan: {
+                loai: selectedPaymentMethod.value,
+                chi_tiet: selectedPaymentMethod.value === 'online' ? selectedOnlineMethod.value : 'cod',
+                ten: selectedPaymentMethod.value === 'online'
+                    ? (selectedOnlineMethod.value === 'vnpay'
+                        ? 'VNPAY'
+                        : selectedOnlineMethod.value === 'momo'
+                            ? 'Ví MoMo'
+                            : selectedOnlineMethod.value === 'payos'
+                                ? 'PayOS'
+                                : 'Thẻ ATM/Internet Banking')
+                    : 'Thanh toán khi nhận hàng'
+            },
+            // Tổng tiền đơn hàng
+            tong_tien: {
+                tam_tinh: Number(subtotal.value || 0),
+                giam_gia: Number(discount.value || 0),
+                phi_van_chuyen: Number(shippingFee.value || 0),
+                tong_cong: Number(grandTotal.value || 0)
+            },
+        },
+        hoaDonChiTiet: orderItems.value.map(item => ({
+            chiTietSanPham: {
+                id_chi_tiet_san_pham: item.id,
+            },
+            so_luong: item.so_luong,
+            don_gia: item.gia
+        })),
+
+
+        // Thông tin cho thanh toán online (nếu cần)
+        payment_info: {
+            productName: "Đơn hàng " + `GB-${currentDate.getTime()}`,
+            description: `GB Sport - ${orderItems.value.length} sản phẩm`,
+            returnUrl: "http://localhost:5173/home",
+            price: Number(grandTotal.value || 0),
+            cancelUrl: "http://localhost:5173/thanhtoan-banhang"
+        }
+    };
+
+    // Lưu hóa đơn vào biến ref để sử dụng sau này
+    generatedInvoice.value = invoice;
+
+    // Log để debug
+    console.log('ĐỐI TƯỢNG HÓA ĐƠN ĐẦY ĐỦ:', JSON.stringify(invoice, null, 2));
+
+    return invoice;
+};
+
 // Place order - updated with form validation
 const placeOrder = async () => {
     try {
@@ -805,8 +880,17 @@ const placeOrder = async () => {
 
         placing.value = true;
 
-        // Calculate and log the complete invoice
+        // Tạo đối tượng hóa đơn đầy đủ
         const orderData = calculateOrderTotals();
+        console.log('ĐỐI TƯỢNG HÓA ĐƠN ĐẦY ĐỦ:', JSON.stringify(orderData.hoaDon, null, 2));
+        const hoaDon = orderData.hoaDon;
+        const hoaDonChiTiet = orderData.hoaDonChiTiet;
+        console.log('ĐỐI TƯỢNG HÓA ĐƠN CHI TIẾT:', JSON.stringify(hoaDonChiTiet, null, 2));
+
+        // Lưu hóa đơn vào store nếu có (tùy chọn)
+        if (store.setInvoiceData) {
+            store.setInvoiceData(orderData);
+        }
 
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -814,11 +898,16 @@ const placeOrder = async () => {
         // Handle different payment methods
         if (selectedPaymentMethod.value === 'online') {
             if (selectedOnlineMethod.value === 'payos') {
-                // Xử lý thanh toán ZaloPay
-                await thanhToanService.handlePayOSPayment(orderData);
+                // Xử lý thanh toán PayOS
+                const response = await banHangOnlineService.createOrder(hoaDon);
+                const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                console.log('Response từ server:', response);
+                console.log('Response chi tiết từ server:', responseChiTiet);
+                await thanhToanService.handlePayOSPayment(orderData.payment_info);
             } else if (selectedOnlineMethod.value === 'vnpay') {
                 // Redirect to VNPAY payment gateway
                 message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
+
                 // Implement VNPAY payment logic here
             } else if (selectedOnlineMethod.value === 'momo') {
                 // Redirect to Momo payment gateway
@@ -841,6 +930,9 @@ const placeOrder = async () => {
         }
 
         placing.value = false;
+
+        // Trả về đối tượng hóa đơn để sử dụng bên ngoài nếu cần
+        return generatedInvoice.value;
     } catch (error) {
         console.error('Lỗi khi đặt hàng:', error);
 
@@ -852,6 +944,7 @@ const placeOrder = async () => {
         }
 
         placing.value = false;
+        return null;
     }
 };
 
@@ -1071,23 +1164,6 @@ const selectVoucher = (voucher) => {
     if (!isVoucherValid(voucher)) {
         message.warning(`Đơn hàng chưa đạt điều kiện áp dụng mã (tối thiểu ${formatCurrency(voucher.dieu_kien)})`);
     }
-};
-
-// Calculate complete order totals and log to console
-const calculateOrderTotals = () => {
-    // Create invoice object with only required fields
-    const invoice = {
-        productName: "Tên sản phảm",
-        description: "GB Sport",
-        returnUrl: "http://localhost:5173/home",
-        price: grandTotal.value * 0.01,
-        cancelUrl: "http://localhost:5173/thanhtoan-banhang"
-    };
-
-    // Log complete invoice to console
-    console.log('THÔNG TIN HÓA ĐƠN:', invoice);
-
-    return invoice;
 };
 
 // Đặt ở cuối script setup, trước khi đóng thẻ script
