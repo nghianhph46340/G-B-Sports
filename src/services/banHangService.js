@@ -134,6 +134,26 @@ const getHoaDonByIdHoaDon = async(idHD) => {
     }
 }
 
+const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt) => {
+    try {
+        const { data } = await axiosInstance.post(banHang + `addKhHD?idHD=${idHoaDon}&idKH=${idKhachHang}&diaChi=${diaChi}&tenKhachHang=${tenKhachHang}&soDienThoai=${sdt}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API thêm khách hàng hoá đơn:', error);
+        return { error: true };
+    }
+}
+
+const setTrangThaiNhanHang = async(idHoaDon, phuongThucNhanHang) => {
+    try {
+        const { data } = await axiosInstance.post(banHang + `setTrangThaiNhanHang?idHD=${idHoaDon}&phuongThucNhanHang=${phuongThucNhanHang}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API set trang thai nhan hang:', error);
+        return { error: true };
+    }
+}
+
 export const banHangService = {
     getAllHoaDonCTT,
     createHoaDon,
@@ -146,5 +166,7 @@ export const banHangService = {
     trangThaiDonHang,
     phuongThucNhanHang,
     xoaSPHD,
-    getHoaDonByIdHoaDon
+    getHoaDonByIdHoaDon,
+    addKhHD,
+    setTrangThaiNhanHang
 }

@@ -85,11 +85,22 @@ const changeTrangThai = async (idKhachHang) => {
     }
 };
 
+const getAllKhachHangNoPage = async () => {
+    try {
+        const response = await axiosInstance.get('/api/khach-hang/getAllKH');
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi lấy api alll khách hàng:', error);
+        return { error: true, message: 'Có lỗi xảy ra khi lấy api alll khách hàng' };
+    }
+};
+
 export const khachHangService = {
     getAllKhachHang,
     themKhachHang,
     getKhachHangByIdForEdit,
     suaKhachHang,
     getKhachHangDetail,
-    changeTrangThai
+    changeTrangThai,
+    getAllKhachHangNoPage
 };

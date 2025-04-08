@@ -11,6 +11,8 @@ import { useRoute } from 'vue-router'
 import { khachHangService } from '@/services/khachHangService'
 import { banHangService } from '@/services/banHangService'
 import { bctkService } from '@/services/bctkService'
+import router from '@/router'
+import { set } from 'date-fns'
 export const useGbStore = defineStore('gbStore', {
   state: () => ({
     // Các state hiện tại chung
@@ -79,7 +81,6 @@ export const useGbStore = defineStore('gbStore', {
     getAllHoaDonCTTArr: [],
     listCTSP_HD: [],
 
-
     // Đăng ký đăng nhập // Thêm state để lưu thông tin người dùng
     userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
     isLoggedIn: localStorage.getItem('isLoggedIn') === 'true' || false,
@@ -92,6 +93,7 @@ export const useGbStore = defineStore('gbStore', {
     totalItemsKhachHang: 0,
     listSanPhamBanHang: [],
     getAllCTSPKMList: [],
+    getAllKhachHangNoPageList: [],
 
     // State cho voucher
     getAllVoucherArr: [],
@@ -607,21 +609,23 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
-    async revertToInitialStatus(maHoaDon) {// Quay lại trạng thái Chờ xác nhận
-        try {
-            const response = await hoaDonService.quayLaiTrangThai(maHoaDon);
-            if (response.error) {
-                toast.error('Quay lại trạng thái ban đầu thất bại');
-                return;
-            }
-            toast.success('Đã quay lại trạng thái ban đầu thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi quay lại trạng thái ban đầu');
+    async revertToInitialStatus(maHoaDon) {
+      // Quay lại trạng thái Chờ xác nhận
+      try {
+        const response = await hoaDonService.quayLaiTrangThai(maHoaDon)
+        if (response.error) {
+          toast.error('Quay lại trạng thái ban đầu thất bại')
+          return
         }
+        toast.success('Đã quay lại trạng thái ban đầu thành công')
+        await this.getHoaDonDetail(maHoaDon)
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra khi quay lại trạng thái ban đầu')
+      }
     },
-    async cancelHoaDon(maHoaDon) {// Thêm action để hủy hóa đơn
+    async cancelHoaDon(maHoaDon) {
+      // Thêm action để hủy hóa đơn
       try {
         const response = await hoaDonService.cancelHoaDon(maHoaDon)
         if (response.error) {
@@ -636,198 +640,198 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     async updateCustomerInfo(maHoaDon, ttkh) {
-        try {
-            const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, ttkh);
-            if (response.error) {
-                toast.error('Cập nhật thông tin khách hàng thất bại');
-                return;
-            }
-            toast.success('Cập nhật thông tin khách hàng thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi cập nhật thông tin khách hàng');
+      try {
+        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, ttkh)
+        if (response.error) {
+          toast.error('Cập nhật thông tin khách hàng thất bại')
+          return
         }
+        toast.success('Cập nhật thông tin khách hàng thành công')
+        await this.getHoaDonDetail(maHoaDon)
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra khi cập nhật thông tin khách hàng')
+      }
     },
     async updateNote(maHoaDon, ghiChu) {
-        try {
-            const response = await hoaDonService.updateNote(maHoaDon, ghiChu);
-            if (response.error) {
-                toast.error('Cập nhật ghi chú thất bại');
-                return;
-            }
-            toast.success('Cập nhật ghi chú thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi cập nhật ghi chú');
+      try {
+        const response = await hoaDonService.updateNote(maHoaDon, ghiChu)
+        if (response.error) {
+          toast.error('Cập nhật ghi chú thất bại')
+          return
         }
+        toast.success('Cập nhật ghi chú thành công')
+        await this.getHoaDonDetail(maHoaDon)
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra khi cập nhật ghi chú')
+      }
     },
     async getAllCTSP_HD(page = 0, size = 5, keyword = '') {
-        try {
-            const response = await hoaDonService.getAllCTSP_HD(page, size, keyword);
-            if (response.error) {
-                toast.error('Không lấy được danh sách sản phẩm');
-                return;
-            }
-            this.listCTSP_HD = response.content || [];
-            this.totalPages = response.totalPages || 0;
-            this.currentPage = page;
-            this.totalItems = response.totalElements || 0;
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm');
+      try {
+        const response = await hoaDonService.getAllCTSP_HD(page, size, keyword)
+        if (response.error) {
+          toast.error('Không lấy được danh sách sản phẩm')
+          return
         }
+        this.listCTSP_HD = response.content || []
+        this.totalPages = response.totalPages || 0
+        this.currentPage = page
+        this.totalItems = response.totalElements || 0
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra khi lấy danh sách sản phẩm')
+      }
     },
     async addProductsToInvoice(maHoaDon, products) {
-        try {
-            const response = await hoaDonService.addProductsToInvoice(maHoaDon, products);
-            if (response.error) {
-                toast.error('Thêm sản phẩm vào hóa đơn thất bại');
-                return;
-            }
-            toast.success('Thêm sản phẩm vào hóa đơn thành công');
-            await this.getHoaDonDetail(maHoaDon);
-        } catch (error) {
-            console.error(error);
-            toast.error('Có lỗi xảy ra khi thêm sản phẩm');
+      try {
+        const response = await hoaDonService.addProductsToInvoice(maHoaDon, products)
+        if (response.error) {
+          toast.error('Thêm sản phẩm vào hóa đơn thất bại')
+          return
         }
+        toast.success('Thêm sản phẩm vào hóa đơn thành công')
+        await this.getHoaDonDetail(maHoaDon)
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra khi thêm sản phẩm')
+      }
     },
     async removeProductFromInvoice(maHoaDon, idCTSP, soLuong) {
-        try {
-            const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong);
-            if (response.error) {
-                return { error: true };
-            }
-            return response;
-        } catch (error) {
-            console.error('Lỗi khi xóa sản phẩm khỏi hóa đơn:', error);
-            return { error: true };
+      try {
+        const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong)
+        if (response.error) {
+          return { error: true }
         }
+        return response
+      } catch (error) {
+        console.error('Lỗi khi xóa sản phẩm khỏi hóa đơn:', error)
+        return { error: true }
+      }
     },
     async updateProductQuantity(maHoaDon, idCTSP, quantityChange) {
-        try {
-            const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange);
-            if (response.error) {
-                return { error: true };
-            }
-            return response;
-        } catch (error) {
-            console.error('Lỗi khi cập nhật số lượng sản phẩm:', error);
-            return { error: true };
+      try {
+        const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange)
+        if (response.error) {
+          return { error: true }
         }
+        return response
+      } catch (error) {
+        console.error('Lỗi khi cập nhật số lượng sản phẩm:', error)
+        return { error: true }
+      }
     },
     ///////////////////////////Đăng ký tài khoản khách hàng + đăng nhập /////////////////////////////////////////
     async registerKhachHang(registerData) {
-        const result = await khachHangService.registerKhachHang(registerData);
-        if (result.error) {
-            if (result.fieldErrors) {
-                return {
-                    error: true,
-                    fieldErrors: result.fieldErrors
-                };
-            }
-            toast.error(result.message || 'Đăng ký tài khoản thất bại!');
-            return { error: true };
+      const result = await khachHangService.registerKhachHang(registerData)
+      if (result.error) {
+        if (result.fieldErrors) {
+          return {
+            error: true,
+            fieldErrors: result.fieldErrors,
+          }
         }
-        toast.success(result.successMessage || 'Đăng ký tài khoản thành công!');
-        return { success: true, khachHang: result.khachHang };
+        toast.error(result.message || 'Đăng ký tài khoản thất bại!')
+        return { error: true }
+      }
+      toast.success(result.successMessage || 'Đăng ký tài khoản thành công!')
+      return { success: true, khachHang: result.khachHang }
     },
     // Thêm action login
     async login(loginData) {
-        const result = await khachHangService.login(loginData);
-        if (result.error) {
-            if (result.fieldErrors) {
-                return {
-                    error: true,
-                    fieldErrors: result.fieldErrors
-                };
-            }
-            toast.error(result.message || 'Đăng nhập thất bại!');
-            return { error: true };
+      const result = await khachHangService.login(loginData)
+      if (result.error) {
+        if (result.fieldErrors) {
+          return {
+            error: true,
+            fieldErrors: result.fieldErrors,
+          }
         }
-    
-        // Kiểm tra dữ liệu trả về từ API đăng nhập
-        if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
-            console.error('Dữ liệu tài khoản không hợp lệ:', result);
-            toast.error('Dữ liệu tài khoản không hợp lệ!');
-            return { error: true };
-        }
-    
-        // Lưu thông tin cơ bản
-        this.userInfo = result.taiKhoan;
-        this.isLoggedIn = true;
-        this.id_roles = result.id_roles;
-    
-        // In thông tin tài khoản cơ bản
-        console.log('Thông tin tài khoản (tai_khoan):', this.userInfo);
-        console.log('ID Roles:', this.id_roles);
-    
-        // Lưu vào sessionStorage
-        sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
-        sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('id_roles', result.id_roles);
-    
+        toast.error(result.message || 'Đăng nhập thất bại!')
+        return { error: true }
+      }
+
+      // Kiểm tra dữ liệu trả về từ API đăng nhập
+      if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
+        console.error('Dữ liệu tài khoản không hợp lệ:', result)
+        toast.error('Dữ liệu tài khoản không hợp lệ!')
+        return { error: true }
+      }
+
+      // Lưu thông tin cơ bản
+      this.userInfo = result.taiKhoan
+      this.isLoggedIn = true
+      this.id_roles = result.id_roles
+
+      // In thông tin tài khoản cơ bản
+      console.log('Thông tin tài khoản (tai_khoan):', this.userInfo)
+      console.log('ID Roles:', this.id_roles)
+
+      // Lưu vào sessionStorage
+      sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+      sessionStorage.setItem('isLoggedIn', 'true')
+      sessionStorage.setItem('id_roles', result.id_roles)
+
+      if (loginData.rememberMe) {
+        localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('id_roles', result.id_roles)
+      }
+
+      // Lấy thông tin chi tiết
+      try {
+        const userDetails = await khachHangService.getUserDetail({
+          username: result.taiKhoan.ten_dang_nhap,
+          id_roles: result.id_roles,
+        })
+        this.userDetails = userDetails
+
+        // In thông tin chi tiết
+        console.log('Thông tin chi tiết (userDetails):', this.userDetails)
+
+        sessionStorage.setItem('userDetails', JSON.stringify(userDetails))
         if (loginData.rememberMe) {
-            localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan));
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('id_roles', result.id_roles);
+          localStorage.setItem('userDetails', JSON.stringify(userDetails))
         }
-    
-        // Lấy thông tin chi tiết
-        try {
-            const userDetails = await khachHangService.getUserDetail({
-                username: result.taiKhoan.ten_dang_nhap,
-                id_roles: result.id_roles
-            });
-            this.userDetails = userDetails;
-    
-            // In thông tin chi tiết
-            console.log('Thông tin chi tiết (userDetails):', this.userDetails);
-    
-            sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
-            if (loginData.rememberMe) {
-                localStorage.setItem('userDetails', JSON.stringify(userDetails));
-            }
-        } catch (error) {
-            console.error('Lỗi khi lấy thông tin chi tiết:', error);
-            toast.error('Không thể lấy thông tin chi tiết tài khoản!');
-        }
-    
-        toast.success(result.successMessage || 'Đăng nhập thành công!');
-        return { success: true, id_roles: result.id_roles };
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin chi tiết:', error)
+        toast.error('Không thể lấy thông tin chi tiết tài khoản!')
+      }
+
+      toast.success(result.successMessage || 'Đăng nhập thành công!')
+      return { success: true, id_roles: result.id_roles }
     },
     // Cập nhật restoreLoginState để kiểm tra cả sessionStorage
     restoreLoginState() {
-        let userInfo = localStorage.getItem('userInfo');
-        let isLoggedIn = localStorage.getItem('isLoggedIn');
-        let id_roles = localStorage.getItem('id_roles');
+      let userInfo = localStorage.getItem('userInfo')
+      let isLoggedIn = localStorage.getItem('isLoggedIn')
+      let id_roles = localStorage.getItem('id_roles')
 
-        // Nếu không có trong localStorage, kiểm tra sessionStorage
-        if (!userInfo || isLoggedIn !== 'true') {
-            userInfo = sessionStorage.getItem('userInfo');
-            isLoggedIn = sessionStorage.getItem('isLoggedIn');
-            id_roles = sessionStorage.getItem('id_roles');
-        }
+      // Nếu không có trong localStorage, kiểm tra sessionStorage
+      if (!userInfo || isLoggedIn !== 'true') {
+        userInfo = sessionStorage.getItem('userInfo')
+        isLoggedIn = sessionStorage.getItem('isLoggedIn')
+        id_roles = sessionStorage.getItem('id_roles')
+      }
 
-        if (userInfo && isLoggedIn === 'true') {
-            this.userInfo = JSON.parse(userInfo);
-            this.isLoggedIn = true;
-            this.id_roles = id_roles;
-        }
+      if (userInfo && isLoggedIn === 'true') {
+        this.userInfo = JSON.parse(userInfo)
+        this.isLoggedIn = true
+        this.id_roles = id_roles
+      }
     },
 
     // Action để đăng xuất
     logout() {
-        // Xóa dữ liệu trong localStorage và state
-        localStorage.removeItem('id_roles');
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('isLoggedIn');
-        this.userInfo = null;
-        this.isLoggedIn = false;
-        this.id_roles = null;
-        router.replace('/login-register/login');
-        toast.success('Đăng xuất thành công!');
+      // Xóa dữ liệu trong localStorage và state
+      localStorage.removeItem('id_roles')
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('isLoggedIn')
+      this.userInfo = null
+      this.isLoggedIn = false
+      this.id_roles = null
+      router.replace('/login-register/login')
+      toast.success('Đăng xuất thành công!')
     },
     //Import excel
     async importExcel(file) {
@@ -895,145 +899,175 @@ export const useGbStore = defineStore('gbStore', {
     //Kết thúc Xuất Excel
     //Khách hàng
     // Lấy danh sách khách hàng
-   async getAllKhachHang(page = 0, size = 5, keyword = null, trangThai = null, updatedId = null) {
-    try {
-        const khachHang = await khachHangService.getAllKhachHang(page, size, keyword, trangThai, updatedId);
+    async getAllKhachHang(page = 0, size = 5, keyword = null, trangThai = null, updatedId = null) {
+      try {
+        const khachHang = await khachHangService.getAllKhachHang(
+          page,
+          size,
+          keyword,
+          trangThai,
+          updatedId,
+        )
         if (khachHang.error) {
-
-            this.getAllKhachHangArr = [];
-            this.diaChiMap = {};
-            this.totalKhachHang = 0;
-            this.currentKhachHang = 0;
-            this.totalItemsKhachHang = 0;
-            return;
+          this.getAllKhachHangArr = []
+          this.diaChiMap = {}
+          this.totalKhachHang = 0
+          this.currentKhachHang = 0
+          this.totalItemsKhachHang = 0
+          return
         }
         if (!khachHang.danhSachKhachHang || khachHang.danhSachKhachHang.length === 0) {
-            this.getAllKhachHangArr = [];
-            this.diaChiMap = {};
-            this.totalKhachHang = 0;
-            this.currentKhachHang = 0;
-            this.totalItemsKhachHang = 0;
-            return;
+          this.getAllKhachHangArr = []
+          this.diaChiMap = {}
+          this.totalKhachHang = 0
+          this.currentKhachHang = 0
+          this.totalItemsKhachHang = 0
+          return
         }
 
-        this.getAllKhachHangArr = khachHang.danhSachKhachHang || [];
-        this.diaChiMap = khachHang.diaChiMap || {};
-        this.totalKhachHang = khachHang.totalPages || 0;
-        this.currentKhachHang = page;
-        this.totalItemsKhachHang = khachHang.totalElements || 0;
-    } catch (error) {
-        console.error('Lỗi khi lấy danh sách khách hàng:', error);
-        toast.error('Có lỗi xảy ra khi lấy danh sách khách hàng');
-        this.getAllKhachHangArr = [];
-        this.diaChiMap = {};
-        this.totalKhachHang = 0;
-        this.currentKhachHang = 0;
-        this.totalItemsKhachHang = 0;
-    }
-},
-
-  // Thêm khách hàng
-  async themKhachHang(khachHangData) {
-    try {
-      const response = await khachHangService.themKhachHang(khachHangData);
-      if (response.error) {
-        toast.error(response.message || 'Có lỗi xảy ra khi thêm khách hàng');
-        return null;
+        this.getAllKhachHangArr = khachHang.danhSachKhachHang || []
+        this.diaChiMap = khachHang.diaChiMap || {}
+        this.totalKhachHang = khachHang.totalPages || 0
+        this.currentKhachHang = page
+        this.totalItemsKhachHang = khachHang.totalElements || 0
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách khách hàng:', error)
+        toast.error('Có lỗi xảy ra khi lấy danh sách khách hàng')
+        this.getAllKhachHangArr = []
+        this.diaChiMap = {}
+        this.totalKhachHang = 0
+        this.currentKhachHang = 0
+        this.totalItemsKhachHang = 0
       }
+    },
 
-      await this.getAllKhachHang(this.currentKhachHang, 3); // Làm mới danh sách sau khi thêm
-      return response.khachHang; // Trả về thông tin khách hàng vừa thêm
-    } catch (error) {
-      console.error('Lỗi khi thêm khách hàng:', error);
-      toast.error('Có lỗi xảy ra khi thêm khách hàng');
-      return null;
-    }
-  },
+    // Thêm khách hàng
+    async themKhachHang(khachHangData) {
+      try {
+        const response = await khachHangService.themKhachHang(khachHangData)
+        if (response.error) {
+          toast.error(response.message || 'Có lỗi xảy ra khi thêm khách hàng')
+          return null
+        }
 
-  // Lấy thông tin khách hàng để chỉnh sửa
-async getKhachHangByIdForEdit(id) {
-  try {
-    const response = await khachHangService.getKhachHangByIdForEdit(id);
-    if (response.error) {
-      toast.error(response.message || 'Không lấy được thông tin khách hàng');
-      return null;
-    }
-    return response.khachHang;
-  } catch (error) {
-    console.error('Lỗi khi lấy thông tin khách hàng:', error);
-    toast.error('Có lỗi xảy ra khi lấy thông tin khách hàng');
-    return null;
-  }
-},
-
-async suaKhachHang(khachHangData) {
-  try {
-      const response = await khachHangService.suaKhachHang(khachHangData);
-      if (response.error) {
-          toast.error(response.message || 'Có lỗi xảy ra khi cập nhật khách hàng');
-          return false;
+        await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách sau khi thêm
+        return response.khachHang // Trả về thông tin khách hàng vừa thêm
+      } catch (error) {
+        console.error('Lỗi khi thêm khách hàng:', error)
+        toast.error('Có lỗi xảy ra khi thêm khách hàng')
+        return null
       }
+    },
 
-      await this.getAllKhachHang(0, 3, this.searchs, this.selectedTrangThai, khachHangData.idKhachHang);
-      this.successMessage = 'Cập nhật khách hàng thành công!';
-      return true;
-  } catch (error) {
-      console.error('Lỗi khi cập nhật khách hàng:', error);
-      toast.error('Có lỗi xảy ra khi cập nhật khách hàng');
-      return false;
-  }
-},
+    // Lấy thông tin khách hàng để chỉnh sửa
+    async getKhachHangByIdForEdit(id) {
+      try {
+        const response = await khachHangService.getKhachHangByIdForEdit(id)
+        if (response.error) {
+          toast.error(response.message || 'Không lấy được thông tin khách hàng')
+          return null
+        }
+        return response.khachHang
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin khách hàng:', error)
+        toast.error('Có lỗi xảy ra khi lấy thông tin khách hàng')
+        return null
+      }
+    },
+
+    async suaKhachHang(khachHangData) {
+      try {
+        const response = await khachHangService.suaKhachHang(khachHangData)
+        if (response.error) {
+          toast.error(response.message || 'Có lỗi xảy ra khi cập nhật khách hàng')
+          return false
+        }
+
+        await this.getAllKhachHang(
+          0,
+          3,
+          this.searchs,
+          this.selectedTrangThai,
+          khachHangData.idKhachHang,
+        )
+        this.successMessage = 'Cập nhật khách hàng thành công!'
+        return true
+      } catch (error) {
+        console.error('Lỗi khi cập nhật khách hàng:', error)
+        toast.error('Có lỗi xảy ra khi cập nhật khách hàng')
+        return false
+      }
+    },
 
     // Lấy chi tiết khách hàng
     async getKhachHangDetail(id) {
       try {
-        const response = await khachHangService.getKhachHangDetail(id);
+        const response = await khachHangService.getKhachHangDetail(id)
         if (response.error) {
-          toast.error(response.message || 'Không lấy được chi tiết khách hàng');
-          return null;
+          toast.error(response.message || 'Không lấy được chi tiết khách hàng')
+          return null
         }
         return {
           khachHang: response.khachHang,
           diaChiList: response.diaChiList, // Trả về danh sách địa chỉ đầy đủ
           matKhau: response.matKhau,
-        }; // Trả về chi tiết khách hàng
+        } // Trả về chi tiết khách hàng
       } catch (error) {
-        console.error('Lỗi khi lấy chi tiết khách hàng:', error);
-        toast.error('Có lỗi xảy ra khi lấy chi tiết khách hàng');
-        return null;
+        console.error('Lỗi khi lấy chi tiết khách hàng:', error)
+        toast.error('Có lỗi xảy ra khi lấy chi tiết khách hàng')
+        return null
       }
     },
 
-     
     // Thay đổi trạng thái khách hàng
     async changeTrangThaiKhachHang(idKhachHang) {
       try {
         // Cập nhật UI trước khi gọi API
-        const khachHang = this.getAllKhachHangArr.find((kh) => kh.idKhachHang === idKhachHang);
+        const khachHang = this.getAllKhachHangArr.find((kh) => kh.idKhachHang === idKhachHang)
         if (khachHang) {
-          khachHang.trangThai = khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động';
+          khachHang.trangThai =
+            khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động'
         }
 
-        const response = await khachHangService.changeTrangThai(idKhachHang);
+        const response = await khachHangService.changeTrangThai(idKhachHang)
         if (response.error) {
-          toast.error(response.message || 'Có lỗi xảy ra khi thay đổi trạng thái');
+          toast.error(response.message || 'Có lỗi xảy ra khi thay đổi trạng thái')
           // Revert trạng thái nếu lỗi
           if (khachHang) {
-            khachHang.trangThai = khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động';
+            khachHang.trangThai =
+              khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động'
           }
-          return false;
+          return false
         }
 
-        return true;
+        return true
       } catch (error) {
-        console.error('Lỗi khi thay đổi trạng thái khách hàng:', error);
-        toast.error('Có lỗi xảy ra khi thay đổi trạng thái');
+        console.error('Lỗi khi thay đổi trạng thái khách hàng:', error)
+        toast.error('Có lỗi xảy ra khi thay đổi trạng thái')
         // Revert trạng thái nếu lỗi
-        const khachHang = this.getAllKhachHangArr.find((kh) => kh.idKhachHang === idKhachHang);
+        const khachHang = this.getAllKhachHangArr.find((kh) => kh.idKhachHang === idKhachHang)
         if (khachHang) {
-          khachHang.trangThai = khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động';
+          khachHang.trangThai =
+            khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động'
         }
-        return false;
+        return false
+      }
+    },
+
+    async getAllKhachHangNoPage() {
+      try {
+        const response = await khachHangService.getAllKhachHangNoPage()
+        if (response.error) {
+          toast.error(response.message || 'Không lấy được dữ liệu khách hàng')
+          return null
+        }
+
+        this.getAllKhachHangNoPageList = response.danhSachKhachHang
+        this.diaChiMap = response.diaChiMap
+      } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu khách hàng no page:', error)
+        toast.error('Có lỗi xảy ra khi lấy dữ liệu khách hàng no page')
+        return null
       }
     },
 
@@ -1218,6 +1252,42 @@ async suaKhachHang(khachHangData) {
           return
         }
         this.getHDBIDHD = hoaDon
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lị xảy ra')
+        throw error
+      }
+    },
+
+    async addKHHD(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt) {
+      try {
+        const result = await banHangService.addKhHD(
+          idHoaDon,
+          idKhachHang,
+          diaChi,
+          tenKhachHang,
+          sdt,
+        )
+        if (result.error) {
+          toast.error(result.message || 'Không thêm được khách hàng hoá đơn')
+          return null
+        }
+        return result
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lị xảy ra')
+        throw error
+      }
+    },
+
+    async setTrangThaiNhanHang(idHoaDon, phuongThucNhanHang) {
+      try {
+        const result = await banHangService.setTrangThaiNhanHang(idHoaDon, phuongThucNhanHang)
+        if (result.error) {
+          toast.error(result.message || 'Không thêm được khách hàng hoá đơn')
+          return null
+        }
+        return result
       } catch (error) {
         console.error(error)
         toast.error('Có lị xảy ra')
