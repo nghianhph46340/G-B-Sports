@@ -52,7 +52,8 @@
                 <div class="section-box">
                     <h2 class="section-title">Thông tin giao hàng</h2>
                     <div class="customer-info">
-                        <a-form :model="customer" layout="vertical" class="shipping-form">
+                        <a-form :model="customer" layout="vertical" class="shipping-form" ref="customerForm"
+                            :rules="validationRules">
                             <div class="form-row">
                                 <a-form-item label="Họ tên người nhận" name="ho_ten" required class="form-item">
                                     <a-input v-model:value="customer.ho_ten" placeholder="Nhập họ tên người nhận" />
@@ -123,7 +124,7 @@
                                     </div>
                                     <div class="payment-info">
                                         <p class="payment-name">Thanh toán khi nhận hàng (COD)</p>
-                                        <p class="payment-desc">Thanh toán bằng tiền mặt khi nhận hàng</p>
+                                        <p class="payment-desc">Thanh toán khi nhận hàng</p>
                                     </div>
                                 </div>
                             </a-radio>
@@ -157,11 +158,11 @@
                                 </a-radio>
                             </div>
                             <div class="online-method-item">
-                                <a-radio value="zalopay" class="online-radio">
+                                <a-radio value="payos" class="online-radio">
                                     <div class="online-content">
-                                        <img src="https://upload.wikimedia.org/wikipedia/vi/thumb/5/5c/ZaloPay_logo.svg/2560px-ZaloPay_logo.svg.png"
-                                            alt="ZaloPay" class="online-logo" />
-                                        <span>ZaloPay</span>
+                                        <img src="../images/icon/depositphotos_593773014-stock-illustration-ruble-money-icon-shadow-russian-899359828.jpg"
+                                            alt="Payos" class="online-logo" />
+                                        <span>PayOs</span>
                                     </div>
                                 </a-radio>
                             </div>
@@ -225,7 +226,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -353,7 +354,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { message } from 'ant-design-vue';
+import { message, Form } from 'ant-design-vue';
 import axios from 'axios';
 import { thanhToanService } from '@/services/thanhToan';
 import {
@@ -454,29 +455,68 @@ const loadingWards = ref(false);
 // Order placement
 const placing = ref(false);
 
+// Form validation
+const customerForm = ref(null);
+
+// Validation rules
+const validationRules = {
+    ho_ten: [
+        { required: true, message: 'Vui lòng nhập họ tên người nhận', trigger: 'blur' },
+        { min: 2, message: 'Họ tên phải có ít nhất 2 ký tự', trigger: 'blur' }
+    ],
+    so_dien_thoai: [
+        { required: true, message: 'Vui lòng nhập số điện thoại', trigger: 'blur' },
+        { pattern: /^(0[3|5|7|8|9])+([0-9]{8})$/, message: 'Số điện thoại không hợp lệ', trigger: 'blur' }
+    ],
+    email: [
+        { required: true, message: 'Vui lòng nhập email', trigger: 'blur' },
+        { type: 'email', message: 'Email không hợp lệ', trigger: 'blur' }
+    ],
+    tinh_thanh: [
+        { required: true, message: 'Vui lòng chọn Tỉnh/Thành phố', trigger: 'change' }
+    ],
+    quan_huyen: [
+        { required: true, message: 'Vui lòng chọn Quận/Huyện', trigger: 'change' }
+    ],
+    xa_phuong: [
+        { required: true, message: 'Vui lòng chọn Phường/Xã', trigger: 'change' }
+    ],
+    dia_chi_cu_the: [
+        { required: true, message: 'Vui lòng nhập địa chỉ cụ thể', trigger: 'blur' },
+        { min: 5, message: 'Địa chỉ phải có ít nhất 5 ký tự', trigger: 'blur' }
+    ]
+};
+
 // Computed values for order summary
 const subtotal = computed(() => {
-    return orderItems.value.reduce((total, item) => total + (item.gia * item.so_luong), 0);
+    return orderItems.value.reduce((total, item) => {
+        // Đảm bảo giá và số lượng đều là số
+        const price = Number(item.gia || item.price || 0);
+        const quantity = Number(item.so_luong || item.quantity || 1);
+        return total + (price * quantity);
+    }, 0);
 });
 
 // Calculate discount based on applied vouchers
 const calculateDiscount = () => {
     let totalDiscount = 0;
+    const subTotal = Number(subtotal.value || 0);
 
     appliedCoupons.value.forEach(voucher => {
         let discountAmount = 0;
 
         if (voucher.loai === 'percent') {
             // Percentage discount
-            discountAmount = subtotal.value * (voucher.gia_tri / 100);
+            const percentValue = Number(voucher.gia_tri || 0);
+            discountAmount = subTotal * (percentValue / 100);
 
             // Cap discount at maximum value if set
-            if (voucher.gia_tri_toi_da && discountAmount > voucher.gia_tri_toi_da) {
-                discountAmount = voucher.gia_tri_toi_da;
+            if (voucher.gia_tri_toi_da && discountAmount > Number(voucher.gia_tri_toi_da)) {
+                discountAmount = Number(voucher.gia_tri_toi_da);
             }
         } else if (voucher.loai === 'fixed') {
             // Fixed amount discount
-            discountAmount = voucher.gia_tri;
+            discountAmount = Number(voucher.gia_tri || 0);
         }
 
         totalDiscount += discountAmount;
@@ -486,24 +526,29 @@ const calculateDiscount = () => {
 };
 
 const discount = computed(() => {
-    return calculateDiscount();
+    return Number(calculateDiscount() || 0);
 });
 
 const shippingFee = computed(() => {
     // Base shipping fee - free shipping for orders over 500,000 VND
-    let fee = subtotal.value > 500000 ? 0 : 30000;
+    const subTotal = Number(subtotal.value || 0);
+    let fee = subTotal > 500000 ? 0 : 30000;
 
     // Apply shipping vouchers
     const shippingVoucher = appliedCoupons.value.find(c => c.loai === 'shipping');
     if (shippingVoucher) {
-        fee = Math.max(0, fee - shippingVoucher.gia_tri);
+        const voucherValue = Number(shippingVoucher.gia_tri || 0);
+        fee = Math.max(0, fee - voucherValue);
     }
 
     return fee;
 });
 
 const grandTotal = computed(() => {
-    return subtotal.value - discount.value + shippingFee.value;
+    const subTotal = Number(subtotal.value || 0);
+    const disc = Number(discount.value || 0);
+    const shipping = Number(shippingFee.value || 0);
+    return subTotal - disc + shipping;
 });
 
 // Fetch customer data
@@ -752,17 +797,12 @@ const removeCoupon = (index) => {
     message.success('Đã xóa mã giảm giá');
 };
 
-// Place order
+// Place order - updated with form validation
 const placeOrder = async () => {
-    // Validate form
-    if (!customer.value.ho_ten || !customer.value.so_dien_thoai || !customer.value.email ||
-        !customer.value.tinh_thanh || !customer.value.quan_huyen ||
-        !customer.value.xa_phuong || !customer.value.dia_chi_cu_the) {
-        message.warning('Vui lòng điền đầy đủ thông tin giao hàng');
-        return;
-    }
-
     try {
+        // Validate form
+        await customerForm.value.validate();
+
         placing.value = true;
 
         // Calculate and log the complete invoice
@@ -773,7 +813,7 @@ const placeOrder = async () => {
 
         // Handle different payment methods
         if (selectedPaymentMethod.value === 'online') {
-            if (selectedOnlineMethod.value === 'zalopay') {
+            if (selectedOnlineMethod.value === 'payos') {
                 // Xử lý thanh toán ZaloPay
                 await thanhToanService.handlePayOSPayment(orderData);
             } else if (selectedOnlineMethod.value === 'vnpay') {
@@ -802,8 +842,15 @@ const placeOrder = async () => {
 
         placing.value = false;
     } catch (error) {
-        console.error('Error placing order:', error);
-        message.error('Không thể đặt hàng. Vui lòng thử lại sau.');
+        console.error('Lỗi khi đặt hàng:', error);
+
+        // Hiển thị lỗi từ validation (nếu có)
+        if (error.errorFields) {
+            message.error('Vui lòng điền đầy đủ thông tin giao hàng');
+        } else {
+            message.error('Không thể đặt hàng. Vui lòng thử lại sau.');
+        }
+
         placing.value = false;
     }
 };
@@ -838,14 +885,41 @@ onMounted(async () => {
     // Kiểm tra xem có sản phẩm mua ngay từ store không
     if (store.checkoutItems && store.checkoutItems.length > 0) {
         console.log('Đã nhận sản phẩm mua ngay từ store:', store.checkoutItems);
-        orderItems.value = [...store.checkoutItems];
+
+        // Xử lý và chuẩn hóa dữ liệu đơn hàng
+        orderItems.value = store.checkoutItems.map(item => {
+            // Đảm bảo các giá trị số đều được chuyển đổi đúng định dạng
+            const processedItem = {
+                ...item,
+                // Sử dụng gia hoặc price tùy theo field có sẵn
+                gia: Number(item.gia || item.price || 0),
+                price: Number(item.gia || item.price || 0),
+                so_luong: Number(item.so_luong || item.quantity || 1),
+                quantity: Number(item.so_luong || item.quantity || 1)
+            };
+
+            console.log('Đã xử lý sản phẩm:', processedItem);
+            return processedItem;
+        });
     }
     // Hoặc kiểm tra nếu có dữ liệu query từ route
     else if (route.query.data) {
         try {
             const productData = JSON.parse(atob(route.query.data));
             console.log('Đã nhận dữ liệu sản phẩm từ query params:', productData);
-            orderItems.value = Array.isArray(productData) ? productData : [productData];
+
+            // Xử lý và chuẩn hóa dữ liệu đơn hàng
+            const processedData = Array.isArray(productData) ? productData : [productData];
+            orderItems.value = processedData.map(item => {
+                return {
+                    ...item,
+                    // Đảm bảo các giá trị số đều được chuyển đổi đúng định dạng
+                    gia: Number(item.gia || item.price || 0),
+                    price: Number(item.gia || item.price || 0),
+                    so_luong: Number(item.so_luong || item.quantity || 1),
+                    quantity: Number(item.so_luong || item.quantity || 1)
+                };
+            });
         } catch (error) {
             console.error('Lỗi khi phân tích dữ liệu sản phẩm:', error);
             message.error('Không thể đọc thông tin sản phẩm');

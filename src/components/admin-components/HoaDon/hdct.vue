@@ -713,7 +713,7 @@ const cannotEditProduct = computed(() => {
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
         return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
     }
-    return ["Đã xác nhận", 'Chờ đóng gói', 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+    return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
 });
 
 const cannotEdit = computed(() => {
@@ -721,7 +721,7 @@ const cannotEdit = computed(() => {
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
         return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
     }
-    return ["Đã xác nhận", 'Chờ đóng gói', 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+    return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
 });
 
 const nextStatusText = computed(() => {

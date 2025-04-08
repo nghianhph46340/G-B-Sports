@@ -85,6 +85,7 @@ export const useGbStore = defineStore('gbStore', {
     userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
     isLoggedIn: localStorage.getItem('isLoggedIn') === 'true' || false,
     id_roles: localStorage.getItem('id_roles') || null, // Thêm id_roles vào state
+    userDetails: null,
 
     //Khách hàng
     getAllKhachHangArr: [],
@@ -247,13 +248,80 @@ export const useGbStore = defineStore('gbStore', {
           return trangThai
       }
     },
-    async getTopSanPhamBanChay() {
-      const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
-      this.topSanPhamBanChay = topSanPhamBanChay
+    // async getTopSanPhamBanChay() {
+    //   const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
+    //   this.topSanPhamBanChay = topSanPhamBanChay
+    // },
+
+    // Hàm format tên trạng thái (nếu chưa có)
+    // formatTrangThai(trangThai) {
+    //   switch (trangThai) {
+    //     case "CHO_XAC_NHAN": return "Chờ xác nhận";
+    //     case "DA_XAC_NHAN": return "Đã xác nhận";
+    //     case "DA_CAP_NHAT": return "Đã cập nhật";
+    //     case "DANG_GIAO": return "Đang giao";
+    //     case "HOAN_THANH": return "Hoàn thành";
+    //     case "DA_HUY": return "Đã hủy";
+    //     default: return trangThai;
+    //   }
+    // },
+    // async getTopSanPhamBanChay() {
+    //   const topSanPhamBanChay = await bctkService.topSanPhamBanChay()
+    //   this.topSanPhamBanChay = topSanPhamBanChay
+    // },
+    // thử nghiệm
+    async getTopSanPhamBanChay(type = 'nam-nay', startDate = null, endDate = null) {
+      try {
+        console.log('Store params:', { type, startDate, endDate })
+        // Đảm bảo luôn có type
+        const response = await bctkService.getTopSanPhamBanChay(
+          type || 'nam-nay',
+          startDate,
+          endDate,
+        )
+
+        if (response && Array.isArray(response)) {
+          this.topSanPhamBanChay = response.map((item, index) => ({
+            stt: index + 1,
+            ma_san_pham: item.ma_san_pham || '',
+            ten_san_pham: item.ten_san_pham || '',
+            so_luong: item.so_luong || 0,
+            gia_ban: item.gia_ban || 0,
+          }))
+        } else {
+          console.warn('Invalid response format:', response)
+          this.topSanPhamBanChay = []
+        }
+        return this.topSanPhamBanChay
+      } catch (error) {
+        console.error('Store error:', error)
+        this.topSanPhamBanChay = []
+        throw error
+      }
     },
-    async getTopSanPhamBanCham() {
-      const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
-      this.topSanPhamBanCham = topSanPhamBanCham
+    // async getTopSanPhamBanCham() {
+    //   const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
+    //   this.topSanPhamBanCham = topSanPhamBanCham
+    // },
+    async getTopSanPhamBanCham(type = 'nam-nay', startDate = null, endDate = null) {
+      try {
+        const response = await bctkService.getTopSanPhamBanCham(type, startDate, endDate)
+        if (response && Array.isArray(response)) {
+          this.topSanPhamBanCham = response.map((item, index) => ({
+            stt: index + 1,
+            ma_san_pham: item.ma_san_pham || '',
+            ten_san_pham: item.ten_san_pham || '',
+            so_luong: item.so_luong || 0,
+            gia_ban: item.gia_ban || 0,
+          }))
+        } else {
+          console.warn('Invalid response format for topSanPhamBanCham:', response)
+          this.topSanPhamBanCham = []
+        }
+      } catch (error) {
+        console.error('Error in getTopSanPhamBanCham:', error)
+        this.topSanPhamBanCham = []
+      }
     },
     //Kết thúc BCTK
 
@@ -757,27 +825,22 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Dữ liệu tài khoản không hợp lệ!')
         return { error: true }
       }
-
       // Lưu thông tin cơ bản
       this.userInfo = result.taiKhoan
       this.isLoggedIn = true
       this.id_roles = result.id_roles
-
       // In thông tin tài khoản cơ bản
       console.log('Thông tin tài khoản (tai_khoan):', this.userInfo)
       console.log('ID Roles:', this.id_roles)
-
       // Lưu vào sessionStorage
       sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
       sessionStorage.setItem('isLoggedIn', 'true')
       sessionStorage.setItem('id_roles', result.id_roles)
-
       if (loginData.rememberMe) {
         localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('id_roles', result.id_roles)
       }
-
       // Lấy thông tin chi tiết
       try {
         const userDetails = await khachHangService.getUserDetail({
@@ -785,10 +848,8 @@ export const useGbStore = defineStore('gbStore', {
           id_roles: result.id_roles,
         })
         this.userDetails = userDetails
-
         // In thông tin chi tiết
         console.log('Thông tin chi tiết (userDetails):', this.userDetails)
-
         sessionStorage.setItem('userDetails', JSON.stringify(userDetails))
         if (loginData.rememberMe) {
           localStorage.setItem('userDetails', JSON.stringify(userDetails))
@@ -797,41 +858,63 @@ export const useGbStore = defineStore('gbStore', {
         console.error('Lỗi khi lấy thông tin chi tiết:', error)
         toast.error('Không thể lấy thông tin chi tiết tài khoản!')
       }
-
       toast.success(result.successMessage || 'Đăng nhập thành công!')
       return { success: true, id_roles: result.id_roles }
     },
     // Cập nhật restoreLoginState để kiểm tra cả sessionStorage
+    // Khôi phục trạng thái đăng nhập từ localStorage hoặc sessionStorage
     restoreLoginState() {
       let userInfo = localStorage.getItem('userInfo')
       let isLoggedIn = localStorage.getItem('isLoggedIn')
       let id_roles = localStorage.getItem('id_roles')
+      let userDetails = localStorage.getItem('userDetails')
 
       // Nếu không có trong localStorage, kiểm tra sessionStorage
       if (!userInfo || isLoggedIn !== 'true') {
         userInfo = sessionStorage.getItem('userInfo')
         isLoggedIn = sessionStorage.getItem('isLoggedIn')
         id_roles = sessionStorage.getItem('id_roles')
+        userDetails = sessionStorage.getItem('userDetails')
       }
 
       if (userInfo && isLoggedIn === 'true') {
         this.userInfo = JSON.parse(userInfo)
         this.isLoggedIn = true
-        this.id_roles = id_roles
+        this.id_roles = id_roles ? parseInt(id_roles) : null
+        this.userDetails = userDetails ? JSON.parse(userDetails) : null
+
+        // In thông tin để kiểm tra
+        console.log('Khôi phục trạng thái đăng nhập:')
+        console.log('User Info:', this.userInfo)
+        console.log('ID Roles:', this.id_roles)
+        console.log('User Details:', this.userDetails)
+      } else {
+        console.log('Không có dữ liệu đăng nhập để khôi phục.')
       }
     },
 
-    // Action để đăng xuất
+    // Đăng xuất
     logout() {
-      // Xóa dữ liệu trong localStorage và state
-      localStorage.removeItem('id_roles')
+      // Xóa dữ liệu trong localStorage và sessionStorage
       localStorage.removeItem('userInfo')
       localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('id_roles')
+      localStorage.removeItem('userDetails')
+      sessionStorage.removeItem('userInfo')
+      sessionStorage.removeItem('isLoggedIn')
+      sessionStorage.removeItem('id_roles')
+      sessionStorage.removeItem('userDetails')
+
+      // Reset trạng thái trong store
       this.userInfo = null
       this.isLoggedIn = false
       this.id_roles = null
-      router.replace('/login-register/login')
+      this.userDetails = null
+
+      // const router = useRouter();
+      // router.replace('/login-register/login');
       toast.success('Đăng xuất thành công!')
+      window.location.href = '/login-register/login'
     },
     //Import excel
     async importExcel(file) {
@@ -943,20 +1026,12 @@ export const useGbStore = defineStore('gbStore', {
 
     // Thêm khách hàng
     async themKhachHang(khachHangData) {
-      try {
-        const response = await khachHangService.themKhachHang(khachHangData)
-        if (response.error) {
-          toast.error(response.message || 'Có lỗi xảy ra khi thêm khách hàng')
-          return null
-        }
-
-        await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách sau khi thêm
-        return response.khachHang // Trả về thông tin khách hàng vừa thêm
-      } catch (error) {
-        console.error('Lỗi khi thêm khách hàng:', error)
-        toast.error('Có lỗi xảy ra khi thêm khách hàng')
-        return null
+      const response = await khachHangService.themKhachHang(khachHangData)
+      if (response.error) {
+        throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng') // Ném lỗi để component xử lý
       }
+      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
+      return response.khachHang // Trả về thông tin khách hàng vừa thêm
     },
 
     // Lấy thông tin khách hàng để chỉnh sửa
@@ -1285,6 +1360,36 @@ export const useGbStore = defineStore('gbStore', {
         const result = await banHangService.setTrangThaiNhanHang(idHoaDon, phuongThucNhanHang)
         if (result.error) {
           toast.error(result.message || 'Không thêm được khách hàng hoá đơn')
+          return null
+        }
+        return result
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lị xảy ra')
+        throw error
+      }
+    },
+
+    async thanhToanMomo(idHoaDon) {
+      try {
+        const result = await banHangService.thanhToanMomo(idHoaDon)
+        if (result.error) {
+          toast.error(result.message || 'Không thêm được khách hàng hoá đơn')
+          return null
+        }
+        return result
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lị xảy ra')
+        throw error
+      }
+    },
+
+    async updateHinhThucTTHoaDon(idHD, hinhThucThanhToan) {
+      try {
+        const result = await hoaDonService.updateHinhThucTTHoaDon(idHD, hinhThucThanhToan)
+        if (result.error) {
+          toast.error(result.message || 'Không update được hình thức thanh toán')
           return null
         }
         return result

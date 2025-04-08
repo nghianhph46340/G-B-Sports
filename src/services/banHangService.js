@@ -154,6 +154,16 @@ const setTrangThaiNhanHang = async(idHoaDon, phuongThucNhanHang) => {
     }
 }
 
+const thanhToanMomo = async(idHoaDon) => {
+    try {
+        const { data } = await axiosInstance.post(`api/momo/thanhToanMomo?idHoaDon=${idHoaDon}`);        
+        return data;
+    } catch (error) {
+        console.error('Lỗi API thanh toán momo:', error);
+        return { error: true };
+    }
+}
+
 export const banHangService = {
     getAllHoaDonCTT,
     createHoaDon,
@@ -168,5 +178,6 @@ export const banHangService = {
     xoaSPHD,
     getHoaDonByIdHoaDon,
     addKhHD,
-    setTrangThaiNhanHang
+    setTrangThaiNhanHang,
+    thanhToanMomo
 }

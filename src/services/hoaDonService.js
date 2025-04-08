@@ -191,6 +191,18 @@ const updateProductQuantity = async (maHoaDon, idCTSP, quantityChange) => {
         return { error: true };
     }
 };
+
+
+const updateHinhThucTTHoaDon = async (idHD, hinhThucThanhToan) => {
+    try {
+        const { data } = await axiosInstance.put(qlhd + `updateHTTTHD?idHD=${idHD}&hinhThucThanhToan=${hinhThucThanhToan}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật hình thức thanh toán:', error);
+        return { error: true };
+    }
+};
+
 export const hoaDonService = {
     getAllHoaDon,
     getListHoaDon,
@@ -206,5 +218,6 @@ export const hoaDonService = {
     addProductsToInvoice,
     removeProductFromInvoice,
     updateProductQuantity,
-    quayLaiTrangThai
+    quayLaiTrangThai,
+    updateHinhThucTTHoaDon
 };

@@ -350,6 +350,10 @@
         </div>
 
         <template #footer>
+            <a-button key="test" type="default" @click="exportTestExcel">
+                <file-excel-outlined />
+                Xuất dữ liệu mẫu
+            </a-button>
             <a-button key="back" @click="exportModalVisible = false">Hủy</a-button>
             <a-button key="submit" type="primary" :loading="exportLoading" :disabled="!canExport"
                 @click="handleExportExcel">
@@ -361,6 +365,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
+import * as XLSX from 'xlsx';
 import {
     FilterOutlined,
     PlusOutlined,
@@ -759,15 +764,19 @@ const selectAllFields = ref(false);
 const exportFields = ref([
     { label: 'Mã sản phẩm', value: 'ma_san_pham', selected: true },
     { label: 'Tên sản phẩm', value: 'ten_san_pham', selected: true },
+    { label: 'ID chi tiết sản phẩm', value: 'id_chi_tiet_san_pham', selected: true },
     { label: 'Danh mục', value: 'ten_danh_muc', selected: true },
     { label: 'Thương hiệu', value: 'ten_thuong_hieu', selected: true },
     { label: 'Chất liệu', value: 'ten_chat_lieu', selected: true },
-    { label: 'Tổng số lượng', value: 'tong_so_luong', selected: true },
+    { label: 'Số lượng', value: 'tong_so_luong', selected: true },
     { label: 'Giá bán', value: 'gia_ban', selected: true },
-    { label: 'Màu sắc', value: 'mau_sac', selected: false },
-    { label: 'Kích thước', value: 'kich_thuoc', selected: false },
-    { label: 'Mô tả', value: 'mo_ta', selected: false },
-    { label: 'Trạng thái', value: 'trang_thai', selected: true }
+    { label: 'Màu sắc', value: 'mau_sac', selected: true },
+    { label: 'Kích thước', value: 'kich_thuoc', selected: true },
+    { label: 'Trạng thái', value: 'trang_thai', selected: true },
+    { label: 'QR Code', value: 'qr_code', selected: false },
+    { label: 'Ngày tạo', value: 'ngay_tao', selected: false },
+    { label: 'Ngày sửa', value: 'ngay_sua', selected: false },
+    { label: 'Mô tả', value: 'mo_ta', selected: false }
 ]);
 
 // Lấy danh sách sản phẩm được chọn từ component cha
@@ -787,78 +796,243 @@ const canExport = computed(() => {
 
 // Hàm hiển thị modal xuất Excel
 const showExportModal = () => {
-    // Lấy danh sách sản phẩm đã chọn từ store hoặc component cha
+    // Kiểm tra và tải thêm dữ liệu chi tiết sản phẩm nếu cần
+    if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
+        message.info('Đang tải dữ liệu chi tiết sản phẩm...');
+        store.getAllCTSP().then(() => {
+            console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
+        });
+    }
+
+    // Hiển thị modal
     exportModalVisible.value = true;
 };
 
-// Khi người dùng chọn/bỏ chọn tất cả các trường
-const handleSelectAllFields = (e) => {
-    const checked = e.target.checked;
-    exportFields.value.forEach(field => {
-        field.selected = checked;
-    });
+// Thêm nút để kiểm tra trực tiếp
+const exportTestExcel = () => {
+    try {
+        message.loading('Đang xuất dữ liệu mẫu...');
+
+        // Tạo một số dữ liệu mẫu
+        const mockData = [
+            {
+                'Mã sản phẩm': 'SP001',
+                'Tên sản phẩm': 'Áo thể thao nam',
+                'Danh mục': 'Áo thể thao',
+                'Thương hiệu': 'Nike',
+                'Chất liệu': 'Polyester',
+                'Số lượng': 10,
+                'Giá bán': 350000,
+                'Màu sắc': 'Đỏ',
+                'Kích thước': 'L'
+            },
+            {
+                'Mã sản phẩm': 'SP002',
+                'Tên sản phẩm': 'Quần thể thao nữ',
+                'Danh mục': 'Quần thể thao',
+                'Thương hiệu': 'Adidas',
+                'Chất liệu': 'Cotton',
+                'Số lượng': 15,
+                'Giá bán': 450000,
+                'Màu sắc': 'Đen',
+                'Kích thước': 'M'
+            }
+        ];
+
+        // Tạo workbook và worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(mockData);
+
+        // Thiết lập độ rộng cột
+        const wscols = [
+            { wch: 15 }, // Mã sản phẩm
+            { wch: 25 }, // Tên sản phẩm
+            { wch: 15 }, // Danh mục
+            { wch: 15 }, // Thương hiệu
+            { wch: 15 }, // Chất liệu
+            { wch: 10 }, // Số lượng
+            { wch: 15 }, // Giá bán
+            { wch: 15 }, // Màu sắc
+            { wch: 15 }  // Kích thước
+        ];
+        ws['!cols'] = wscols;
+
+        // Thêm worksheet vào workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Dữ liệu mẫu");
+
+        // Tạo tên file với timestamp hiện tại
+        const fileName = `test-data-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+        // Xuất file Excel
+        XLSX.writeFile(wb, fileName);
+
+        message.success('Xuất Excel mẫu thành công!');
+    } catch (error) {
+        console.error('Lỗi khi xuất Excel mẫu:', error);
+        message.error('Có lỗi xảy ra khi xuất Excel mẫu');
+    }
 };
 
-// Theo dõi thay đổi của từng trường để cập nhật selectAllFields
-watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
-    selectAllFields.value = newVal.every(v => v === true);
-}, { deep: true });
-
-// Xử lý xuất Excel
+// Sửa lại hàm xử lý xuất Excel
 const handleExportExcel = async () => {
     try {
         exportLoading.value = true;
+
+        // Debug thông tin trước khi xuất
+        console.log('Bắt đầu xuất Excel');
+        console.log('Số lượng sản phẩm trong store:', store.getAllSanPham?.length || 0);
+        console.log('Số lượng chi tiết sản phẩm trong store:', store.getAllChiTietSanPham?.length || 0);
 
         // Lấy danh sách các trường đã chọn
         const selectedFields = exportFields.value
             .filter(field => field.selected)
             .map(field => field.value);
 
-        // Lấy danh sách ID sản phẩm cần xuất
-        let productIds = [];
+        // Tải dữ liệu chi tiết sản phẩm nếu chưa có
+        if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
+            try {
+                message.loading('Đang tải dữ liệu chi tiết sản phẩm...');
+                await store.getAllCTSP();
+                console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
+            } catch (error) {
+                console.error('Lỗi khi tải chi tiết sản phẩm:', error);
+                message.error('Không thể tải dữ liệu chi tiết sản phẩm');
+                exportLoading.value = false;
+                return;
+            }
+        }
 
-        if (exportSelection.value === 'all') {
-            // Xuất tất cả sản phẩm
-            productIds = null; // Null có nghĩa là tất cả sản phẩm
-        } else if (exportSelection.value === 'filtered' && store.getFilteredProducts.length > 0) {
-            // Xuất các sản phẩm đã lọc
-            productIds = store.getFilteredProducts.map(p => p.id_san_pham);
-        } else if (exportSelection.value === 'selected' && selectedRows.value.length > 0) {
-            // Xuất các sản phẩm đã chọn
-            productIds = selectedRows.value.map(p => p.id_san_pham);
-        } else {
-            message.warning('Vui lòng chọn sản phẩm để xuất');
+        // Lấy danh sách ID sản phẩm cần xuất (nếu người dùng chọn sản phẩm đã lọc hoặc đã chọn)
+        let filteredProductIds = [];
+
+        if (exportSelection.value === 'filtered' && store.getFilteredProducts?.length > 0) {
+            // Xuất các chi tiết sản phẩm của sản phẩm đã lọc
+            filteredProductIds = store.getFilteredProducts.map(p => p.id_san_pham);
+            console.log('Lọc theo sản phẩm đã lọc:', filteredProductIds);
+        } else if (exportSelection.value === 'selected' && selectedRows.value?.length > 0) {
+            // Xuất các chi tiết sản phẩm của sản phẩm đã chọn
+            filteredProductIds = selectedRows.value.map(p => p.id_san_pham);
+            console.log('Lọc theo sản phẩm đã chọn:', filteredProductIds);
+        }
+
+        // Chuẩn bị dữ liệu cho file Excel từ chi tiết sản phẩm
+        let excelData = prepareDetailExcelData(store.getAllChiTietSanPham, selectedFields, filteredProductIds);
+
+        // Kiểm tra xem có dữ liệu sau khi xử lý không
+        if (!excelData || excelData.length === 0) {
+            console.error('Không có dữ liệu chi tiết sản phẩm sau khi xử lý');
+            message.error('Không có dữ liệu hợp lệ để xuất');
             exportLoading.value = false;
             return;
         }
 
-        // Log dữ liệu sẽ xuất ra Excel
-        console.log('Dữ liệu xuất Excel:');
-        console.log('- Các trường được chọn:', selectedFields);
-        console.log('- ID sản phẩm xuất:', productIds);
+        console.log('Đã chuẩn bị dữ liệu Excel:', excelData.length, 'dòng');
+        console.log('Mẫu dữ liệu Excel đầu tiên:', excelData[0]);
 
-        if (exportSelection.value === 'all') {
-            console.log('- Toàn bộ sản phẩm sẽ được xuất');
-        } else if (exportSelection.value === 'filtered') {
-            console.log('- Sản phẩm được lọc sẽ xuất:', store.getFilteredProducts);
-        } else if (exportSelection.value === 'selected') {
-            console.log('- Sản phẩm được chọn sẽ xuất:', selectedRows.value);
-        }
+        // Tạo workbook và worksheet
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(excelData);
 
-        // Gọi hàm xuất Excel
-        const result = await store.exportExcel(productIds, selectedFields);
+        // Thiết lập độ rộng cột
+        const wscols = setColumnWidths(excelData);
+        ws['!cols'] = wscols;
 
-        if (result) {
-            console.log('Kết quả xuất Excel:', result);
-            message.success('Xuất Excel thành công!');
-            exportModalVisible.value = false;
-        }
+        // Thêm worksheet vào workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Chi tiết sản phẩm");
+
+        // Tạo tên file với timestamp hiện tại
+        const fileName = `chi-tiet-san-pham-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+        // Xuất file Excel
+        XLSX.writeFile(wb, fileName);
+
+        message.success('Xuất Excel thành công!');
+        exportModalVisible.value = false;
     } catch (error) {
         console.error('Lỗi khi xuất Excel:', error);
-        message.error('Có lỗi xảy ra khi xuất Excel');
+        message.error('Có lỗi xảy ra khi xuất Excel: ' + error.message);
     } finally {
         exportLoading.value = false;
     }
+};
+
+// Hàm chuẩn bị dữ liệu Excel từ chi tiết sản phẩm
+const prepareDetailExcelData = (chiTietSanPhams, selectedFields, filteredProductIds = []) => {
+    if (!chiTietSanPhams || chiTietSanPhams.length === 0) {
+        console.error('Không có dữ liệu chi tiết sản phẩm để xuất');
+        return [];
+    }
+
+    console.log('Chuẩn bị dữ liệu Excel từ', chiTietSanPhams.length, 'chi tiết sản phẩm');
+    console.log('Mẫu chi tiết sản phẩm đầu tiên:', JSON.parse(JSON.stringify(chiTietSanPhams[0])));
+
+    // Lọc chi tiết sản phẩm theo ID sản phẩm nếu có
+    let filteredCTSPs = chiTietSanPhams;
+    if (filteredProductIds.length > 0 && exportSelection.value !== 'all') {
+        filteredCTSPs = chiTietSanPhams.filter(ct =>
+            ct && filteredProductIds.includes(
+                typeof ct.id_san_pham === 'number'
+                    ? ct.id_san_pham
+                    : ct.sanPham?.id_san_pham)
+        );
+        console.log('Sau khi lọc theo ID sản phẩm:', filteredCTSPs.length, 'chi tiết sản phẩm');
+    }
+
+    // Tạo dữ liệu Excel
+    return filteredCTSPs.map(ct => {
+        // Tạo đối tượng dữ liệu Excel trống
+        const row = {};
+
+        // Thêm thông tin từ chi tiết sản phẩm
+        if (selectedFields.includes('ma_san_pham')) row['Mã sản phẩm'] = ct.ma_san_pham || '';
+        if (selectedFields.includes('ten_san_pham')) row['Tên sản phẩm'] = ct.ten_san_pham || '';
+        if (selectedFields.includes('id_chi_tiet_san_pham')) row['ID chi tiết SP'] = ct.id_chi_tiet_san_pham || '';
+
+        // Thêm thông tin danh mục, thương hiệu, chất liệu
+        if (selectedFields.includes('ten_danh_muc')) row['Danh mục'] = ct.ten_danh_muc || '';
+        if (selectedFields.includes('ten_thuong_hieu')) row['Thương hiệu'] = ct.ten_thuong_hieu || '';
+        if (selectedFields.includes('ten_chat_lieu')) row['Chất liệu'] = ct.ten_chat_lieu || '';
+
+        // Thêm thông tin màu sắc và kích thước
+        if (selectedFields.includes('mau_sac')) row['Màu sắc'] = ct.ten_mau || '';
+        if (selectedFields.includes('kich_thuoc')) {
+            const kichThuoc = ct.gia_tri || '';
+            const donVi = ct.don_vi || '';
+            row['Kích thước'] = kichThuoc + (donVi ? ' ' + donVi : '');
+        }
+
+        // Thêm thông tin số lượng và giá bán
+        if (selectedFields.includes('tong_so_luong')) row['Số lượng'] = ct.so_luong || 0;
+        if (selectedFields.includes('gia_ban')) row['Giá bán'] = ct.gia_ban || 0;
+
+        // Thêm thông tin trạng thái và thời gian
+        if (selectedFields.includes('trang_thai')) row['Trạng thái'] = ct.trang_thai || '';
+        if (selectedFields.includes('ngay_tao')) row['Ngày tạo'] = ct.ngay_tao || '';
+        if (selectedFields.includes('ngay_sua')) row['Ngày sửa'] = ct.ngay_sua || '';
+
+        // Thêm thông tin QR và mô tả
+        if (selectedFields.includes('qr_code')) row['QR Code'] = ct.qr_code || '';
+        if (selectedFields.includes('mo_ta')) row['Mô tả'] = ct.mo_ta || '';
+
+        return row;
+    });
+};
+
+// Hàm thiết lập độ rộng cột
+const setColumnWidths = (data) => {
+    if (!data || data.length === 0) return [];
+
+    const sample = data[0];
+    return Object.keys(sample).map(key => {
+        // Thiết lập độ rộng dựa trên loại trường
+        if (key === 'Tên sản phẩm' || key === 'Mô tả') {
+            return { wch: 40 }; // Rộng hơn cho text dài
+        } else if (key === 'Màu sắc' || key === 'Kích thước') {
+            return { wch: 20 }; // Trung bình cho danh sách
+        } else {
+            return { wch: 15 }; // Mặc định cho các trường còn lại
+        }
+    });
 };
 
 // Phương thức để nhận danh sách sản phẩm được chọn từ component cha
@@ -889,7 +1063,7 @@ const formatPrice = (price) => {
     }).format(price);
 };
 
-// Xử lý khi kéo thả file
+// Xử lý kéo thả file
 const handleFileDrop = (event) => {
     isDragging.value = false;
     const files = event.dataTransfer.files;
@@ -1050,6 +1224,19 @@ const downloadTemplate = () => {
     // link.click();
     // document.body.removeChild(link);
 };
+
+// Khi người dùng chọn/bỏ chọn tất cả các trường
+const handleSelectAllFields = (e) => {
+    const checked = e.target.checked;
+    exportFields.value.forEach(field => {
+        field.selected = checked;
+    });
+};
+
+// Theo dõi thay đổi của từng trường để cập nhật selectAllFields
+watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
+    selectAllFields.value = newVal.every(v => v === true);
+}, { deep: true });
 </script>
 
 <style scoped>

@@ -107,7 +107,7 @@
                                 </td>
                                 <td>
                                     {{ item.ten_san_pham }} <br />
-                                    <small>({{ item.ten_mau }} - {{ item.gia_tri }})</small>
+                                    <small>(Màu: {{ item.mau_sac }} - Size: {{ item.kich_thuoc }})</small>
                                 </td>
                                 <td>
                                     <a-space direction="vertical">
@@ -143,7 +143,7 @@
                             Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || 'Khách lẻ' }}
                         </label>
                         <div class="mb-3">
-                            <a-switch v-model:checked="activeTabData.hd.isKhachLe" @change="handleKhachLeChange" />
+                            <a-switch v-model:checked="activeTabData.hd.isKhachLe" />
                         </div>
 
                         <div v-if="activeTabData.hd.isKhachLe">
@@ -200,7 +200,7 @@
                                                     <td>{{ khachHang.tenKhachHang }}</td>
                                                     <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
                                                     <td>{{ khachHang.soDienThoai }}</td>
-                                                    <td>{{ diaChiMap[khachHang.idKhachHang] || 'Chưa có địa chỉ' }}</td>
+                                                    <td>{{ khachHang.diaChi }}</td>
                                                     <td>
                                                         <a-button size="small" type="link"
                                                             @click="chonKhachHang(khachHang)">Chọn</a-button>
@@ -266,13 +266,13 @@
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" :name="'hinhThucThanhToan_' + activeKey"
                                 :id="'tienMat_' + activeKey" value="Tiền mặt"
-                                v-model="activeTabData.hd.hinh_thuc_thanh_toan">
+                                v-model="activeTabData.hd.hinh_thuc_thanh_toan" @change="updateHinhThucThanhToan" />
                             <label class="form-check-label" :for="'tienMat_' + activeKey">Tiền mặt</label>
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" :name="'hinhThucThanhToan_' + activeKey"
                                 :id="'chuyenKhoan_' + activeKey" value="Chuyển khoản"
-                                v-model="activeTabData.hd.hinh_thuc_thanh_toan">
+                                v-model="activeTabData.hd.hinh_thuc_thanh_toan" @change="updateHinhThucThanhToan" />
                             <label class="form-check-label" :for="'chuyenKhoan_' + activeKey">Chuyển khoản</label>
                         </div>
                         <div v-if="activeTabData.hd.hinh_thuc_thanh_toan === 'Tiền mặt'" class="mt-2">
@@ -322,13 +322,20 @@ import { useGbStore } from '@/stores/gbStore';
 import { Empty } from 'ant-design-vue';
 import jsPDF from 'jspdf';
 import logo from '../../../images/logo/logo2.png';
+import '../../../config/fonts/Roboto-normal'
+import '../../../config/fonts/Roboto-bold'
+import { toast } from 'vue3-toastify';
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const pageSize = ref(5);
 const store = useGbStore();
 const scrollContainer = ref(null);
 
-
-const danhSachKhachHang = computed(() => store.getAllKhachHangNoPageList)
+const danhSachKhachHang = computed(() => {
+    return store.getAllKhachHangNoPageList.map(khachHang => ({
+        ...khachHang,
+        diaChi: store.diaChiMap[khachHang.idKhachHang] || 'Chưa có địa chỉ'
+    }));
+});
 const diaChiMap = computed(() => store.diaChiMap);
 
 const chonKhachHang = (khachHang) => {
@@ -337,6 +344,7 @@ const chonKhachHang = (khachHang) => {
     activeTabData.value.hd.dia_chi = diaChiMap[khachHang.idKhachHang] || "Chưa có địa chỉ";
     activeTabData.value.hd.id_khach_hang = khachHang.idKhachHang;
     store.addKHHD(activeTabData.value.hd.id_hoa_don, khachHang.idKhachHang, khachHang.diaChi, khachHang.tenKhachHang, khachHang.soDienThoai);
+    refreshHoaDon(activeTabData.value.hd.id_hoa_don);
     open.value = false;
 };
 
@@ -457,20 +465,24 @@ const performSearch = () => {
 
 const refreshHoaDon = async (idHoaDon) => {
     try {
-        await store.getHoaDonByIdHoaDon(idHoaDon); // Hoặc API khác nếu bạn có
+        // Gọi API để lấy lại dữ liệu hóa đơn
+        await store.getHoaDonByIdHoaDon(idHoaDon);
         const hoaDonInfo = store.getHDBIDHD;
+
         const currentTab = activeTabData.value;
         if (hoaDonInfo && currentTab && currentTab.hd?.id_hoa_don === idHoaDon) {
-            currentTab.hd.tong_tien_truoc_giam = hoaDonInfo.tong_tien_truoc_giam || 0;
-            currentTab.hd.tong_tien_sau_giam = hoaDonInfo.tong_tien_sau_giam || 0;
-            currentTab.hd.id_voucher = hoaDonInfo.id_voucher || null;
-            currentTab.hd.ten_voucher = hoaDonInfo.ten_voucher || '';
+            // Gán lại toàn bộ đối tượng hóa đơn cho tab hiện tại
+            currentTab.hd = {
+                ...currentTab.hd, // giữ lại tham chiếu nếu cần
+                ...hoaDonInfo     // ghi đè bằng dữ liệu mới từ server
+            };
         }
     } catch (error) {
         console.error('Lỗi khi cập nhật thông tin hóa đơn:', error);
         message.error('Không thể làm mới thông tin hóa đơn.');
     }
 };
+
 
 
 
@@ -663,14 +675,34 @@ const removeFromBill = async (productId) => {
 // Hàm tạo mới một tab hóa đơn (Đã sửa)
 const add = async () => {
     try {
-        const response = await store.createHoaDon(1); // ID nhân viên
+        // Kiểm tra xem người dùng đã đăng nhập và có thông tin chi tiết không
+        if (!store.isLoggedIn || !store.userDetails) {
+            throw new Error('Người dùng chưa đăng nhập hoặc không có thông tin chi tiết!');
+        }
+
+        // Kiểm tra vai trò (chỉ nhân viên mới được tạo hóa đơn)
+        if (![1, 2, 3].includes(store.id_roles)) {
+            throw new Error('Chỉ nhân viên mới có thể tạo hóa đơn!');
+        }
+
+        // Lấy id_nhan_vien từ userDetails
+        const idNhanVien = store.userDetails.idNhanVien;
+        if (!idNhanVien) {
+            throw new Error('Không tìm thấy ID nhân viên!');
+        }
+
+        console.log('ID Nhân viên được sử dụng để tạo hóa đơn:', idNhanVien);
+        // Gọi API tạo hóa đơn với id_nhan_vien
+        const response = await store.createHoaDon(idNhanVien);
         if (!response || response.error) {
             throw new Error(response?.message || 'Không thể tạo hóa đơn');
         }
 
+        // Tăng index cho tab mới
         newTabIndex.value++;
         const newKey = `invoiceTab_${Date.now()}_${newTabIndex.value}`;
 
+        // Thêm tab mới vào danh sách
         panes.value.push({
             title: `Đơn ${panes.value.length + 1}`,
             key: newKey,
@@ -698,6 +730,7 @@ const add = async () => {
         activeKey.value = newKey;
     } catch (error) {
         console.error("Lỗi khi tạo hóa đơn:", error);
+        toast.error(error.message || 'Lỗi khi tạo hóa đơn!');
     }
 };
 // Hàm đóng tab hóa đơn (Đã sửa)
@@ -775,6 +808,7 @@ const printInvoice = () => {
     const doc = new jsPDF();
     // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
     doc.setFont("Roboto");
+    
     // Thêm logo
     const logoWidth = 30; // Chiều rộng logo (mm)
     const logoHeight = 20; // Chiều cao logo (mm)
@@ -799,16 +833,16 @@ const printInvoice = () => {
     // Thông tin hóa đơn
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
-    doc.text(`Mã hóa đơn: ${store.hoaDonDetail.ma_hoa_don || 'N/A'}`, 20, 86);
-    doc.text(`Ngày: ${formatDate(store.hoaDonDetail.ngay_tao)}`, 20, 94);
-    doc.text(`Tên khách hàng: ${store.hoaDonDetail.ho_ten || 'Khách lẻ'}`, 20, 102);
+    doc.text(`Mã hóa đơn: ${activeTabData.value.hd.ma_hoa_don || 'N/A'}`, 20, 86);
+    doc.text(`Tên nhân viên: ${activeTabData.value.hd.ten_nhan_vien || 'N/A'}`, 20, 94);
+    doc.text(`Ngày: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
+    doc.text(`Tên khách hàng: ${activeTabData.value.hd.khach_hang || 'Khách lẻ'}`, 20, 110);
     // Danh sách sản phẩm
-    let y = 110;
+    let y = 120;
     doc.setFontSize(12);
     doc.setFont("Roboto", "bold");
     doc.text("Sản phẩm", 20, y);
     // Tiêu đề bảng
-    y += 10;
     doc.setFontSize(10);
     doc.setFont("Roboto", "bold");
     doc.text("Số lượng", 100, y, { align: "center" });
@@ -822,9 +856,9 @@ const printInvoice = () => {
     y += 6;
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
-    store.chiTietHoaDons.forEach((item, index) => {
+    currentInvoiceItems.value.forEach((item, index) => {
         // Tên sản phẩm
-        const productName = `${index + 1}. ${item.ten_san_pham} (${item.ten_mau_sac} - ${item.kich_thuoc})`;
+        const productName = `${index + 1}. ${item.ten_san_pham} (${item.mau_sac} - ${item.kich_thuoc})`;
         const productLines = doc.splitTextToSize(productName, 80); // Chia nhỏ nếu tên quá dài
         doc.text(productLines, 20, y);
 
@@ -832,11 +866,11 @@ const printInvoice = () => {
         doc.text(`${item.so_luong}`, 100, y, { align: "center" });
 
         // Đơn giá
-        doc.text(`${formatCurrency(item.gia_ban)} VNĐ`, 130, y, { align: "center" });
+        doc.text(`${formatCurrency(item.gia_ban)}`, 130, y, { align: "center" });
 
         // Thành tiền
-        const thanhTien = item.so_luong * item.gia_ban;
-        doc.text(`${formatCurrency(thanhTien)} VNĐ`, 170, y, { align: "center" });
+        const thanhTien = item.gia_ban * item.so_luong;
+        doc.text(`${formatCurrency(thanhTien)}`, 170, y, { align: "center" });
 
         // Tăng y dựa trên số dòng của tên sản phẩm
         y += productLines.length * 6 + 4;
@@ -848,24 +882,24 @@ const printInvoice = () => {
     y += 10;
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
-    doc.text(`Tổng tiền hàng: ${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 20, y);
+    doc.text(`Tổng tiền hàng: ${formatCurrency(activeTabData.value.hd.tong_tien_truoc_giam)}`, 20, y);
     y += 6;
-    const giamGia = (store.hoaDonDetail.tong_tien_truoc_giam || 0) +
-        (store.hoaDonDetail.phi_van_chuyen || 0) -
-        (store.hoaDonDetail.tong_tien_sau_giam || 0);
-    doc.text(`Giảm giá: ${formatCurrency(giamGia)} VNĐ`, 20, y);
+    const giamGia = (activeTabData.value.hd.tong_tien_truoc_giam || 0) +
+        (activeTabData.value.hd.phi_van_chuyen || 0) -
+        (activeTabData.value.hd.tong_tien_sau_giam || 0);
+    doc.text(`Giảm giá: ${formatCurrency(giamGia)}`, 20, y);
     y += 6;
-    doc.text(`Phí vận chuyển: ${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 20, y);
+    doc.text(`Phí vận chuyển: ${formatCurrency(activeTabData.value.hd.phi_van_chuyen || 0)}`, 20, y);
     y += 6;
     doc.setFont("Roboto", "bold");
-    doc.text(`Thành tiền: ${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 20, y);
+    doc.text(`Thành tiền: ${formatCurrency(activeTabData.value.hd.tong_tien_sau_giam)}`, 20, y);
     // Chân trang
     y += 10;
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
     doc.text("Cảm ơn Quý Khách, hẹn gặp lại!", 105, y, { align: "center" });
     // Lưu file PDF
-    doc.save(`HoaDon_${store.hoaDonDetail.ma_hoa_don}.pdf`);
+    doc.save(`HoaDon_${activeTabData.value.hd.ma_hoa_don}.pdf`);
 };
 
 // Xử lý sự kiện edit tab (add hoặc remove) (Đã sửa)
@@ -937,25 +971,47 @@ const handlePayment = async () => { // Thêm async nếu gọi API
 const confirmPrint = async (shouldPrint) => {
     showPrintConfirm.value = false; // Đóng modal
 
-    try {
+    const hinhThuc = activeTabData.value.hd.hinh_thuc_thanh_toan;
 
-        // Gọi API thanh toán (ví dụ)
-        await store.trangThaiDonHang(activeTabData.value.hd.id_hoa_don);
-
-        // Nếu chọn in hóa đơn
-        if (shouldPrint) {
-            printInvoice();
-        }
-
-        message.success('Thanh toán thành công!');
-        // Có thể chuyển hướng hoặc reset form sau khi thanh toán
-    } catch (error) {
-        console.error('Lỗi khi thanh toán:', error);
-        message.error('Đã xảy ra lỗi khi thanh toán!');
+    if (shouldPrint) {
+        printInvoice();
     }
 
-    window.location.href = 'http://localhost:5173/admin';
+    if (hinhThuc === "Tiền mặt") {
+        try {
+            await store.trangThaiDonHang(activeTabData.value.hd.id_hoa_don);
+            message.success('Thanh toán tiền mặt thành công!');
+            window.location.href = 'http://localhost:5173/admin';
+        } catch (error) {
+            console.error('Lỗi khi thanh toán:', error);
+            message.error('Đã xảy ra lỗi khi thanh toán!');
+        }
+    } else if (hinhThuc === "Chuyển khoản") {
+        try {
+            // const res = await store.thanhToanMomo(activeTabData.value.hd.id_hoa_don);
+            // Điều hướng đến trang thanh toán MoMo
+            // window.location.href = res.payUrl;
+        } catch (error) {
+            console.error('Lỗi khi tạo yêu cầu thanh toán Momo:', error);
+            message.error('Không thể tạo thanh toán Momo!');
+        }
+    }
 };
+
+
+const updateHinhThucThanhToan = async () => {
+  try {
+    const id = activeTabData.value.hd.id_hoa_don;
+    const hinhThuc = activeTabData.value.hd.hinh_thuc_thanh_toan;
+
+    await store.updateHinhThucTTHoaDon(id, hinhThuc);
+
+    console.log("Đã cập nhật hình thức thanh toán:", hinhThuc);
+  } catch (err) {
+    console.error("Lỗi cập nhật hình thức thanh toán", err);
+  }
+};
+
 
 const da = ref([]);
 
@@ -967,6 +1023,7 @@ onMounted(async () => {
         await store.getAllCTSPKM();
         await store.getAllNhanVien(0, pageSize.value);
         await store.getAllKhachHangNoPage();
+        // await store.getHoaDonDetail(activeTabData.value.hd.ma_hoa_don);
         // Gán dữ liệu hóa đơn
         da.value = store.getAllHoaDonCTTArr;
 
@@ -1029,22 +1086,17 @@ watch(() => searchQuery, (newVal) => {
 })
 
 const handlePhuongThucChange = async () => {
-  const idHD = activeTabData.value.hd.id_hoa_don;
+    const idHD = activeTabData.value.hd.id_hoa_don;
 
-  if (activeTabData.value.hd.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
-    activeTabData.value.hd.phi_van_chuyen = 0;
-    await store.setTrangThaiNhanHang(idHD, 'Nhận tại cửa hàng');
-  } else {
-    activeTabData.value.hd.phi_van_chuyen = 30000;
-    await store.setTrangThaiNhanHang(idHD, 'Giao hàng');
-  }
+    if (activeTabData.value.hd.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+        activeTabData.value.hd.phi_van_chuyen = 0;
+        await store.setTrangThaiNhanHang(idHD, 'Nhận tại cửa hàng');
+    } else {
+        activeTabData.value.hd.phi_van_chuyen = 30000;
+        await store.setTrangThaiNhanHang(idHD, 'Giao hàng');
+    }
 
-  // 🔄 Gọi API lấy lại hóa đơn để cập nhật tiền
-  const updatedHD = await store.getHoaDonByIdHoaDon(idHD); // phương thức này cần tồn tại trong store
-  activeTabData.value.hd = {
-    ...activeTabData.value.hd,
-    ...updatedHD, // Gộp thông tin cập nhật mới (tiền, phí, ...)
-  };
+    refreshHoaDon(idHD);
 };
 
 
