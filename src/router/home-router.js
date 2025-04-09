@@ -25,6 +25,11 @@ const home = [
                 path: "giohang-banhang",
                 name: "giohang-banhang",
                 component: () => import('@/views/web/gioHang-BanHang.vue')
+            },
+            {
+                path: "tracuudonhang-banhang",
+                name: "tracuudonhang-banhang",
+                component: () => import('@/views/web/traCuuDonHang-BanHang.vue')
             }
         ]
     }
