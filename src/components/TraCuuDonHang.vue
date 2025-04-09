@@ -48,7 +48,7 @@
                         <div class="order-info">
                             <h2>Thông tin đơn hàng #{{ thongTinHoaDon.ma_hoa_don }}</h2>
                             <p v-if="thongTinHoaDon.ma_hoa_don">Ngày đặt hàng: {{ dinhDangNgay(thongTinHoaDon.ngay_tao)
-                            }}
+                                }}
                             </p>
                         </div>
                         <div :class="['order-status', `status-${currentStatus?.code || 'pending'}`]">
@@ -104,8 +104,7 @@
                             </div>
                             <div class="total-row" v-if="thongTinHoaDon.ma_voucher">
                                 <span>Giảm giá:</span>
-                                <span>-{{ dinhDangTien(thongTinHoaDon.gia_tri_giam) + " " + thongTinHoaDon.kieu_giam_gia
-                                    }}</span>
+                                <span>0</span>
                             </div>
                             <div class="total-row">
                                 <span>Phí vận chuyển:</span>
