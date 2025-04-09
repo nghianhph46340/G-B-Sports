@@ -1460,194 +1460,50 @@ onMounted(async () => {
 
 .status-icons {
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin: 40px 0;
+    justify-content: flex-start;
+    gap: 40px;
+    margin-bottom: 20px;
     position: relative;
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: 20px 0;
-    /* Hide scrollbar but keep functionality */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.status-icons::-webkit-scrollbar {
-    display: none;
-}
-
-/* Column for each status */
-.status-icons .col {
-    position: relative;
-    z-index: 2;
-    min-width: 120px;
-    transition: all 0.4s ease;
-    transform-origin: center;
-}
-
-.status-icons .col:hover {
-    transform: translateY(-5px) scale(1.05);
+    padding: 10px 0;
 }
 
 .status-icon {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 15px 10px;
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
+    font-size: 14px;
     position: relative;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    min-height: 120px;
+    z-index: 1;
+    min-width: 100px;
 }
 
-.status-icon:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-}
-
-/* Connection line between status icons */
 .status-icon:not(:last-child)::after {
     content: '';
     position: absolute;
-    top: 50%;
+    top: 12px;
     left: 100%;
-    width: 30px;
-    height: 3px;
-    background: linear-gradient(90deg, #1890ff 0%, rgba(24, 144, 255, 0.4) 100%);
-    transform: translateY(-50%);
-    z-index: 1;
+    width: 40px;
+    height: 2px;
+    background-color: #1890ff;
+    z-index: 0;
 }
 
-/* Icon container */
 .status-icon i {
-    font-size: 28px;
-    margin-bottom: 12px;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: #f0f8ff;
-    color: #1890ff;
-    margin-top: -30px;
-    border: 4px solid #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.4s ease;
+    font-size: 24px;
+    margin-bottom: 5px;
 }
 
-.status-icon:hover i {
-    transform: rotate(360deg);
-    background: #1890ff;
-    color: #fff;
-}
-
-/* Status text */
-.status-icon p {
-    font-weight: 600;
-    margin: 0 0 5px;
-    font-size: 14px;
-    color: #333;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.status-icon:hover p {
-    color: #1890ff;
-}
-
-/* Date text */
 .status-icon small {
     display: block;
     font-size: 12px;
-    color: #888;
-    text-align: center;
-    transition: all 0.3s ease;
+    color: #666;
 }
 
-/* Active status styles */
-.status-icon.active {
-    border-color: #1890ff;
-    background: #f0f8ff;
-    transform: scale(1.05);
-}
-
-.status-icon.active i {
-    background: #1890ff;
-    color: #fff;
-    animation: pulse 2s infinite;
-}
-
-/* Completed status styles */
-.status-icon.completed i {
-    background: #52c41a;
-    color: #fff;
-}
-
-.status-icon.completed::after {
-    background: linear-gradient(90deg, #52c41a 0%, rgba(82, 196, 26, 0.4) 100%);
-}
-
-/* Text status colors */
-.text-danger i {
-    background: #ffccc7;
-    color: #f5222d;
-}
-
-.text-danger:hover i {
-    background: #f5222d;
-    color: #fff;
-}
-
-.text-success i {
-    background: #d9f7be;
-    color: #52c41a;
-}
-
-.text-success:hover i {
-    background: #52c41a;
-    color: #fff;
-}
-
-/* Animation keyframes */
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.7);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(24, 144, 255, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
-    }
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-    .status-icons {
-        padding: 30px 0 10px;
-        justify-content: flex-start;
-    }
-
-    .status-icon {
-        min-height: 100px;
-        padding: 10px 8px;
-    }
-
-    .status-icon i {
-        font-size: 20px;
-        width: 50px;
-        height: 50px;
-        margin-top: -25px;
-    }
-
-    .status-icon:not(:last-child)::after {
-        width: 20px;
-    }
+.order-status {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-bottom: 20px;
 }
 
 .info-box {
@@ -1792,152 +1648,5 @@ onMounted(async () => {
 :deep(.fa-spinner) {
     font-size: 16px;
     color: #1890ff;
-}
-
-.order-status {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    margin: 10px 0;
-}
-
-.order-status a-form {
-    margin-right: 10px;
-    display: inline-block;
-}
-
-.order-status .ant-btn {
-    margin-right: 0;
-}
-
-/* Để các button trong a-form inline với nhau */
-:deep(.ant-form-inline) {
-    display: inline-flex;
-    margin-right: 0;
-    margin-bottom: 0;
-}
-
-/* Ensure forms are displayed side by side */
-:deep(.order-status > *) {
-    margin-bottom: 0;
-    margin-right: 10px;
-}
-
-/* Status strip styling */
-.status-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 15px 0;
-    padding: 5px;
-    background: #f7f9fc;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.status-strip .btn {
-    position: relative;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 500;
-    min-width: 100px;
-    overflow: hidden;
-}
-
-.status-strip .btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
-    transform: translateX(-100%);
-    transition: transform 0.6s;
-}
-
-.status-strip .btn:hover::before {
-    transform: translateX(100%);
-}
-
-.status-strip .btn-primary {
-    background-color: #1890ff;
-    border-color: #1890ff;
-    color: white;
-    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.35);
-}
-
-.status-strip .btn-outline-primary {
-    color: #1890ff;
-    border-color: #1890ff;
-    background-color: white;
-}
-
-.status-strip .btn-outline-primary:hover {
-    background-color: rgba(24, 144, 255, 0.08);
-    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
-}
-
-/* Badge styling */
-:deep(.ant-badge) {
-    display: inline-block;
-}
-
-:deep(.ant-badge .ant-badge-count) {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    height: 22px;
-    padding: 0 7px;
-    color: #fff;
-    font-weight: bold;
-    font-size: 12px;
-    background: #ff4d4f;
-    border-radius: 11px;
-    box-shadow: 0 0 0 1px #fff;
-    z-index: 5;
-    min-width: 22px;
-    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-}
-
-:deep(.ant-badge-count-sm) {
-    height: 18px;
-    padding: 0 5px;
-    font-size: 11px;
-    border-radius: 9px;
-}
-
-:deep(.status-strip .ant-badge:hover .ant-badge-count) {
-    transform: scale(1.1);
-    box-shadow: 0 0 0 2px #fff;
-}
-
-/* Animation for switching between statuses */
-.status-strip .btn-primary,
-.status-strip .btn-outline-primary {
-    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-}
-
-/* Status colors for different types */
-.status-strip button[data-status="Chờ xác nhận"] .ant-badge-count {
-    background-color: #faad14;
-}
-
-.status-strip button[data-status="Đã xác nhận"] .ant-badge-count {
-    background-color: #1890ff;
-}
-
-.status-strip button[data-status="Đang giao"] .ant-badge-count {
-    background-color: #722ed1;
-}
-
-.status-strip button[data-status="Hoàn thành"] .ant-badge-count {
-    background-color: #52c41a;
-}
-
-.status-strip button[data-status="Đã hủy"] .ant-badge-count {
-    background-color: #ff4d4f;
 }
 </style>
