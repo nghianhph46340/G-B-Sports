@@ -657,23 +657,23 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     // Thêm action để thay đổi trạng thái hóa đơn
-    async changeTrangThaiHoaDon(maHoaDon, newTrangThai) {
+    async changeTrangThaiHoaDon(maHoaDon, newTrangThai, nhanVienDoi, noiDungDoi) {
       try {
-        const response = await hoaDonService.changeTrangThai(maHoaDon, newTrangThai)
+        const response = await hoaDonService.changeTrangThai(maHoaDon, newTrangThai, nhanVienDoi, noiDungDoi);
         if (response.error) {
-          toast.error('Cập nhật trạng thái thất bại')
-          return
+          toast.error('Cập nhật trạng thái thất bại');
+          return;
         }
-        toast.success('Cập nhật trạng thái thành công')
-        await this.getHoaDonDetail(maHoaDon) // Refresh dữ liệu sau khi cập nhật
+        toast.success('Cập nhật trạng thái thành công');
+        await this.getHoaDonDetail(maHoaDon);
       } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra')
+        console.error(error);
+        toast.error('Có lỗi xảy ra');
       }
     },
-    async revertToInitialStatus(maHoaDon) {// Quay lại trạng thái Chờ xác nhận
+    async revertToInitialStatus(maHoaDon, nhanVienDoi, noiDungDoi) {
       try {
-        const response = await hoaDonService.quayLaiTrangThai(maHoaDon);
+        const response = await hoaDonService.quayLaiTrangThai(maHoaDon, nhanVienDoi, noiDungDoi);
         if (response.error) {
           toast.error('Quay lại trạng thái ban đầu thất bại');
           return;
@@ -685,23 +685,24 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra khi quay lại trạng thái ban đầu');
       }
     },
-    async cancelHoaDon(maHoaDon) {// Thêm action để hủy hóa đơn
+    async cancelHoaDon(maHoaDon, nhanVienDoi, noiDungDoi) {
       try {
-        const response = await hoaDonService.cancelHoaDon(maHoaDon)
+        const response = await hoaDonService.cancelHoaDon(maHoaDon, nhanVienDoi, noiDungDoi);
         if (response.error) {
-          toast.error('Hủy hóa đơn thất bại')
-          return
+          toast.error('Hủy hóa đơn thất bại');
+          return;
         }
-        toast.success('Hủy hóa đơn thành công')
-        await this.getHoaDonDetail(maHoaDon) // Refresh dữ liệu sau khi hủy
+        toast.success('Hủy hóa đơn thành công');
+        await this.getHoaDonDetail(maHoaDon);
       } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra')
+        console.error(error);
+        toast.error('Có lỗi xảy ra');
       }
     },
     async updateCustomerInfo(maHoaDon, ttkh) {
       try {
-        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, ttkh);
+        const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || '';
+        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, { ...ttkh, nhanVienDoi });
         if (response.error) {
           toast.error('Cập nhật thông tin khách hàng thất bại');
           return;
@@ -715,7 +716,8 @@ export const useGbStore = defineStore('gbStore', {
     },
     async updateNote(maHoaDon, ghiChu) {
       try {
-        const response = await hoaDonService.updateNote(maHoaDon, ghiChu);
+        const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || '';
+        const response = await hoaDonService.updateNote(maHoaDon, ghiChu, nhanVienDoi);
         if (response.error) {
           toast.error('Cập nhật ghi chú thất bại');
           return;
@@ -745,7 +747,8 @@ export const useGbStore = defineStore('gbStore', {
     },
     async addProductsToInvoice(maHoaDon, products) {
       try {
-        const response = await hoaDonService.addProductsToInvoice(maHoaDon, products);
+        const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || '';
+        const response = await hoaDonService.addProductsToInvoice(maHoaDon, products, nhanVienDoi);
         if (response.error) {
           toast.error('Thêm sản phẩm vào hóa đơn thất bại');
           return;
@@ -759,7 +762,9 @@ export const useGbStore = defineStore('gbStore', {
     },
     async removeProductFromInvoice(maHoaDon, idCTSP, soLuong) {
       try {
-        const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong);
+        const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || '';
+        const noiDungDoi = "Xóa sản phẩm khỏi hóa đơn"; // Giá trị mặc định
+        const response = await hoaDonService.removeProductFromInvoice(maHoaDon, idCTSP, soLuong, nhanVienDoi, noiDungDoi);
         if (response.error) {
           return { error: true };
         }
@@ -771,7 +776,9 @@ export const useGbStore = defineStore('gbStore', {
     },
     async updateProductQuantity(maHoaDon, idCTSP, quantityChange) {
       try {
-        const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange);
+        const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || '';
+        const noiDungDoi = "Update số lượng sản phẩm"; // Giá trị mặc định
+        const response = await hoaDonService.updateProductQuantity(maHoaDon, idCTSP, quantityChange, nhanVienDoi, noiDungDoi);
         if (response.error) {
           return { error: true };
         }

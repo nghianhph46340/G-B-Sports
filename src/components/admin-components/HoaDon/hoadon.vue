@@ -26,31 +26,19 @@
             <!-- Dải trạng thái ngang -->
             <div class="d-flex flex-wrap gap-2 mt-2 status-strip">
                 <a-badge :count="totalHoaDonCount" :overflow-count="999">
-                    <button
-                        class="btn d-flex align-items-center flex-fill"
-                        :class="{
-                            'btn-primary': valueTrangThaiDonHang === 'Chọn trạng thái đơn hàng',
-                            'btn-outline-primary': valueTrangThaiDonHang !== 'Chọn trạng thái đơn hàng',
-                        }"
-                        @click="handleTrangThaiChange('Chọn trạng thái đơn hàng')"
-                    >
+                    <button class="btn d-flex align-items-center flex-fill" :class="{
+                        'btn-primary': valueTrangThaiDonHang === 'Chọn trạng thái đơn hàng',
+                        'btn-outline-primary': valueTrangThaiDonHang !== 'Chọn trạng thái đơn hàng',
+                    }" @click="handleTrangThaiChange('Chọn trạng thái đơn hàng')">
                         Tất cả
                     </button>
                 </a-badge>
-                <a-badge
-                    v-for="option in trangThaiDonHangOptions"
-                    :key="option.value"
-                    :count="countByTrangThai[option.value] || 0"
-                    :overflow-count="999"
-                >
-                    <button
-                        class="btn d-flex align-items-center flex-fill"
-                        :class="{
-                            'btn-primary': valueTrangThaiDonHang === option.value,
-                            'btn-outline-primary': valueTrangThaiDonHang !== option.value,
-                        }"
-                        @click="handleTrangThaiChange(option.value)"
-                    >
+                <a-badge v-for="option in trangThaiDonHangOptions" :key="option.value"
+                    :count="countByTrangThai[option.value] || 0" :overflow-count="999">
+                    <button class="btn d-flex align-items-center flex-fill" :class="{
+                        'btn-primary': valueTrangThaiDonHang === option.value,
+                        'btn-outline-primary': valueTrangThaiDonHang !== option.value,
+                    }" @click="handleTrangThaiChange(option.value)">
                         {{ option.label }}
                     </button>
                 </a-badge>
@@ -89,6 +77,14 @@
                                 <i class="bi bi-eye" style="color: #f33b47;"></i>
                             </button>
                         </td>
+                    </tr>
+                </tbody>
+                <tbody>
+                    <tr v-if="!store.getAllHoaDonArr || store.getAllHoaDonArr.length === 0">
+                        <td colspan="9" class="text-center">Không tìm thấy hóa đơn</td>
+                    </tr>
+                    <tr v-else v-for="(hoaDon, index) in store.getAllHoaDonArr" :key="hoaDon.id_hoa_don">
+                        <!-- Nội dung hiện tại -->
                     </tr>
                 </tbody>
             </table>
@@ -145,56 +141,56 @@ const formatCurrency = (value) => {
 const countByTrangThai = ref({});
 
 const totalHoaDonCount = computed(() => {
-  return Object.values(countByTrangThai.value).reduce((sum, count) => sum + count, 0);
+    return Object.values(countByTrangThai.value).reduce((sum, count) => sum + count, 0);
 });
 
 const calculateCounts = async () => {
-  try {
-    const countsFromServer = await store.getHoaDonCountsByStatus();
-    countByTrangThai.value = countsFromServer;
-    console.log('Số lượng theo trạng thái:', countByTrangThai.value);
-  } catch (error) {
-    console.error('Lỗi khi tính số lượng:', error);
-    trangThaiDonHangOptions.value.forEach(option => {
-      countByTrangThai.value[option.value] = 0;
-    });
-  }
+    try {
+        const countsFromServer = await store.getHoaDonCountsByStatus();
+        countByTrangThai.value = countsFromServer;
+        console.log('Số lượng theo trạng thái:', countByTrangThai.value);
+    } catch (error) {
+        console.error('Lỗi khi tính số lượng:', error);
+        trangThaiDonHangOptions.value.forEach(option => {
+            countByTrangThai.value[option.value] = 0;
+        });
+    }
 };
 
 const fetchData = async (page) => {
-  await store.getAllHoaDon(page, pageSize.value);
-  await calculateCounts();
+    await store.getAllHoaDon(page, pageSize.value);
+    await calculateCounts();
 };
 
 const handleTrangThaiChange = async (value) => {
-  console.log(`Trạng thái đã chọn: ${value}, Số lượng: ${countByTrangThai.value[value] || 0}`);
-  valueTrangThaiDonHang.value = value;
-  if (value === 'Chọn trạng thái đơn hàng') {
-    await fetchData(0);
-  } else {
-    await store.filterByTrangThai(value, 0, pageSize.value);
-    await calculateCounts();
-  }
+    console.log(`Trạng thái đã chọn: ${value}, Số lượng: ${countByTrangThai.value[value] || 0}`);
+    valueTrangThaiDonHang.value = value;
+    if (value === 'Chọn trạng thái đơn hàng') {
+        await fetchData(0);
+    } else {
+        await store.filterByTrangThai(value, 0, pageSize.value);
+        await calculateCounts();
+    }
 };
 
 const filterData = async () => {
-  const [tuNgay, denNgay] = formState['range-time-picker'] || [];
-  if (!tuNgay || !denNgay) {
-    toast.warning('Vui lòng chọn đầy đủ khoảng thời gian!');
-    return;
-  }
-  await store.filterByDate(tuNgay, denNgay, 0, pageSize.value);
-  await calculateCounts();
+    const [tuNgay, denNgay] = formState['range-time-picker'] || [];
+    if (!tuNgay || !denNgay) {
+        toast.warning('Vui lòng chọn đầy đủ khoảng thời gian!');
+        return;
+    }
+    await store.filterByDate(tuNgay, denNgay, 0, pageSize.value);
+    await calculateCounts();
 };
 
 const resetFilters = async () => {
-  valueTrangThaiDonHang.value = 'Chọn trạng thái đơn hàng';
-  formState['range-time-picker'] = [];
-  await fetchData(0);
+    valueTrangThaiDonHang.value = 'Chọn trạng thái đơn hàng';
+    formState['range-time-picker'] = [];
+    await fetchData(0);
 };
 
 onMounted(async () => {
-  await fetchData(0);
+    await fetchData(0);
 });
 </script>
 
@@ -223,21 +219,29 @@ onMounted(async () => {
 
 /* Style cho dải trạng thái */
 .status-strip {
-    width: 100%; /* Chiều rộng bằng với bảng */
+    width: 100%;
+    /* Chiều rộng bằng với bảng */
     display: flex;
-    flex-wrap: nowrap; /* Không xuống dòng, tất cả trạng thái nằm trên 1 hàng */
-    gap: 8px; /* Khoảng cách giữa các nút */
-    overflow-x: auto; /* Nếu có quá nhiều trạng thái, cho phép cuộn ngang */
+    flex-wrap: nowrap;
+    /* Không xuống dòng, tất cả trạng thái nằm trên 1 hàng */
+    gap: 8px;
+    /* Khoảng cách giữa các nút */
+    overflow-x: auto;
+    /* Nếu có quá nhiều trạng thái, cho phép cuộn ngang */
 }
 
 /* Style cho các nút trạng thái */
 .status-strip .btn {
-    flex: 1; /* Chia đều chiều rộng */
-    min-width: 120px; /* Đảm bảo nút không quá nhỏ */
+    flex: 1;
+    /* Chia đều chiều rộng */
+    min-width: 145px;
+    /* Đảm bảo nút không quá nhỏ */
     height: 32px;
     font-size: 14px;
-    white-space: nowrap; /* Không xuống dòng trong nút */
-    justify-content: center; /* Căn giữa nội dung trong nút */
+    white-space: nowrap;
+    /* Không xuống dòng trong nút */
+    justify-content: center;
+    /* Căn giữa nội dung trong nút */
 }
 
 /* Tùy chỉnh a-badge */
@@ -245,13 +249,15 @@ onMounted(async () => {
     display: flex;
     align-items: center;
 }
+
 .ant-badge-count {
     font-size: 12px;
     min-width: 20px;
     height: 20px;
     line-height: 20px;
     border-radius: 50%;
-    background-color: #f33b47; /* Đảm bảo màu đỏ */
+    background-color: #f33b47;
+    /* Đảm bảo màu đỏ */
     color: white;
 }
 </style>
