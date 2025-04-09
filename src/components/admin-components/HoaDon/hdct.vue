@@ -129,13 +129,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -1648,5 +1648,152 @@ onMounted(async () => {
 :deep(.fa-spinner) {
     font-size: 16px;
     color: #1890ff;
+}
+
+.order-status {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.order-status a-form {
+    margin-right: 10px;
+    display: inline-block;
+}
+
+.order-status .ant-btn {
+    margin-right: 0;
+}
+
+/* Để các button trong a-form inline với nhau */
+:deep(.ant-form-inline) {
+    display: inline-flex;
+    margin-right: 0;
+    margin-bottom: 0;
+}
+
+/* Ensure forms are displayed side by side */
+:deep(.order-status > *) {
+    margin-bottom: 0;
+    margin-right: 10px;
+}
+
+/* Status strip styling */
+.status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 5px;
+    background: #f7f9fc;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.status-strip .btn {
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    min-width: 100px;
+    overflow: hidden;
+}
+
+.status-strip .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.status-strip .btn:hover::before {
+    transform: translateX(100%);
+}
+
+.status-strip .btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.35);
+}
+
+.status-strip .btn-outline-primary {
+    color: #1890ff;
+    border-color: #1890ff;
+    background-color: white;
+}
+
+.status-strip .btn-outline-primary:hover {
+    background-color: rgba(24, 144, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+/* Badge styling */
+:deep(.ant-badge) {
+    display: inline-block;
+}
+
+:deep(.ant-badge .ant-badge-count) {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    height: 22px;
+    padding: 0 7px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    background: #ff4d4f;
+    border-radius: 11px;
+    box-shadow: 0 0 0 1px #fff;
+    z-index: 5;
+    min-width: 22px;
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+:deep(.ant-badge-count-sm) {
+    height: 18px;
+    padding: 0 5px;
+    font-size: 11px;
+    border-radius: 9px;
+}
+
+:deep(.status-strip .ant-badge:hover .ant-badge-count) {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 2px #fff;
+}
+
+/* Animation for switching between statuses */
+.status-strip .btn-primary,
+.status-strip .btn-outline-primary {
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* Status colors for different types */
+.status-strip button[data-status="Chờ xác nhận"] .ant-badge-count {
+    background-color: #faad14;
+}
+
+.status-strip button[data-status="Đã xác nhận"] .ant-badge-count {
+    background-color: #1890ff;
+}
+
+.status-strip button[data-status="Đang giao"] .ant-badge-count {
+    background-color: #722ed1;
+}
+
+.status-strip button[data-status="Hoàn thành"] .ant-badge-count {
+    background-color: #52c41a;
+}
+
+.status-strip button[data-status="Đã hủy"] .ant-badge-count {
+    background-color: #ff4d4f;
 }
 </style>
