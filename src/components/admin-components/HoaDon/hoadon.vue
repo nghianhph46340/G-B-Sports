@@ -29,7 +29,7 @@
                     <button class="btn d-flex align-items-center flex-fill" :class="{
                         'btn-primary': valueTrangThaiDonHang === 'Chọn trạng thái đơn hàng',
                         'btn-outline-primary': valueTrangThaiDonHang !== 'Chọn trạng thái đơn hàng',
-                    }" @click="handleTrangThaiChange('Chọn trạng thái đơn hàng')">
+                    }" @click="handleTrangThaiChange('Chọn trạng thái đơn hàng')" data-status="all">
                         Tất cả
                     </button>
                 </a-badge>
@@ -38,7 +38,7 @@
                     <button class="btn d-flex align-items-center flex-fill" :class="{
                         'btn-primary': valueTrangThaiDonHang === option.value,
                         'btn-outline-primary': valueTrangThaiDonHang !== option.value,
-                    }" @click="handleTrangThaiChange(option.value)">
+                    }" @click="handleTrangThaiChange(option.value)" :data-status="option.value">
                         {{ option.label }}
                     </button>
                 </a-badge>
