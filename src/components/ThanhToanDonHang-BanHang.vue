@@ -226,7 +226,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -354,7 +354,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { message, Form } from 'ant-design-vue';
+import { message, Form, Modal } from 'ant-design-vue';
 import axios from 'axios';
 import { thanhToanService } from '@/services/thanhToan';
 import {
@@ -849,7 +849,7 @@ const calculateOrderTotals = () => {
                 id_chi_tiet_san_pham: item.id,
             },
             so_luong: item.so_luong,
-            don_gia: item.gia
+            don_gia: item.gia * item.so_luong
         })),
 
 
@@ -898,16 +898,38 @@ const placeOrder = async () => {
         // Handle different payment methods
         if (selectedPaymentMethod.value === 'online') {
             if (selectedOnlineMethod.value === 'payos') {
-                // Xử lý thanh toán PayOS
+                try {
+                    // Tạo hóa đơn trong hệ thống trước khi chuyển hướng thanh toán
+                    const response = await banHangOnlineService.createOrder(hoaDon);
+                    const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                    console.log('Response từ server:', response);
+                    console.log('Response chi tiết từ server:', responseChiTiet);
+
+                    // Lưu mã hóa đơn vào localStorage để kiểm tra sau khi thanh toán
+                    if (response && response.ma_hoa_don) {
+                        localStorage.setItem('pendingOrderCode', response.ma_hoa_don);
+                    }
+
+                    // Đặt URL callback để xử lý sau khi thanh toán
+                    const returnUrl = window.location.origin + '/payment-callback';
+                    orderData.payment_info.returnUrl = returnUrl;
+
+                    // Chuyển đến trang thanh toán PayOS
+                    await thanhToanService.handlePayOSPayment(orderData.payment_info);
+
+                    // Lưu ý: Code sau đây sẽ không chạy ngay lập tức vì người dùng sẽ bị chuyển hướng
+                    // Xử lý callback sẽ được thực hiện ở trang payment-callback
+                } catch (error) {
+                    console.error('Lỗi khi xử lý thanh toán PayOS:', error);
+                    message.error('Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau.');
+                }
+            } else if (selectedOnlineMethod.value === 'vnpay') {
+                // Redirect to VNPAY payment gateway
+                message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
                 const response = await banHangOnlineService.createOrder(hoaDon);
                 const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);
-                await thanhToanService.handlePayOSPayment(orderData.payment_info);
-            } else if (selectedOnlineMethod.value === 'vnpay') {
-                // Redirect to VNPAY payment gateway
-                message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
-
                 // Implement VNPAY payment logic here
             } else if (selectedOnlineMethod.value === 'momo') {
                 // Redirect to Momo payment gateway
@@ -920,13 +942,45 @@ const placeOrder = async () => {
             }
         } else {
             // COD payment - immediately mark as ordered
-            currentStatus.value = 3;
+            try {
+                // Tạo hóa đơn trong hệ thống
+                const response = await banHangOnlineService.createOrder(hoaDon);
+                const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                console.log('Response từ server:', response);
+                console.log('Response chi tiết từ server:', responseChiTiet);
 
-            setTimeout(() => {
-                currentStatus.value = 4;
-                message.success('Đặt hàng thành công!');
-                // router.push('/order-complete');
-            }, 1000);
+                // Lưu mã hóa đơn vào localStorage
+                if (response && response.ma_hoa_don) {
+                    localStorage.setItem('lastOrderCode', response.ma_hoa_don);
+                }
+
+                // Cập nhật trạng thái đơn hàng
+                currentStatus.value = 3;
+
+                // Hiển thị thông báo thành công và chuyển đến trang hoàn tất
+                setTimeout(() => {
+                    currentStatus.value = 4;
+                    message.success('Đặt hàng thành công! Cảm ơn bạn đã mua hàng.');
+
+                    // Hiển thị modal xác nhận đặt hàng thành công
+                    Modal.success({
+                        title: 'Đặt hàng thành công',
+                        content: `Đơn hàng của bạn đã được tạo thành công với mã đơn hàng ${response.ma_hoa_don}. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất để xác nhận đơn hàng.`,
+                        okText: 'Theo dõi đơn hàng',
+                        onOk: () => {
+                            router.push(`/tracuudonhang-banhang?code=${response.ma_hoa_don}`);
+                        }
+                    });
+
+                    // Xóa giỏ hàng sau khi đặt hàng thành công
+                    if (store.clearCart) {
+                        store.clearCart();
+                    }
+                }, 1000);
+            } catch (error) {
+                console.error('Lỗi khi tạo đơn hàng COD:', error);
+                message.error('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại sau.');
+            }
         }
 
         placing.value = false;

@@ -19,23 +19,23 @@
             </div>
 
             <div class="tracking-search">
-                <a-form layout="vertical" @finish="searchOrder">
+                <a-form layout="vertical" @finish="timKiemDonHang">
                     <a-form-item label="Mã đơn hàng / Mã vận đơn" name="trackingCode">
                         <a-input v-model:value="trackingCode" placeholder="Nhập mã đơn hàng hoặc mã vận đơn"
                             :maxLength="50" :allowClear="true" size="large" />
                     </a-form-item>
                     <a-form-item>
-                        <a-button type="primary" html-type="submit" @click="searchOrder" :loading="loading" size="large"
-                            block>
+                        <a-button type="primary" html-type="submit" @click="timKiemDonHang" :loading="dangTai"
+                            size="large" block>
                             <search-outlined /> Tra cứu
                         </a-button>
                     </a-form-item>
                 </a-form>
             </div>
 
-            <div class="search-results" v-if="isSearched">
+            <div class="search-results" v-if="daTimKiem">
                 <!-- Not Found State -->
-                <div v-if="!orderFound" class="not-found">
+                <div v-if="!timThayDonHang" class="not-found">
                     <file-search-outlined class="not-found-icon" />
                     <h2>Không tìm thấy đơn hàng</h2>
                     <p>Không tìm thấy đơn hàng với mã đơn hàng / mã vận đơn bạn vừa nhập.</p>
@@ -46,28 +46,31 @@
                 <div v-else class="order-details">
                     <div class="order-header">
                         <div class="order-info">
-                            <h2>Thông tin đơn hàng #{{ order.orderCode }}</h2>
-                            <p v-if="order.dateCreated">Ngày đặt hàng: {{ formatDate(order.dateCreated) }}</p>
+                            <h2>Thông tin đơn hàng #{{ thongTinHoaDon.ma_hoa_don }}</h2>
+                            <p v-if="thongTinHoaDon.ma_hoa_don">Ngày đặt hàng: {{ dinhDangNgay(thongTinHoaDon.ngay_tao)
+                                }}
+                            </p>
                         </div>
-                        <div :class="['order-status', `status-${order.status.code}`]">
-                            <component :is="getStatusIcon(order.status.code)" class="status-icon" />
-                            <span>{{ order.status.name }}</span>
+                        <div :class="['order-status', `status-${currentStatus?.code || 'pending'}`]">
+                            <component :is="layBieuTuongTrangThai(currentStatus?.code || 'pending')"
+                                class="status-icon" />
+                            <span>{{ currentStatus?.name || 'Chờ xác nhận' }}</span>
                         </div>
                     </div>
 
                     <div class="tracking-timeline">
                         <div class="timeline-container">
-                            <div v-for="(status, index) in statusTimeline" :key="index" :class="['timeline-step', {
-                                active: isStatusActive(status.code),
-                                completed: isStatusCompleted(status.code),
-                                cancelled: order.status.code === 'cancelled' && index > getStatusIndex(order.status.code)
+                            <div v-for="(status, index) in getTimelineData" :key="index" :class="['timeline-step', {
+                                active: kiemTraTrangThaiDangHoatDong(status.code),
+                                completed: kiemTraTrangThaiDaHoanThanh(status.code),
+                                cancelled: status.code === 'cancelled'
                             }]">
                                 <div class="step-icon">
                                     <component :is="status.icon" />
                                 </div>
                                 <div class="step-content">
                                     <p class="step-name">{{ status.name }}</p>
-                                    <p v-if="status.date" class="step-date">{{ formatDate(status.date) }}</p>
+                                    <p v-if="status.date" class="step-date">{{ dinhDangNgay(status.date) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -76,20 +79,20 @@
                     <div class="order-summary">
                         <h3>Chi tiết đơn hàng</h3>
                         <div class="order-products">
-                            <div class="product-item" v-for="(item, index) in order.items" :key="index">
+                            <div class="product-item" v-for="(item, index) in thongTinHoaDonChiTiet" :key="index">
                                 <div class="product-image">
-                                    <img :src="item.image" :alt="item.name" />
+                                    <img :src="item.hinh_anh" :alt="item.ten_san_pham" />
                                     <span class="product-quantity">{{ item.quantity }}</span>
                                 </div>
                                 <div class="product-details">
-                                    <p class="product-name">{{ item.name }}</p>
-                                    <p class="product-variant" v-if="item.color || item.size">
-                                        <span v-if="item.color">Màu: {{ item.color }}</span>
-                                        <span v-if="item.size">Size: {{ item.size }}</span>
+                                    <p class="product-name">{{ item.ten_san_pham }}</p>
+                                    <p class="product-variant" v-if="item.ten_mau_sac || item.gia_tri">
+                                        <span v-if="item.ten_mau_sac">Màu: {{ item.ten_mau_sac }}</span>
+                                        <span v-if="item.gia_tri">Size: {{ item.gia_tri + " " + item.don_vi }}</span>
                                     </p>
                                 </div>
                                 <div class="product-price">
-                                    {{ formatCurrency(item.price * item.quantity) }}
+                                    {{ dinhDangTien(item.don_gia) }}
                                 </div>
                             </div>
                         </div>
@@ -97,19 +100,19 @@
                         <div class="order-totals">
                             <div class="total-row">
                                 <span>Tạm tính:</span>
-                                <span>{{ formatCurrency(orderSubtotal) }}</span>
+                                <span>{{ dinhDangTien(thongTinHoaDon.tong_tien_truoc_giam) }}</span>
                             </div>
-                            <div class="total-row" v-if="order.discount">
+                            <div class="total-row" v-if="thongTinHoaDon.ma_voucher">
                                 <span>Giảm giá:</span>
-                                <span>-{{ formatCurrency(order.discount) }}</span>
+                                <span>0</span>
                             </div>
                             <div class="total-row">
                                 <span>Phí vận chuyển:</span>
-                                <span>{{ formatCurrency(order.shippingFee) }}</span>
+                                <span>{{ dinhDangTien(thongTinHoaDon.phi_van_chuyen) }}</span>
                             </div>
                             <div class="total-row grand-total">
                                 <span>Tổng cộng:</span>
-                                <span>{{ formatCurrency(order.total) }}</span>
+                                <span>{{ dinhDangTien(thongTinHoaDon.tong_tien_sau_giam) }}</span>
                             </div>
                         </div>
 
@@ -117,28 +120,28 @@
                             <h3>Thông tin giao hàng</h3>
                             <div class="info-row">
                                 <span class="info-label">Người nhận:</span>
-                                <span class="info-value">{{ order.recipient.name }}</span>
+                                <span class="info-value">{{ thongTinHoaDon.ho_ten }}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Số điện thoại:</span>
-                                <span class="info-value">{{ order.recipient.phone }}</span>
+                                <span class="info-value">{{ thongTinHoaDon.sdt_nguoi_nhan }}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Địa chỉ:</span>
-                                <span class="info-value">{{ order.recipient.address }}</span>
+                                <span class="info-value">{{ thongTinHoaDon.dia_chi }}</span>
                             </div>
-                            <div class="info-row" v-if="order.deliveryService">
+                            <div class="info-row" v-if="donHang.deliveryService">
                                 <span class="info-label">Đơn vị vận chuyển:</span>
-                                <span class="info-value">{{ order.deliveryService }}</span>
+                                <span class="info-value">G-B Sports</span>
                             </div>
-                            <div class="info-row" v-if="order.trackingNumber">
+                            <div class="info-row" v-if="donHang.trackingNumber">
                                 <span class="info-label">Mã vận đơn:</span>
-                                <span class="info-value">{{ order.trackingNumber }}</span>
+                                <span class="info-value">{{ thongTinHoaDon.ma_hoa_don }}</span>
                             </div>
                         </div>
 
                         <div class="order-actions">
-                            <a-button v-if="canCancelOrder" type="danger" @click="showCancelConfirm">
+                            <a-button v-if="coTheHuyDonHang" type="danger" @click="hienThiXacNhanHuy">
                                 Hủy đơn hàng
                             </a-button>
                             <a-button type="primary">
@@ -203,14 +206,15 @@ import {
 } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { banHangOnlineService } from '@/services/banHangOnlineService';
-// Tracking code input
-const trackingCode = ref('');
-const loading = ref(false);
-const isSearched = ref(false);
-const orderFound = ref(false);
 
-// Mock order data - In a real app, this would come from an API
-const order = reactive({
+// Biến lưu mã tra cứu
+const trackingCode = ref('');
+const dangTai = ref(false);
+const daTimKiem = ref(false);
+const timThayDonHang = ref(false);
+
+// Dữ liệu mẫu cho đơn hàng - Trong ứng dụng thực tế, dữ liệu này sẽ được lấy từ API
+const donHang = reactive({
     orderCode: 'GB123456789',
     dateCreated: new Date(2023, 6, 15),
     status: {
@@ -253,9 +257,11 @@ const order = reactive({
         { code: 'processing', date: new Date(2023, 6, 17), name: 'Đang xử lý' }
     ]
 });
-
-// Status timeline definitions
-const statusTimeline = [
+const thongTinHoaDon = ref({});
+const thongTinTimeLine = ref([]);
+const thongTinHoaDonChiTiet = ref([]);
+// Định nghĩa các trạng thái trong timeline
+const danhSachTrangThai = [
     { code: 'pending', name: 'Chờ xác nhận', icon: ClockCircleOutlined },
     { code: 'updated', name: 'Đã cập nhật', icon: SyncOutlined },
     { code: 'confirmed', name: 'Đã xác nhận', icon: CheckCircleOutlined },
@@ -264,8 +270,8 @@ const statusTimeline = [
     { code: 'completed', name: 'Hoàn thành', icon: TrophyOutlined }
 ];
 
-// Map status codes to their index in the timeline
-const statusIndex = {
+// Ánh xạ mã trạng thái và thứ tự trong timeline
+const viTriTrangThai = {
     'pending': 0,
     'updated': 1,
     'confirmed': 2,
@@ -275,137 +281,134 @@ const statusIndex = {
     'cancelled': -1
 };
 
-// Compute order subtotal
-const orderSubtotal = computed(() => {
-    return order.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+// Tính tổng giá trị tạm tính
+const tongTamTinh = computed(() => {
+    return donHang.items.reduce((total, item) => total + (item.price * item.quantity), 0);
 });
 
-// Determine if user can cancel the order
-const canCancelOrder = computed(() => {
-    const cancelableStatuses = ['pending', 'confirmed', 'updated'];
-    return cancelableStatuses.includes(order.status.code);
+// Kiểm tra xem có thể hủy đơn hàng hay không
+const coTheHuyDonHang = computed(() => {
+    if (!currentStatus.value) return false;
+    const trangThaiCoTheHuy = ['pending', 'confirmed', 'updated'];
+    return trangThaiCoTheHuy.includes(currentStatus.value.code);
 });
 
-// Thêm animation khi hiển thị kết quả tìm kiếm
-const animateSearch = () => {
-    // Thêm hiệu ứng cho việc tìm kiếm
-    loading.value = true;
+// Thêm hiệu ứng khi hiển thị kết quả tìm kiếm
+const hienThiKetQuaTimKiem = async () => {
+    try {
+        dangTai.value = true;
 
-    // Simulate API call
-    setTimeout(() => {
-        isSearched.value = true;
-
-        // For demo purposes, always show the order if the code matches
-        if (trackingCode.value === order.orderCode || trackingCode.value === order.trackingNumber) {
-            orderFound.value = true;
-
-            // Update order status based on tracking code for demo
-            if (trackingCode.value === 'GB123456789') {
-                order.status = { code: 'pending', name: 'Chờ xác nhận' };
-                updateOrderStatusHistory('pending');
-            } else if (trackingCode.value === 'GB123456790') {
-                order.status = { code: 'updated', name: 'Đã cập nhật' };
-                updateOrderStatusHistory('updated');
-            } else if (trackingCode.value === 'GB123456791') {
-                order.status = { code: 'confirmed', name: 'Đã xác nhận' };
-                updateOrderStatusHistory('confirmed');
-            } else if (trackingCode.value === 'GB123456792') {
-                order.status = { code: 'packaging', name: 'Chờ đóng gói' };
-                updateOrderStatusHistory('packaging');
-            } else if (trackingCode.value === 'GB123456793') {
-                order.status = { code: 'shipping', name: 'Đang giao' };
-                updateOrderStatusHistory('shipping');
-            } else if (trackingCode.value === 'GB123456794') {
-                order.status = { code: 'completed', name: 'Hoàn thành' };
-                updateOrderStatusHistory('completed');
-            } else if (trackingCode.value === 'GB123456795') {
-                order.status = { code: 'cancelled', name: 'Đã hủy' };
-                updateOrderStatusHistory('cancelled');
-            }
-
-            message.success('Tìm thấy thông tin đơn hàng!');
-        } else {
-            orderFound.value = false;
-            message.error('Không tìm thấy đơn hàng với mã bạn đã nhập!');
+        // Gọi API và kiểm tra response
+        const thongTinHoaDonResponse = await banHangOnlineService.getThongTinHoaDon(trackingCode.value);
+        if (thongTinHoaDonResponse) {
+            thongTinHoaDon.value = thongTinHoaDonResponse;
         }
 
-        loading.value = false;
-    }, 1500);
+        const thongTinTimeLineResponse = await banHangOnlineService.getThongTinTimeLine(trackingCode.value);
+        if (thongTinTimeLineResponse) {
+            thongTinTimeLine.value = thongTinTimeLineResponse;
+        }
+
+        const thongTinHoaDonChiTietResponse = await banHangOnlineService.getThongTinHoaDonChiTiet(trackingCode.value);
+        if (thongTinHoaDonChiTietResponse) {
+            thongTinHoaDonChiTiet.value = thongTinHoaDonChiTietResponse;
+        }
+
+        daTimKiem.value = true;
+
+        // Kiểm tra mã hóa đơn
+        if (trackingCode.value === thongTinHoaDon.value.ma_hoa_don) {
+            timThayDonHang.value = true;
+            message.success('Tìm thấy thông tin đơn hàng!');
+        } else {
+            timThayDonHang.value = false;
+            message.error('Không tìm thấy đơn hàng với mã bạn đã nhập!');
+        }
+    } catch (error) {
+        console.error('Lỗi khi tìm kiếm đơn hàng:', error);
+        message.error('Có lỗi xảy ra khi tìm kiếm đơn hàng');
+    } finally {
+        dangTai.value = false;
+    }
 };
 
-// Thay đổi hàm searchOrder gọi đến hàm animateSearch
-const searchOrder = () => {
+// Thay đổi hàm tìm kiếm để gọi hàm hiển thị kết quả
+const timKiemDonHang = () => {
     if (!trackingCode.value) {
         message.warning('Vui lòng nhập mã đơn hàng hoặc mã vận đơn');
         return;
     }
 
-    animateSearch();
+    hienThiKetQuaTimKiem();
 };
 
-// Update order status history for demo
-const updateOrderStatusHistory = (statusCode) => {
-    // Clear existing history
-    order.statusHistory = [];
+// Cập nhật lịch sử trạng thái đơn hàng cho demo
+const capNhatLichSuTrangThai = (maTrangThai) => {
+    // Xóa lịch sử hiện tại
+    donHang.statusHistory = [];
 
-    // Add history based on current status
-    const statuses = ['pending', 'updated', 'confirmed', 'packaging', 'shipping', 'completed'];
-    const currentIndex = statuses.indexOf(statusCode);
+    // Thêm lịch sử dựa vào trạng thái hiện tại
+    const danhSachMaTrangThai = ['pending', 'updated', 'confirmed', 'packaging', 'shipping', 'completed'];
+    const viTriHienTai = danhSachMaTrangThai.indexOf(maTrangThai);
 
-    if (statusCode === 'cancelled') {
-        // If cancelled, just add pending and cancelled
-        order.statusHistory.push(
+    if (maTrangThai === 'cancelled') {
+        // Nếu hủy, chỉ thêm trạng thái chờ xác nhận và đã hủy
+        donHang.statusHistory.push(
             { code: 'pending', date: new Date(2023, 6, 15), name: 'Chờ xác nhận' },
             { code: 'cancelled', date: new Date(), name: 'Đã hủy' }
         );
     } else {
-        // Add history up to current status
-        for (let i = 0; i <= currentIndex; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() - (currentIndex - i));
-            order.statusHistory.push({
-                code: statuses[i],
-                date: date,
-                name: getStatusName(statuses[i])
+        // Thêm lịch sử đến trạng thái hiện tại
+        for (let i = 0; i <= viTriHienTai; i++) {
+            const ngay = new Date();
+            ngay.setDate(ngay.getDate() - (viTriHienTai - i));
+            donHang.statusHistory.push({
+                code: danhSachMaTrangThai[i],
+                date: ngay,
+                name: layTenTrangThai(danhSachMaTrangThai[i])
             });
         }
     }
 };
 
-// Get status name by code
-const getStatusName = (code) => {
-    const status = statusTimeline.find(s => s.code === code);
-    return status ? status.name : '';
+// Lấy tên trạng thái từ mã
+const layTenTrangThai = (maTrangThai) => {
+    const trangThai = danhSachTrangThai.find(s => s.code === maTrangThai);
+    return trangThai ? trangThai.name : '';
 };
 
-// Get status index
-const getStatusIndex = (statusCode) => {
-    return statusIndex[statusCode] !== undefined ? statusIndex[statusCode] : -1;
+// Lấy vị trí trạng thái
+const layViTriTrangThai = (maTrangThai) => {
+    return viTriTrangThai[maTrangThai] !== undefined ? viTriTrangThai[maTrangThai] : -1;
 };
 
-// Check if status is active (current status)
-const isStatusActive = (statusCode) => {
-    if (order.status.code === 'cancelled' && statusCode === 'cancelled') {
+// Kiểm tra xem trạng thái có đang active (trạng thái hiện tại)
+const kiemTraTrangThaiDangHoatDong = (maTrangThai) => {
+    if (!currentStatus.value) return false;
+
+    if (currentStatus.value.code === 'cancelled' && maTrangThai === 'cancelled') {
         return true;
     }
-    return statusCode === order.status.code;
+    return maTrangThai === currentStatus.value.code;
 };
 
-// Check if status is completed (status that has been passed)
-const isStatusCompleted = (statusCode) => {
-    if (order.status.code === 'cancelled') {
-        return statusCode === 'pending'; // Only pending is completed in cancelled state
+// Kiểm tra xem trạng thái đã hoàn thành chưa (trạng thái đã qua)
+const kiemTraTrangThaiDaHoanThanh = (maTrangThai) => {
+    if (!currentStatus.value) return false;
+
+    if (currentStatus.value.code === 'cancelled') {
+        return maTrangThai === 'pending'; // Chỉ trạng thái chờ xác nhận được đánh dấu hoàn thành khi đã hủy
     }
 
-    const currentStatusIndex = getStatusIndex(order.status.code);
-    const checkStatusIndex = getStatusIndex(statusCode);
+    const viTriTrangThaiHienTai = layViTriTrangThai(currentStatus.value.code);
+    const viTriTrangThaiKiemTra = layViTriTrangThai(maTrangThai);
 
-    return checkStatusIndex < currentStatusIndex;
+    return viTriTrangThaiKiemTra < viTriTrangThaiHienTai && viTriTrangThaiKiemTra !== -1;
 };
 
-// Get status icon based on status code
-const getStatusIcon = (statusCode) => {
-    switch (statusCode) {
+// Lấy biểu tượng trạng thái dựa trên mã trạng thái
+const layBieuTuongTrangThai = (maTrangThai) => {
+    switch (maTrangThai) {
         case 'pending':
             return ClockCircleOutlined;
         case 'updated':
@@ -425,27 +428,27 @@ const getStatusIcon = (statusCode) => {
     }
 };
 
-// Format date
-const formatDate = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('vi-VN', {
+// Định dạng ngày tháng
+const dinhDangNgay = (ngay) => {
+    if (!ngay) return '';
+    return new Date(ngay).toLocaleDateString('vi-VN', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
     });
 };
 
-// Format currency
-const formatCurrency = (value) => {
+// Định dạng tiền tệ
+const dinhDangTien = (giaTri) => {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND',
         minimumFractionDigits: 0
-    }).format(value);
+    }).format(giaTri);
 };
 
-// Show cancel confirmation dialog
-const showCancelConfirm = () => {
+// Hiện hộp thoại xác nhận hủy đơn hàng
+const hienThiXacNhanHuy = () => {
     Modal.confirm({
         title: 'Xác nhận hủy đơn hàng',
         content: 'Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.',
@@ -453,23 +456,92 @@ const showCancelConfirm = () => {
         okType: 'danger',
         cancelText: 'Hủy bỏ',
         onOk() {
-            cancelOrder();
+            huyDonHang();
         }
     });
 };
 
-// Cancel order
-const cancelOrder = () => {
-    loading.value = true;
+// Hủy đơn hàng
+const huyDonHang = () => {
+    dangTai.value = true;
 
-    // Simulate API call
+    // Mô phỏng gọi API
     setTimeout(() => {
-        order.status = { code: 'cancelled', name: 'Đã hủy' };
-        updateOrderStatusHistory('cancelled');
+        donHang.status = { code: 'cancelled', name: 'Đã hủy' };
+        capNhatLichSuTrangThai('cancelled');
         message.success('Đơn hàng đã được hủy thành công');
-        loading.value = false;
+        dangTai.value = false;
     }, 1000);
 };
+
+// Cập nhật phần computed và methods
+const mapTrangThaiToCode = (trangThai) => {
+    if (!trangThai) return 'pending';
+
+    // Chuẩn hóa chuỗi bằng cách loại bỏ khoảng trắng thừa
+    const cleanedTrangThai = trangThai.trim();
+
+    const mappings = {
+        'Chờ xác nhận': 'pending',
+        'Đã cập nhật': 'updated',
+        'Đã xác nhận': 'confirmed',
+        'Chờ đóng gói': 'packaging',
+        'Đang giao': 'shipping',
+        'Hoàn thành': 'completed',
+        'Đã hoàn thành': 'completed',
+        'Đã hủy': 'cancelled',
+        'Hủy': 'cancelled'
+    };
+
+    return mappings[cleanedTrangThai] || 'pending';
+};
+
+// Thêm computed property để xử lý trạng thái từ API
+const currentStatus = computed(() => {
+    if (!thongTinTimeLine.value || thongTinTimeLine.value.length === 0) return null;
+
+    // Lấy trạng thái mới nhất (trạng thái cuối cùng trong mảng)
+    const latestStatus = thongTinTimeLine.value[thongTinTimeLine.value.length - 1];
+
+    return {
+        code: mapTrangThaiToCode(latestStatus.trang_thai),
+        name: latestStatus.trang_thai,
+        date: latestStatus.ngay_tao || latestStatus.ngay_chuyen
+    };
+});
+
+// Cập nhật timeline để sử dụng dữ liệu từ API
+const getTimelineData = computed(() => {
+    if (!thongTinTimeLine.value || thongTinTimeLine.value.length === 0) return [];
+
+    // Tạo danh sách các trạng thái cố định
+    const allStatuses = [
+        { code: 'pending', name: 'Chờ xác nhận', date: null, icon: layBieuTuongTrangThai('pending') },
+        { code: 'confirmed', name: 'Đã xác nhận', date: null, icon: layBieuTuongTrangThai('confirmed') },
+        { code: 'packaging', name: 'Chờ đóng gói', date: null, icon: layBieuTuongTrangThai('packaging') },
+        { code: 'shipping', name: 'Đang giao', date: null, icon: layBieuTuongTrangThai('shipping') },
+        { code: 'completed', name: 'Hoàn thành', date: null, icon: layBieuTuongTrangThai('completed') }
+    ];
+
+    // Cập nhật ngày cho các trạng thái đã đạt được
+    thongTinTimeLine.value.forEach(item => {
+        const statusCode = mapTrangThaiToCode(item.trang_thai);
+        const statusIndex = allStatuses.findIndex(s => s.code === statusCode);
+        if (statusIndex >= 0) {
+            allStatuses[statusIndex].date = item.ngay_tao || item.ngay_chuyen;
+        }
+    });
+
+    // Xử lý trường hợp đặc biệt cho "cancelled"
+    if (currentStatus.value && currentStatus.value.code === 'cancelled') {
+        return [
+            allStatuses[0], // Chờ xác nhận
+            { code: 'cancelled', name: 'Đã hủy', date: currentStatus.value.date, icon: layBieuTuongTrangThai('cancelled') }
+        ];
+    }
+
+    return allStatuses;
+});
 </script>
 
 <style scoped>

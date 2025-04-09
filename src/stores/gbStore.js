@@ -516,7 +516,7 @@ export const useGbStore = defineStore('gbStore', {
         this.mauSacList = mauSacRespone
       }
     },
-    //Lấy danh sách size
+    //Lấy danh sách size    
     async getSizeList() {
       const sizeRespone = await sanPhamService.getSizeList()
       if (sizeRespone.error) {
