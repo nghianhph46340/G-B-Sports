@@ -17,7 +17,14 @@
                     </a-col>
                 </a-row>
                 <a-divider />
-                <h4 style="text-align: center;">Lịch sử trạng thái</h4><br>
+                <a-row>
+                    <a-col :md="22" class="text-center">
+                        <h4 style="margin-left: 90px;">Lịch sử trạng thái</h4>
+                    </a-col>
+                    <a-col :md="2" class="text-right"><a-button type="link" @click="openStatusHistoryDrawer">Xem chi
+                            tiết</a-button></a-col>
+                </a-row>
+                <br>
                 <div class="status-icons">
                     <div class="col" v-for="history in sortedTrangThaiHistory" :key="history.trang_thai">
                         <div class="status-icon" :class="getStatusClass(history.trang_thai)">
@@ -28,21 +35,47 @@
                     </div>
                 </div>
                 <a-divider />
-
+                <!-- Drawer hiển thị chi tiết lịch sử trạng thái -->
+                <a-drawer v-model:open="showStatusHistoryDrawer" title="Chi tiết lịch sử trạng thái" placement="right"
+                    :width="450">
+                    <a-timeline :pending="isPending ? 'Đang xử lý...' : null" :reverse="reverseTimeline">
+                        <template #pendingDot>
+                            <i v-if="isPending" class="fas fa-spinner fa-spin" />
+                        </template>
+                        <a-timeline-item v-for="(status, index) in sortedTrangThaiHistory" :key="index"
+                            :color="getTimelineColor(status.trang_thai)">
+                            <a-row>
+                                <a-col :md="15">
+                                    <h6 style="font-weight: bold;">{{ status.trang_thai }}</h6>
+                                </a-col>
+                                <a-col :md="9">{{ formatDateTime(status.ngay_chuyen) }}</a-col>
+                            </a-row>
+                            <p v-if="status.nhan_vien_doi">
+                                Nhân viên: {{ status.nhan_vien_doi }}
+                            </p>
+                            <p v-if="status.noi_dung_doi">
+                                Nội dung: {{ status.noi_dung_doi }}
+                            </p>
+                        </a-timeline-item>
+                    </a-timeline>
+                    <a-button type="primary" style="margin-top: 16px" @click="toggleReverseTimeline">
+                        Đảo ngược thứ tự
+                    </a-button>
+                </a-drawer>
                 <div class="order-status">
                     <!-- Nút Quay lại trạng thái ban đầu -->
-                    <a-form @submit="revertToInitial" v-if="showRevertButton" :inline="true">
+                    <a-form @submit="openStatusModal('revert')" v-if="showRevertButton" :inline="true">
                         <a-button type="warning" html-type="submit">
                             Quay lại trạng thái ban đầu
                         </a-button>
                     </a-form>
-                    <a-form @submit="changeStatus" :inline="true">
+                    <a-form @submit="openStatusModal('change')" :inline="true">
                         <a-button type="primary" html-type="submit" :disabled="isCompletedOrCancelled"
                             :class="{ 'disabled': isCompletedOrCancelled }">
                             {{ nextStatusText }}
                         </a-button>
                     </a-form>
-                    <a-form @submit="cancelOrder" :inline="true">
+                    <a-form @submit="openStatusModal('cancel')" :inline="true">
                         <a-button type="text" html-type="submit" :disabled="cannotCancel"
                             :class="{ 'disabled': cannotCancel }">
                             Hủy đơn
@@ -61,6 +94,28 @@
                             <a-button key="ok" type="primary" @click="confirmPrint(true)">Đúng</a-button>
                         </template>
                     </a-modal>
+                    <!-- Modal dùng chung cho thay đổi trạng thái -->
+                    <a-modal v-model:open="showStatusModal" :title="modalTitle" @ok="confirmStatusChange"
+                        @cancel="closeStatusModal">
+                        <a-form :model="statusForm" layout="vertical">
+                            <a-form-item label="Người xác nhận">
+                                <a-input v-model:value="statusForm.nhanVienDoi" :readonly="isNhanVienDoiReadOnly"
+                                    placeholder="Nhập tên nhân viên" />
+                            </a-form-item>
+                            <a-form-item label="Nội dung chuyển trạng thái">
+                                <a-select v-model:value="statusForm.noiDungDoi" show-search allow-clear
+                                    placeholder="Chọn hoặc nhập nội dung" :filter-option="filterOption">
+                                    <a-select-option v-for="option in noiDungDoiOptions" :key="option" :value="option">
+                                        {{ option }}
+                                    </a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-form>
+                        <template #footer>
+                            <a-button key="cancel" @click="closeStatusModal">Hủy</a-button>
+                            <a-button key="ok" type="primary" @click="confirmStatusChange">Xác nhận</a-button>
+                        </template>
+                    </a-modal>
                 </div>
             </div>
 
@@ -72,15 +127,15 @@
                         <a-row :gutter="16">
                             <a-col :span="12">
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
-                                <p>Trạng thái: {{ store.hoaDonDetail.trang_thai_thanh_toan || 'N/A' }}</p>
+                                <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                             <a-col :span="12">
-                                <p>Ngày tạo: {{ formatDate(store.hoaDonDetail.ngay_tao) }}</p>
+                                <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -661,7 +716,6 @@ const saveCustomerInfo = () => {
         } else {
             editedCustomer.value.diaChi = editedCustomer.value.diaChiCuThe || '';
         }
-
         // Gọi hàm cập nhật thông tin khách hàng
         store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, {
             hoTen: editedCustomer.value.hoTen,
@@ -669,7 +723,6 @@ const saveCustomerInfo = () => {
             sdtNguoiNhan: editedCustomer.value.sdtNguoiNhan,
             diaChi: editedCustomer.value.diaChi,
         });
-
         // Đóng drawer
         closeDrawer();
     }
@@ -818,11 +871,17 @@ const nextStatusValue = computed(() => {
 const formatCurrency = (value) => {
     return value ? new Intl.NumberFormat('vi-VN').format(value) : '0';
 };
-
+// format chỉ hiện hh:mm dd-mm-yyyy
 const formatDate = (date) => {
     if (!date) return 'N/A';
     const d = new Date(date);
     return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+// format chỉ hiện hh:mm:ss dd-mm-yyyy
+const formatDateTime = (date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 const getStatusClass = (trangThai) => {
@@ -958,7 +1017,7 @@ const addSelectedProducts = () => {
         toast.error('Vui lòng chọn ít nhất một sản phẩm để thêm!');
         return;
     }
-    // Validate số lượng trước khi gửi API
+
     for (const product of selectedProducts) {
         const ctsp = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === product.idCTSP);
         const soLuongTon = calculateSoLuongTon(ctsp);
@@ -1002,6 +1061,132 @@ const removeProduct = async (item, index) => {
     }
 };
 
+const showStatusModal = ref(false);
+const modalTitle = ref('');
+const modalAction = ref(''); // 'change', 'revert', hoặc 'cancel'
+const statusForm = ref({
+    nhanVienDoi: '',
+    noiDungDoi: ''
+});
+const isNhanVienDoiReadOnly = ref(false);
+
+// Danh sách gợi ý cho noi_dung_doi
+const noiDungDoiOptions = [
+    'Xác nhận đơn hàng',
+    'Chuẩn bị hàng',
+    'Giao cho đơn vị vận chuyển',
+    'Hoàn thành đơn hàng',
+    'Hủy đơn hàng',
+    'Quay lại trạng thái ban đầu'
+];
+
+// Hàm mở modal
+const openStatusModal = (action) => {
+    modalAction.value = action;
+    if (action === 'change') {
+        modalTitle.value = `Xác nhận chuyển trạng thái thành "${nextStatusValue.value}"`;
+    } else if (action === 'revert') {
+        modalTitle.value = 'Xác nhận quay lại trạng thái "Chờ xác nhận"';
+    } else if (action === 'cancel') {
+        modalTitle.value = 'Xác nhận hủy đơn hàng';
+    }
+
+    // Lấy thông tin nhân viên từ store
+    const nhanVienDoi = store.userDetails?.tenNhanVien || store.userInfo?.ten_dang_nhap || '';
+    statusForm.value.nhanVienDoi = nhanVienDoi;
+    isNhanVienDoiReadOnly.value = !!nhanVienDoi; // Nếu có thông tin thì readonly
+    statusForm.value.noiDungDoi = ''; // Reset nội dung
+
+    showStatusModal.value = true;
+};
+
+// Hàm đóng modal
+const closeStatusModal = () => {
+    showStatusModal.value = false;
+    modalAction.value = '';
+    modalTitle.value = '';
+    statusForm.value = { nhanVienDoi: '', noiDungDoi: '' };
+};
+// Hàm xác nhận thay đổi trạng thái
+const confirmStatusChange = () => {
+    if (!statusForm.value.nhanVienDoi) {
+        toast.error('Vui lòng nhập tên nhân viên!');
+        return;
+    }
+    if (!statusForm.value.noiDungDoi) {
+        toast.error('Vui lòng chọn hoặc nhập nội dung chuyển trạng thái!');
+        return;
+    }
+
+    if (modalAction.value === 'change') {
+        store.changeTrangThaiHoaDon(
+            store.hoaDonDetail.ma_hoa_don,
+            nextStatusValue.value,
+            statusForm.value.nhanVienDoi,
+            statusForm.value.noiDungDoi
+        );
+    } else if (modalAction.value === 'revert') {
+        store.revertToInitialStatus(
+            store.hoaDonDetail.ma_hoa_don,
+            statusForm.value.nhanVienDoi,
+            statusForm.value.noiDungDoi
+        );
+    } else if (modalAction.value === 'cancel') {
+        store.cancelHoaDon(
+            store.hoaDonDetail.ma_hoa_don,
+            statusForm.value.nhanVienDoi,
+            statusForm.value.noiDungDoi
+        );
+    }
+
+    closeStatusModal();
+};
+// Thêm vào phần đầu của <script setup>
+const showStatusHistoryDrawer = ref(false);
+const reverseTimeline = ref(true);
+
+// Computed property để kiểm tra trạng thái pending
+const isPending = computed(() => {
+    const currentStatus = store.hoaDonDetail?.trang_thai;
+    return currentStatus !== 'Hoàn thành' && currentStatus !== 'Đã hủy';
+});
+
+// Hàm mở drawer
+const openStatusHistoryDrawer = () => {
+    showStatusHistoryDrawer.value = true;
+};
+
+// // Hàm đóng drawer
+// const closeStatusHistoryDrawer = () => {
+//     showStatusHistoryDrawer.value = false;
+// };
+
+// Hàm đảo ngược thứ tự timeline
+const toggleReverseTimeline = () => {
+    reverseTimeline.value = !reverseTimeline.value;
+};
+
+// Hàm lấy màu cho timeline item dựa trên trạng thái
+const getTimelineColor = (trangThai) => {
+    switch (trangThai) {
+        case 'Chờ xác nhận':
+            return 'blue';
+        case 'Đã xác nhận':
+            return 'green';
+        case 'Chờ đóng gói':
+            return 'orange';
+        case 'Đang giao':
+            return 'purple';
+        case 'Hoàn thành':
+            return 'green';
+        case 'Đã hủy':
+            return 'red';
+        case 'Đã cập nhật':
+            return 'gray';
+        default:
+            return 'blue';
+    }
+};
 // Trạng thái popup chỉnh sửa số lượng
 const showQuantityPopup = ref(false);
 const popupType = ref('');
@@ -1179,7 +1364,7 @@ const printInvoice = () => {
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
     doc.text(`Mã hóa đơn: ${store.hoaDonDetail.ma_hoa_don || 'N/A'}`, 20, 86);
-    doc.text(`Ngày: ${formatDate(store.hoaDonDetail.ngay_tao)}`, 20, 94);
+    doc.text(`Ngày: ${formatDateTime(store.hoaDonDetail.ngay_tao)}`, 20, 94);
     doc.text(`Tên khách hàng: ${store.hoaDonDetail.ho_ten || 'Khách lẻ'}`, 20, 102);
     // Danh sách sản phẩm
     let y = 110;
@@ -1445,5 +1630,23 @@ onMounted(async () => {
 /* Style cho bảng danh sách địa chỉ */
 :deep(.ant-table) {
     margin-bottom: 20px;
+}
+
+/* Định dạng timeline trong drawer */
+:deep(.ant-timeline-item-content) {
+    margin-left: 20px;
+}
+
+:deep(.ant-timeline-item-tail) {
+    border-left: 2px solid #d9d9d9;
+}
+
+:deep(.ant-timeline-item-pending .ant-timeline-item-tail) {
+    border-left: 2px dashed #d9d9d9;
+}
+
+:deep(.fa-spinner) {
+    font-size: 16px;
+    color: #1890ff;
 }
 </style>
