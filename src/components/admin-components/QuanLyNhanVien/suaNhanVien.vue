@@ -12,17 +12,24 @@
                         <div class="avatar-container d-flex justify-content-center">
                             <div class="avatar-upload">
                                 <div class="avatar-preview" @click="triggerFileInput">
-                                    <img :src="previewImage || defaultAvatar" alt="Avatar" class="rounded-circle">
-                                    <button v-if="previewImage" @click.stop="removeImage" class="delete-btn"
-                                        type="button">
+                                    <img :src="previewImage || defaultAvatar" alt="Avatar" class="rounded-circle"
+                                        :class="{ 'uploading': isUploading }">
+                                    <button v-if="previewImage && !isUploading" @click.stop="removeImage"
+                                        class="delete-btn" type="button">
                                         ×
                                     </button>
-                                    <div class="camera-icon">
+                                    <div v-if="isUploading" class="upload-indicator">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </div>
+                                    <div v-else class="camera-icon">
                                         <i class="fas fa-camera"></i>
                                     </div>
                                 </div>
                                 <input type="file" id="imageUpload" accept=".png, .jpg, .jpeg"
                                     @change="handleImageChange" class="d-none" ref="fileInput">
+                                <small v-if="formData.anhNhanVien" class="text-success d-block mt-2">
+                                    <i class="fas fa-check-circle"></i> Ảnh đã được tải lên
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -134,8 +141,8 @@
 
             <!-- Buttons -->
             <div class="mt-4">
-                <button type="submit" class="btn btn-warning me-2">Sửa nhân viên</button>
-                <button type="reset" class="btn btn-secondary">Làm mới</button>
+                <button type="submit" class="btn btn-warning me-2" :disabled="isUploading">Sửa nhân viên</button>
+                <button type="reset" class="btn btn-secondary" :disabled="isUploading">Làm mới</button>
             </div>
         </form>
     </div>
@@ -160,6 +167,7 @@ const previewImage = ref(null);
 const fileInput = ref(null);
 const selectedFile = ref(null);
 const defaultAvatar = ref('https://static.vecteezy.com/system/resources/previews/019/879/186/non_2x/user-icon-on-transparent-background-free-png.png');
+const isUploading = ref(false); // Add loading state for image upload
 // Form data
 const formData = reactive({
     idNhanVien: route.params.id,
@@ -407,11 +415,12 @@ const handleImageChange = (event) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 previewImage.value = e.target.result;
-                console.log("hihi" + previewImage);
+                // Upload image to cloud when selected
+                uploadImageToCloud(file);
             };
             reader.readAsDataURL(file);
         } else {
-            alert('Vui lòng chọn file ảnh có định dạng jpg, jpeg, png và kích thước dưới 5MB');
+            toast.error('Vui lòng chọn file ảnh có định dạng jpg, jpeg, png và kích thước dưới 5MB');
             fileInput.value.value = '';
         }
     }
@@ -423,17 +432,91 @@ const validateImage = (file) => {
     return validTypes.includes(file.type) && file.size <= maxSize;
 };
 
+// Uploads image to cloud service and updates formData with the URL
+const uploadImageToCloud = async (file) => {
+    if (!file) {
+        return;
+    }
+
+    try {
+        // Show loading indicator
+        isUploading.value = true;
+        const toastId = toast.loading('Đang tải ảnh lên...');
+
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        const response = await axiosInstance.post('testImage', formDataUpload, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        if (response.data) {
+            // Update formData with cloud image URL
+            formData.anhNhanVien = response.data;
+            toast.update(toastId, {
+                render: 'Tải ảnh thành công',
+                type: 'success',
+                isLoading: false,
+                autoClose: 2000
+            });
+            console.log('Uploaded image URL:', response.data);
+        } else {
+            toast.update(toastId, {
+                render: 'Không thể tải ảnh lên',
+                type: 'error',
+                isLoading: false,
+                autoClose: 2000
+            });
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Có lỗi khi tải ảnh lên: ' + (error.response?.data || error.message));
+    } finally {
+        isUploading.value = false;
+    }
+};
+
 const removeImage = (e) => {
     e.stopPropagation();
+
+    // Delete image from cloud if we have a URL
+    if (formData.anhNhanVien) {
+        deleteImageFromCloud(formData.anhNhanVien);
+    }
+
+    // Reset all image related values
     previewImage.value = null;
     selectedFile.value = null;
+    formData.anhNhanVien = null;
+
     if (fileInput.value) {
         fileInput.value.value = '';
     }
 };
+
+// Delete image from cloud service
+const deleteImageFromCloud = async (imageUrl) => {
+    if (!imageUrl) return;
+
+    try {
+        // Lấy publicId từ URL
+        const urlParts = imageUrl.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
+
+        // Gọi API xóa ảnh
+        await axiosInstance.delete("testDeleteImage?publicId=" + publicId);
+        console.log('Đã xóa ảnh từ cloud');
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        // We don't show error toast here to avoid confusing the user
+    }
+};
+
 // Reset form
 const resetForm = () => {
-
     Modal.confirm({
         title: 'Xác nhận làm mới',
         content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
@@ -452,6 +535,11 @@ const resetForm = () => {
             });
 
             // Reset ảnh
+            if (formData.anhNhanVien) {
+                // Attempt to delete the image from cloud if there was one
+                deleteImageFromCloud(formData.anhNhanVien);
+            }
+
             previewImage.value = null;
             selectedFile.value = null;
             if (fileInput.value) {
@@ -466,7 +554,6 @@ const resetForm = () => {
             wards.value = [];
         }
     });
-
 };
 
 // Submit form
@@ -566,6 +653,11 @@ const deleteImage = async () => {
 //--------------------------------------
 
 const suaNhanVien = async () => {
+    if (isUploading.value) {
+        toast.warning('Vui lòng đợi tải ảnh lên hoàn tất');
+        return;
+    }
+
     if (validateForm()) {
         Modal.confirm({
             title: 'Bạn có chắc chắn muốn sửa nhân viên này không?',
@@ -631,6 +723,11 @@ onMounted(async () => {
         formData.trangThai = nhanVienById.trangThai;
         formData.anhNhanVien = nhanVienById.anhNhanVien;
         formData.taiKhoan = nhanVienById.taiKhoan;
+
+        // Set preview image if there is avatar
+        if (nhanVienById.anhNhanVien) {
+            previewImage.value = nhanVienById.anhNhanVien;
+        }
 
         // Xử lý địa chỉ
         const addressParts = nhanVienById.diaChiLienHe.split(',').map(part => part.trim());
@@ -813,5 +910,41 @@ onMounted(async () => {
 :deep(.ant-select-selection-placeholder),
 :deep(.ant-select-selection-item) {
     line-height: 32px !important;
+}
+
+.avatar-preview img.uploading {
+    opacity: 0.6;
+    filter: blur(1px);
+}
+
+/* Upload indicator */
+.upload-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 3;
+}
+
+.upload-indicator i {
+    font-size: 32px;
+    color: white;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 </style>
