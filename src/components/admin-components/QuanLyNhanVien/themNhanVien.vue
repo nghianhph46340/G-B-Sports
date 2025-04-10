@@ -1,11 +1,11 @@
 <template>
     <div>
         <h2>Thêm nhân viên</h2>
-        <form @submit.prevent="themNhanVien" @reset.prevent="resetForm">
+        <a-form :model="formData" @finish="themNhanVien" layout="vertical" class="nhvform">
             <div class="container">
-                <div class="row">
+                <a-row :gutter="24">
                     <!-- Phần ảnh đại diện -->
-                    <div class="col-md-4">
+                    <a-col :span="8">
                         <div class="avatar-label">
                             <label>Ảnh đại diện</label>
                         </div>
@@ -32,142 +32,134 @@
                                 </small>
                             </div>
                         </div>
-                    </div>
+                    </a-col>
 
                     <!-- Form nhập liệu bên phải -->
-                    <div class="col-md-8">
-                        <!-- Mã nhân viên -->
-                        <div class="row mb-2">
-                            <div class="col-6">
-                                <label class="form-label">Mã nhân viên</label>
-                                <input type="text" class="form-control" v-model="formData.maNhanVien" disabled>
-                            </div>
+                    <a-col :span="16">
+                        <a-row :gutter="16">
+                            <!-- Mã nhân viên -->
+                            <a-col :span="12">
+                                <a-form-item label="Mã nhân viên" class="form-item-custom">
+                                    <a-input v-model:value="formData.maNhanVien" disabled />
+                                </a-form-item>
+                            </a-col>
 
                             <!-- Tên nhân viên -->
-                            <div class="col-6">
-                                <label class="form-label">Tên nhân viên</label>
-                                <input type="text" class="form-control" v-model="formData.tenNhanVien"
-                                    placeholder="Nhập tên nhân viên">
-                                <span v-if="errors.tenNhanVien" class="text-danger">{{ errors.tenNhanVien }}</span>
-                            </div>
-                        </div>
+                            <a-col :span="12">
+                                <a-form-item label="Tên nhân viên" class="form-item-custom"
+                                    :validateStatus="errors.tenNhanVien ? 'error' : ''" :help="errors.tenNhanVien">
+                                    <a-input v-model:value="formData.tenNhanVien" placeholder="Nhập tên nhân viên" />
+                                </a-form-item>
+                            </a-col>
+                        </a-row>
 
-                        <!-- Giới tính -->
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="form-label">Giới tính</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="true"
-                                        v-model="formData.gioiTinh">
-                                    <label class="form-check-label">Nam</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="gioiTinh" :value="false"
-                                        v-model="formData.gioiTinh">
-                                    <label class="form-check-label">Nữ</label>
-                                </div>
-                                <span v-if="errors.gioiTinh" class="text-danger">{{ errors.gioiTinh }}</span>
-                            </div>
+                        <a-row :gutter="16">
+                            <!-- Giới tính -->
+                            <a-col :span="12">
+                                <a-form-item label="Giới tính" class="form-item-custom"
+                                    :validateStatus="errors.gioiTinh ? 'error' : ''" :help="errors.gioiTinh">
+                                    <a-radio-group v-model:value="formData.gioiTinh">
+                                        <a-radio :value="true">Nam</a-radio>
+                                        <a-radio :value="false">Nữ</a-radio>
+                                    </a-radio-group>
+                                </a-form-item>
+                            </a-col>
 
                             <!-- Ngày sinh -->
-                            <div class="col-md-6">
-                                <label class="form-label">Ngày sinh</label>
-                                <input type="date" class="form-control" v-model="formData.ngaySinh">
-                                <span v-if="errors.ngaySinh" class="text-danger">{{ errors.ngaySinh }}</span>
-                            </div>
-                        </div>
+                            <a-col :span="12">
+                                <a-form-item label="Ngày sinh" class="form-item-custom"
+                                    :validateStatus="errors.ngaySinh ? 'error' : ''" :help="errors.ngaySinh">
+                                    <a-date-picker v-model:value="formData.ngaySinh" format="YYYY-MM-DD"
+                                        style="width: 100%" placeholder="Chọn ngày sinh" :valueFormat="'YYYY-MM-DD'" />
+                                </a-form-item>
+                            </a-col>
+                        </a-row>
 
                         <!-- Số điện thoại và Email -->
-                        <div class="row mb-2">
-                            <div class="col-md-6">
-                                <label class="form-label">Số điện thoại</label>
-                                <input type="tel" class="form-control" v-model="formData.soDienThoai"
-                                    placeholder="Nhập số điện thoại">
-                                <span v-if="errors.soDienThoai" class="text-danger">{{ errors.soDienThoai }}</span>
-                            </div>
+                        <a-row :gutter="16">
+                            <a-col :span="12">
+                                <a-form-item label="Số điện thoại" class="form-item-custom"
+                                    :validateStatus="errors.soDienThoai ? 'error' : ''" :help="errors.soDienThoai">
+                                    <a-input v-model:value="formData.soDienThoai" placeholder="Nhập số điện thoại" />
+                                </a-form-item>
+                            </a-col>
 
-                            <div class="col-md-6">
-                                <label class="form-label">Email</label>
-                                <input type="text" class="form-control" v-model="formData.email"
-                                    placeholder="Nhập email">
-                                <span v-if="errors.email" class="text-danger">{{ errors.email }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                            <a-col :span="12">
+                                <a-form-item label="Email" class="form-item-custom"
+                                    :validateStatus="errors.email ? 'error' : ''" :help="errors.email">
+                                    <a-input v-model:value="formData.email" placeholder="Nhập email" />
+                                </a-form-item>
+                            </a-col>
+                        </a-row>
+                    </a-col>
+                </a-row>
 
                 <!-- Phần địa chỉ -->
-                <div class="col-12 pb-2 pt-2">
-                    <div class="row g-3">
-                        <!-- Tỉnh/Thành phố -->
-                        <div class="col-md-4">
-                            <label class="form-label">Tỉnh/Thành phố</label>
-                            <select class="form-select" v-model="selectedProvince" @change="handleProvinceChange">
-                                <option value="">Chọn Tỉnh/Thành phố</option>
-                                <option v-for="province in provinces" :key="province.code" :value="province.code">
-                                    {{ province.name }}
-                                </option>
-                            </select>
-                            <span v-if="errors.selectedProvince" class="text-danger">{{ errors.selectedProvince
-                            }}</span>
-                        </div>
+                <a-divider orientation="left">Thông tin địa chỉ</a-divider>
+                <a-row :gutter="16">
+                    <!-- Tỉnh/Thành phố -->
+                    <a-col :span="8">
+                        <a-form-item label="Tỉnh/Thành phố" class="form-item-custom"
+                            :validateStatus="errors.selectedProvince ? 'error' : ''" :help="errors.selectedProvince">
+                            <a-select v-model:value="selectedProvince" show-search placeholder="Chọn Tỉnh/Thành phố"
+                                :options="provinceOptions" :filter-option="filterOption" @change="handleProvinceChange"
+                                allowClear></a-select>
+                        </a-form-item>
+                    </a-col>
 
-                        <!-- Quận/Huyện -->
-                        <div class="col-md-4">
-                            <label class="form-label">Quận/Huyện</label>
-                            <select class="form-select" v-model="selectedDistrict" @change="handleDistrictChange"
-                                :disabled="!selectedProvince">
-                                <option value="">Chọn Quận/Huyện</option>
-                                <option v-for="district in districts" :key="district.code" :value="district.code">
-                                    {{ district.name }}
-                                </option>
-                            </select>
-                            <span v-if="errors.selectedDistrict" class="text-danger">{{ errors.selectedDistrict
-                            }}</span>
-                        </div>
+                    <!-- Quận/Huyện -->
+                    <a-col :span="8">
+                        <a-form-item label="Quận/Huyện" class="form-item-custom"
+                            :validateStatus="errors.selectedDistrict ? 'error' : ''" :help="errors.selectedDistrict">
+                            <a-select v-model:value="selectedDistrict" show-search placeholder="Chọn Quận/Huyện"
+                                :options="districtOptions" :filter-option="filterOption" :disabled="!selectedProvince"
+                                @change="handleDistrictChange" allowClear></a-select>
+                        </a-form-item>
+                    </a-col>
 
-                        <!-- Phường/Xã -->
-                        <div class="col-md-4">
-                            <label class="form-label">Phường/Xã</label>
-                            <select class="form-select" v-model="selectedWard" :disabled="!selectedDistrict">
-                                <option value="">Chọn Phường/Xã</option>
-                                <option v-for="ward in wards" :key="ward.code" :value="ward.code">
-                                    {{ ward.name }}
-                                </option>
-                            </select>
-                            <span v-if="errors.selectedWard" class="text-danger">{{ errors.selectedWard }}</span>
-                        </div>
+                    <!-- Phường/Xã -->
+                    <a-col :span="8">
+                        <a-form-item label="Phường/Xã" class="form-item-custom"
+                            :validateStatus="errors.selectedWard ? 'error' : ''" :help="errors.selectedWard">
+                            <a-select v-model:value="selectedWard" show-search placeholder="Chọn Phường/Xã"
+                                :options="wardOptions" :filter-option="filterOption" :disabled="!selectedDistrict"
+                                allowClear></a-select>
+                        </a-form-item>
+                    </a-col>
 
-                        <!-- Địa chỉ cụ thể -->
-                        <div class="col-12">
-                            <label class="form-label">Địa chỉ cụ thể</label>
-                            <input type="text" class="form-control" v-model="formData.diaChiLienHe"
-                                placeholder="Số nhà, tên đường...">
-                            <span v-if="errors.diaChiLienHe" class="text-danger">{{ errors.diaChiLienHe }}</span>
-                        </div>
-                    </div>
-                </div>
+                    <!-- Địa chỉ cụ thể -->
+                    <a-col :span="24">
+                        <a-form-item label="Địa chỉ cụ thể" class="form-item-custom"
+                            :validateStatus="errors.diaChiLienHe ? 'error' : ''" :help="errors.diaChiLienHe">
+                            <a-input v-model:value="formData.diaChiLienHe" placeholder="Số nhà, tên đường..." />
+                        </a-form-item>
+                    </a-col>
+                </a-row>
             </div>
 
             <!-- Buttons -->
-            <div class="mt-4">
-                <button type="submit" class="btn btn-warning me-2" :disabled="isUploading">Tạo tài khoản</button>
-                <button type="reset" class="btn btn-secondary" :disabled="isUploading">Làm mới</button>
+            <div class="form-actions">
+                <a-button html-type="submit" :loading="isUploading" class="action-btn create-btn">
+                    Tạo tài khoản
+                </a-button>
+                <a-button @click="resetForm" :disabled="isUploading" class="action-btn reset-btn">
+                    Làm mới
+                </a-button>
             </div>
-        </form>
+        </a-form>
     </div>
 </template>
 
 
 <script setup>
-import { ref, onMounted, onUnmounted, reactive } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 //Import service ảnh
 import axiosInstance from '@/config/axiosConfig';
-import { message } from 'ant-design-vue';
+import { message, Modal, Form, Input, Select, DatePicker, Radio, Button, Row, Col, Divider } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
-import { Modal } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
+import dayjs from 'dayjs';
 //--------------------------------------
 // Khai báo biến cho ảnh
 const store = useGbStore();
@@ -176,6 +168,7 @@ const fileInput = ref(null);
 const selectedFile = ref(null);
 const defaultAvatar = ref('https://static.vecteezy.com/system/resources/previews/019/879/186/non_2x/user-icon-on-transparent-background-free-png.png');
 const isUploading = ref(false); // Add loading state for image upload
+const router = useRouter();
 
 // Form data
 const formData = reactive({
@@ -197,7 +190,16 @@ const wards = ref([]);
 const selectedProvince = ref('');
 const selectedDistrict = ref('');
 const selectedWard = ref('');
-const router = useRouter();
+
+// Khai báo options cho select
+const provinceOptions = ref([]);
+const districtOptions = ref([]);
+const wardOptions = ref([]);
+
+// Hàm filter cho search
+const filterOption = (input, option) => {
+    return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+};
 
 const validateForm = () => {
     let isValid = true;
@@ -312,7 +314,8 @@ const validateEmail = (email) => {
 // Tính tuổi
 const calculateAge = (birthdate) => {
     const today = new Date();
-    const birthDate = new Date(birthdate);
+    // Convert dayjs to native Date if needed
+    const birthDate = birthdate instanceof dayjs ? birthdate.toDate() : new Date(birthdate);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
@@ -334,32 +337,6 @@ const errors = reactive({
     diaChiLienHe: ''
 });
 
-
-
-// // Submit form
-// const validateAndSubmit = async () => {
-//     if (validateForm()) {
-//         try {
-//             const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
-//             const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
-//             const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
-//             const nhanVienMoi = {
-//                 ...formData,
-//                 diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim()
-//             };
-//             console.log('Dữ liệu truyền vào mới them nhan vien', nhanVienMoi);
-//             const themNhanVien = await store.themNhanVien(nhanVienMoi);
-//             if (themNhanVien.error) {
-//                 toast.error('Có lỗi xảy ra');
-//                 console.log(themNhanVien.error);
-//             } else {
-//                 toast.success('Thêm nhân viên thành công');
-//             }
-//         } catch (error) {
-//             console.error(error);
-//         }
-//     }
-// };
 // Xử lý ảnh
 const triggerFileInput = () => {
     fileInput.value.click();
@@ -479,98 +456,115 @@ const loadProvinces = async () => {
         const response = await fetch('https://provinces.open-api.vn/api/p/');
         const data = await response.json();
         provinces.value = data;
+        // Chuyển đổi format cho a-select
+        provinceOptions.value = data.map(province => ({
+            value: province.code,
+            label: province.name
+        }));
     } catch (error) {
         console.error('Lỗi khi tải tỉnh/thành:', error);
     }
 };
 
-const handleProvinceChange = async () => {
-    if (selectedProvince.value) {
+const handleProvinceChange = async (value) => {
+    if (value) {
         try {
-            const response = await fetch(`https://provinces.open-api.vn/api/p/${selectedProvince.value}?depth=2`);
+            const response = await fetch(`https://provinces.open-api.vn/api/p/${value}?depth=2`);
             const data = await response.json();
             districts.value = data.districts;
-            selectedDistrict.value = '';
-            wards.value = [];
+            // Chuyển đổi format cho a-select
+            districtOptions.value = data.districts.map(district => ({
+                value: district.code,
+                label: district.name
+            }));
+            selectedDistrict.value = undefined;
+            selectedWard.value = undefined;
+            wardOptions.value = [];
         } catch (error) {
             console.error('Lỗi khi tải quận/huyện:', error);
         }
     } else {
         districts.value = [];
-        wards.value = [];
+        districtOptions.value = [];
+        selectedDistrict.value = undefined;
+        wardOptions.value = [];
+        selectedWard.value = undefined;
     }
 };
 
-const handleDistrictChange = async () => {
-    if (selectedDistrict.value) {
+const handleDistrictChange = async (value) => {
+    if (value) {
         try {
-            const response = await fetch(`https://provinces.open-api.vn/api/d/${selectedDistrict.value}?depth=2`);
+            const response = await fetch(`https://provinces.open-api.vn/api/d/${value}?depth=2`);
             const data = await response.json();
             wards.value = data.wards;
-            selectedWard.value = '';
+            // Chuyển đổi format cho a-select
+            wardOptions.value = data.wards.map(ward => ({
+                value: ward.code,
+                label: ward.name
+            }));
+            selectedWard.value = undefined;
         } catch (error) {
             console.error('Lỗi khi tải phường/xã:', error);
         }
     } else {
         wards.value = [];
+        wardOptions.value = [];
+        selectedWard.value = undefined;
     }
 };
 
 // Reset form
 const resetForm = () => {
-    Object.assign(formData, {
-        tenNhanVien: '',
-        gioiTinh: null,
-        ngaySinh: '',
-        soDienThoai: '',
-        email: '',
-        diaChiLienHe: '',
-        anhNhanVien: null,
-        trangThai: 'Đang hoạt động'
+    Modal.confirm({
+        title: 'Xác nhận làm mới',
+        content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        onOk: async () => {
+            try {
+                Object.assign(formData, {
+                    tenNhanVien: '',
+                    gioiTinh: null,
+                    ngaySinh: null,
+                    soDienThoai: '',
+                    email: '',
+                    diaChiLienHe: '',
+                    anhNhanVien: null,
+                    trangThai: 'Đang hoạt động'
+                });
+
+                // Reset ảnh
+                if (formData.anhNhanVien) {
+                    // Attempt to delete the image from cloud if there was one
+                    deleteImageFromCloud(formData.anhNhanVien);
+                }
+
+                previewImage.value = null;
+                selectedFile.value = null;
+                if (fileInput.value) {
+                    fileInput.value.value = '';
+                }
+
+                // Reset địa chỉ
+                selectedProvince.value = '';
+                selectedDistrict.value = '';
+                selectedWard.value = '';
+                districts.value = [];
+                wards.value = [];
+
+                // Clear any error messages
+                Object.keys(errors).forEach(key => {
+                    errors[key] = '';
+                });
+
+                message.success('Đã làm mới form');
+            } catch (error) {
+                console.error('Lỗi khi reset form:', error);
+                message.error('Có lỗi xảy ra khi làm mới form');
+            }
+        }
     });
-
-    // Reset ảnh
-    if (formData.anhNhanVien) {
-        // Attempt to delete the image from cloud if there was one
-        deleteImageFromCloud(formData.anhNhanVien);
-    }
-
-    previewImage.value = null;
-    selectedFile.value = null;
-    if (fileInput.value) {
-        fileInput.value.value = '';
-    }
-
-    // Reset địa chỉ
-    selectedProvince.value = '';
-    selectedDistrict.value = '';
-    selectedWard.value = '';
-    districts.value = [];
-    wards.value = [];
-
-    // Clear any error messages
-    Object.keys(errors).forEach(key => {
-        errors[key] = '';
-    });
-};
-
-// Submit form
-const handleSubmit = async () => {
-    try {
-        const submitData = {
-            ...formData.value,
-            province: selectedProvince.value,
-            district: selectedDistrict.value,
-            ward: selectedWard.value,
-            avatar: selectedFile.value
-        };
-
-        // Gọi API tạo nhân viên
-        console.log('Form data:', submitData);
-
-    } catch (error) {
-        console.error('Error submitting form:', error);
-    }
 };
 
 const taoMaNhanVienMoi = (nhanVienArr) => {
@@ -586,11 +580,16 @@ const taoMaNhanVienMoi = (nhanVienArr) => {
     const maxNumber = Math.max(...nhanVienMoi);
     const nextNumber = maxNumber + 1;
 
-    return `NV${String(nextNumber).padStart(2)}`;
+    return `NV${String(nextNumber).padStart(2, '0')}`;
 };
 //--------------------------------------
 
 const themNhanVien = async () => {
+    if (isUploading.value) {
+        toast.warning('Vui lòng đợi tải ảnh lên hoàn tất');
+        return;
+    }
+
     if (validateForm()) {
         Modal.confirm({
             title: 'Bạn có chắc chắn muốn thêm nhân viên này không?',
@@ -599,18 +598,34 @@ const themNhanVien = async () => {
                     const province = provinces.value.find(p => p.code === selectedProvince.value)?.name || '';
                     const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
                     const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
+
+                    // Format the date back to string for API
+                    const formattedDate = formData.ngaySinh
+                        ? (typeof formData.ngaySinh === 'object' && formData.ngaySinh !== null && typeof formData.ngaySinh.format === 'function'
+                            ? formData.ngaySinh.format('YYYY-MM-DD')
+                            : (typeof formData.ngaySinh === 'string'
+                                ? formData.ngaySinh
+                                : dayjs(formData.ngaySinh).format('YYYY-MM-DD')))
+                        : '';
+
                     const nhanVienMoi = {
                         ...formData,
+                        ngaySinh: formattedDate,
                         diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim()
                     };
-                    console.log('Dữ liệu truyền vào mới them nhan vien', nhanVienMoi);
+
+                    console.log('Dữ liệu truyền vào mới thêm nhân viên', nhanVienMoi);
                     const themNhanVien = await store.themNhanVien(nhanVienMoi);
                     if (themNhanVien.error) {
                         toast.error('Có lỗi xảy ra');
                         console.log(themNhanVien.error);
                     } else {
                         toast.success('Thêm nhân viên thành công');
-                        router.push('/admin/quanlynhanvien');
+                        // Sử dụng setTimeout để đảm bảo toast hiển thị trước khi chuyển trang
+                        setTimeout(() => {
+                            console.log('Chuyển trang...');
+                            window.location.href = '/admin/quanlynhanvien';
+                        }, 1000);
                     }
                 } catch (error) {
                     console.error(error);
@@ -638,16 +653,7 @@ onMounted(async () => {
         toast.error('Có lỗi khi khởi tạo dữ liệu');
     }
 });
-// onMounted(() => {
-//     loadProvinces();
-// });
-// onMounted(async () => {
-//   await store.layDanhSachNhanVien();
-//     formData.maNhanVien = taoMaNhanVienMoi(store.nhanVienArr);
-// })
 </script>
-
-<!-- Phần template và style giữ nguyên như cũ -->
 
 <style scoped>
 .avatar-container {
@@ -782,29 +788,163 @@ onMounted(async () => {
     color: black;
 }
 
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+/* Cải thiện căn chỉnh form */
+.nhvform {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 15px;
 }
 
-.form-control,
-.form-select {
+.form-item-custom {
+    margin-bottom: 20px;
+}
+
+.form-actions {
+    display: flex;
+    padding-top: 24px;
+    margin-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.action-btn {
+    margin-right: 12px;
+    min-width: 150px;
     height: 40px;
+    font-size: 16px;
 }
 
-.btn {
-    padding: 0.5rem 1.5rem;
+/* Điều chỉnh các select & input để căn đều */
+:deep(.ant-select) {
+    width: 100%;
 }
 
-.form-check-input:checked {
-    background-color: #f33b47 !important;
-    /* Màu đỏ cho chấm tròn */
+:deep(.ant-select-selector) {
+    height: 40px !important;
+    padding: 4px 15px !important;
+    display: flex;
+    align-items: center;
+}
+
+:deep(.ant-input),
+:deep(.ant-picker),
+:deep(.ant-select-selector),
+:deep(.ant-radio-wrapper) {
+    font-size: 15px;
+}
+
+:deep(.ant-input) {
+    height: 40px;
+    padding: 6px 15px;
+}
+
+:deep(.ant-picker) {
+    height: 40px;
+    padding: 6px 15px;
+}
+
+:deep(.ant-form-item-label) {
+    padding-bottom: 6px;
+}
+
+:deep(.ant-form-item-label > label) {
+    font-weight: 500;
+    font-size: 15px;
+}
+
+:deep(.ant-divider) {
+    margin: 24px 0;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+:deep(.ant-select-selection-item) {
+    line-height: 32px;
+}
+
+:deep(.ant-radio-wrapper) {
+    font-size: 15px;
+    height: 40px;
+    line-height: 40px;
+}
+
+:deep(.ant-form-item-control-input-content) {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+/* Tùy chỉnh màu sắc cho các thành phần form */
+:deep(.ant-input:hover),
+:deep(.ant-input:focus),
+:deep(.ant-picker:hover),
+:deep(.ant-picker-focused),
+:deep(.ant-select:hover .ant-select-selector),
+:deep(.ant-select-focused .ant-select-selector),
+:deep(.ant-select-open .ant-select-selector) {
     border-color: #f33b47 !important;
-    /* Màu viền */
+    box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2) !important;
 }
 
-.form-check-input:focus {
-    box-shadow: none !important;
-    /* Xóa viền xanh khi focus */
+:deep(.ant-input:focus) {
+    border-color: #f33b47 !important;
+    box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2) !important;
+}
+
+:deep(.ant-radio-checked .ant-radio-inner) {
+    border-color: #f33b47 !important;
+    background-color: #f33b47 !important;
+}
+
+:deep(.ant-radio:hover .ant-radio-inner) {
+    border-color: #f33b47 !important;
+}
+
+:deep(.ant-form-item-has-error .ant-input),
+:deep(.ant-form-item-has-error .ant-input:hover),
+:deep(.ant-form-item-has-error .ant-select-selector),
+:deep(.ant-form-item-has-error .ant-select-selector:hover) {
+    border-color: #ff4d4f !important;
+}
+
+/* Nút tạo tài khoản với màu riêng */
+.create-btn {
+    background-color: #f33b47;
+    border-color: #f33b47;
+    color: white;
+}
+
+.create-btn:hover,
+.create-btn:focus {
+    background-color: #ff5060;
+    border-color: #ff5060;
+    color: white;
+}
+
+.create-btn:active {
+    background-color: #d63040;
+    border-color: #d63040;
+}
+
+/* Nút làm mới với hiệu ứng hover */
+.reset-btn:hover,
+.reset-btn:focus {
+    border-color: #f33b47;
+    color: #f33b47;
+}
+
+.reset-btn:active {
+    border-color: #d63040;
+    color: #d63040;
+}
+
+/* Đảm bảo placeholder hiển thị đúng cho select */
+:deep(.ant-select-placeholder) {
+    color: #bfbfbf;
+    opacity: 1 !important;
+}
+
+:deep(.ant-select-selection-placeholder) {
+    opacity: 1 !important;
+    color: #bfbfbf;
 }
 </style>
