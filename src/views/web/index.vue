@@ -1,6 +1,6 @@
 <template>
     <div class="web p-0 m-0">
-        <!-- <TheNoitification />
+        <TheNoitification />
         <TheBaner />
         <BoSuuTapHot />
         <DanhMucSanPham />
@@ -10,7 +10,7 @@
         <AoTheThaoBanChay />
         <QuanTheThaoBanChay />
         <GiayVaPhuKienBanChay />
-        <ThuongHieuSanPham /> -->
+        <ThuongHieuSanPham />
     </div>
     <ChatWidget :customerId="'1'" :staffId="'1'" senderType="CUSTOMER" :anou="false" />
 </template>
