@@ -28,9 +28,9 @@
                 <form @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
                         <label for="email">
-                            <i class="fas fa-envelope"></i> Email
+                            <i class="fas fa-envelope"></i> Tên đăng nhập
                         </label>
-                        <input type="email" id="email" v-model="email" class="form-control"
+                        <input type="text" id="email" v-model="email" class="form-control"
                             placeholder="Nhập email của bạn" required />
                     </div>
 

@@ -80,6 +80,7 @@ export const useGbStore = defineStore('gbStore', {
     trangThaiHistory: [],
     getAllHoaDonCTTArr: [],
     listCTSP_HD: [],
+    listDCKHinHD: [],
 
     // Đăng ký đăng nhập // Thêm state để lưu thông tin người dùng
     userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
@@ -656,6 +657,7 @@ export const useGbStore = defineStore('gbStore', {
           this.hoaDonDetail = response.hoaDon || {}
           this.chiTietHoaDons = response.chiTietHoaDons || []
           this.trangThaiHistory = response.trangThaiHistory || []
+          this.listDCKHinHD = response.listDC || []
         }
       } catch (error) {
         console.error('Lỗi trong getHoaDonDetail:', error)

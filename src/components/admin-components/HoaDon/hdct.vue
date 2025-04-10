@@ -129,13 +129,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -253,11 +253,6 @@
                                         Sửa
                                     </a-button>
                                 </div>
-                                <!-- <div v-else>
-                                    <a-button type="primary" @click="saveCustomerInfo">Lưu</a-button>
-                                    <a-button style="margin-left: 8px;" type="default"
-                                        @click="cancelEditingCustomer">Hủy</a-button>
-                                </div> -->
                             </a-col>
                         </a-row>
                         <hr>
@@ -267,22 +262,12 @@
                             <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
                             <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
                         </div>
-                        <!-- <div v-else>
-                            <a-form @submit="saveCustomerInfo" layout="vertical">
-                                <a-form-item label="Tên">
-                                    <a-input v-model:value="editedCustomer.hoTen" required />
-                                </a-form-item>
-                                <a-form-item label="Email">
-                                    <a-input v-model:value="editedCustomer.email" type="email" required />
-                                </a-form-item>
-                                <a-form-item label="Phone">
-                                    <a-input v-model:value="editedCustomer.sdtNguoiNhan" required />
-                                </a-form-item>
-                                <a-form-item label="Địa chỉ">
-                                    <a-input v-model:value="editedCustomer.diaChi" required />
-                                </a-form-item>
-                            </a-form>
-                        </div> -->
+                        <div v-else>
+                            <p>Tên: {{ store.hoaDonDetail.ho_ten || 'Chưa xác định' }}</p>
+                            <p>Email: {{ store.hoaDonDetail.email || 'Chưa xác định' }}</p>
+                            <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
+                            <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
+                        </div>
                         <!-- Drawer cho chỉnh sửa thông tin khách hàng -->
                         <a-drawer v-model:open="isEditingCustomer" title="Chỉnh sửa thông tin khách hàng"
                             placement="right" :width="500" @after-open-change="afterOpenChange">
@@ -334,10 +319,13 @@
                                 <a-divider orientation="left">Danh sách địa chỉ</a-divider>
                                 <a-table :columns="addressColumns" :data-source="addressList" :pagination="false"
                                     row-key="id">
-                                    <template #bodyCell="{ column }">
+                                    <template #bodyCell="{ column, record }">
                                         <template v-if="column.key === 'thao_tac'">
-                                            <a-button type="link">Chọn</a-button>
+                                            <a-button type="link" @click="selectAddress(record)">Chọn</a-button>
                                         </template>
+                                    </template>
+                                    <template #emptyText>
+                                        <span>Không có dữ liệu</span>
                                     </template>
                                 </a-table>
 
@@ -543,8 +531,17 @@ const tinhList = ref([]);
 const huyenList = ref([]);
 const xaList = ref([]);
 
-// Dữ liệu mẫu cho bảng danh sách địa chỉ (sẽ xử lý luồng sau)
-const addressList = ref([]);
+// Dữ liệu cho bảng danh sách địa chỉ
+const addressList = computed(() => {
+    return store.listDCKHinHD.map(item => ({
+        id: item.idDiaChiKhachHang,
+        dia_chi: `${item.soNha}, ${item.xaPhuong}, ${item.quanHuyen}, ${item.tinhThanhPho}`,
+        soNha: item.soNha,
+        xaPhuong: item.xaPhuong,
+        quanHuyen: item.quanHuyen,
+        tinhThanhPho: item.tinhThanhPho,
+    }));
+});
 
 // Trạng thái chỉnh sửa thông tin khách hàng
 const isEditingCustomer = ref(false);
@@ -624,6 +621,26 @@ const openDrawer = async () => {
     }
     isEditingCustomer.value = true;
 };
+
+// Hàm chọn địa chỉ từ bảng
+const selectAddress = (record) => {
+    editedCustomer.value.diaChiCuThe = record.soNha;
+    editedCustomer.value.xa = record.xaPhuong;
+    editedCustomer.value.huyen = record.quanHuyen;
+    editedCustomer.value.tinh = record.tinhThanhPho;
+
+    // Load danh sách huyện và xã dựa trên tỉnh, huyện đã chọn
+    const provinceCode = findProvinceCode(record.tinhThanhPho);
+    if (provinceCode) {
+        fetchHuyenList(provinceCode).then(() => {
+            const districtCode = findDistrictCode(record.quanHuyen);
+            if (districtCode) {
+                fetchXaList(districtCode);
+            }
+        });
+    }
+};
+
 // Đóng drawer
 const closeDrawer = () => {
     isEditingCustomer.value = false;
@@ -1155,12 +1172,6 @@ const isPending = computed(() => {
 const openStatusHistoryDrawer = () => {
     showStatusHistoryDrawer.value = true;
 };
-
-// // Hàm đóng drawer
-// const closeStatusHistoryDrawer = () => {
-//     showStatusHistoryDrawer.value = false;
-// };
-
 // Hàm đảo ngược thứ tự timeline
 const toggleReverseTimeline = () => {
     reverseTimeline.value = !reverseTimeline.value;
