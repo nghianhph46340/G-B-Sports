@@ -1,5 +1,6 @@
 import './assets/main.css'
 import './assets/smooth-scroll.css'  // Import CSS cho hiệu ứng cuộn mượt
+import './polyfills/global';
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia';
