@@ -411,7 +411,7 @@ onUnmounted(() => {
   }
 });
 
-// Expose phương thức handleOpenChat ra ngoài
+// Giữ lại phần expose để component cha có thể gọi hàm
 defineExpose({
   handleOpenChat
 });

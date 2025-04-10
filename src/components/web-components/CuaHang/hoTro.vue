@@ -44,7 +44,7 @@
                         </div>
                         <h3>Live Chat</h3>
                         <p>Chat trực tiếp với nhân viên</p>
-                        <a-button type="primary" @click="$emit('openChat')">Chat ngay</a-button>
+                        <a-button type="primary" @click="openChat">Chat ngay</a-button>
                     </div>
 
                     <div class="support-option">
@@ -324,12 +324,12 @@
         </section>
 
         <!-- Live Chat Button -->
-        <div class="live-chat-button">
+        <!-- <div class="live-chat-button">
             <a-button type="primary" shape="circle" size="large">
                 <message-outlined />
             </a-button>
             <span class="live-chat-tooltip">Chat với tư vấn viên</span>
-        </div>
+        </div> -->
 
         <!-- Thêm vào ngay sau thẻ div.support-page -->
         <div class="scroll-indicator"></div>
@@ -353,6 +353,7 @@ import {
     GiftOutlined
 } from '@ant-design/icons-vue';
 import { ref, onMounted } from 'vue';
+import { emitter } from '@/components/ChatWidge/ChatWidget.vue'
 
 // Refs for sections
 const heroRef = ref(null);
@@ -377,6 +378,10 @@ const scrollToElement = (elementId) => {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 };
+
+function openChat() {
+    emitter.emit('open-chat')
+}
 
 onMounted(() => {
     // Hiệu ứng cuộn
