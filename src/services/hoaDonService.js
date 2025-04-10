@@ -71,12 +71,11 @@ const getCTHD = async (maHoaDon) => {
         return { error: true };
     }
 };
-
 // Thay đổi trạng thái hóa đơn
-const changeTrangThai = async (maHoaDon, newTrangThai) => {
+const changeTrangThai = async (maHoaDon, newTrangThai, nhanVienDoi, noiDungDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'chuyen_trang_thai', null, {
-            params: { maHoaDon, newTrangThai }
+            params: { maHoaDon, newTrangThai, nhanVienDoi, noiDungDoi }
         });
         return data;
     } catch (error) {
@@ -84,11 +83,11 @@ const changeTrangThai = async (maHoaDon, newTrangThai) => {
         return { error: true };
     }
 };
-
-const quayLaiTrangThai = async (maHoaDon) => {
+// Quay lại trạng thái ban đầu
+const quayLaiTrangThai = async (maHoaDon, nhanVienDoi, noiDungDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'quay_lai_trang_thai', null, {
-            params: { maHoaDon }
+            params: { maHoaDon, nhanVienDoi, noiDungDoi }
         });
         return data;
     } catch (error) {
@@ -96,12 +95,11 @@ const quayLaiTrangThai = async (maHoaDon) => {
         return { error: true };
     }
 };
-
 // Hủy hóa đơn
-const cancelHoaDon = async (maHoaDon) => {
+const cancelHoaDon = async (maHoaDon, nhanVienDoi, noiDungDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'cancel_order', null, {
-            params: { maHoaDon }
+            params: { maHoaDon, nhanVienDoi, noiDungDoi }
         });
         return data;
     } catch (error) {
@@ -109,7 +107,6 @@ const cancelHoaDon = async (maHoaDon) => {
         return { error: true };
     }
 };
-
 // Cập nhật thông tin khách hàng trong hóa đơn
 const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
     try {
@@ -118,7 +115,8 @@ const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
             hoTen: ttkh.hoTen,
             email: ttkh.email,
             sdtNguoiNhan: ttkh.sdtNguoiNhan,
-            diaChi: ttkh.diaChi
+            diaChi: ttkh.diaChi,
+            nhanVienDoi: ttkh.nhanVienDoi // Thêm nhanVienDoi
         });
         return data;
     } catch (error) {
@@ -126,13 +124,13 @@ const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
         return { error: true };
     }
 };
-
 // Cập nhật ghi chú
-const updateNote = async (maHoaDon, ghiChu) => {
+const updateNote = async (maHoaDon, ghiChu, nhanVienDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'update_note', {
             maHoaDon,
-            ghiChu
+            ghiChu,
+            nhanVienDoi // Thêm nhanVienDoi
         });
         return data;
     } catch (error) {
@@ -140,7 +138,6 @@ const updateNote = async (maHoaDon, ghiChu) => {
         return { error: true };
     }
 };
-
 // Lấy danh sách chi tiết sản phẩm
 const getAllCTSP_HD = async (page = 0, size = 5, keyword = '') => {
     try {
@@ -155,13 +152,13 @@ const getAllCTSP_HD = async (page = 0, size = 5, keyword = '') => {
         return { error: true };
     }
 };
-
 // Thêm sản phẩm vào hóa đơn
-const addProductsToInvoice = async (maHoaDon, products) => {
+const addProductsToInvoice = async (maHoaDon, products, nhanVienDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'addSP_HD', {
             maHoaDon,
-            products
+            products,
+            nhanVienDoi // Thêm nhanVienDoi
         });
         return data;
     } catch (error) {
@@ -169,10 +166,10 @@ const addProductsToInvoice = async (maHoaDon, products) => {
         return { error: true };
     }
 };
-const removeProductFromInvoice = async (maHoaDon, idCTSP, soLuong) => {
+const removeProductFromInvoice = async (maHoaDon, idCTSP, soLuong, nhanVienDoi, noiDungDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'removeSP_HD', null, {
-            params: { maHoaDon, idCTSP, soLuong }
+            params: { maHoaDon, idCTSP, soLuong, nhanVienDoi, noiDungDoi }
         });
         return data;
     } catch (error) {
@@ -180,10 +177,10 @@ const removeProductFromInvoice = async (maHoaDon, idCTSP, soLuong) => {
         return { error: true };
     }
 };
-const updateProductQuantity = async (maHoaDon, idCTSP, quantityChange) => {
+const updateProductQuantity = async (maHoaDon, idCTSP, quantityChange, nhanVienDoi, noiDungDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'update_soLuong', null, {
-            params: { maHoaDon, idCTSP, quantityChange }
+            params: { maHoaDon, idCTSP, quantityChange, nhanVienDoi, noiDungDoi }
         });
         return data;
     } catch (error) {
@@ -191,6 +188,18 @@ const updateProductQuantity = async (maHoaDon, idCTSP, quantityChange) => {
         return { error: true };
     }
 };
+
+
+const updateHinhThucTTHoaDon = async (idHD, hinhThucThanhToan) => {
+    try {
+        const { data } = await axiosInstance.put(qlhd + `updateHTTTHD?idHD=${idHD}&hinhThucThanhToan=${hinhThucThanhToan}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật hình thức thanh toán:', error);
+        return { error: true };
+    }
+};
+
 export const hoaDonService = {
     getAllHoaDon,
     getListHoaDon,
@@ -206,5 +215,6 @@ export const hoaDonService = {
     addProductsToInvoice,
     removeProductFromInvoice,
     updateProductQuantity,
-    quayLaiTrangThai
+    quayLaiTrangThai,
+    updateHinhThucTTHoaDon
 };

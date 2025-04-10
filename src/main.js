@@ -15,6 +15,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'vue3-toastify/dist/index.css';
 import 'bootstrap';
 import VueApexCharts from 'vue3-apexcharts'
+import { useGbStore } from '@/stores/gbStore';
 
 
 
@@ -26,4 +27,7 @@ app.use(Carousel);
 app.use(pinia);
 app.use(Antd);
 app.use(VueApexCharts)
+// Khôi phục trạng thái đăng nhập ngay khi ứng dụng khởi động
+const gbStore = useGbStore();
+gbStore.restoreLoginState();
 app.mount('#app');

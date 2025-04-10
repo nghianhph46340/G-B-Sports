@@ -17,32 +17,151 @@
                     </a-col>
                 </a-row>
                 <a-divider />
-                <h4 style="text-align: center;">Lịch sử trạng thái</h4><br>
-                <div class="status-icons">
-                    <div class="col" v-for="history in sortedTrangThaiHistory" :key="history.trang_thai">
-                        <div class="status-icon" :class="getStatusClass(history.trang_thai)">
-                            <i :class="getIconForStatus(history.trang_thai)"></i>
-                            <p>{{ history.trang_thai }}</p>
-                            <small>{{ history.ngay_chuyen_formatted }}</small>
+                <a-row>
+                    <a-col :md="22" class="text-center">
+                        <h4 style="margin-left: 90px;">Lịch sử trạng thái</h4>
+                    </a-col>
+                    <a-col :md="2" class="text-right"><a-button type="link" @click="openStatusHistoryDrawer">Xem chi
+                            tiết</a-button></a-col>
+                </a-row>
+                <br>
+                <div class="order-status-timeline">
+                    <div class="timeline-track"></div>
+
+                    <!-- Main status steps (always show all 5 possible statuses) -->
+                    <div class="timeline-steps">
+                        <!-- Chờ xác nhận -->
+                        <div class="timeline-step" :class="{
+                            'active': store.hoaDonDetail.trang_thai === 'Chờ xác nhận',
+                            'completed': isStatusCompleted('Chờ xác nhận')
+                        }">
+                            <div class="timeline-icon">
+                                <i class="fas fa-hourglass-start"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>Chờ xác nhận</h4>
+                                <p v-if="getStatusDate('Chờ xác nhận')">{{ formatDate(getStatusDate('Chờ xác nhận')) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Đã xác nhận -->
+                        <div class="timeline-step" :class="{
+                            'active': store.hoaDonDetail.trang_thai === 'Đã xác nhận',
+                            'completed': isStatusCompleted('Đã xác nhận')
+                        }">
+                            <div class="timeline-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>Đã xác nhận</h4>
+                                <p v-if="getStatusDate('Đã xác nhận')">{{ formatDate(getStatusDate('Đã xác nhận')) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Chờ đóng gói -->
+                        <div class="timeline-step" :class="{
+                            'active': store.hoaDonDetail.trang_thai === 'Chờ đóng gói',
+                            'completed': isStatusCompleted('Chờ đóng gói')
+                        }">
+                            <div class="timeline-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>Chờ đóng gói</h4>
+                                <p v-if="getStatusDate('Chờ đóng gói')">{{ formatDate(getStatusDate('Chờ đóng gói')) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Đang giao -->
+                        <div class="timeline-step" :class="{
+                            'active': store.hoaDonDetail.trang_thai === 'Đang giao',
+                            'completed': isStatusCompleted('Đang giao')
+                        }">
+                            <div class="timeline-icon">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>Đang giao</h4>
+                                <p v-if="getStatusDate('Đang giao')">{{ formatDate(getStatusDate('Đang giao')) }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Hoàn thành -->
+                        <div class="timeline-step" :class="{
+                            'active': store.hoaDonDetail.trang_thai === 'Hoàn thành',
+                            'completed': isStatusCompleted('Hoàn thành')
+                        }">
+                            <div class="timeline-icon">
+                                <i class="fas fa-flag-checkered"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>Hoàn thành</h4>
+                                <p v-if="getStatusDate('Hoàn thành')">{{ formatDate(getStatusDate('Hoàn thành')) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intermediate update points between main statuses -->
+                    <div class="update-markers">
+                        <div v-for="update in getUpdatedStatuses" :key="update.id" class="update-marker"
+                            :style="{ left: getUpdatePosition(update) + '%' }">
+                            <div class="update-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="update-tooltip">
+                                <h5>Đã cập nhật</h5>
+                                <p>{{ formatDateTime(update.ngay_chuyen) }}</p>
+                                <p v-if="update.nhan_vien_doi">Bởi: {{ update.nhan_vien_doi }}</p>
+                                <p v-if="update.noi_dung_doi">{{ update.noi_dung_doi }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <a-divider />
-
+                <!-- Drawer hiển thị chi tiết lịch sử trạng thái -->
+                <a-drawer v-model:open="showStatusHistoryDrawer" title="Chi tiết lịch sử trạng thái" placement="right"
+                    :width="450">
+                    <a-timeline :pending="isPending ? 'Đang xử lý...' : null" :reverse="reverseTimeline">
+                        <template #pendingDot>
+                            <i v-if="isPending" class="fas fa-spinner fa-spin" />
+                        </template>
+                        <a-timeline-item v-for="(status, index) in sortedTrangThaiHistory" :key="index"
+                            :color="getTimelineColor(status.trang_thai)">
+                            <a-row>
+                                <a-col :md="15">
+                                    <h6 style="font-weight: bold;">{{ status.trang_thai }}</h6>
+                                </a-col>
+                                <a-col :md="9">{{ formatDateTime(status.ngay_chuyen) }}</a-col>
+                            </a-row>
+                            <p v-if="status.nhan_vien_doi">
+                                Nhân viên: {{ status.nhan_vien_doi }}
+                            </p>
+                            <p v-if="status.noi_dung_doi">
+                                Nội dung: {{ status.noi_dung_doi }}
+                            </p>
+                        </a-timeline-item>
+                    </a-timeline>
+                    <a-button type="primary" style="margin-top: 16px" @click="toggleReverseTimeline">
+                        Đảo ngược thứ tự
+                    </a-button>
+                </a-drawer>
                 <div class="order-status">
                     <!-- Nút Quay lại trạng thái ban đầu -->
-                    <a-form @submit="revertToInitial" v-if="showRevertButton" :inline="true">
+                    <a-form @submit="openStatusModal('revert')" v-if="showRevertButton" :inline="true">
                         <a-button type="warning" html-type="submit">
                             Quay lại trạng thái ban đầu
                         </a-button>
                     </a-form>
-                    <a-form @submit="changeStatus" :inline="true">
+                    <a-form @submit="openStatusModal('change')" :inline="true">
                         <a-button type="primary" html-type="submit" :disabled="isCompletedOrCancelled"
                             :class="{ 'disabled': isCompletedOrCancelled }">
                             {{ nextStatusText }}
                         </a-button>
                     </a-form>
-                    <a-form @submit="cancelOrder" :inline="true">
+                    <a-form @submit="openStatusModal('cancel')" :inline="true">
                         <a-button type="text" html-type="submit" :disabled="cannotCancel"
                             :class="{ 'disabled': cannotCancel }">
                             Hủy đơn
@@ -61,6 +180,28 @@
                             <a-button key="ok" type="primary" @click="confirmPrint(true)">Đúng</a-button>
                         </template>
                     </a-modal>
+                    <!-- Modal dùng chung cho thay đổi trạng thái -->
+                    <a-modal v-model:open="showStatusModal" :title="modalTitle" @ok="confirmStatusChange"
+                        @cancel="closeStatusModal">
+                        <a-form :model="statusForm" layout="vertical">
+                            <a-form-item label="Người xác nhận">
+                                <a-input v-model:value="statusForm.nhanVienDoi" :readonly="isNhanVienDoiReadOnly"
+                                    placeholder="Nhập tên nhân viên" />
+                            </a-form-item>
+                            <a-form-item label="Nội dung chuyển trạng thái">
+                                <a-select v-model:value="statusForm.noiDungDoi" show-search allow-clear
+                                    placeholder="Chọn hoặc nhập nội dung" :filter-option="filterOption">
+                                    <a-select-option v-for="option in noiDungDoiOptions" :key="option" :value="option">
+                                        {{ option }}
+                                    </a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-form>
+                        <template #footer>
+                            <a-button key="cancel" @click="closeStatusModal">Hủy</a-button>
+                            <a-button key="ok" type="primary" @click="confirmStatusChange">Xác nhận</a-button>
+                        </template>
+                    </a-modal>
                 </div>
             </div>
 
@@ -72,15 +213,15 @@
                         <a-row :gutter="16">
                             <a-col :span="12">
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
-                                <p>Trạng thái: {{ store.hoaDonDetail.trang_thai_thanh_toan || 'N/A' }}</p>
+                                <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                             <a-col :span="12">
-                                <p>Ngày tạo: {{ formatDate(store.hoaDonDetail.ngay_tao) }}</p>
+                                <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -455,8 +596,8 @@ const defaultStatusSteps = [
     { name: 'Đơn hàng đã đặt', backendStatus: 'Chờ xác nhận', icon: 'fas fa-file-alt' },
     { name: 'Đã xác nhận', backendStatus: 'Đã xác nhận', icon: 'fas fa-check' },
     { name: 'Đã cập nhật', backendStatus: 'Đã cập nhật', icon: 'fas fa-edit' },
+    { name: 'Đang đóng gói', backendStatus: 'Chờ đóng gói', icon: 'fas fa-truck' },
     { name: 'Đã giao cho ĐVVC', backendStatus: 'Đang giao', icon: 'fas fa-truck' },
-    { name: 'Đã nhận hàng', backendStatus: 'Đã nhận hàng', icon: 'fas fa-box' },
     { name: 'Hoàn thành', backendStatus: 'Hoàn thành', icon: 'fas fa-check-circle' },
     { name: 'Đã hủy', backendStatus: 'Đã hủy', icon: 'fas fa-times-circle' }
 ];
@@ -661,7 +802,6 @@ const saveCustomerInfo = () => {
         } else {
             editedCustomer.value.diaChi = editedCustomer.value.diaChiCuThe || '';
         }
-
         // Gọi hàm cập nhật thông tin khách hàng
         store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, {
             hoTen: editedCustomer.value.hoTen,
@@ -669,7 +809,6 @@ const saveCustomerInfo = () => {
             sdtNguoiNhan: editedCustomer.value.sdtNguoiNhan,
             diaChi: editedCustomer.value.diaChi,
         });
-
         // Đóng drawer
         closeDrawer();
     }
@@ -710,18 +849,41 @@ const cannotCancel = computed(() => {
 
 const cannotEditProduct = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
-        return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
+    if (!trangThai) return true;
+
+    // Nếu trạng thái là "Đã cập nhật", kiểm tra trạng thái trước đó
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận';
     }
-    return ["Đã xác nhận", 'Chờ đóng gói', 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+
+    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+        return !['Chờ xác nhận'].includes(effectiveStatus);
+    }
+
+    return !['Chờ xác nhận', 'Đã xác nhận', 'Chờ đóng gói'].includes(effectiveStatus);
 });
 
 const cannotEdit = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
-    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
-        return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
+    if (!trangThai) return true;
+
+    // Nếu trạng thái là "Đã cập nhật", kiểm tra trạng thái trước đó
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận';
     }
-    return ["Đã xác nhận", 'Chờ đóng gói', 'Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+
+    if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+        return !['Chờ xác nhận'].includes(effectiveStatus);
+    }
+    return !['Chờ xác nhận', 'Đã xác nhận', 'Chờ đóng gói'].includes(effectiveStatus);
 });
 
 const nextStatusText = computed(() => {
@@ -730,15 +892,23 @@ const nextStatusText = computed(() => {
 
     if (!phuongThucNhanHang || !trangThai) return 'Chuyển trạng thái';
 
-    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
-        return trangThai === 'Chờ xác nhận' ? 'Hoàn thành' : 'Hoàn thành';
+    // Xác định trạng thái trước "Đã cập nhật" (nếu trạng thái hiện tại là "Đã cập nhật")
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận'; // Mặc định là "Chờ xác nhận" nếu không tìm thấy
     }
 
-    switch (trangThai) {
+    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
+        if (effectiveStatus === 'Chờ xác nhận') return 'Hoàn thành';
+        return 'Hoàn thành';
+    }
+
+    switch (effectiveStatus) {
         case 'Chờ xác nhận':
             return 'Xác nhận đơn hàng';
-        case 'Đã cập nhật': // Chỉ xử lý "Đã cập nhật" sau "Chờ xác nhận"
-            return 'Xác nhận đơn hàng'; // Vẫn chuyển sang "Đã xác nhận"
         case 'Đã xác nhận':
             return 'Chuẩn bị hàng';
         case 'Chờ đóng gói':
@@ -756,15 +926,23 @@ const nextStatusValue = computed(() => {
 
     if (!phuongThucNhanHang || !trangThai) return '';
 
-    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
-        return trangThai === 'Chờ xác nhận' ? 'Hoàn thành' : 'Hoàn thành';
+    // Xác định trạng thái trước "Đã cập nhật"
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận'; // Mặc định là "Chờ xác nhận" nếu không tìm thấy
     }
 
-    switch (trangThai) {
+    if (phuongThucNhanHang === 'Nhận tại cửa hàng') {
+        if (effectiveStatus === 'Chờ xác nhận') return 'Hoàn thành';
+        return 'Hoàn thành';
+    }
+
+    switch (effectiveStatus) {
         case 'Chờ xác nhận':
             return 'Đã xác nhận';
-        case 'Đã cập nhật': // Chỉ xử lý "Đã cập nhật" sau "Chờ xác nhận"
-            return 'Đã xác nhận'; // Vẫn chuyển sang "Đã xác nhận"
         case 'Đã xác nhận':
             return 'Chờ đóng gói';
         case 'Chờ đóng gói':
@@ -779,11 +957,17 @@ const nextStatusValue = computed(() => {
 const formatCurrency = (value) => {
     return value ? new Intl.NumberFormat('vi-VN').format(value) : '0';
 };
-
+// format chỉ hiện hh:mm dd-mm-yyyy
 const formatDate = (date) => {
     if (!date) return 'N/A';
     const d = new Date(date);
     return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+// format chỉ hiện hh:mm:ss dd-mm-yyyy
+const formatDateTime = (date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 const getStatusClass = (trangThai) => {
@@ -919,7 +1103,7 @@ const addSelectedProducts = () => {
         toast.error('Vui lòng chọn ít nhất một sản phẩm để thêm!');
         return;
     }
-    // Validate số lượng trước khi gửi API
+
     for (const product of selectedProducts) {
         const ctsp = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === product.idCTSP);
         const soLuongTon = calculateSoLuongTon(ctsp);
@@ -963,6 +1147,132 @@ const removeProduct = async (item, index) => {
     }
 };
 
+const showStatusModal = ref(false);
+const modalTitle = ref('');
+const modalAction = ref(''); // 'change', 'revert', hoặc 'cancel'
+const statusForm = ref({
+    nhanVienDoi: '',
+    noiDungDoi: ''
+});
+const isNhanVienDoiReadOnly = ref(false);
+
+// Danh sách gợi ý cho noi_dung_doi
+const noiDungDoiOptions = [
+    'Xác nhận đơn hàng',
+    'Chuẩn bị hàng',
+    'Giao cho đơn vị vận chuyển',
+    'Hoàn thành đơn hàng',
+    'Hủy đơn hàng',
+    'Quay lại trạng thái ban đầu'
+];
+
+// Hàm mở modal
+const openStatusModal = (action) => {
+    modalAction.value = action;
+    if (action === 'change') {
+        modalTitle.value = `Xác nhận chuyển trạng thái thành "${nextStatusValue.value}"`;
+    } else if (action === 'revert') {
+        modalTitle.value = 'Xác nhận quay lại trạng thái "Chờ xác nhận"';
+    } else if (action === 'cancel') {
+        modalTitle.value = 'Xác nhận hủy đơn hàng';
+    }
+
+    // Lấy thông tin nhân viên từ store
+    const nhanVienDoi = store.userDetails?.tenNhanVien || store.userInfo?.ten_dang_nhap || '';
+    statusForm.value.nhanVienDoi = nhanVienDoi;
+    isNhanVienDoiReadOnly.value = !!nhanVienDoi; // Nếu có thông tin thì readonly
+    statusForm.value.noiDungDoi = ''; // Reset nội dung
+
+    showStatusModal.value = true;
+};
+
+// Hàm đóng modal
+const closeStatusModal = () => {
+    showStatusModal.value = false;
+    modalAction.value = '';
+    modalTitle.value = '';
+    statusForm.value = { nhanVienDoi: '', noiDungDoi: '' };
+};
+// Hàm xác nhận thay đổi trạng thái
+const confirmStatusChange = () => {
+    if (!statusForm.value.nhanVienDoi) {
+        toast.error('Vui lòng nhập tên nhân viên!');
+        return;
+    }
+    if (!statusForm.value.noiDungDoi) {
+        toast.error('Vui lòng chọn hoặc nhập nội dung chuyển trạng thái!');
+        return;
+    }
+
+    if (modalAction.value === 'change') {
+        store.changeTrangThaiHoaDon(
+            store.hoaDonDetail.ma_hoa_don,
+            nextStatusValue.value,
+            statusForm.value.nhanVienDoi,
+            statusForm.value.noiDungDoi
+        );
+    } else if (modalAction.value === 'revert') {
+        store.revertToInitialStatus(
+            store.hoaDonDetail.ma_hoa_don,
+            statusForm.value.nhanVienDoi,
+            statusForm.value.noiDungDoi
+        );
+    } else if (modalAction.value === 'cancel') {
+        store.cancelHoaDon(
+            store.hoaDonDetail.ma_hoa_don,
+            statusForm.value.nhanVienDoi,
+            statusForm.value.noiDungDoi
+        );
+    }
+
+    closeStatusModal();
+};
+// Thêm vào phần đầu của <script setup>
+const showStatusHistoryDrawer = ref(false);
+const reverseTimeline = ref(true);
+
+// Computed property để kiểm tra trạng thái pending
+const isPending = computed(() => {
+    const currentStatus = store.hoaDonDetail?.trang_thai;
+    return currentStatus !== 'Hoàn thành' && currentStatus !== 'Đã hủy';
+});
+
+// Hàm mở drawer
+const openStatusHistoryDrawer = () => {
+    showStatusHistoryDrawer.value = true;
+};
+
+// // Hàm đóng drawer
+// const closeStatusHistoryDrawer = () => {
+//     showStatusHistoryDrawer.value = false;
+// };
+
+// Hàm đảo ngược thứ tự timeline
+const toggleReverseTimeline = () => {
+    reverseTimeline.value = !reverseTimeline.value;
+};
+
+// Hàm lấy màu cho timeline item dựa trên trạng thái
+const getTimelineColor = (trangThai) => {
+    switch (trangThai) {
+        case 'Chờ xác nhận':
+            return 'blue';
+        case 'Đã xác nhận':
+            return 'green';
+        case 'Chờ đóng gói':
+            return 'orange';
+        case 'Đang giao':
+            return 'purple';
+        case 'Hoàn thành':
+            return 'green';
+        case 'Đã hủy':
+            return 'red';
+        case 'Đã cập nhật':
+            return 'gray';
+        default:
+            return 'blue';
+    }
+};
 // Trạng thái popup chỉnh sửa số lượng
 const showQuantityPopup = ref(false);
 const popupType = ref('');
@@ -1140,7 +1450,7 @@ const printInvoice = () => {
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
     doc.text(`Mã hóa đơn: ${store.hoaDonDetail.ma_hoa_don || 'N/A'}`, 20, 86);
-    doc.text(`Ngày: ${formatDate(store.hoaDonDetail.ngay_tao)}`, 20, 94);
+    doc.text(`Ngày: ${formatDateTime(store.hoaDonDetail.ngay_tao)}`, 20, 94);
     doc.text(`Tên khách hàng: ${store.hoaDonDetail.ho_ten || 'Khách lẻ'}`, 20, 102);
     // Danh sách sản phẩm
     let y = 110;
@@ -1221,6 +1531,121 @@ onMounted(async () => {
         console.log('Mô tả: ', store.chiTietHoaDons?.moTa);
     }
 });
+
+// Add these new computed properties and methods to the script section
+
+// Get only the "Đã cập nhật" statuses from history
+const getUpdatedStatuses = computed(() => {
+    if (!store.trangThaiHistory) return [];
+    return store.trangThaiHistory.filter(history => history.trang_thai === 'Đã cập nhật');
+});
+
+// Check if a status is completed (past status)
+const isStatusCompleted = (status) => {
+    if (!store.trangThaiHistory || store.trangThaiHistory.length === 0) return false;
+
+    // Define order for main statuses
+    const statusOrder = {
+        'Chờ xác nhận': 1,
+        'Đã xác nhận': 2,
+        'Chờ đóng gói': 3,
+        'Đang giao': 4,
+        'Hoàn thành': 5
+    };
+
+    // Current status order
+    const currentStatusOrder = statusOrder[store.hoaDonDetail.trang_thai] || 0;
+    const checkStatusOrder = statusOrder[status] || 0;
+
+    // Status is completed if it comes before current status
+    if (checkStatusOrder < currentStatusOrder) return true;
+
+    // Or if the status exists in history (and is not the current status)
+    return store.trangThaiHistory.some(
+        history => history.trang_thai === status && history.trang_thai !== store.hoaDonDetail.trang_thai
+    );
+};
+
+// Get the date when a status occurred
+const getStatusDate = (status) => {
+    if (!store.trangThaiHistory) return null;
+
+    const statusHistory = store.trangThaiHistory.find(h => h.trang_thai === status);
+    return statusHistory ? statusHistory.ngay_chuyen : null;
+};
+
+// Calculate position for update markers based on surrounding main statuses
+const getUpdatePosition = (update) => {
+    if (!update || !update.ngay_chuyen) return 50; // Default to middle
+
+    // Define status points (percentage along timeline)
+    const statusPoints = {
+        'Chờ xác nhận': 0,
+        'Đã xác nhận': 25,
+        'Chờ đóng gói': 50,
+        'Đang giao': 75,
+        'Hoàn thành': 100
+    };
+
+    // Find previous and next non-update statuses
+    const orderedStatuses = [...store.trangThaiHistory].sort(
+        (a, b) => new Date(a.ngay_chuyen) - new Date(b.ngay_chuyen)
+    );
+
+    const updateIndex = orderedStatuses.findIndex(s =>
+        s.trang_thai === 'Đã cập nhật' && s.ngay_chuyen === update.ngay_chuyen
+    );
+
+    if (updateIndex === -1) return 50;
+
+    let prevStatus = null;
+    let nextStatus = null;
+
+    // Look for previous main status
+    for (let i = updateIndex - 1; i >= 0; i--) {
+        if (orderedStatuses[i].trang_thai !== 'Đã cập nhật') {
+            prevStatus = orderedStatuses[i].trang_thai;
+            break;
+        }
+    }
+
+    // Look for next main status
+    for (let i = updateIndex + 1; i < orderedStatuses.length; i++) {
+        if (orderedStatuses[i].trang_thai !== 'Đã cập nhật') {
+            nextStatus = orderedStatuses[i].trang_thai;
+            break;
+        }
+    }
+
+    // Calculate position
+    if (prevStatus && statusPoints[prevStatus] !== undefined) {
+        if (nextStatus && statusPoints[nextStatus] !== undefined) {
+            // Between two main statuses
+            const prevPoint = statusPoints[prevStatus];
+            const nextPoint = statusPoints[nextStatus];
+            const range = nextPoint - prevPoint;
+
+            // Position proportionally based on time between statuses
+            const prevDate = new Date(orderedStatuses.find(s => s.trang_thai === prevStatus).ngay_chuyen);
+            const nextDate = new Date(orderedStatuses.find(s => s.trang_thai === nextStatus).ngay_chuyen);
+            const updateDate = new Date(update.ngay_chuyen);
+
+            const totalDuration = nextDate - prevDate;
+            if (totalDuration <= 0) return prevPoint + range / 2; // Middle point as fallback
+
+            const updateProgress = (updateDate - prevDate) / totalDuration;
+            return prevPoint + (range * updateProgress);
+        } else {
+            // After a main status with no next main status yet
+            return statusPoints[prevStatus] + 12.5; // Halfway to next point
+        }
+    } else if (nextStatus) {
+        // Before first main status
+        return statusPoints[nextStatus] - 12.5; // Halfway from previous point
+    }
+
+    return 50; // Default middle position
+};
 </script>
 
 <style scoped>
@@ -1236,50 +1661,194 @@ onMounted(async () => {
 
 .status-icons {
     display: flex;
-    justify-content: flex-start;
-    gap: 40px;
-    margin-bottom: 20px;
+    justify-content: center;
+    gap: 20px;
+    margin: 40px 0;
     position: relative;
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: 10px 0;
+    padding: 20px 0;
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.status-icons::-webkit-scrollbar {
+    display: none;
+}
+
+/* Column for each status */
+.status-icons .col {
+    position: relative;
+    z-index: 2;
+    min-width: 120px;
+    transition: all 0.4s ease;
+    transform-origin: center;
+}
+
+.status-icons .col:hover {
+    transform: translateY(-5px) scale(1.05);
 }
 
 .status-icon {
-    text-align: center;
-    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 10px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     position: relative;
-    z-index: 1;
-    min-width: 100px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    min-height: 120px;
 }
 
+.status-icon:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Connection line between status icons */
 .status-icon:not(:last-child)::after {
     content: '';
     position: absolute;
-    top: 12px;
+    top: 50%;
     left: 100%;
-    width: 40px;
-    height: 2px;
-    background-color: #1890ff;
-    z-index: 0;
+    width: 30px;
+    height: 3px;
+    background: linear-gradient(90deg, #1890ff 0%, rgba(24, 144, 255, 0.4) 100%);
+    transform: translateY(-50%);
+    z-index: 1;
 }
 
+/* Icon container */
 .status-icon i {
-    font-size: 24px;
-    margin-bottom: 5px;
+    font-size: 28px;
+    margin-bottom: 12px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f0f8ff;
+    color: #1890ff;
+    margin-top: -30px;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s ease;
 }
 
+.status-icon:hover i {
+    transform: rotate(360deg);
+    background: #1890ff;
+    color: #fff;
+}
+
+/* Status text */
+.status-icon p {
+    font-weight: 600;
+    margin: 0 0 5px;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.status-icon:hover p {
+    color: #1890ff;
+}
+
+/* Date text */
 .status-icon small {
     display: block;
     font-size: 12px;
-    color: #666;
+    color: #888;
+    text-align: center;
+    transition: all 0.3s ease;
 }
 
-.order-status {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-bottom: 20px;
+/* Active status styles */
+.status-icon.active {
+    border-color: #1890ff;
+    background: #f0f8ff;
+    transform: scale(1.05);
+}
+
+.status-icon.active i {
+    background: #1890ff;
+    color: #fff;
+    animation: pulse 2s infinite;
+}
+
+/* Completed status styles */
+.status-icon.completed i {
+    background: #52c41a;
+    color: #fff;
+}
+
+.status-icon.completed::after {
+    background: linear-gradient(90deg, #52c41a 0%, rgba(82, 196, 26, 0.4) 100%);
+}
+
+/* Text status colors */
+.text-danger i {
+    background: #ffccc7;
+    color: #f5222d;
+}
+
+.text-danger:hover i {
+    background: #f5222d;
+    color: #fff;
+}
+
+.text-success i {
+    background: #d9f7be;
+    color: #52c41a;
+}
+
+.text-success:hover i {
+    background: #52c41a;
+    color: #fff;
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(24, 144, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .status-icons {
+        padding: 30px 0 10px;
+        justify-content: flex-start;
+    }
+
+    .status-icon {
+        min-height: 100px;
+        padding: 10px 8px;
+    }
+
+    .status-icon i {
+        font-size: 20px;
+        width: 50px;
+        height: 50px;
+        margin-top: -25px;
+    }
+
+    .status-icon:not(:last-child)::after {
+        width: 20px;
+    }
 }
 
 .info-box {
@@ -1406,5 +1975,448 @@ onMounted(async () => {
 /* Style cho bảng danh sách địa chỉ */
 :deep(.ant-table) {
     margin-bottom: 20px;
+}
+
+/* Định dạng timeline trong drawer */
+:deep(.ant-timeline-item-content) {
+    margin-left: 20px;
+}
+
+:deep(.ant-timeline-item-tail) {
+    border-left: 2px solid #d9d9d9;
+}
+
+:deep(.ant-timeline-item-pending .ant-timeline-item-tail) {
+    border-left: 2px dashed #d9d9d9;
+}
+
+:deep(.fa-spinner) {
+    font-size: 16px;
+    color: #1890ff;
+}
+
+.order-status {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.order-status a-form {
+    margin-right: 10px;
+    display: inline-block;
+}
+
+.order-status .ant-btn {
+    margin-right: 0;
+}
+
+/* Để các button trong a-form inline với nhau */
+:deep(.ant-form-inline) {
+    display: inline-flex;
+    margin-right: 0;
+    margin-bottom: 0;
+}
+
+/* Ensure forms are displayed side by side */
+:deep(.order-status > *) {
+    margin-bottom: 0;
+    margin-right: 10px;
+}
+
+/* Status strip styling */
+.status-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 5px;
+    background: #f7f9fc;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.status-strip .btn {
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    min-width: 100px;
+    overflow: hidden;
+}
+
+.status-strip .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.status-strip .btn:hover::before {
+    transform: translateX(100%);
+}
+
+.status-strip .btn-primary {
+    background-color: #1890ff;
+    border-color: #1890ff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.35);
+}
+
+.status-strip .btn-outline-primary {
+    color: #1890ff;
+    border-color: #1890ff;
+    background-color: white;
+}
+
+.status-strip .btn-outline-primary:hover {
+    background-color: rgba(24, 144, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+/* Badge styling */
+:deep(.ant-badge) {
+    display: inline-block;
+}
+
+:deep(.ant-badge .ant-badge-count) {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    height: 22px;
+    padding: 0 7px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    background: #ff4d4f;
+    border-radius: 11px;
+    box-shadow: 0 0 0 1px #fff;
+    z-index: 5;
+    min-width: 22px;
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+:deep(.ant-badge-count-sm) {
+    height: 18px;
+    padding: 0 5px;
+    font-size: 11px;
+    border-radius: 9px;
+}
+
+:deep(.status-strip .ant-badge:hover .ant-badge-count) {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 2px #fff;
+}
+
+/* Animation for switching between statuses */
+.status-strip .btn-primary,
+.status-strip .btn-outline-primary {
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+/* Status colors for different types */
+.status-strip button[data-status="Chờ xác nhận"] .ant-badge-count {
+    background-color: #faad14;
+}
+
+.status-strip button[data-status="Đã xác nhận"] .ant-badge-count {
+    background-color: #1890ff;
+}
+
+.status-strip button[data-status="Đang giao"] .ant-badge-count {
+    background-color: #722ed1;
+}
+
+.status-strip button[data-status="Hoàn thành"] .ant-badge-count {
+    background-color: #52c41a;
+}
+
+.status-strip button[data-status="Đã hủy"] .ant-badge-count {
+    background-color: #ff4d4f;
+}
+
+.order-status-timeline {
+    position: relative;
+    margin: 60px 0 80px;
+    padding: 0 20px;
+    width: 100%;
+}
+
+.timeline-track {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #f5f5f5, #f0f0f0);
+    border-radius: 3px;
+    z-index: 1;
+}
+
+.timeline-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-width: 120px;
+    margin: 0 5px;
+    flex: 1;
+}
+
+.timeline-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 15px;
+    transition: all 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+    position: relative;
+    border: 3px solid #e8e8e8;
+    z-index: 2;
+}
+
+.timeline-icon i {
+    font-size: 32px;
+    color: #b0b0b0;
+    transition: all 0.4s ease;
+}
+
+.timeline-content {
+    text-align: center;
+    max-width: 150px;
+    transition: all 0.3s ease;
+}
+
+.timeline-content h4 {
+    margin: 0 0 5px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.timeline-content p {
+    margin: 0;
+    font-size: 13px;
+    color: #888;
+}
+
+/* Active status styling */
+.timeline-step.active .timeline-icon {
+    border-color: #1890ff;
+    box-shadow: 0 8px 16px rgba(24, 144, 255, 0.3);
+    transform: translateY(-10px) scale(1.05);
+    animation: pulse-blue 2s infinite;
+}
+
+.timeline-step.active .timeline-icon i {
+    color: #1890ff;
+}
+
+.timeline-step.active .timeline-content h4 {
+    color: #1890ff;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* Completed status styling */
+.timeline-step.completed .timeline-icon {
+    border-color: #52c41a;
+    background-color: #f6ffed;
+}
+
+.timeline-step.completed .timeline-icon i {
+    color: #52c41a;
+}
+
+.timeline-step.completed .timeline-content h4 {
+    color: #52c41a;
+}
+
+/* Connection line styling */
+.timeline-step::before {
+    content: '';
+    position: absolute;
+    top: 40px;
+    width: 100%;
+    height: 6px;
+    background-color: #e8e8e8;
+    z-index: 1;
+}
+
+.timeline-step.completed::before,
+.timeline-step.active::before {
+    background: linear-gradient(90deg, #52c41a, #1890ff);
+}
+
+.timeline-step:first-child::before {
+    left: 50%;
+    width: 50%;
+}
+
+.timeline-step:last-child::before {
+    width: 50%;
+    right: 50%;
+}
+
+/* Update markers styling */
+.update-markers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+}
+
+.update-marker {
+    position: absolute;
+    top: 34px;
+    /* Align with timeline track */
+}
+
+.update-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: #722ed1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(114, 46, 209, 0.4);
+    cursor: pointer;
+    border: 2px solid #fff;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.update-icon i {
+    font-size: 8px;
+    color: white;
+}
+
+.update-marker:hover .update-icon {
+    transform: scale(1.2);
+}
+
+.update-tooltip {
+    position: absolute;
+    top: -82px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    min-width: 180px;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.update-tooltip h5 {
+    margin: 0 0 5px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.update-tooltip p {
+    margin: 2px 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.update-marker:hover .update-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+.update-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Animation for active status */
+@keyframes pulse-blue {
+    0% {
+        box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.5);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(24, 144, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
+    }
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+    .timeline-step {
+        min-width: 80px;
+    }
+
+    .timeline-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .timeline-icon i {
+        font-size: 26px;
+    }
+
+    .timeline-content h4 {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 767px) {
+    .timeline-steps {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 20px;
+        justify-content: flex-start;
+    }
+
+    .timeline-step {
+        min-width: 140px;
+        flex: 0 0 auto;
+    }
+
+    .timeline-track {
+        height: 4px;
+    }
+
+    .update-marker {
+        top: 32px;
+    }
 }
 </style>
