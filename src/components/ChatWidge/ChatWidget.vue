@@ -1,10 +1,17 @@
 <template>
   <div>
     <!-- Nút chat ở góc phải bên dưới -->
-    <div class="chat-button" @click="handleOpenChat">
+    <!-- <div class="chat-button" @click="handleOpenChat">
       <a-badge :count="totalUnread">
         <message-outlined class="chat-icon" />
       </a-badge>
+    </div> -->
+
+    <div class="live-chat-button" @click="handleOpenChat">
+      <a-button :count="totalUnread" type="primary" shape="circle" size="large">
+        <message-outlined />
+      </a-button>
+      <span class="live-chat-tooltip">Chat với tư vấn viên</span>
     </div>
 
     <!-- Modal Chat -->
@@ -76,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, defineExpose } from 'vue';
 import { MessageOutlined, ArrowLeftOutlined } from '@ant-design/icons-vue';
 import axios from 'axios';
 import SockJS from 'sockjs-client';
@@ -403,34 +410,60 @@ onUnmounted(() => {
     stompClient.value.deactivate();
   }
 });
+
+// Expose phương thức handleOpenChat ra ngoài
+defineExpose({
+  handleOpenChat
+});
 </script>
 
 <style scoped>
-.chat-button {
+/* Live Chat Button */
+.live-chat-button {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 60px;
-  height: 60px;
-  background-color: black;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  bottom: 30px;
+  right: 30px;
+  z-index: 100;
 }
 
-.chat-icon {
+.live-chat-button .ant-btn {
+  width: 65px;
+  height: 65px;
+  background-color: #e53935 !important;
+  /* Màu đỏ theo yêu cầu */
+  border-color: #e53935 !important;
+  box-shadow: 0 5px 15px rgba(229, 57, 53, 0.3);
+}
+
+.live-chat-button .ant-btn:hover {
+  background-color: #c62828 !important;
+  /* Màu đỏ đậm hơn khi hover */
+  border-color: #c62828 !important;
+}
+
+.live-chat-button .anticon {
+  font-size: 28px;
+}
+
+.live-chat-tooltip {
+  position: absolute;
+  right: 75px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #000;
   color: white;
-  font-size: 24px;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 1rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
 }
 
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+.live-chat-button:hover .live-chat-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 
 .messages-container {
