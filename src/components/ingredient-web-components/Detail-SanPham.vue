@@ -137,9 +137,10 @@
                 </div>
 
                 <div class="product-actions">
-                    <button class="btn-add-to-cart" @click="addToCart" :disabled="!canAddToCart">
+                    <button class="btn-add-to-cart" @click="addToCartFromDetail" :disabled="!canAddToCart">
                         <shopping-cart-outlined />
                         Thêm vào giỏ hàng
+                        <span v-if="cartCount > 0" class="cart-count-badge">{{ cartCount }}</span>
                     </button>
                     <button class="btn-buy-now" @click="buyNow" :disabled="!canAddToCart">
                         <thunderbolt-outlined />
@@ -280,7 +281,7 @@
                                         <i class="fas fa-eye"></i>
                                         Xem
                                     </button>
-                                    <button class="overlay-btn cart">
+                                    <button class="overlay-btn cart" @click="addToCart(product)">
                                         <i class="fas fa-shopping-cart"></i>
                                         Thêm vào giỏ
                                     </button>
@@ -345,6 +346,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal notificación carrito -->
+        <a-modal v-model:open="cartNotification" :footer="null" :mask-closable="true" :width="400"
+            class="cart-notification-modal">
+            <div class="cart-notification">
+                <div class="notification-header">
+                    <check-circle-outlined class="success-icon" />
+                    <h3>Đã thêm vào giỏ hàng!</h3>
+                </div>
+
+                <div class="notification-product" v-if="lastAddedProduct">
+                    <img :src="lastAddedProduct.image" :alt="lastAddedProduct.name" class="product-thumbnail">
+                    <div class="product-info">
+                        <h4>{{ lastAddedProduct.name }}</h4>
+                        <div class="product-variants" v-if="lastAddedProduct.color || lastAddedProduct.size">
+                            <span v-if="lastAddedProduct.color">Màu: {{ lastAddedProduct.color }}</span>
+                            <span v-if="lastAddedProduct.size">Size: {{ lastAddedProduct.size }}</span>
+                        </div>
+                        <div class="product-quantity-price">
+                            <span class="quantity">SL: {{ lastAddedProduct.quantity }}</span>
+                            <span class="price">{{ formatCurrency(lastAddedProduct.price) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cart-summary">
+                    <div class="summary-row">
+                        <span>Giỏ hàng của bạn</span>
+                        <span>{{ cartItems.length }} sản phẩm</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Tổng tiền:</span>
+                        <span>{{ formatCurrency(cartTotal) }}</span>
+                    </div>
+                </div>
+
+                <div class="notification-actions">
+                    <a-button @click="cartNotification = false">
+                        Tiếp tục mua sắm
+                    </a-button>
+                    <a-button type="primary" @click="viewCart">
+                        Xem giỏ hàng
+                    </a-button>
+                </div>
+            </div>
+        </a-modal>
     </div>
 </template>
 
@@ -366,7 +413,8 @@ import {
     PlusOutlined,
     MinusOutlined,
     StarTwoTone,
-    EyeOutlined
+    EyeOutlined,
+    CheckCircleOutlined
 } from '@ant-design/icons-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
@@ -854,24 +902,179 @@ const decreaseQuantity = () => {
 };
 
 // Xử lý thêm vào giỏ hàng
-const addToCart = () => {
+const addToCart = (product) => {
+    // Tạo đối tượng sản phẩm để thêm vào giỏ hàng
+    const cartItem = {
+        id: product.id_chi_tiet_san_pham || product.id_san_pham,
+        name: product.ten_san_pham || product.ten,
+        image: product.hinh_anh,
+        price: product.gia_khuyen_mai || product.gia_ban,
+        originalPrice: product.gia_goc,
+        quantity: 1,
+        maxQuantity: product.so_luong || 10, // Số lượng tối đa có thể mua
+        color: product.ten_mau || '',
+        size: product.gia_tri || ''
+    };
+
+    // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
+    const existingItemIndex = cartItems.value.findIndex(item => item.id === cartItem.id);
+
+    if (existingItemIndex >= 0) {
+        // Nếu sản phẩm đã có trong giỏ hàng, tăng số lượng
+        if (cartItems.value[existingItemIndex].quantity < cartItems.value[existingItemIndex].maxQuantity) {
+            cartItems.value[existingItemIndex].quantity += 1;
+            showSuccessMessage('Đã tăng số lượng sản phẩm trong giỏ hàng!');
+
+            // Gán sản phẩm vừa thêm
+            lastAddedProduct.value = { ...cartItems.value[existingItemIndex] };
+        } else {
+            showWarningMessage('Số lượng sản phẩm đã đạt mức tối đa!');
+            return;
+        }
+    } else {
+        // Nếu sản phẩm chưa có trong giỏ hàng, thêm mới
+        cartItems.value.push(cartItem);
+        showSuccessMessage('Đã thêm sản phẩm vào giỏ hàng!');
+
+        // Gán sản phẩm vừa thêm
+        lastAddedProduct.value = { ...cartItem };
+    }
+
+    // Lưu giỏ hàng vào localStorage
+    saveCartToLocalStorage();
+
+    // Hiển thị modal thông báo
+    cartNotification.value = true;
+
+    // Tự động đóng modal sau 5 giây
+    setTimeout(() => {
+        cartNotification.value = false;
+    }, 5000);
+};
+
+// Xử lý thêm vào giỏ hàng từ trang chi tiết sản phẩm
+const addToCartFromDetail = () => {
     if (!selectedVariant.value) {
         message.warning('Vui lòng chọn màu sắc và kích thước');
         return;
     }
 
-    // Xử lý thêm vào giỏ hàng
-    console.log('Thêm vào giỏ hàng:', {
-        product_id: productId.value,
-        variant_id: selectedVariant.value.id_chi_tiet_san_pham,
-        color: selectedColorName.value,
-        size: selectedSizeName.value,
+    // Tạo đối tượng sản phẩm để thêm vào giỏ hàng
+    const cartItem = {
+        id: selectedVariant.value.id_chi_tiet_san_pham,
+        name: product.value.ten_san_pham,
+        image: product.value.hinh_anh[0],
+        price: product.value.gia_khuyen_mai || product.value.gia_ban_hien_tai,
+        originalPrice: product.value.gia_goc,
         quantity: quantity.value,
-        price: product.value.gia_khuyen_mai
-    });
+        maxQuantity: selectedVariant.value.so_luong,
+        color: selectedColorName.value,
+        size: selectedSizeName.value
+    };
 
-    message.success('Đã thêm sản phẩm vào giỏ hàng');
+    // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
+    const existingItemIndex = cartItems.value.findIndex(item => item.id === cartItem.id);
+
+    if (existingItemIndex >= 0) {
+        // Kiểm tra nếu thêm vào sẽ vượt quá số lượng tối đa
+        const newQuantity = cartItems.value[existingItemIndex].quantity + cartItem.quantity;
+
+        if (newQuantity <= cartItems.value[existingItemIndex].maxQuantity) {
+            cartItems.value[existingItemIndex].quantity = newQuantity;
+            message.success('Đã cập nhật số lượng sản phẩm trong giỏ hàng');
+
+            // Gán sản phẩm vừa thêm
+            lastAddedProduct.value = { ...cartItems.value[existingItemIndex] };
+        } else {
+            message.warning(`Chỉ có thể thêm tối đa ${cartItems.value[existingItemIndex].maxQuantity} sản phẩm`);
+            return;
+        }
+    } else {
+        // Nếu sản phẩm chưa có trong giỏ hàng, thêm mới
+        cartItems.value.push(cartItem);
+        message.success('Đã thêm sản phẩm vào giỏ hàng');
+
+        // Gán sản phẩm vừa thêm
+        lastAddedProduct.value = { ...cartItem };
+    }
+
+    // Lưu giỏ hàng vào localStorage
+    saveCartToLocalStorage();
+
+    // Hiển thị modal thông báo
+    cartNotification.value = true;
+
+    // Tự động đóng modal sau 5 giây
+    setTimeout(() => {
+        cartNotification.value = false;
+    }, 5000);
+
+    console.log('Đã thêm vào giỏ hàng:', cartItem);
 };
+
+// Hiển thị thông báo thành công
+const showSuccessMessage = (message) => {
+    if (window.antd && window.antd.message) {
+        window.antd.message.success(message);
+    } else {
+        alert(message);
+    }
+};
+
+// Hiển thị thông báo cảnh báo
+const showWarningMessage = (message) => {
+    if (window.antd && window.antd.message) {
+        window.antd.message.warning(message);
+    } else {
+        alert(message);
+    }
+};
+
+// Tải giỏ hàng từ localStorage
+const loadCartFromLocalStorage = () => {
+    const savedCart = localStorage.getItem('gb-sport-cart');
+    if (savedCart) {
+        try {
+            const parsedCart = JSON.parse(savedCart);
+            console.log('Đã tải giỏ hàng từ localStorage:', parsedCart);
+
+            // Đảm bảo các giá trị số là số
+            cartItems.value = parsedCart.map(item => ({
+                ...item,
+                price: Number(item.price || 0),
+                quantity: Number(item.quantity || 1),
+                maxQuantity: Number(item.maxQuantity || 10),
+                originalPrice: Number(item.originalPrice || 0)
+            }));
+        } catch (error) {
+            console.error('Lỗi khi tải giỏ hàng:', error);
+            cartItems.value = [];
+        }
+    }
+};
+
+// Lưu giỏ hàng vào localStorage
+const saveCartToLocalStorage = () => {
+    // Đảm bảo tất cả các giá trị số được lưu dưới dạng số
+    const cartToSave = cartItems.value.map(item => ({
+        ...item,
+        price: Number(item.price || 0),
+        quantity: Number(item.quantity || 1),
+        maxQuantity: Number(item.maxQuantity || 10),
+        originalPrice: Number(item.originalPrice || 0)
+    }));
+
+    console.log('Lưu giỏ hàng vào localStorage:', cartToSave);
+    localStorage.setItem('gb-sport-cart', JSON.stringify(cartToSave));
+
+    // Phát ra sự kiện custom để cập nhật giỏ hàng
+    window.dispatchEvent(new CustomEvent('cart-updated'));
+};
+
+// Tải giỏ hàng khi component được tạo
+onMounted(() => {
+    loadCartFromLocalStorage();
+});
 
 // Xử lý mua ngay
 const buyNow = () => {
@@ -887,7 +1090,8 @@ const buyNow = () => {
         color: selectedColorName.value,
         size: selectedSizeName.value,
         quantity: quantity.value,
-        price: product.value.gia_khuyen_mai
+        price: product.value.gia_khuyen_mai || product.value.gia_ban_hien_tai,
+        originalPrice: product.value.gia_goc
     });
 
     // Lấy URL hình ảnh an toàn
@@ -909,7 +1113,8 @@ const buyNow = () => {
         ten_mau_sac: selectedColorName.value,
         ten_kich_thuoc: selectedSizeName.value,
         gia: product.value.gia_khuyen_mai || product.value.gia_ban_hien_tai,
-        so_luong: quantity.value
+        so_luong: quantity.value,
+        original_price: product.value.gia_goc
     };
     store.setCheckoutItems(checkoutItem);
     // Chuyển hướng đến trang thanh toán
@@ -1065,6 +1270,28 @@ const isNextImage = (index) => {
     }
     return false;
 };
+
+// Giỏ hàng
+const cartItems = ref([]);
+const cartCount = computed(() => {
+    return cartItems.value.reduce((total, item) => total + item.quantity, 0);
+});
+
+// Modal notificación carrito
+const cartNotification = ref(false);
+const lastAddedProduct = ref(null);
+
+// Tính tổng tiền của giỏ hàng
+const cartTotal = computed(() => {
+    return cartItems.value.reduce((total, item) => total + (item.price * item.quantity), 0);
+});
+
+// Chuyển đến trang giỏ hàng
+const viewCart = () => {
+    router.push('/giohang-banhang');
+};
+
+// ... existing code ...
 </script>
 
 <style scoped>
@@ -1689,6 +1916,7 @@ const isNextImage = (index) => {
 .btn-add-to-cart {
     background-color: #007bff;
     color: #fff;
+    position: relative;
 }
 
 .btn-add-to-cart:hover:not(:disabled) {
@@ -2601,5 +2829,142 @@ const isNextImage = (index) => {
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
+}
+
+.cart-count-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff3a3a;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+/* Cart notification modal */
+:deep(.cart-notification-modal .ant-modal-content) {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+:deep(.cart-notification-modal .ant-modal-body) {
+    padding: 0;
+}
+
+.cart-notification {
+    padding: 0;
+}
+
+.notification-header {
+    background-color: #f6ffed;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.notification-header h3 {
+    margin: 0;
+    color: #52c41a;
+    font-size: 18px;
+}
+
+.success-icon {
+    color: #52c41a;
+    font-size: 24px;
+}
+
+.notification-product {
+    display: flex;
+    padding: 0 20px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.product-thumbnail {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    margin-right: 15px;
+}
+
+.product-info {
+    flex: 1;
+}
+
+.product-info h4 {
+    margin: 0 0 5px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.product-variants {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.product-variants span {
+    margin-right: 10px;
+}
+
+.product-quantity-price {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.price {
+    font-weight: 600;
+    color: #ff4d4f;
+}
+
+.cart-summary {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.summary-row.total {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.notification-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 15px 20px 20px;
+}
+
+.notification-actions button {
+    flex: 1;
 }
 </style>

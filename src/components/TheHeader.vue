@@ -41,9 +41,10 @@
                                 :class="{ 'icon-animated': animatedIcon === 'support' }" />
                         </div>
                         <span class="nav-text">{{ !store.changeLanguage.hoTro ? 'Hỗ trợ' : store.changeLanguage.hoTro
-                        }}</span>
+                            }}</span>
                     </div>
-                    <div class="nav-item text-center" @mouseenter="animateIcon('cart')">
+                    <div class="nav-item text-center" @click="chuyenTrang('/giohang-banhang')"
+                        @mouseenter="animateIcon('cart')">
                         <div class="icon-container">
                             <ShoppingCart class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'cart' }" />
                             <span v-if="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
@@ -65,21 +66,71 @@ import { MessageCircleQuestion } from 'lucide-vue-next';
 import { ShoppingCart } from 'lucide-vue-next';
 import { useGbStore } from '@/stores/gbStore';
 import TheHeaderSearchModal from './TheHeaderSearchModal.vue';
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 const store = useGbStore();
 const animatedIcon = ref(null);
-const cartItemCount = ref(0); // Giả sử số lượng sản phẩm trong giỏ hàng
+const cartItemCount = ref(0); // Số lượng sản phẩm trong giỏ hàng
 const router = useRouter();
+
 const chuyenTrang = (path) => {
     router.push(path);
 }
+
 const animateIcon = (iconName) => {
     animatedIcon.value = iconName;
     setTimeout(() => {
         animatedIcon.value = null;
     }, 500);
 };
+
+// Hàm tải giỏ hàng từ localStorage và cập nhật số lượng
+const updateCartCount = () => {
+    try {
+        const savedCart = localStorage.getItem('gb-sport-cart');
+        if (savedCart) {
+            const cartItems = JSON.parse(savedCart);
+            // Tính tổng số lượng sản phẩm trong giỏ hàng
+            cartItemCount.value = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+        } else {
+            cartItemCount.value = 0;
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải giỏ hàng từ localStorage:', error);
+        cartItemCount.value = 0;
+    }
+};
+
+// Lắng nghe sự kiện storage change để cập nhật giỏ hàng khi có thay đổi
+const handleStorageChange = (event) => {
+    if (event.key === 'gb-sport-cart') {
+        updateCartCount();
+    }
+};
+
+// Khởi tạo khi component được tạo
+onMounted(() => {
+    // Tải giỏ hàng ban đầu
+    updateCartCount();
+
+    // Lắng nghe sự kiện storage change
+    window.addEventListener('storage', handleStorageChange);
+
+    // Lắng nghe sự kiện custom để cập nhật giỏ hàng
+    window.addEventListener('cart-updated', updateCartCount);
+});
+
+// Làm sạch listener khi component bị hủy
+const beforeUnmount = () => {
+    window.removeEventListener('storage', handleStorageChange);
+    window.removeEventListener('cart-updated', updateCartCount);
+};
+
+// Kiểm tra giỏ hàng định kỳ để đảm bảo hiển thị chính xác
+const checkCartInterval = setInterval(updateCartCount, 5000);
+beforeUnmount(() => {
+    clearInterval(checkCartInterval);
+});
 </script>
 
 <style scoped>

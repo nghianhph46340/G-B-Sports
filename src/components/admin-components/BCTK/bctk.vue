@@ -52,41 +52,71 @@
                 </div>
             </div>
         </div>
-        <div class="chart-container mt-4">
-            <div class="chart-header d-flex justify-content-between align-items-center mb-3">
-                <h3>Biểu đồ doanh thu</h3>
-                <div class="chart-controls d-flex gap-2">
-                    <a-select v-model:value="timeUnit" style="width: 120px">
-                        <!-- <a-select-option value="day">Theo ngày</a-select-option> -->
-                        <a-select-option value="week">Theo tuần</a-select-option>
-                        <a-select-option value="month">Theo tháng</a-select-option>
-                        <a-select-option value="year">Theo năm</a-select-option>
-                    </a-select>
-                    <a-select v-model:value="chartType" style="width: 120px">
-                        <a-select-option value="revenue">Doanh thu</a-select-option>
-                        <a-select-option value="orders">Đơn hàng</a-select-option>
-                        <a-select-option value="products">Sản phẩm</a-select-option>
-                    </a-select>
+        <div class="row mb-4">
+            <div class="chart-container mt-4 col-md-8">
+                <div class="chart-header d-flex justify-content-between align-items-center mb-3">
+                    <h3>Biểu đồ doanh thu</h3>
+                    <div class="chart-controls d-flex gap-2">
+                        <a-select v-model:value="timeUnit" style="width: 120px">
+                            <!-- <a-select-option value="day">Theo ngày</a-select-option> -->
+                            <a-select-option value="week">Theo tuần</a-select-option>
+                            <a-select-option value="month">Theo tháng</a-select-option>
+                            <a-select-option value="year">Theo năm</a-select-option>
+                        </a-select>
+                        <a-select v-model:value="chartType" style="width: 120px">
+                            <a-select-option value="revenue">Doanh thu</a-select-option>
+                            <a-select-option value="orders">Đơn hàng</a-select-option>
+                            <a-select-option value="products">Sản phẩm</a-select-option>
+                        </a-select>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <apexchart type="line" height="400" :options="chartOptions" :series="series"></apexchart>
                 </div>
             </div>
-            <div class="chart-body">
-                <apexchart type="line" height="400" :options="chartOptions" :series="series"></apexchart>
+            <div class="col-md-4 mt-4">
+                <a-card title="Tỉ lệ trạng thái đơn hàng" :bordered="false">
+                    <a-spin :spinning="gbStore.loading">
+                        <div id="orderStatusChart">
+                            <apexchart type="pie" :options="chartOptionTiLeTrangThai" :series="chartSeries"
+                                height="380" />
+                        </div>
+                    </a-spin>
+                </a-card>
             </div>
-
         </div>
+
         <div class="row">
             <!-- Top 3 sản phẩm bán chạy -->
             <div class="col-md-6">
-                <a-card title="Top 3 sản phẩm bán chạy" :bordered="false">
-                    <a-table :columns="columns" :data-source="topSellingProducts" :pagination="false" size="small">
-                        <template #bodyCell="{ column, record }">
-                            <template v-if="column.key === 'index'">
-                                <a-tag>
-                                    #{{ record.index }}
+                <a-card :bordered="false">
+                    <template #title>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Top 3 sản phẩm bán chạy</span>
+                            <div class="filter-section d-flex gap-3 ">
+                                <!-- Date Range Picker cho sản phẩm bán chạy -->
+                                <template v-if="sellingFilter === 'tuy-chon'">
+                                    <a-range-picker v-model:value="sellingDateRange" @change="handleSellingDateChange"
+                                        :placeholder="['Start date', 'End date']" :locale="locale"
+                                        style="margin-left: 10px;" />
+                                </template>
+                                <!-- Filter Select cho sản phẩm bán chạy -->
+                                <a-select v-model:value="sellingFilter" show-search placeholder="Chọn thời gian"
+                                    style="width: 120px;" :options="options" :filter-option="filterOption"
+                                    @change="handleSellingFilterChange"></a-select>
+                            </div>
+                        </div>
+                    </template>
+                    <a-table :columns="columns" :data-source="gbStore.topSanPhamBanChay" :pagination="false"
+                        size="small">
+                        <template #bodyCell="{ column, text, index }">
+                            <template v-if="column.key === 'stt'">
+                                <a-tag :color="getTagColor(index + 1)">
+                                    {{ getTopRank(index + 1) }}
                                 </a-tag>
                             </template>
-                            <template v-else-if="column.key === 'doanhThu'">
-                                {{ formatCurrency(record.doanhThu) }}
+                            <template v-else-if="column.key === 'gia_ban'">
+                                {{ formatCurrency(text) }}
                             </template>
                         </template>
                     </a-table>
@@ -95,16 +125,34 @@
 
             <!-- Top 3 sản phẩm bán chậm -->
             <div class="col-md-6">
-                <a-card title="Top 3 sản phẩm bán chậm" :bordered="false">
-                    <a-table :columns="columns" :data-source="topSlowProducts" :pagination="false" size="small">
-                        <template #bodyCell="{ column, record }">
-                            <template v-if="column.key === 'index'">
-                                <a-tag>
-                                    #{{ record.index }}
+                <a-card :bordered="false">
+                    <template #title>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Top 3 sản phẩm bán chậm</span>
+                            <div class="filter-section d-flex gap-3">
+                                <!-- Date Range Picker cho sản phẩm bán chậm -->
+                                <template v-if="slowFilter === 'tuy-chon'">
+                                    <a-range-picker v-model:value="slowDateRange" @change="handleSlowDateChange"
+                                        :placeholder="['Start date', 'End date']" :locale="locale"
+                                        style="margin-left: 10px;" />
+                                </template>
+                                <!-- Filter Select cho sản phẩm bán chậm -->
+                                <a-select v-model:value="slowFilter" show-search placeholder="Chọn thời gian"
+                                    style="width: 120px;" :options="options" :filter-option="filterOption"
+                                    @change="handleSlowFilterChange"></a-select>
+                            </div>
+                        </div>
+                    </template>
+                    <a-table :columns="columns" :data-source="gbStore.topSanPhamBanCham" :pagination="false"
+                        size="small">
+                        <template #bodyCell="{ column, text, index }">
+                            <template v-if="column.key === 'stt'">
+                                <a-tag :color="getTagColor(index + 1)">
+                                    {{ getTopRank(index + 1) }}
                                 </a-tag>
                             </template>
-                            <template v-else-if="column.key === 'doanhThu'">
-                                {{ formatCurrency(record.doanhThu) }}
+                            <template v-else-if="column.key === 'gia_ban'">
+                                {{ formatCurrency(text) }}
                             </template>
                         </template>
                     </a-table>
@@ -115,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { storeToRefs } from 'pinia';
 import viVN from 'ant-design-vue/es/date-picker/locale/vi_VN';
@@ -123,13 +171,14 @@ import VueApexCharts from 'vue3-apexcharts';
 import { bctkService } from '@/services/bctkService';
 import { Card, Table, Tag } from 'ant-design-vue';
 
+
 // Định nghĩa cột
 const columns = [
     {
-        title: '#',
-        dataIndex: 'index',
-        key: 'index',
-        width: 60,
+        title: 'STT',
+        dataIndex: 'stt',
+        key: 'stt',
+        width: 100,
     },
     {
         title: 'Mã sản phẩm',
@@ -148,10 +197,11 @@ const columns = [
         align: 'right',
     },
     {
-        title: 'Doanh thu',
-        dataIndex: 'tong_tien_sau_giam',
-        key: 'tong_tien_sau_giam',
+        title: 'Giá',
+        dataIndex: 'gia_ban',
+        key: 'gia_ban',
         align: 'right',
+        render: (text) => formatCurrency(text)
     },
 ];
 
@@ -162,21 +212,21 @@ const topSlowProducts = ref([]);
 
 
 // Hàm lấy màu cho tag
-// const getTagColor = (index) => {
-//     switch (index) {
-//         case 1:
-//             return 'gold';
-//         case 2:
-//             return 'silver';
-//         case 3:
-//             return '#cd7f32'; // bronze
-//         default:
-//             return 'default';
-//     }
-// };
-const store = useGbStore();
-const { thongKe } = storeToRefs(store);
-
+const getTagColor = (index) => {
+    switch (index) {
+        case 1:
+            return 'gold';
+        case 2:
+            return 'silver';
+        case 3:
+            return '#cd7f32'; // bronze
+        default:
+            return 'default';
+    }
+};
+const gbStore = useGbStore();
+const { thongKe } = storeToRefs(gbStore);
+const { topSanPhamBanChay } = storeToRefs(gbStore);
 const selectedFilter = ref('hom-nay');
 const dateRange = ref();
 const locale = {
@@ -217,7 +267,7 @@ const handleFilterChange = async (value) => {
         dateRange.value = null; // Reset date range
     } else {
         console.log('Gửi request với filter:', value);
-        await store.getSoLieu(value);
+        await gbStore.getSoLieu(value);
     }
 };
 
@@ -228,7 +278,7 @@ const handleDateChange = async (dates) => {
         const startDate = dates[0].format('YYYY-MM-DD');
         const endDate = dates[1].format('YYYY-MM-DD');
         console.log('Gửi request với ngày:', { startDate, endDate });
-        await store.getSoLieu('tuy-chon', startDate, endDate);
+        await gbStore.getSoLieu('tuy-chon', startDate, endDate);
     }
 };
 
@@ -472,21 +522,226 @@ watch([timeUnit, chartType], async ([newTimeUnit, newChartType], [oldTimeUnit, o
     }
 });
 
-// Khởi tạo
+// State cho bộ lọc sản phẩm bán chạy
+const sellingFilter = ref('nam-nay');
+const sellingDateRange = ref();
+
+// State cho bộ lọc sản phẩm bán chậm
+const slowFilter = ref('nam-nay');
+const slowDateRange = ref();
+
+//tạm comment
+// Xử lý khi thay đổi filter sản phẩm bán chạy
+// const handleSellingFilterChange = async (value) => {
+//     console.log('Filter sản phẩm bán chạy:', value);
+//     sellingFilter.value = value;
+//     if (value === 'tuy-chon') {
+//         sellingDateRange.value = null; // Reset date range
+//     } else {
+//         console.log('Gửi request với filter:', value);
+//         await gbStore.getTopSanPhamBanChay(value);
+//         topSellingProducts.value = gbStore.topSanPhamBanChay;
+//     }
+// };
+
+// Xử lý khi thay đổi filter sản phẩm bán chạy
+const handleSellingFilterChange = async (value) => {
+    try {
+        console.log('Selected filter:', value);
+        sellingFilter.value = value;
+
+        if (value === 'tuy-chon') {
+            sellingDateRange.value = null;
+            return;
+        }
+
+        await gbStore.getTopSanPhamBanChay(value);
+        console.log('Dữ liệu sau khi cập nhật:', gbStore.topSanPhamBanChay);
+    } catch (error) {
+        console.error('Filter change error:', error);
+    }
+};
+
+// Xử lý khi thay đổi ngày cho sản phẩm bán chạy
+// const handleSellingDateChange = async (dates) => {
+//     console.log('Selected dates for selling products:', dates);
+//     if (dates && dates[0] && dates[1]) {
+//         const startDate = dates[0].format('YYYY-MM-DD');
+//         const endDate = dates[1].format('YYYY-MM-DD');
+//         console.log('Gửi request với ngày:', { startDate, endDate });
+//         await gbStore.getTopSanPhamBanChay('tuy-chon', startDate, endDate);
+//         topSellingProducts.value = gbStore.topSanPhamBanChay;
+//     }
+// };
+//thử nghiệm
+const handleSellingDateChange = async (dates) => {
+    try {
+        if (!dates || !dates[0] || !dates[1]) return;
+
+        const startDate = dates[0].format('YYYY-MM-DD');
+        const endDate = dates[1].format('YYYY-MM-DD');
+
+        await gbStore.getTopSanPhamBanChay('tuy-chon', startDate, endDate);
+        console.log('Dữ liệu sau khi cập nhật date range:', gbStore.topSanPhamBanChay);
+    } catch (error) {
+        console.error('Date change error:', error);
+    }
+};
+
+// Xử lý khi thay đổi filter sản phẩm bán chậm
+const handleSlowFilterChange = async (value) => {
+    try {
+        console.log('Selected filter (Bán chậm):', value);
+        slowFilter.value = value;
+
+        if (value === 'tuy-chon') {
+            slowDateRange.value = null;
+            return;
+        }
+
+        await gbStore.getTopSanPhamBanCham(value);
+        console.log('Dữ liệu sau khi cập nhật (Bán chậm):', gbStore.topSanPhamBanCham);
+    } catch (error) {
+        console.error('Filter change error (Bán chậm):', error);
+    }
+};
+
+// Xử lý khi thay đổi ngày cho sản phẩm bán chậm
+const handleSlowDateChange = async (dates) => {
+    try {
+        if (!dates || !dates[0] || !dates[1]) return;
+
+        const startDate = dates[0].format('YYYY-MM-DD');
+        const endDate = dates[1].format('YYYY-MM-DD');
+
+        await gbStore.getTopSanPhamBanCham('tuy-chon', startDate, endDate);
+        console.log('Dữ liệu sau khi cập nhật date range (Bán chậm):', gbStore.topSanPhamBanCham);
+    } catch (error) {
+        console.error('Date change error (Bán chậm):', error);
+    }
+};
+
+// Cập nhật onMounted
+// onMounted(async () => {
+//     try {
+//         console.log('Đang fetch dữ liệu...');
+//         await Promise.all([
+//             gbStore.getSoLieu('hom-nay'),
+//             fetchChartData('month'),
+//             gbStore.fetchTiLeTrangThai(),
+//             gbStore.getTopSanPhamBanChay('hom-nay'),
+//             gbStore.getTopSanPhamBanCham('hom-nay')
+//         ]);
+
+//         // Cập nhật dữ liệu
+//         topSellingProducts.value = gbStore.topSanPhamBanChay;
+//         topSlowProducts.value = gbStore.topSanPhamBanCham;
+//     } catch (error) {
+//         console.error('Lỗi trong onMounted:', error);
+//     }
+// });
+
+// thử nghiệm
 onMounted(async () => {
     try {
+        console.log('Đang fetch dữ liệu...');
         await Promise.all([
-            store.getSoLieu('hom-nay'),
-            fetchChartData('month')
+            gbStore.getSoLieu('hom-nay'),
+            fetchChartData('month'),
+            gbStore.fetchTiLeTrangThai(),
+            gbStore.getTopSanPhamBanChay('nam-nay'),
+            gbStore.getTopSanPhamBanCham('nam-nay')
         ]);
+
+        // Cập nhật dữ liệu
+        topSellingProducts.value = gbStore.topSanPhamBanChay;
+        topSlowProducts.value = gbStore.topSanPhamBanCham;
     } catch (error) {
-        console.error('Error in onMounted:', error);
+        console.error('Lỗi trong onMounted:', error);
     }
-    await store.getTopSanPhamBanChay();
-    await store.getTopSanPhamBanCham();
-    topSellingProducts.value = store.topSanPhamBanChay;
-    topSlowProducts.value = store.topSanPhamBanCham;
 });
+
+// Thêm hàm này vào script
+const getTopRank = (index) => {
+    switch (index) {
+        case 1:
+            return '🥇 1';
+        case 2:
+            return '🥈 2';
+        case 3:
+            return '🥉 3';
+        default:
+            return `${index}`;
+    }
+};
+
+
+
+// Cập nhật các computed properties
+const chartSeries = computed(() => {
+    if (!gbStore.tiLeTrangThai || !Array.isArray(gbStore.tiLeTrangThai) || gbStore.tiLeTrangThai.length === 0) {
+        console.log("Không có dữ liệu tiLeTrangThai, trả về [100]");
+        return [100]; // Giá trị mặc định để chart không bị lỗi
+    }
+    const values = gbStore.tiLeTrangThai.map(item => item.soLuong || 0);
+    console.log("chartSeries values:", values);
+    return values.length > 0 ? values : [100];
+});
+
+const chartLabels = computed(() => {
+    if (!gbStore.tiLeTrangThai || !Array.isArray(gbStore.tiLeTrangThai) || gbStore.tiLeTrangThai.length === 0) {
+        console.log("Không có dữ liệu tiLeTrangThai, trả về ['Không có dữ liệu']");
+        return ['Không có dữ liệu']; // Giá trị mặc định
+    }
+    const labels = gbStore.tiLeTrangThai.map(item => item.trangThai || 'Không xác định');
+    console.log("chartLabels:", labels);
+    return labels.length > 0 ? labels : ['Không có dữ liệu'];
+});
+
+// Cấu hình biểu đồ
+const chartOptionTiLeTrangThai = computed(() => ({
+    chart: {
+        type: 'pie',
+    },
+    labels: chartLabels.value,
+    colors: ['#bb05e8', '#52c41a', '#faad14', '#cf1322', '#0f79ec', '#d86103'],
+    legend: {
+        position: 'bottom',
+        horizontalAlign: 'center',
+    },
+    tooltip: {
+        y: {
+            formatter: (value) => `${(value || 0).toFixed(2)}%`
+        }
+    },
+    plotOptions: {
+        pie: {
+            dataLabels: {
+                offset: -5
+            }
+        }
+    },
+    dataLabels: {
+        formatter(val, opts) {
+            const name = opts.w.globals.labels[opts.seriesIndex] || 'Unknown';
+            return [name, `${(val || 0).toFixed(1)}%`];
+        }
+    },
+    title: {
+        text: 'Phân bố trạng thái đơn hàng',
+        align: 'center',
+        style: {
+            fontSize: '16px',
+            fontFamily: '"Segoe UI", "Roboto", "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji'
+
+        }
+    },
+    noData: {
+        text: 'No data available',
+        align: 'center',
+        verticalAlign: 'middle'
+    }
+}));
 </script>
 
 <style scoped>
@@ -611,5 +866,9 @@ onMounted(async () => {
     font-size: 1.2rem;
     margin: 0;
     color: #374151;
+}
+
+#orderStatusChart {
+    min-height: 380px;
 }
 </style>

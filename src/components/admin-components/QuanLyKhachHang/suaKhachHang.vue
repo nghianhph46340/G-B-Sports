@@ -1,19 +1,23 @@
 <template>
   <div>
     <div class="header-section">
-      <h2>Thêm khách hàng</h2>
+      <h2>Sửa thông tin khách hàng</h2>
       <button class="btn btn-secondary btn-sm" @click="router.push('/admin/quanlykhachhang')">Quay lại</button>
     </div>
-    <form @submit.prevent="themKhachHang" @reset.prevent="resetForm">
+    <form @submit.prevent="confirmSubmitForm" @reset.prevent="resetForm">
       <a-form :model="formData" :label-col="{ span: 24 }" :wrapper-col="{ span: 24 }">
         <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="Mã khách hàng">
+              <a-input v-model:value="formData.maKhachHang" readonly />
+            </a-form-item>
+          </a-col>
           <a-col :span="8">
             <a-form-item label="Họ tên khách hàng" :validate-status="errors.tenKhachHang ? 'error' : ''"
               :help="errors.tenKhachHang">
               <a-input v-model:value="formData.tenKhachHang" placeholder="Nhập tên khách hàng" />
             </a-form-item>
           </a-col>
-
           <a-col :span="8">
             <a-form-item label="Giới tính" :validate-status="errors.gioiTinh ? 'error' : ''" :help="errors.gioiTinh">
               <a-radio-group v-model:value="formData.gioiTinh">
@@ -22,28 +26,26 @@
               </a-radio-group>
             </a-form-item>
           </a-col>
-
           <a-col :span="8">
             <a-form-item label="Ngày sinh" :validate-status="errors.ngaySinh ? 'error' : ''" :help="errors.ngaySinh">
               <a-date-picker v-model:value="formData.ngaySinh" format="DD/MM/YYYY" placeholder="Chọn ngày sinh"
                 class="w-100" />
             </a-form-item>
           </a-col>
-
           <a-col :span="8">
             <a-form-item label="Số điện thoại" :validate-status="errors.soDienThoai ? 'error' : ''"
               :help="errors.soDienThoai">
               <a-input v-model:value="formData.soDienThoai" placeholder="Nhập số điện thoại" />
             </a-form-item>
           </a-col>
-
           <a-col :span="8">
             <a-form-item label="Email" :validate-status="errors.email ? 'error' : ''" :help="errors.email">
-              <a-input v-model:value="formData.email" placeholder="Nhập email" />
+              <a-input v-model:value="formData.email" placeholder="Nhập email" readonly />
             </a-form-item>
           </a-col>
         </a-row>
 
+        <!-- Danh sách địa chỉ -->
         <div v-for="(diaChi, index) in formData.diaChiList" :key="index" class="address-section">
           <h3>Địa chỉ {{ index + 1 }}</h3>
           <a-row :gutter="16">
@@ -59,19 +61,17 @@
                 </a-select>
               </a-form-item>
             </a-col>
-
             <a-col :span="6">
               <a-form-item label="Quận/Huyện" :validate-status="errors.diaChiErrors[index]?.quanHuyen ? 'error' : ''"
                 :help="errors.diaChiErrors[index]?.quanHuyen">
-                <a-select v-model:value="diaChi.quanHuyen" placeholder="Chọn Quận/Huyện"
-                  :disabled="!diaChi.tinhThanhPho" @change="() => handleDistrictChange(index)">
+                <a-select v-model:value="diaChi.quanHuyen" placeholder="Chọn Quận/Huyện" :disabled="!diaChi.tinhThanhPho"
+                  @change="() => handleDistrictChange(index)">
                   <a-select-option v-for="district in districts[index]" :key="district.code" :value="district.name">
                     {{ district.name }}
                   </a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
-
             <a-col :span="6">
               <a-form-item label="Phường/Xã" :validate-status="errors.diaChiErrors[index]?.xaPhuong ? 'error' : ''"
                 :help="errors.diaChiErrors[index]?.xaPhuong">
@@ -82,21 +82,20 @@
                 </a-select>
               </a-form-item>
             </a-col>
-
             <a-col :span="5">
               <a-form-item label="Số nhà, tên đường" :validate-status="errors.diaChiErrors[index]?.soNha ? 'error' : ''"
                 :help="errors.diaChiErrors[index]?.soNha">
                 <a-input v-model:value="diaChi.soNha" placeholder="Số nhà, tên đường..." />
               </a-form-item>
             </a-col>
-
             <a-col :span="1">
               <a-form-item label="Mặc định">
                 <a-checkbox v-model:checked="diaChi.diaChiMacDinh" @change="handleDefaultChange(index)" />
               </a-form-item>
             </a-col>
           </a-row>
-          <button type="button" class="btn btn-danger" @click="xoaDiaChi(index)" v-if="formData.diaChiList.length > 1">
+          <button type="button" class="btn btn-danger" @click="xoaDiaChi(index)"
+            v-if="formData.diaChiList.length > 1">
             Xóa địa chỉ
           </button>
         </div>
@@ -105,8 +104,7 @@
         <button type="button" class="btn btn-primary" @click="themDiaChi">+ Thêm địa chỉ khác</button>
 
         <div class="mt-4">
-          <button type="btn buttonADD" class="btn btn-warning me-2" @click="confirmThemKhachHang">+ Tạo tài
-            khoản</button>
+          <button type="submit" class="btn btn-warning me-2" @click="confirmSubmitForm">Cập nhật</button>
           <button type="button" class="btn btn-secondary" @click="resetForm">Làm mới</button>
         </div>
       </a-form>
@@ -116,17 +114,20 @@
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
-import { useRouter } from 'vue-router';
+import dayjs from 'dayjs';
 
 const gbStore = useGbStore();
 const router = useRouter();
+const route = useRoute();
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
 
 const formData = reactive({
+  idKhachHang: null,
   maKhachHang: '',
   tenKhachHang: '',
   gioiTinh: null,
@@ -134,13 +135,7 @@ const formData = reactive({
   ngaySinh: null,
   email: '',
   trangThai: 'Đang hoạt động',
-  diaChiList: [{
-    soNha: '',
-    xaPhuong: '',
-    quanHuyen: '',
-    tinhThanhPho: '',
-    diaChiMacDinh: true
-  }]
+  diaChiList: []
 });
 
 const errors = reactive({
@@ -149,7 +144,7 @@ const errors = reactive({
   ngaySinh: '',
   soDienThoai: '',
   email: '',
-  diaChiErrors: [{}]
+  diaChiErrors: []
 });
 
 const validateForm = () => {
@@ -244,14 +239,27 @@ const loadProvinces = async () => {
 };
 
 const handleProvinceChange = async (index) => {
-  if (formData.diaChiList[index].tinhThanhPho) {
+  const diaChi = formData.diaChiList[index];
+  if (diaChi.tinhThanhPho) {
     try {
-      const provinceCode = provinces.value.find(p => p.name === formData.diaChiList[index].tinhThanhPho)?.code;
+      const provinceCode = provinces.value.find(p => p.name === diaChi.tinhThanhPho)?.code;
+      if (!provinceCode) {
+        console.error('Không tìm thấy provinceCode cho tỉnh:', diaChi.tinhThanhPho);
+        return;
+      }
+
       const response = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
       const data = await response.json();
-      districts.value[index] = data.districts;
-      formData.diaChiList[index].quanHuyen = '';
-      wards.value[index] = [];
+
+      districts.value[index] = data.districts || [];
+      const currentQuanHuyen = diaChi.quanHuyen;
+      if (!districts.value[index].some(d => d.name === currentQuanHuyen)) {
+        diaChi.quanHuyen = '';
+        diaChi.xaPhuong = '';
+        wards.value[index] = [];
+      } else if (diaChi.quanHuyen) {
+        await handleDistrictChange(index);
+      }
     } catch (error) {
       console.error('Lỗi khi tải quận/huyện:', error);
     }
@@ -259,13 +267,23 @@ const handleProvinceChange = async (index) => {
 };
 
 const handleDistrictChange = async (index) => {
-  if (formData.diaChiList[index].quanHuyen) {
+  const diaChi = formData.diaChiList[index];
+  if (diaChi.quanHuyen) {
     try {
-      const districtCode = districts.value[index].find(d => d.name === formData.diaChiList[index].quanHuyen)?.code;
+      const districtCode = districts.value[index].find(d => d.name === diaChi.quanHuyen)?.code;
+      if (!districtCode) {
+        console.error('Không tìm thấy districtCode cho quận/huyện:', diaChi.quanHuyen);
+        return;
+      }
+
       const response = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
       const data = await response.json();
-      wards.value[index] = data.wards;
-      formData.diaChiList[index].xaPhuong = '';
+
+      wards.value[index] = data.wards || [];
+      const currentXaPhuong = diaChi.xaPhuong;
+      if (!wards.value[index].some(w => w.name === currentXaPhuong)) {
+        diaChi.xaPhuong = '';
+      }
     } catch (error) {
       console.error('Lỗi khi tải phường/xã:', error);
     }
@@ -298,23 +316,27 @@ const xoaDiaChi = (index) => {
 const handleDefaultChange = (index) => {
   if (formData.diaChiList[index].diaChiMacDinh) {
     formData.diaChiList.forEach((diaChi, i) => {
-      diaChi.diaChiMacDinh = (i === index);
+      diaChi.diaChiMacDinh = i === index;
     });
   } else if (!formData.diaChiList.some(d => d.diaChiMacDinh)) {
     formData.diaChiList[0].diaChiMacDinh = true;
   }
 };
 
-
-
 const resetForm = () => {
+  // Lưu lại giá trị maKhachHang và email trước khi reset
+  const currentMaKhachHang = formData.maKhachHang;
+  const currentEmail = formData.email;
+
+  // Reset toàn bộ trạng thái, giữ lại maKhachHang và email
   Object.assign(formData, {
-    maKhachHang: '',
+    idKhachHang: null,
+    maKhachHang: currentMaKhachHang,
     tenKhachHang: '',
     gioiTinh: null,
     soDienThoai: '',
     ngaySinh: null,
-    email: '',
+    email: currentEmail,
     trangThai: 'Đang hoạt động',
     diaChiList: [{
       soNha: '',
@@ -324,60 +346,117 @@ const resetForm = () => {
       diaChiMacDinh: true
     }]
   });
-  Object.keys(errors).forEach(key => {
-    if (key !== 'diaChiErrors') errors[key] = '';
-  });
-  errors.diaChiErrors = [{}];
+
   districts.value = [[]];
   wards.value = [[]];
+  Object.assign(errors, {
+    tenKhachHang: '',
+    gioiTinh: '',
+    ngaySinh: '',
+    soDienThoai: '',
+    email: '',
+    diaChiErrors: [{}]
+  });
 };
 
-const themKhachHang = async () => {
-  if (!validateForm()) {
-    toast.error('Vui lòng điền đầy đủ và chính xác thông tin!');
-    return;
-  }
-
-  const dataToSend = { ...formData };
-  if (dataToSend.ngaySinh) {
-    dataToSend.ngaySinh = new Date(dataToSend.ngaySinh).toISOString();
-  }
-
+const loadKhachHang = async () => {
   try {
-    const result = await gbStore.themKhachHang(dataToSend);
-    if (result) {
-      toast.success('Thêm khách hàng thành công!', {
-        autoClose: 2000,
-        position: 'top-right'
-      });
-      setTimeout(() => {
-        router.push('/admin/quanlykhachhang');
-      }, 2000);
+    const id = route.params.id;
+    const khachHang = await gbStore.getKhachHangByIdForEdit(id);
+
+    if (!khachHang) {
+      toast.error('Không tìm thấy thông tin khách hàng');
+      router.push('/admin/quanlykhachhang');
+      return;
     }
-  } catch (error) {
-    console.error('Lỗi khi thêm khách hàng:', error);
-    // Kiểm tra lỗi từ backend
-    if (error.response && error.response.data && error.response.data.error) {
-      if (error.response.data.error.includes('Email đã được sử dụng')) {
-        errors.email = 'Email đã được sử dụng!';
-      } else {
-        toast.error(error.response.data.error); // Hiển thị lỗi khác từ backend
+
+    Object.assign(formData, {
+      idKhachHang: khachHang.idKhachHang,
+      maKhachHang: khachHang.maKhachHang,
+      tenKhachHang: khachHang.tenKhachHang,
+      gioiTinh: khachHang.gioiTinh,
+      soDienThoai: khachHang.soDienThoai,
+      ngaySinh: khachHang.ngaySinh ? dayjs(khachHang.ngaySinh) : null,
+      email: khachHang.email,
+      trangThai: khachHang.trangThai || 'Đang hoạt động',
+      diaChiList: []
+    });
+
+    if (khachHang.diaChiList && khachHang.diaChiList.length > 0) {
+      formData.diaChiList = khachHang.diaChiList.map((diaChi, index) => {
+        districts.value[index] = [];
+        wards.value[index] = [];
+        errors.diaChiErrors[index] = {};
+        return {
+          soNha: diaChi.soNha || '',
+          xaPhuong: diaChi.xaPhuong || '',
+          quanHuyen: diaChi.quanHuyen || '',
+          tinhThanhPho: diaChi.tinhThanhPho || '',
+          diaChiMacDinh: diaChi.diaChiMacDinh || false
+        };
+      });
+
+      for (let index = 0; index < formData.diaChiList.length; index++) {
+        const diaChi = formData.diaChiList[index];
+        if (diaChi.tinhThanhPho) {
+          await handleProvinceChange(index);
+          if (diaChi.quanHuyen) {
+            await handleDistrictChange(index);
+          }
+        }
       }
     } else {
-      toast.error('Có lỗi xảy ra khi thêm khách hàng');
+      formData.diaChiList.push({
+        soNha: '',
+        xaPhuong: '',
+        quanHuyen: '',
+        tinhThanhPho: '',
+        diaChiMacDinh: true
+      });
+      districts.value.push([]);
+      wards.value.push([]);
+      errors.diaChiErrors.push({});
     }
+  } catch (error) {
+    console.error('Lỗi khi tải dữ liệu khách hàng:', error);
+    toast.error('Không thể tải thông tin khách hàng');
+    router.push('/admin/quanlykhachhang');
   }
 };
-const confirmThemKhachHang = () => {
-  if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
-    themKhachHang();
+
+const confirmSubmitForm = async () => {
+  if (confirm('Bạn có chắc chắn muốn cập nhật thông tin khách hàng này không?')) {
+    if (!validateForm()) {
+      toast.error('Vui lòng điền đầy đủ và chính xác thông tin!');
+      return;
+    }
+
+    const dataToSend = { ...formData };
+    if (dataToSend.ngaySinh) {
+      dataToSend.ngaySinh = dataToSend.ngaySinh.toISOString();
+    }
+
+    try {
+      const result = await gbStore.suaKhachHang(dataToSend);
+      if (result) {
+        toast.success('Cập nhật khách hàng thành công!', {
+          autoClose: 2000,
+          position: 'top-right'
+        });
+        setTimeout(() => {
+          router.push('/admin/quanlykhachhang');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Lỗi khi cập nhật khách hàng:', error);
+      toast.error('Có lỗi xảy ra khi cập nhật khách hàng');
+    }
   }
 };
 
 onMounted(async () => {
   await loadProvinces();
-  districts.value = [[]];
-  wards.value = [[]];
+  await loadKhachHang();
 });
 </script>
 

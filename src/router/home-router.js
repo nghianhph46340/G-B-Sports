@@ -25,6 +25,17 @@ const home = [
                 path: "giohang-banhang",
                 name: "giohang-banhang",
                 component: () => import('@/views/web/gioHang-BanHang.vue')
+            },
+            {
+                path: "tracuudonhang-banhang",
+                name: "tracuudonhang-banhang",
+                component: () => import('@/views/web/traCuuDonHang-BanHang.vue')
+            },
+            {
+                path: "payment-callback",
+                name: "payment-callback",
+                component: () => import('@/views/web/PaymentCallback.vue'),
+                meta: { scrollToTop: true }
             }
         ]
     }

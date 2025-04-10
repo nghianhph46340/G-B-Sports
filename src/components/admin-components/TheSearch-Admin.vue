@@ -1,5 +1,5 @@
 <template>
-    <div class="container-fluid" style="width: 85%;">
+    <div class="container-fluid" style="width: 70%;">
         <form class="d-flex align-items-center justify-content-start" role="search" @submit.prevent="handleSearch">
             <SearchOutlined class="icon-search" @click="handleSearch" />
             <input class="form-control me-2" v-model="searchInput" type="search" placeholder="Bạn muốn tìm gì?"
@@ -20,12 +20,14 @@ const searchInput = ref('');
 
 // Hàm xóa kết quả tìm kiếm
 const clearSearchResults = () => {
-    store.searchs = '';
-    store.searchSanPham = [];
-    store.searchChiSanPham = [];
-    store.nhanVienSearch = [];
-    // store.khachHangSearch = [];
-    store.getAllKhachHangArr = [];
+    if (route.name === 'admin-quan-ly-san-pham') {
+        store.resetSearch();
+    } else {
+        // Xử lý các trường hợp khác
+        store.searchs = '';
+        store.nhanVienSearch = [];
+        store.getAllKhachHangArr = [];
+    }
     searchInput.value = '';
 };
 
@@ -44,7 +46,8 @@ watch(searchInput, (newValue) => {
 
         // Load lại dữ liệu dựa trên route hiện tại
         if (route.name === 'admin-quan-ly-san-pham') {
-            store.getAllSP();
+            // Sử dụng resetSearch thay vì getAllSP
+            store.resetSearch();
         }
         else if (route.name === 'admin-quan-ly-nhan-vien') {
             store.getAllNhanVien(0, 5);
@@ -66,21 +69,22 @@ const handleSearch = async () => {
 
     console.log('Đang tìm kiếm với từ khóa:', searchInput.value);
 
-    // Cập nhật giá trị tìm kiếm vào store
-    store.searchs = searchInput.value;
-
     try {
         // Tìm kiếm dựa trên route hiện tại
         if (route.name === 'admin-quan-ly-san-pham') {
             await store.searchSP(searchInput.value);
-            console.log('Kết quả tìm kiếm sản phẩm:', store.searchSanPham);
+            console.log('Kết quả tìm kiếm sản phẩm:', store.getFilteredProducts.length);
         }
         else if (route.name === 'admin-quan-ly-nhan-vien') {
+            // Cập nhật giá trị tìm kiếm vào store cho các route khác
+            store.searchs = searchInput.value;
             await store.searchNhanVien(searchInput.value, 0, 5);
             console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
         }
-        else if(route.name === 'admin-quan-ly-khach-hang') {
-            await store.getAllKhachHang( 0, 3, searchInput.value, null);
+        else if (route.name === 'admin-quan-ly-khach-hang') {
+            // Cập nhật giá trị tìm kiếm vào store cho các route khác
+            store.searchs = searchInput.value;
+            await store.getAllKhachHang(0, 3, searchInput.value, null);
             console.log('Kết quả tìm kiếm khách hàng:', store.khachHangSearch);
         }
         // Thêm các route khác nếu cần
