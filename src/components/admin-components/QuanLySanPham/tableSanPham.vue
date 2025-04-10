@@ -9,65 +9,7 @@
         <menuAction ref="menuActionRef" />
         <h4 class="ms-3">Danh sách sản phẩm</h4>
         <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
-            class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
-            :row-key="record => record.id_san_pham">
-            <template #expandedRowRender="{ record }">
-                <a-table :columns="columnsCTSP" :row-selection="{
-                    selectedRowKeys: selectedCTSPKeys,
-                    onChange: (keys, rows) => handleCTSPSelection(keys, rows, record.id_san_pham)
-                }" :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small"
-                    :row-key="record => record.id_chi_tiet_san_pham">
-                    <template #bodyCell="{ column, record: ctspRecord }">
-                        <template v-if="column.key === 'trang_thai'">
-                            <a-switch
-                                :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
-                                size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false" />
-                        </template>
-                        <template v-if="column.key === 'action'">
-                            <a-button @click="showDrawer" type="" style="color: white;"
-                                class="d-flex align-items-center btn btn-warning">
-                                <EditOutlined />Sửa
-                            </a-button>
-                            <a-drawer v-model:open="open" class="custom-class" root-class-name="root-class-name"
-                                :root-style="{ color: 'black' }" title="Chi tiết sản phẩm" placement="left"
-                                @after-open-change="afterOpenChange" :footer-style="{ textAlign: 'right' }">
-                                <a-form :model="productDetails" layout="vertical" @submit.prevent="handleSubmit">
-                                    <a-form-item label="Tên sản phẩm" name="ten_san_pham">
-                                        <a-input v-model:value="productDetails.ten_san_pham"
-                                            placeholder="Nhập tên sản phẩm" />
-                                    </a-form-item>
-
-                                    <a-form-item label="Danh mục" name="danh_muc_id">
-                                        <a-select v-model:value="productDetails.danh_muc_id"
-                                            placeholder="Chọn danh mục">
-                                            <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc"
-                                                :value="item.id_danh_muc">
-                                                {{ item.ten_danh_muc }}
-                                            </a-select-option>
-                                        </a-select>
-                                    </a-form-item>
-
-                                    <a-form-item label="Giá bán" name="gia_ban">
-                                        <a-input-number v-model:value="productDetails.gia_ban"
-                                            placeholder="Nhập giá bán" style="width: 100%;" />
-                                    </a-form-item>
-
-                                    <!-- Thêm các trường khác tương tự -->
-
-                                    <a-form-item>
-                                        <a-button type="primary" html-type="submit">Lưu</a-button>
-                                        <a-button @click="closeDrawer">Hủy</a-button>
-                                    </a-form-item>
-                                </a-form>
-
-
-                            </a-drawer>
-
-
-                        </template>
-                    </template>
-                </a-table>
-            </template>
+            class="components-table-demo-nested" :row-key="record => record.id_san_pham">
             <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'trang_thai'">
                     <a-switch @change="(checked) => changeStatusSanPham(record.id_san_pham, checked)"
@@ -81,21 +23,93 @@
                     {{ record.gia_ban }}
                 </template>
                 <template v-if="column.key === 'action'">
-                    <a-button type="" @click="changeRouter(record.id_san_pham)" style="color: white;"
-                        class="d-flex align-items-center btn btn-warning">
-                        <EditOutlined />Sửa
-                    </a-button>
+                    <div class="d-flex gap-2">
+                        <a-button type="" @click="changeRouter(record.id_san_pham)" style="color: white;"
+                            class="d-flex align-items-center btn btn-warning">
+                            <EditOutlined />Sửa
+                        </a-button>
+                        <a-button type="primary" @click="() => showVariants(record)" class="d-flex align-items-center">
+                            <EyeOutlined />Biến thể
+                        </a-button>
+                    </div>
                 </template>
             </template>
-
-
         </a-table>
+
+        <!-- Drawer for product variants -->
+        <a-drawer v-model:open="drawerVisible" title="Chi tiết biến thể sản phẩm" placement="right" :width="700"
+            :footer-style="{ textAlign: 'right' }" @close="closeVariantDrawer">
+            <template v-if="currentProduct">
+                <div class="product-info mb-4">
+                    <h3>{{ currentProduct.ten_san_pham }}</h3>
+                    <div class="d-flex gap-3 align-items-center">
+                        <a-image style="width: 60px; height: 60px;" :src="currentProduct.hinh_anh" />
+                        <div>
+                            <p><strong>Mã sản phẩm:</strong> {{ currentProduct.ma_san_pham }}</p>
+                            <p><strong>Trạng thái:</strong> {{ currentProduct.trang_thai }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Danh sách biến thể</h4>
+                <a-table :columns="columnsCTSP" :row-selection="{
+                    selectedRowKeys: selectedCTSPKeys,
+                    onChange: (keys, rows) => handleCTSPSelection(keys, rows, currentProduct.id_san_pham)
+                }" :data-source="productCTSPMap.get(currentProduct.id_san_pham) || []" :pagination="false"
+                    :row-key="record => record.id_chi_tiet_san_pham">
+                    <template #bodyCell="{ column, record: ctspRecord }">
+                        <template v-if="column.key === 'trang_thai'">
+                            <a-switch
+                                :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
+                                size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false" />
+                        </template>
+                        <template v-if="column.key === 'action'">
+                            <a-button @click="showDrawer" type="" style="color: white;"
+                                class="d-flex align-items-center btn btn-warning">
+                                <EditOutlined />Sửa
+                            </a-button>
+                        </template>
+                    </template>
+                </a-table>
+            </template>
+        </a-drawer>
+
+        <!-- Existing drawer for editing product details -->
+        <a-drawer v-model:open="open" class="custom-class" root-class-name="root-class-name"
+            :root-style="{ color: 'black' }" title="Chi tiết sản phẩm" placement="left"
+            @after-open-change="afterOpenChange" :footer-style="{ textAlign: 'right' }">
+            <a-form :model="productDetails" layout="vertical" @submit.prevent="handleSubmit">
+                <a-form-item label="Tên sản phẩm" name="ten_san_pham">
+                    <a-input v-model:value="productDetails.ten_san_pham" placeholder="Nhập tên sản phẩm" />
+                </a-form-item>
+
+                <a-form-item label="Danh mục" name="danh_muc_id">
+                    <a-select v-model:value="productDetails.danh_muc_id" placeholder="Chọn danh mục">
+                        <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc" :value="item.id_danh_muc">
+                            {{ item.ten_danh_muc }}
+                        </a-select-option>
+                    </a-select>
+                </a-form-item>
+
+                <a-form-item label="Giá bán" name="gia_ban">
+                    <a-input-number v-model:value="productDetails.gia_ban" placeholder="Nhập giá bán"
+                        style="width: 100%;" />
+                </a-form-item>
+
+                <!-- Thêm các trường khác tương tự -->
+
+                <a-form-item>
+                    <a-button type="primary" html-type="submit">Lưu</a-button>
+                    <a-button @click="closeDrawer">Hủy</a-button>
+                </a-form-item>
+            </a-form>
+        </a-drawer>
     </div>
 
 </template>
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
-import { EditOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
+import { EditOutlined, PlusOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons-vue';
 import { onMounted, ref, render, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
@@ -105,6 +119,23 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const open = ref(false);
 const store = useGbStore();
+
+// New refs for variant drawer
+const drawerVisible = ref(false);
+const currentProduct = ref(null);
+
+// Function to show variants drawer
+const showVariants = async (product) => {
+    currentProduct.value = product;
+    await getCTSPForProduct(product);
+    drawerVisible.value = true;
+};
+
+// Function to close variant drawer
+const closeVariantDrawer = () => {
+    drawerVisible.value = false;
+    currentProduct.value = null;
+};
 
 const changeRouter = (path) => {
     try {
@@ -217,11 +248,6 @@ const onFinish = async (values) => {
 const showDrawer = () => {
     open.value = true;
 }
-const handleExpand = async (expanded, record) => {
-    if (expanded) {
-        await getCTSPForProduct(record);
-    }
-};
 
 const formState = ref({});
 const fileList = ref([]);
@@ -320,11 +346,11 @@ const columnsCTSP = [
         dataIndex: 'trang_thai',
         key: 'trang_thai',
     },
-    {
-        title: 'Hành động',
-        dataIndex: 'action',
-        key: 'action',
-    },
+    // {
+    //     title: 'Hành động',
+    //     dataIndex: 'action',
+    //     key: 'action',
+    // },
 
 ];
 const data = ref([]);
@@ -334,26 +360,30 @@ const rowSelection = ref({
     onChange: (selectedRowKeys, selectedRows) => {
         rowSelection.value.selectedRowKeys = selectedRowKeys;
 
-        // Lấy danh sách các sản phẩm cha đã bị bỏ chọn
-        const deselectedParents = data.value
-            .filter(item => !selectedRowKeys.includes(item.id_san_pham))
-            .map(item => item.id_san_pham);
+        // Lưu danh sách các sản phẩm đã chọn
+        const selectedProducts = new Set(selectedRowKeys);
 
-        // Xóa các CTSP của các sản phẩm cha đã bị bỏ chọn
-        deselectedParents.forEach(parentId => {
-            const childItems = productCTSPMap.value.get(parentId) || [];
-            const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
-            selectedCTSPKeys.value = selectedCTSPKeys.value.filter(key => !childKeys.includes(key));
-        });
-
-        // Thêm các CTSP mới cho các sản phẩm cha được chọn
+        // Cập nhật chọn CTSP cho các sản phẩm đã chọn
         selectedRowKeys.forEach(async (key) => {
             const record = data.value.find(item => item.id_san_pham === key);
             if (record) {
                 await getCTSPForProduct(record);
                 const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
-                const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
-                selectedCTSPKeys.value = [...new Set([...selectedCTSPKeys.value, ...childKeys])];
+                childItems.forEach(item => {
+                    if (!selectedCTSPKeys.value.includes(item.id_chi_tiet_san_pham)) {
+                        selectedCTSPKeys.value.push(item.id_chi_tiet_san_pham);
+                    }
+                });
+            }
+        });
+
+        // Loại bỏ CTSP của các sản phẩm bị bỏ chọn
+        data.value.forEach(item => {
+            if (!selectedProducts.has(item.id_san_pham)) {
+                const childItems = productCTSPMap.value.get(item.id_san_pham) || [];
+                selectedCTSPKeys.value = selectedCTSPKeys.value.filter(
+                    key => !childItems.some(child => child.id_chi_tiet_san_pham === key)
+                );
             }
         });
 
@@ -398,23 +428,6 @@ const getCTSPForProduct = async (record) => {
     }
     return productCTSPMap.value.get(record.id_san_pham) || [];
 };
-const expandableConfig = {
-    expandIcon: () => null,
-    defaultExpandAllRows: false,
-    expandRowByClick: true,
-    onExpandedRowsChange: (expandedRows) => {
-        console.log("Các row đang mở rộng:", expandedRows);
-    },
-    onExpand: async (expanded, record) => {
-        if (expanded) {
-            console.log("Đang mở rrộng")
-            await getCTSPForProduct(record);
-        }
-        else {
-            console.log("Lỗi")
-        }
-    },
-};
 
 const changeStatusSanPham = async (id, checked) => {
     try {
@@ -444,16 +457,24 @@ const handleOk = e => {
     open.value = false;
 };
 
-// Hàm xử lý selection cho CTSP
+// Update the handleCTSPSelection to work with the drawer
 const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
-    selectedCTSPKeys.value = selectedKeys;
+    // Cập nhật lại danh sách CTSP đã chọn, loại bỏ các CTSP cũ của sản phẩm hiện tại
+    const otherProductCTSPs = selectedCTSPKeys.value.filter(key => {
+        // Kiểm tra key có thuộc sản phẩm hiện tại không
+        const currentProductCTSPs = productCTSPMap.value.get(parentId) || [];
+        return !currentProductCTSPs.some(item => item.id_chi_tiet_san_pham === key);
+    });
+
+    // Thêm các CTSP mới được chọn của sản phẩm hiện tại
+    selectedCTSPKeys.value = [...otherProductCTSPs, ...selectedKeys];
 
     // Cập nhật selection của sản phẩm cha
     const childItems = productCTSPMap.value.get(parentId) || [];
     const allChildKeys = childItems.map(item => item.id_chi_tiet_san_pham);
-    const allChildrenSelected = allChildKeys.every(key => selectedKeys.includes(key));
+    const allChildrenSelected = allChildKeys.length > 0 && allChildKeys.every(key => selectedKeys.includes(key));
 
-    const currentParentKeys = rowSelection.value.selectedRowKeys;
+    const currentParentKeys = [...rowSelection.value.selectedRowKeys];
     if (allChildrenSelected && !currentParentKeys.includes(parentId)) {
         rowSelection.value.selectedRowKeys = [...currentParentKeys, parentId];
     } else if (!allChildrenSelected && currentParentKeys.includes(parentId)) {
