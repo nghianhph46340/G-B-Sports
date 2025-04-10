@@ -30,29 +30,36 @@
       </div>
     </div>
 
-    <!-- Tìm kiếm và lọc theo giá, ngày -->
     <div class="row mt-3 g-2 align-items-center">
-      <div class="col-md-6 d-flex align-items-center">
+      <div class="col-md-8 d-flex align-items-center">
         <label class="me-2" style="white-space: nowrap;">Tìm kiếm:</label>
         <input type="text" class="form-control" v-model="store.khuyenMaiSearchs" placeholder="Nhập mã hoặc tên khuyến mãi">
       </div>
-      <div class="col-md-6 d-flex align-items-center flex-nowrap">
-        <label class="me-2" style="white-space: nowrap;">Giá trị giảm tối d:</label>
+      <div class="col-md-3 d-flex align-items-center mt-2">
+        <label class="me-2" style="white-space: nowrap;">Kiểu giảm giá:</label>
+        <select class="form-select" v-model="selectedKieuGiamGia" @change="fetchData(0)">
+          <option value="">Tất cả</option>
+          <option value="Phần trăm">Phần trăm</option>
+          <option value="Tiền mặt">Tiền mặt</option>
+        </select>
+      </div>
+      <div class="col-md-5 d-flex align-items-center flex-nowrap">
+        <label class="me-2" style="white-space: nowrap;">Giá trị giảm tối đa:</label>
         <div class="d-flex flex-nowrap w-100">
-          <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="0.01">
+          <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="1">
           <span class="align-self-center">-</span>
-          <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="0.01">
+          <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="1">
         </div>
       </div>
-      <div class="col-md-8 d-flex align-items-center mt-2">
+      <div class="col-md-6 d-flex align-items-center mt-2">
         <label class="me-2" style="white-space: nowrap;">Ngày:</label>
         <input type="datetime-local" class="form-control w-50" v-model="startDate">
         <span class="mx-2">-</span>
         <input type="datetime-local" class="form-control w-50" v-model="endDate">
       </div>
-      <div class="col-md-4 text-end mt-2">
-        <button class="btn btn-outline-primary" @click="refreshData">
-          <i class="fas fa-sync-alt me-1"></i>Làm mới
+      <div class="col-md-1 text-end mt-2">
+        <button class="btn btn-outline-danger" @click="refreshData">
+          <i class="bi bi-arrow-clockwise"></i>
         </button>
       </div>
     </div>
@@ -85,14 +92,15 @@
             <th scope="col">Giá trị tối đa</th>
             <th scope="col">Ngày bắt đầu</th>
             <th scope="col">Ngày kết thúc</th>
-            <th scope="col">Mô tả</th>
             <th scope="col">Trạng thái</th>
             <th scope="col">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="dataKhuyenMai.length === 0">
-            <td colspan="11" class="text-center">Không có khuyến mãi nào</td>
+            <td colspan="11" class="text-center">
+              <a-empty :image="simpleImage" />
+            </td>
           </tr>
           <tr v-for="(khuyenMai, index) in dataKhuyenMai" :key="khuyenMai.id">
             <td>{{ index + 1 + (store.khuyenMaiCurrentPage * pageSize) }}</td>
@@ -102,8 +110,7 @@
             <td>{{ khuyenMai.kieuGiamGia }}</td>
             <td>{{ formatGiaTriToiDa(khuyenMai) }}</td>
             <td>{{ formatDate(khuyenMai.ngayBatDau) }}</td>
-            <td>{{ formatDate(khuyenMai.ngayHetHan) }}</td>
-            <td>{{ khuyenMai.moTa || '' }}</td>
+            <td>{{ formatDate(khuyenMai.ngayHetHan) }}</td>    
             <td>{{ khuyenMai.trangThai }}</td>
             <td>
               <button class="btn btn-outline-danger btn-sm" v-if="khuyenMai.trangThai !== 'Đã kết thúc'"
@@ -130,20 +137,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue'; // Thêm onUnmounted
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
+import { Empty } from 'ant-design-vue';
 
 const router = useRouter();
 const store = useGbStore();
-const pageSize = ref(5); // Giá trị mặc định
+const pageSize = ref(5);
 const selectedTrangThai = ref('');
+const selectedKieuGiamGia = ref('');
 const minPrice = ref(null);
 const maxPrice = ref(null);
 const startDate = ref(null);
 const endDate = ref(null);
+const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 
-// Khai báo refreshInterval ở scope ngoài để có thể truy cập trong onUnmounted
 let refreshInterval = null;
 
 const fetchData = async (page = 0) => {
@@ -151,6 +160,18 @@ const fetchData = async (page = 0) => {
   store.khuyenMaiCurrentPage = page;
 
   try {
+    console.log('Fetching data with:', {
+      search: store.khuyenMaiSearchs,
+      minPrice: minPrice.value,
+      maxPrice: maxPrice.value,
+      startDate: startDate.value,
+      endDate: endDate.value,
+      trangThai: selectedTrangThai.value,
+      kieuGiamGia: selectedKieuGiamGia.value,
+      page,
+      size: pageSize.value,
+    });
+
     if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '') {
       await store.searchKhuyenMai(store.khuyenMaiSearchs, page, pageSize.value);
     } else if (minPrice.value || maxPrice.value) {
@@ -162,11 +183,13 @@ const fetchData = async (page = 0) => {
       }
     } else if (selectedTrangThai.value) {
       await store.getKhuyenMaiLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+    } else if (selectedKieuGiamGia.value) {
+      await store.getKhuyenMaiLocKieuGiamGia(page, pageSize.value, selectedKieuGiamGia.value);
     } else {
       await store.getAllKhuyenMai(page, pageSize.value);
     }
   } catch (error) {
-    console.error('Lỗi trong fetchData:', error);
+    console.error('Lỗi trong fetchData:', error.message, error.stack);
     toast.error('Có lỗi xảy ra khi tải dữ liệu!');
   }
 };
@@ -174,6 +197,7 @@ const fetchData = async (page = 0) => {
 const refreshData = async () => {
   store.khuyenMaiSearchs = '';
   selectedTrangThai.value = '';
+  selectedKieuGiamGia.value = '';
   minPrice.value = null;
   maxPrice.value = null;
   startDate.value = null;
@@ -186,11 +210,11 @@ const offKhuyenMai = async (id) => {
   await fetchData(store.khuyenMaiCurrentPage);
 };
 
-// Sắp xếp dữ liệu theo id giảm dần
 const dataKhuyenMai = computed(() => {
   let data = [];
-  if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '' && store.khuyenMaiSearch.length > 0) {
-    data = [...store.khuyenMaiSearch];
+  if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '') {
+    // Chỉ lấy dữ liệu từ khuyenMaiSearch khi tìm kiếm, nếu không có thì trả về mảng rỗng
+    data = store.khuyenMaiSearch.length > 0 ? [...store.khuyenMaiSearch] : [];
   } else {
     data = [...store.getAllKhuyenMaiArr];
   }
@@ -223,8 +247,12 @@ const formatDate = (dateStr) => {
   });
 };
 
-watch(() => store.khuyenMaiSearchs, async () => {
-  await fetchData(0);
+watch(() => store.khuyenMaiSearchs, async (newValue) => {
+  if (!newValue || newValue.trim() === '') {
+    await fetchData(0);
+  } else {
+    await fetchData(0); // Gọi fetchData ngay khi có thay đổi tìm kiếm
+  }
 });
 
 watch([minPrice, maxPrice], async () => {
@@ -235,24 +263,21 @@ watch([startDate, endDate], async () => {
   await fetchData(0);
 });
 
-watch([pageSize, selectedTrangThai], async () => {
+watch([pageSize, selectedTrangThai, selectedKieuGiamGia], async () => {
   await fetchData(0);
 });
 
-// Mounted hook - Thêm polling
 onMounted(async () => {
   if (typeof store.getAllKhuyenMai !== 'function') {
     console.error('getAllKhuyenMai is not a function in store!');
     return;
   }
   await store.getAllKhuyenMai(0, pageSize.value);
-  
   refreshInterval = setInterval(() => {
     fetchData(store.khuyenMaiCurrentPage);
-  }, 10000); // 10 giây
+  }, 10000);
 });
 
-// Cleanup interval khi component bị hủy
 onUnmounted(() => {
   if (refreshInterval) {
     clearInterval(refreshInterval);

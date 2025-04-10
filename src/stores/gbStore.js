@@ -1345,7 +1345,42 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra');
       }
     },
-
+    async getVoucherLocKieuGiamGia(page = 0, size = 5, kieuGiamGia = '') {
+      try {
+        console.log('Calling getVoucherLocKieuGiamGia with:', { page, size, kieuGiamGia });
+        const response = await voucherService.getVoucherLocKieuGiamGia(page, size, kieuGiamGia);
+        console.log('Response from getVoucherLocKieuGiamGia:', response);
+        if (response.error) {
+          toast.error('Không lấy được dữ liệu voucher theo kiểu giảm giá');
+          return;
+        }
+        this.getAllVoucherArr = response.content || [];
+        this.voucherTotalPages = response.totalPages || 0;
+        this.voucherCurrentPage = page;
+      } catch (error) {
+        console.error('Lỗi khi lọc voucher theo kiểu giảm giá:', error);
+        toast.error('Có lỗi xảy ra');
+      }
+    },
+// Lọc khuyến mãi theo kiểu giảm giá
+async getKhuyenMaiLocKieuGiamGia(page = 0, size = 5, kieuGiamGia = '') {
+  try {
+    console.log('Calling getKhuyenMaiLocKieuGiamGia with:', { page, size, kieuGiamGia });
+    const response = await khuyenMaiService.getKhuyenMaiLocKieuGiamGia(page, size, kieuGiamGia);
+    console.log('Response from getKhuyenMaiLocKieuGiamGia:', response);
+    if (response.error) {
+      console.error('API returned error:', response);
+      toast.error('Không lấy được dữ liệu khuyến mãi theo kiểu giảm giá');
+      return;
+    }
+    this.getAllKhuyenMaiArr = response.content || [];
+    this.khuyenMaiTotalPages = response.totalPages || 0;
+    this.khuyenMaiCurrentPage = page;
+  } catch (error) {
+    console.error('Lỗi khi gọi API lọc khuyến mãi theo kiểu giảm giá:', error.message, error.stack);
+    toast.error('Có lỗi xảy ra');
+  }
+},
     async searchVoucher(keyword, page = 0, size = 5) {
       try {
         const voucherSearch = await voucherService.searchVoucher(keyword, page, size);
@@ -1499,11 +1534,11 @@ export const useGbStore = defineStore('gbStore', {
           this.khuyenMaiTotalItems = khuyenMaiSearch.totalElements || 0;
         }
       } catch (error) {
-        console.error(error);
+        console.error('Lỗi khi tìm kiếm khuyến mãi:', error);
         toast.error('Có lỗi xảy ra');
+        this.khuyenMaiSearch = []; // Đặt về rỗng khi có lỗi
       }
     },
-
     async offKhuyenMai(id) {
       try {
         const khuyenMai = this.getAllKhuyenMaiArr.find(km => km.id === id);
