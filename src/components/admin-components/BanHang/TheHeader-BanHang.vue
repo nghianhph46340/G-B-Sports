@@ -843,7 +843,7 @@ const printInvoice = () => {
     doc.setFont("Roboto", "normal");
     doc.text(`Mã hóa đơn: ${activeTabData.value.hd.ma_hoa_don || 'N/A'}`, 20, 86);
     doc.text(`Tên nhân viên: ${activeTabData.value.hd.ten_nhan_vien || 'N/A'}`, 20, 94);
-    doc.text(`Ngày: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
+    doc.text(`Ngày tạo: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
     doc.text(`Tên khách hàng: ${activeTabData.value.hd.khach_hang || 'Khách lẻ'}`, 20, 110);
     // Danh sách sản phẩm
     let y = 120;
