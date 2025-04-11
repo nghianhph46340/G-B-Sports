@@ -49,7 +49,7 @@
                             <h2>Thông tin đơn hàng #{{ thongTinHoaDon.ma_hoa_don }}</h2>
                             <p v-if="thongTinHoaDon.ma_hoa_don">Ngày đặt hàng: {{
                                 dinhDangNgayGio(thongTinHoaDon.ngay_tao)
-                            }}
+                                }}
                             </p>
                         </div>
                         <div :class="['order-status', `status-${currentStatus?.code || 'pending'}`]">
