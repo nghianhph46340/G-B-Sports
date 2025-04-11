@@ -1316,7 +1316,7 @@ export const useGbStore = defineStore('gbStore', {
           toast.error(result.message || 'Không xóa được sản phẩm khỏi hóa đơn')
           return null
         }
-        return result.data // Trả về dữ liệu HoaDon
+        return result // ✅ trả toàn bộ để lấy thêm dữ liệu nếu muốn
       } catch (error) {
         console.error('Lỗi từ API:', error.response?.data || error.message)
         toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm')

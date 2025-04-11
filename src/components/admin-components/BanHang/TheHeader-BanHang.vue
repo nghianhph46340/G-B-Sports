@@ -535,8 +535,8 @@ const addToBill = async (product) => {
         dropdownVisible.value = false;
         searchQuery.value = '';
         message.success(`Đã thêm "${product.ten_san_pham}" vào hóa đơn.`);
-        await store.getAllCTSPKM();              // <-- lấy lại danh sách mới
-        allProducts.value = store.getAllCTSPKMList;  // <-- cập nhật lại biến reactive
+        await store.getAllCTSPKM();
+        allProducts.value = store.getAllCTSPKMList;
 
     } catch (error) {
         console.error('Lỗi khi thêm sản phẩm:', error);
@@ -623,8 +623,8 @@ const updateItemTotal = async (item) => {
         }
         console.log("id hoá đơn truyền vào ", item.id_hoa_don)
         await refreshHoaDon(item.id_hoa_don);
-        await store.getAllCTSPKM();              // <-- lấy lại danh sách mới
-        allProducts.value = store.getAllCTSPKMList;  // <-- cập nhật lại biến reactive
+        await store.getAllCTSPKM();
+        allProducts.value = store.getAllCTSPKMList;
     } catch (error) {
         console.error('Lỗi khi cập nhật số lượng:', error);
         message.error('Đã xảy ra lỗi khi cập nhật số lượng!');
@@ -635,7 +635,6 @@ const updateItemTotal = async (item) => {
 const removeFromBill = async (productId) => {
     const currentTab = activeTabData.value;
     if (!currentTab || !currentTab.items) return;
-
     const itemsArray = currentTab.items.value;
     const itemIndex = itemsArray.findIndex(item => item.id_chi_tiet_san_pham === productId);
     if (itemIndex === -1) return;
@@ -644,7 +643,8 @@ const removeFromBill = async (productId) => {
 
     try {
         const result = await store.xoaSPHD(currentTab.hd.id_hoa_don, productId);
-        if (!result) return;
+        if (!result || !result.success) return;
+
 
         // Làm mới danh sách sản phẩm từ server
         await store.getAllSPHD(currentTab.hd.id_hoa_don);
@@ -662,7 +662,8 @@ const removeFromBill = async (productId) => {
         }));
 
         await refreshHoaDon(currentTab.hd.id_hoa_don);
-
+        await store.getAllCTSPKM();
+        allProducts.value = store.getAllCTSPKMList;
         message.info(`Đã xóa "${removedItem.ten_san_pham}" khỏi hóa đơn.`);
     } catch (error) {
         console.error('Lỗi không mong đợi:', error);
