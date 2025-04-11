@@ -102,6 +102,17 @@
                                 <p v-if="getStatusDate('Hoàn thành')">{{ formatDate(getStatusDate('Hoàn thành')) }}</p>
                             </div>
                         </div>
+
+                        <!-- Đã hủy - chỉ hiển thị khi đơn hàng bị hủy -->
+                        <div v-if="store.hoaDonDetail.trang_thai === 'Đã hủy'" class="timeline-step cancelled active">
+                            <div class="timeline-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>Đã hủy</h4>
+                                <p v-if="getStatusDate('Đã hủy')">{{ formatDate(getStatusDate('Đã hủy')) }}</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Intermediate update points between main statuses -->
@@ -2508,6 +2519,43 @@ const getUpdatePosition = (update) => {
         color: gray;
         font-size: 12px;
         /* Kích thước chữ nhỏ hơn */
+    }
+}
+
+.timeline-step.cancelled .timeline-icon {
+    background-color: #fff1f0;
+    color: #f5222d;
+    border-color: #f5222d;
+}
+
+.timeline-step.cancelled.active .timeline-icon {
+    background-color: #f5222d;
+    color: #fff;
+}
+
+.timeline-step.cancelled .timeline-content h4 {
+    color: #f5222d;
+}
+
+@media (max-width: 768px) {
+    .timeline-steps {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 20px;
+        justify-content: flex-start;
+    }
+
+    .timeline-step {
+        min-width: 140px;
+        flex: 0 0 auto;
+    }
+
+    .timeline-track {
+        height: 4px;
+    }
+
+    .update-marker {
+        top: 32px;
     }
 }
 </style>
