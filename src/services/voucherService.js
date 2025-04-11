@@ -30,6 +30,19 @@ const addVoucher = async (voucherData) => {
     throw error;
   }
 };
+const getVoucherLocKieuGiamGia = async (page, size, kieuGiamGia) => {
+  try {
+    console.log('Sending request to API:', `/admin/quan_ly_voucher/loc-kieu-giam-gia-VC?page=${page}&size=${size}&kieuGiamGia=${kieuGiamGia}`);
+    const { data } = await axiosInstance.get(
+      `/admin/quan_ly_voucher/loc-kieu-giam-gia-VC?page=${page}&size=${size}&kieuGiamGia=${kieuGiamGia}`
+    );
+    console.log('Raw API data:', data);
+    return normalizeResponse(data);
+  } catch (error) {
+    console.error('Lỗi khi gọi API:', error.message, error.response?.data || error);
+    return { error: true };
+  }
+};
 const updateVoucher = async (voucherData) => {
   try {
     const { data } = await axiosInstance.put('/admin/quan_ly_voucher/update', voucherData);
@@ -123,4 +136,5 @@ export const voucherService = {
   addVoucher,
   updateVoucher,
   getVoucherById,
+  getVoucherLocKieuGiamGia,
 };

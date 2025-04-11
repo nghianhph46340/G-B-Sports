@@ -948,11 +948,11 @@ const handlePayment = async () => { // Thêm async nếu gọi API
     }
     if (currentTab.hd.hinh_thuc_thanh_toan === 'Tiền mặt') {
         // Validate tiền khách đưa (nếu cần thiết)
-        // if(currentTab.hd.tien_khach_dua === null || currentTab.hd.tien_khach_dua < currentTab.hd.tong_tien_sau_giam){
-        //     message.error("Vui lòng nhập đủ tiền khách đưa.");
-        //     return;
-        // }
-        // currentTab.hd.tien_du = currentTab.hd.tien_khach_dua - currentTab.hd.tong_tien_sau_giam;
+        if(currentTab.hd.tien_khach_dua === null || currentTab.hd.tien_khach_dua < currentTab.hd.tong_tien_sau_giam){
+            message.error("Vui lòng nhập đủ tiền khách đưa.");
+            return;
+        }
+        currentTab.hd.tien_du = currentTab.hd.tien_khach_dua - currentTab.hd.tong_tien_sau_giam;
     }
 
 
