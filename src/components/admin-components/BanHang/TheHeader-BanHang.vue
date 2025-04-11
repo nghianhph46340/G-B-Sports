@@ -433,13 +433,6 @@ const formatCurrency = (value) => {
     return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
-// Hiển thị dropdown khi focus vào input
-// const showDropdown = () => {
-//     this.$nextTick(() => {
-//         this.dropdownVisible = true;
-//     });
-// };
-
 // Xử lý khi người dùng gõ vào ô tìm kiếm
 const handleSearchInput = () => {
     if (!searchQuery.value.trim()) {
@@ -542,6 +535,9 @@ const addToBill = async (product) => {
         dropdownVisible.value = false;
         searchQuery.value = '';
         message.success(`Đã thêm "${product.ten_san_pham}" vào hóa đơn.`);
+        await store.getAllCTSPKM();              // <-- lấy lại danh sách mới
+        allProducts.value = store.getAllCTSPKMList;  // <-- cập nhật lại biến reactive
+
     } catch (error) {
         console.error('Lỗi khi thêm sản phẩm:', error);
         message.error('Đã xảy ra lỗi khi thêm sản phẩm!');
@@ -627,7 +623,8 @@ const updateItemTotal = async (item) => {
         }
         console.log("id hoá đơn truyền vào ", item.id_hoa_don)
         await refreshHoaDon(item.id_hoa_don);
-
+        await store.getAllCTSPKM();              // <-- lấy lại danh sách mới
+        allProducts.value = store.getAllCTSPKMList;  // <-- cập nhật lại biến reactive
     } catch (error) {
         console.error('Lỗi khi cập nhật số lượng:', error);
         message.error('Đã xảy ra lỗi khi cập nhật số lượng!');
@@ -676,6 +673,11 @@ const removeFromBill = async (productId) => {
 // Hàm tạo mới một tab hóa đơn (Đã sửa)
 const add = async () => {
     try {
+        // Giới hạn số lượng hóa đơn tối đa là 5
+        if (panes.value.length >= 5) {
+            throw new Error('Bạn chỉ có thể tạo tối đa 5 hóa đơn cùng lúc!');
+        }
+
         // Kiểm tra xem người dùng đã đăng nhập và có thông tin chi tiết không
         if (!store.isLoggedIn || !store.userDetails) {
             throw new Error('Người dùng chưa đăng nhập hoặc không có thông tin chi tiết!');
@@ -686,24 +688,21 @@ const add = async () => {
             throw new Error('Chỉ nhân viên mới có thể tạo hóa đơn!');
         }
 
-        // Lấy id_nhan_vien từ userDetails
         const idNhanVien = store.userDetails.idNhanVien;
         if (!idNhanVien) {
             throw new Error('Không tìm thấy ID nhân viên!');
         }
 
         console.log('ID Nhân viên được sử dụng để tạo hóa đơn:', idNhanVien);
-        // Gọi API tạo hóa đơn với id_nhan_vien
+
         const response = await store.createHoaDon(idNhanVien);
         if (!response || response.error) {
             throw new Error(response?.message || 'Không thể tạo hóa đơn');
         }
 
-        // Tăng index cho tab mới
         newTabIndex.value++;
         const newKey = `invoiceTab_${Date.now()}_${newTabIndex.value}`;
 
-        // Thêm tab mới vào danh sách
         panes.value.push({
             title: `Đơn ${panes.value.length + 1}`,
             key: newKey,
@@ -717,7 +716,6 @@ const add = async () => {
                 id_nhan_vien: response.id_nhan_vien,
                 ten_nhan_vien: response.ten_nhan_vien,
                 id_voucher: null,
-                // Các trường mặc định
                 id_khach_hang: null,
                 hinh_thuc_thanh_toan: 'Tiền mặt',
                 phuong_thuc_nhan_hang: 'Nhận tại cửa hàng',
@@ -734,12 +732,12 @@ const add = async () => {
         toast.error(error.message || 'Lỗi khi tạo hóa đơn!');
     }
 };
+
 // Hàm đóng tab hóa đơn (Đã sửa)
 const remove = async (targetKey) => {
     const tabToRemove = panes.value.find(p => p.key === targetKey);
     if (!tabToRemove) return;
 
-    // Kiểm tra và xác nhận nếu có sản phẩm
     if (tabToRemove.items?.value?.length > 0) {
         Modal.confirm({
             title: `Xác nhận hủy hóa đơn "${tabToRemove.title}"`,
@@ -764,14 +762,20 @@ const performRemove = async (tabToRemove, targetKey) => {
                 return;
             }
 
-            // Làm mới danh sách sản phẩm để cập nhật số lượng tồn
+            // Làm mới danh sách sản phẩm
             await store.getAllCTSPKM();
             allProducts.value = store.getAllCTSPKMList;
         }
 
-        // Cập nhật UI chỉ khi xóa thành công
+        // Xóa tab
         panes.value = panes.value.filter(pane => pane.key !== targetKey);
 
+        // ✅ Cập nhật lại tiêu đề tab sau khi xóa
+        panes.value.forEach((pane, index) => {
+            pane.title = `Đơn ${index + 1}`;
+        });
+
+        // Nếu tab đang active bị xóa thì chuyển sang tab gần nhất
         if (activeKey.value === targetKey) {
             const remainingPanes = panes.value;
             activeKey.value = remainingPanes.length > 0
@@ -779,6 +783,7 @@ const performRemove = async (tabToRemove, targetKey) => {
                 : '';
         }
 
+        // Nếu không còn tab nào, tạo tab mới
         if (panes.value.length === 0) {
             await add();
         }
@@ -789,6 +794,7 @@ const performRemove = async (tabToRemove, targetKey) => {
         message.error('Đã xảy ra lỗi khi xóa hóa đơn!');
     }
 };
+
 
 
 // Thêm font Arial tiếng Việt (cần tải file font .ttf và chuyển thành base64)
@@ -809,7 +815,7 @@ const printInvoice = () => {
     const doc = new jsPDF();
     // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
     doc.setFont("Roboto");
-    
+
     // Thêm logo
     const logoWidth = 30; // Chiều rộng logo (mm)
     const logoHeight = 20; // Chiều cao logo (mm)
@@ -1001,16 +1007,16 @@ const confirmPrint = async (shouldPrint) => {
 
 
 const updateHinhThucThanhToan = async () => {
-  try {
-    const id = activeTabData.value.hd.id_hoa_don;
-    const hinhThuc = activeTabData.value.hd.hinh_thuc_thanh_toan;
+    try {
+        const id = activeTabData.value.hd.id_hoa_don;
+        const hinhThuc = activeTabData.value.hd.hinh_thuc_thanh_toan;
 
-    await store.updateHinhThucTTHoaDon(id, hinhThuc);
+        await store.updateHinhThucTTHoaDon(id, hinhThuc);
 
-    console.log("Đã cập nhật hình thức thanh toán:", hinhThuc);
-  } catch (err) {
-    console.error("Lỗi cập nhật hình thức thanh toán", err);
-  }
+        console.log("Đã cập nhật hình thức thanh toán:", hinhThuc);
+    } catch (err) {
+        console.error("Lỗi cập nhật hình thức thanh toán", err);
+    }
 };
 
 
