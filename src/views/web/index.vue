@@ -11,8 +11,8 @@
         <QuanTheThaoBanChay />
         <GiayVaPhuKienBanChay />
         <ThuongHieuSanPham />
-
     </div>
+    <ChatWidget :customerId="'1'" :staffId="'1'" senderType="CUSTOMER" :anou="false" />
 </template>
 
 <script>
@@ -27,7 +27,7 @@ import GiayVaPhuKienBanChay from '@/components/ingredient-web-components/GiayVaP
 import DanhMucSanPham from '@/components/ingredient-web-components/DanhMucSanPham.vue';
 import ThuongHieuSanPham from '@/components/ingredient-web-components/ThuongHieuSanPham.vue';
 import TheNoitification from '@/components/TheNoitification.vue';
-
+import ChatWidget from '@/components/ChatWidge/ChatWidget.vue';
 
 export default {
     components: {
@@ -41,7 +41,8 @@ export default {
         SanPhamMoiChoTatCa,
         DanhMucSanPham,
         ThuongHieuSanPham,
-        TheNoitification
+        TheNoitification,
+        ChatWidget
     }
 }
 </script>

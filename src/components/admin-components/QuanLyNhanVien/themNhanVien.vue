@@ -94,8 +94,6 @@
                     </a-col>
                 </a-row>
 
-                <!-- Phần địa chỉ -->
-                <a-divider orientation="left">Thông tin địa chỉ</a-divider>
                 <a-row :gutter="16">
                     <!-- Tỉnh/Thành phố -->
                     <a-col :span="8">

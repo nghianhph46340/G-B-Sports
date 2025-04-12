@@ -30,7 +30,7 @@
                         <label for="email">
                             <i class="fas fa-envelope"></i> Email
                         </label>
-                        <input type="email" id="email" v-model="email" class="form-control"
+                        <input type="text" id="email" v-model="email" class="form-control"
                             placeholder="Nhập email của bạn" required />
                     </div>
 

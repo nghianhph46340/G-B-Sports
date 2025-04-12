@@ -8,11 +8,11 @@
             <a-menu class="" v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" theme="light"
                 mode="inline">
 
-                <a-menu-item key="2" @click="changeRoute('/admin/baocaothongke')">
+                <a-menu-item key="1" @click="changeRoute('/admin')">
                     <AreaChartOutlined />
                     <span>Thống kê</span>
                 </a-menu-item>
-                <a-menu-item key="1" @click="changeRoute('/admin');">
+                <a-menu-item key="2" @click="changeRoute('/admin/banhang');">
                     <HomeOutlined />
                     <span>Bán hàng</span>
                 </a-menu-item>

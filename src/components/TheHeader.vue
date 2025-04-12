@@ -28,14 +28,14 @@
                         <span class="nav-text">{{ !store.changeLanguage.nguoiDung ? 'Đăng nhập' :
                             store.changeLanguage.nguoiDung }}</span>
                     </div>
-                    <div class="nav-item text-center" @mouseenter="animateIcon('store')">
+                    <div class="nav-item text-center" @click="chuyenTrang('/cuaHang')" @mouseenter="animateIcon('store')">
                         <div class="icon-container">
                             <Store class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'store' }" />
                         </div>
                         <span class="nav-text">{{ !store.changeLanguage.cuaHang ? 'Cửa hàng' :
                             store.changeLanguage.cuaHang }}</span>
                     </div>
-                    <div class="nav-item text-center" @mouseenter="animateIcon('support')">
+                    <div class="nav-item text-center" @click="chuyenTrang('/hoTro')" @mouseenter="animateIcon('support')">
                         <div class="icon-container">
                             <MessageCircleQuestion class="nav-icon"
                                 :class="{ 'icon-animated': animatedIcon === 'support' }" />
