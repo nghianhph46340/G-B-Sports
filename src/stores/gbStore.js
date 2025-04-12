@@ -1313,18 +1313,17 @@ export const useGbStore = defineStore('gbStore', {
 
     async xoaSPHD(idHoaDon, idCTSP) {
       try {
-        const result = await banHangService.xoaSPHD(idHoaDon, idCTSP)
-        if (!result.success) {
-          toast.error(result.message || 'Không xóa được sản phẩm khỏi hóa đơn')
-          return null
-        }
-        return result // ✅ trả toàn bộ để lấy thêm dữ liệu nếu muốn
+        const result = await banHangService.xoaSPHD(idHoaDon, idCTSP);
+        return result; // ✨ Trả luôn response object { success, message }
       } catch (error) {
-        console.error('Lỗi từ API:', error.response?.data || error.message)
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm')
-        return null
+        console.error('Lỗi từ API:', error.response?.data || error.message);
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm'
+        };
       }
     },
+    
 
     async getHoaDonByIdHoaDon(idHD) {
       try {

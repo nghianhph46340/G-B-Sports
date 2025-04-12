@@ -633,43 +633,48 @@ const updateItemTotal = async (item) => {
 
 // Xóa sản phẩm khỏi hóa đơn chi tiết của tab hiện tại
 const removeFromBill = async (productId) => {
-    const currentTab = activeTabData.value;
-    if (!currentTab || !currentTab.items) return;
-    const itemsArray = currentTab.items.value;
-    const itemIndex = itemsArray.findIndex(item => item.id_chi_tiet_san_pham === productId);
-    if (itemIndex === -1) return;
+  const currentTab = activeTabData.value;
+  if (!currentTab || !currentTab.items) return;
+  const itemsArray = currentTab.items.value;
+  const itemIndex = itemsArray.findIndex(item => item.id_chi_tiet_san_pham === productId);
+  if (itemIndex === -1) return;
 
-    const removedItem = itemsArray[itemIndex];
+  const removedItem = itemsArray[itemIndex];
 
-    try {
-        const result = await store.xoaSPHD(currentTab.hd.id_hoa_don, productId);
-        if (!result || !result.success) return;
+  try {
+    const result = await store.xoaSPHD(currentTab.hd.id_hoa_don, productId);
 
-
-        // Làm mới danh sách sản phẩm từ server
-        await store.getAllSPHD(currentTab.hd.id_hoa_don);
-        currentTab.items.value = store.getAllSPHDArr.map(item => ({
-            id_hoa_don: item.id_hoa_don,
-            id_chi_tiet_san_pham: item.id_chi_tiet_san_pham,
-            hinh_anh: item.hinh_anh,
-            ten_san_pham: item.ten_san_pham,
-            mau_sac: item.ten_mau_sac || item.mau_sac || null,
-            kich_thuoc: item.gia_tri || null,
-            so_luong: item.so_luong,
-            gia_ban: item.gia_ban,
-            tong_tien: item.don_gia,
-            so_luong_ton_goc: item.so_luong_ton || 0,
-        }));
-
-        await refreshHoaDon(currentTab.hd.id_hoa_don);
-        await store.getAllCTSPKM();
-        allProducts.value = store.getAllCTSPKMList;
-        message.info(`Đã xóa "${removedItem.ten_san_pham}" khỏi hóa đơn.`);
-    } catch (error) {
-        console.error('Lỗi không mong đợi:', error);
-        message.error('Đã xảy ra lỗi bất ngờ khi xóa sản phẩm!');
+    if (!result || !result.success) {
+      message.error(result.message || 'Không xóa được sản phẩm khỏi hóa đơn!');
+      return;
     }
+
+    // Làm mới danh sách sản phẩm từ server
+    await store.getAllSPHD(currentTab.hd.id_hoa_don);
+    currentTab.items.value = store.getAllSPHDArr.map(item => ({
+      id_hoa_don: item.id_hoa_don,
+      id_chi_tiet_san_pham: item.id_chi_tiet_san_pham,
+      hinh_anh: item.hinh_anh,
+      ten_san_pham: item.ten_san_pham,
+      mau_sac: item.ten_mau_sac || item.mau_sac || null,
+      kich_thuoc: item.gia_tri || null,
+      so_luong: item.so_luong,
+      gia_ban: item.gia_ban,
+      tong_tien: item.don_gia,
+      so_luong_ton_goc: item.so_luong_ton || 0,
+    }));
+
+    await refreshHoaDon(currentTab.hd.id_hoa_don);
+    await store.getAllCTSPKM();
+    allProducts.value = store.getAllCTSPKMList;
+
+    message.info(`Đã xóa "${removedItem.ten_san_pham}" khỏi hóa đơn.`);
+  } catch (error) {
+    console.error('Lỗi không mong đợi:', error);
+    message.error('Đã xảy ra lỗi bất ngờ khi xóa sản phẩm!');
+  }
 };
+
 
 // Hàm tạo mới một tab hóa đơn (Đã sửa)
 const add = async () => {
@@ -999,6 +1004,7 @@ const confirmPrint = async (shouldPrint) => {
             // const res = await store.thanhToanMomo(activeTabData.value.hd.id_hoa_don);
             // Điều hướng đến trang thanh toán MoMo
             // window.location.href = res.payUrl;
+            
         } catch (error) {
             console.error('Lỗi khi tạo yêu cầu thanh toán Momo:', error);
             message.error('Không thể tạo thanh toán Momo!');
