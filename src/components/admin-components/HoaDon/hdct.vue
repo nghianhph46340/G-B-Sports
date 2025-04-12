@@ -431,10 +431,10 @@
                                 <a-button @click="decreaseQuantityPopup(index)"
                                     :disabled="quantities[index] <= 0">-</a-button>
                                 <a-input-number type="number" v-model:value="quantities[index]" :min="0"
-                                    :max="shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : undefined"
-                                    @change="validateQuantity(index, shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : Infinity)" />
+                                    :max="shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : record.so_luong"
+                                    @change="validateQuantity(index, shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : record.so_luong)" />
                                 <a-button @click="increaseQuantityPopup(index)"
-                                    :disabled="shouldCalculateSoLuongTon && quantities[index] >= calculateSoLuongTon(record)">+</a-button>
+                                    :disabled="quantities[index] >= (shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : record.so_luong)">+</a-button>
                             </div>
                         </template>
                     </template>
@@ -457,14 +457,16 @@
                 :title="popupType === 'increase' ? 'Giảm số lượng' : 'Thêm số lượng'" :footer="null">
                 <div class="popup-input">
                     <label>
-
                         <span v-if="shouldCalculateSoLuongTon">Số lượng
                             (Khả dụng: {{ currentProduct ? calculateSoLuongTon(currentProduct) : 0 }})
+                        </span>
+                        <span v-else>Số lượng
+                            (Tổng: {{ currentProduct ? currentProduct.so_luong : 0 }})
                         </span>
                     </label>
                     <label style="width: 100px;">Số lượng:</label>
                     <a-input-number style="width: 150px;" type="number" v-model:value="quantityChange" :min="0"
-                        :max="popupType === 'increase' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : undefined)" />
+                        :max="popupType === 'increase' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : currentProduct.so_luong)" />
                 </div>
                 <div class="popup-actions">
                     <a-button type="primary" @click="updateQuantity">
@@ -1071,7 +1073,7 @@ const validateQuantity = (index, max) => {
 };
 
 // Thêm sản phẩm vào hóa đơn
-const addSelectedProducts = () => {
+const addSelectedProducts = async () => {
     const selectedProducts = store.listCTSP_HD
         .map((item, index) => ({
             idCTSP: item.id_chi_tiet_san_pham,
@@ -1085,18 +1087,16 @@ const addSelectedProducts = () => {
     }
 
     // Chỉ validate số lượng khả dụng nếu trạng thái là "Chờ xác nhận"
-    if (shouldCalculateSoLuongTon) {
-        for (const product of selectedProducts) {
-            const ctsp = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === product.idCTSP);
-            const soLuongTon = calculateSoLuongTon(ctsp);
-            if (product.soLuongMua > soLuongTon) {
-                toast.error(`Số lượng sản phẩm ${ctsp.ten_san_pham} vượt quá số lượng khả dụng (${soLuongTon})`);
-                return;
-            }
+    for (const product of selectedProducts) {
+        const ctsp = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === product.idCTSP);
+        const maxQuantity = shouldCalculateSoLuongTon ? calculateSoLuongTon(ctsp) : ctsp.so_luong;
+        if (product.soLuongMua > maxQuantity) {
+            toast.error(`Số lượng sản phẩm ${ctsp.ten_san_pham} vượt quá số lượng tối đa (${maxQuantity})`);
+            return;
         }
     }
 
-    store.addProductsToInvoice(store.hoaDonDetail.ma_hoa_don, selectedProducts);
+    await store.addProductsToInvoice(store.hoaDonDetail.ma_hoa_don, selectedProducts);
     closeAddProductPopup();
 };
 
@@ -1304,13 +1304,11 @@ const updateQuantity = async () => {
     }
 
     if (popupType.value === 'decrease') {
-        // Chỉ validate số lượng khả dụng nếu trạng thái là "Chờ xác nhận"
-        if (shouldCalculateSoLuongTon) {
-            const soLuongTon = calculateSoLuongTon(item);
-            if (change > soLuongTon) {
-                toast.error(`Số lượng thêm không được vượt quá ${soLuongTon}`);
-                return;
-            }
+        // Tính số lượng tối đa
+        const maxQuantity = shouldCalculateSoLuongTon ? calculateSoLuongTon(item) : item.so_luong;
+        if (change > maxQuantity) {
+            toast.error(`Số lượng thêm không được vượt quá ${maxQuantity}`);
+            return;
         }
 
         try {
@@ -1332,10 +1330,8 @@ const updateQuantity = async () => {
             toast.error('Có lỗi xảy ra khi thêm số lượng');
         }
     } else if (popupType.value === 'increase') {
-        // Giảm số lượng
         const totalQuantity = calculateTotalQuantity();
         const newQuantity = totalQuantity - change;
-        // Validate: Tổng số lượng sau khi giảm phải >= 1
         if (newQuantity < 1) {
             toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm với số lượng tối thiểu là 1!');
             return;
@@ -1440,7 +1436,7 @@ const printInvoice = () => {
     doc.setFont("Roboto", "bold");
     doc.text("Số lượng", 100, y, { align: "center" });
     doc.text("Đơn giá", 130, y, { align: "center" });
-    doc.text("Thành tiền", 170, y, { align: "center" });
+    doc.text("Tổng tiền", 170, y, { align: "center" });
     // Vẽ đường kẻ ngang dưới tiêu đề bảng
     y += 2;
     doc.setLineWidth(0.2);
