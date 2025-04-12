@@ -125,7 +125,7 @@ export const useGbStore = defineStore('gbStore', {
       endDate: '',
     },
     topSanPhamBanChay: [],
-    topSanPhamBanCham: [],
+    topSanPhamSapHetHang: [],
     // tỉ lệ trạng thái đơn hàng
     tiLeTrangThai: [],
     loading: false,
@@ -303,26 +303,26 @@ export const useGbStore = defineStore('gbStore', {
     //   const topSanPhamBanCham = await bctkService.topSanPhamBanCham()
     //   this.topSanPhamBanCham = topSanPhamBanCham
     // },
-    async getTopSanPhamBanCham(type = 'nam-nay', startDate = null, endDate = null) {
+    async getTopSanPhamSapHetHang() {
       try {
-        const response = await bctkService.getTopSanPhamBanCham(type, startDate, endDate)
-        if (response && Array.isArray(response)) {
-          this.topSanPhamBanCham = response.map((item, index) => ({
-            stt: index + 1,
-            ma_san_pham: item.ma_san_pham || '',
-            ten_san_pham: item.ten_san_pham || '',
-            so_luong: item.so_luong || 0,
-            gia_ban: item.gia_ban || 0,
-          }))
-        } else {
-          console.warn('Invalid response format for topSanPhamBanCham:', response)
-          this.topSanPhamBanCham = []
-        }
+          const response = await bctkService.getTopSanPhamSapHetHang();
+          if (response && Array.isArray(response)) {
+              this.topSanPhamSapHetHang = response.map((item, index) => ({
+                  stt: index + 1,
+                  ma_san_pham: item.ma_san_pham || '',
+                  ten_san_pham: item.ten_san_pham || '',
+                  so_luong: item.so_luong || 0,
+                  gia_ban: item.gia_ban || 0,
+              }));
+          } else {
+              console.warn('Invalid response format for topSanPhamSapHetHang:', response);
+              this.topSanPhamSapHetHang = [];
+          }
       } catch (error) {
-        console.error('Error in getTopSanPhamBanCham:', error)
-        this.topSanPhamBanCham = []
+          console.error('Error in getTopSanPhamSapHetHang:', error);
+          this.topSanPhamSapHetHang = [];
       }
-    },
+  },
     //Kết thúc BCTK
 
     //Nhân viên

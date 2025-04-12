@@ -353,7 +353,6 @@ import {
     GiftOutlined
 } from '@ant-design/icons-vue';
 import { ref, onMounted } from 'vue';
-import { emitter } from '@/components/ChatWidge/ChatWidget.vue'
 
 // Refs for sections
 const heroRef = ref(null);
