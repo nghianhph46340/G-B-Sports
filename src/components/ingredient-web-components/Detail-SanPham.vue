@@ -287,7 +287,7 @@
                                     </button>
                                 </div>
                                 <div class="product-card-badge" v-if="product.giam_gia">-{{ product.phan_tram_giam_gia
-                                }}%
+                                    }}%
                                 </div>
                             </div>
                             <div class="product-card-info">
@@ -296,7 +296,7 @@
                                     <span class="current-price">{{ formatCurrency(product.gia_khuyen_mai) }}</span>
                                     <span class="original-price" v-if="product.giam_gia">{{
                                         formatCurrency(product.gia_goc)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                             </div>
                         </div>
