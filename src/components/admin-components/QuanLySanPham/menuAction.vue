@@ -91,7 +91,7 @@
                         <!-- Bộ lọc Giá -->
                         <div class="filter-group">
                             <div class="filter-title">Giá</div>
-                            <a-slider v-model:value="value2" range :min="0" :max="10000000" :step="100000"
+                            <a-slider v-model:value="value2" range :min="0" :max="maxPriceFromProducts" :step="100000"
                                 :tipFormatter="value => `${value.toLocaleString('vi-VN')} đ`" />
                             <div class="price-range">
                                 <span>{{ value2[0].toLocaleString('vi-VN') }} đ</span>
@@ -393,6 +393,21 @@ const store = useGbStore();
 const visible = ref(false);
 const value = ref('Hoạt động');
 
+// Computed property để lấy giá bán lớn nhất
+const maxPriceFromProducts = computed(() => {
+    if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
+        return 10000000; // Giá trị mặc định nếu chưa có dữ liệu
+    }
+
+    // Tìm giá bán lớn nhất trong danh sách chi tiết sản phẩm
+    const maxPrice = Math.max(...store.getAllChiTietSanPham.map(item =>
+        item.gia_ban ? Number(item.gia_ban) : 0
+    ));
+
+    // Làm tròn đến hàng trăm nghìn gần nhất và thêm khoảng dư
+    return Math.ceil(maxPrice / 100000) * 100000 + 100000;
+});
+
 // Sử dụng mảng để lưu nhiều giá trị
 const valueDanhMuc = ref([]);
 const valueThuongHieu = ref([]);
@@ -400,6 +415,11 @@ const valueChatLieu = ref([]);
 const valueMauSac = ref([]);
 const valueSize = ref([]);
 const value2 = ref([0, 10000000]);
+
+// Cập nhật value2 khi maxPriceFromProducts thay đổi
+watch(() => maxPriceFromProducts.value, (newMaxPrice) => {
+    value2.value = [0, newMaxPrice];
+}, { immediate: true });
 
 const xemTheo = ref('0');
 
@@ -449,13 +469,13 @@ const listSort = ref([
     { value: '7', label: 'Cũ nhất' },
 ]);
 
-const listXemTheo = ref([
-    { value: '0', label: 'Tất cả sản phẩm' },
-    { value: '1', label: '5 sản phẩm' },
-    { value: '2', label: '10 sản phẩm' },
-    { value: '3', label: '15 sản phẩm' },
-    { value: '4', label: '20 sản phẩm' },
-])
+// const listXemTheo = ref([
+//     { value: '0', label: 'Tất cả sản phẩm' },
+//     { value: '1', label: '5 sản phẩm' },
+//     { value: '2', label: '10 sản phẩm' },
+//     { value: '3', label: '15 sản phẩm' },
+//     { value: '4', label: '20 sản phẩm' },
+// ])
 const luuBien = ref('1');
 const openModalImportExcel = ref(false);
 const fileList = ref([]);
