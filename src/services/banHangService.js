@@ -86,9 +86,12 @@ const giamSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
 
 const xoaSPHD = async (idHoaDon, idCTSP) => {
     try {
-        const response = await axiosInstance.delete(
-            banHang + `xoaSPHD?idHoaDon=${idHoaDon}&idChiTietSanPham=${idCTSP}`
-        );
+        const response = await axiosInstance.delete(banHang + 'xoaSPHD', {
+            params: {
+                idHoaDon,
+                idChiTietSanPham: idCTSP
+            }
+        });
         return response.data;
     } catch (error) {
         if (error.response) {
@@ -103,6 +106,7 @@ const xoaSPHD = async (idHoaDon, idCTSP) => {
         }
     }
 };
+
 
 const trangThaiDonHang = async(idHoaDon) => {
     try {

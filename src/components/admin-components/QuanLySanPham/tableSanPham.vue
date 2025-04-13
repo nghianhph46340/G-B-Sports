@@ -7,15 +7,84 @@
         class="components-table-demo-nested" /> -->
     <div>
         <menuAction ref="menuActionRef" />
-        <h4 class="ms-3">Danh sách sản phẩm</h4>
-        <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
-            class="components-table-demo-nested" :expandable="expandableConfig" @expand="handleExpand"
-            :row-key="record => record.id_san_pham">
-            <template #expandedRowRender="{ record }">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="ms-3 mb-0">Danh sách sản phẩm</h4>
+            <a-button @click="refreshData" :loading="isLoading" type="primary" size="small">
+                <template #icon>
+                    <ReloadOutlined />
+                </template>
+                Làm mới dữ liệu
+            </a-button>
+        </div>
+
+        <!-- Loading skeleton -->
+        <template v-if="isLoading">
+            <a-skeleton active :paragraph="{ rows: 10 }" />
+        </template>
+
+        <!-- Data table -->
+        <template v-else>
+            <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
+                class="components-table-demo-nested" :row-key="record => record.id_san_pham"
+                :pagination="{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }">
+                <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'trang_thai'">
+                        <a-switch @change="(checked) => changeStatusSanPham(record.id_san_pham, checked)"
+                            :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
+                            :checked="record.trang_thai === 'Hoạt động' ? true : false" />
+                    </template>
+                    <template v-if="column.key === 'hinh_anh'">
+                        <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" />
+                    </template>
+                    <template v-if="column.key === 'gia_ban'">
+                        {{ record.gia_ban }}
+                    </template>
+                    <template v-if="column.key === 'action'">
+                        <div class="d-flex gap-2">
+                            <a-button type="" @click="changeRouter(record.id_san_pham)" style="color: white;"
+                                class="d-flex align-items-center btn btn-warning">
+                                <EditOutlined />Sửa
+                            </a-button>
+                            <a-button type="primary" @click="() => showVariants(record)"
+                                class="d-flex align-items-center">
+                                <EyeOutlined />Biến thể
+                            </a-button>
+                        </div>
+                    </template>
+                </template>
+            </a-table>
+
+            <!-- Cache info -->
+            <a-alert class="mt-3" type="info" show-icon>
+                <template #message>
+                    <span>Dữ liệu được lưu trong bộ nhớ tạm (cache) để tối ưu tốc độ tải. Thời gian lưu: 5 phút.</span>
+                </template>
+                <template #description>
+                    <span>Thời gian tải trang: {{ loadTime }}ms</span>
+                </template>
+            </a-alert>
+        </template>
+
+        <!-- Drawer for product variants -->
+        <a-drawer v-model:open="drawerVisible" title="Chi tiết biến thể sản phẩm" placement="right" :width="700"
+            :footer-style="{ textAlign: 'right' }" @close="closeVariantDrawer">
+            <template v-if="currentProduct">
+                <div class="product-info mb-4">
+                    <h3>{{ currentProduct.ten_san_pham }}</h3>
+                    <div class="d-flex gap-3 align-items-center">
+                        <a-image style="width: 60px; height: 60px;" :src="currentProduct.hinh_anh" />
+                        <div>
+                            <p><strong>Mã sản phẩm:</strong> {{ currentProduct.ma_san_pham }}</p>
+                            <p><strong>Trạng thái:</strong> {{ currentProduct.trang_thai }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>Danh sách biến thể</h4>
                 <a-table :columns="columnsCTSP" :row-selection="{
                     selectedRowKeys: selectedCTSPKeys,
-                    onChange: (keys, rows) => handleCTSPSelection(keys, rows, record.id_san_pham)
-                }" :data-source="productCTSPMap.get(record.id_san_pham) || []" :pagination="false" size="small"
+                    onChange: (keys, rows) => handleCTSPSelection(keys, rows, currentProduct.id_san_pham)
+                }" :data-source="productCTSPMap.get(currentProduct.id_san_pham) || []" :pagination="false"
                     :row-key="record => record.id_chi_tiet_san_pham">
                     <template #bodyCell="{ column, record: ctspRecord }">
                         <template v-if="column.key === 'trang_thai'">
@@ -28,83 +97,158 @@
                                 class="d-flex align-items-center btn btn-warning">
                                 <EditOutlined />Sửa
                             </a-button>
-                            <a-drawer v-model:open="open" class="custom-class" root-class-name="root-class-name"
-                                :root-style="{ color: 'black' }" title="Chi tiết sản phẩm" placement="left"
-                                @after-open-change="afterOpenChange" :footer-style="{ textAlign: 'right' }">
-                                <a-form :model="productDetails" layout="vertical" @submit.prevent="handleSubmit">
-                                    <a-form-item label="Tên sản phẩm" name="ten_san_pham">
-                                        <a-input v-model:value="productDetails.ten_san_pham"
-                                            placeholder="Nhập tên sản phẩm" />
-                                    </a-form-item>
-
-                                    <a-form-item label="Danh mục" name="danh_muc_id">
-                                        <a-select v-model:value="productDetails.danh_muc_id"
-                                            placeholder="Chọn danh mục">
-                                            <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc"
-                                                :value="item.id_danh_muc">
-                                                {{ item.ten_danh_muc }}
-                                            </a-select-option>
-                                        </a-select>
-                                    </a-form-item>
-
-                                    <a-form-item label="Giá bán" name="gia_ban">
-                                        <a-input-number v-model:value="productDetails.gia_ban"
-                                            placeholder="Nhập giá bán" style="width: 100%;" />
-                                    </a-form-item>
-
-                                    <!-- Thêm các trường khác tương tự -->
-
-                                    <a-form-item>
-                                        <a-button type="primary" html-type="submit">Lưu</a-button>
-                                        <a-button @click="closeDrawer">Hủy</a-button>
-                                    </a-form-item>
-                                </a-form>
-
-
-                            </a-drawer>
-
-
                         </template>
                     </template>
                 </a-table>
             </template>
-            <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'trang_thai'">
-                    <a-switch @change="(checked) => changeStatusSanPham(record.id_san_pham, checked)"
-                        :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
-                        :checked="record.trang_thai === 'Hoạt động' ? true : false" />
-                </template>
-                <template v-if="column.key === 'hinh_anh'">
-                    <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" />
-                </template>
-                <template v-if="column.key === 'gia_ban'">
-                    {{ record.gia_ban }}
-                </template>
-                <template v-if="column.key === 'action'">
-                    <a-button type="" @click="changeRouter(record.id_san_pham)" style="color: white;"
-                        class="d-flex align-items-center btn btn-warning">
-                        <EditOutlined />Sửa
-                    </a-button>
-                </template>
-            </template>
+        </a-drawer>
 
+        <!-- Existing drawer for editing product details -->
+        <a-drawer v-model:open="open" class="custom-class" root-class-name="root-class-name"
+            :root-style="{ color: 'black' }" title="Chi tiết sản phẩm" placement="left"
+            @after-open-change="afterOpenChange" :footer-style="{ textAlign: 'right' }">
+            <a-form :model="productDetails" layout="vertical" @submit.prevent="handleSubmit">
+                <a-form-item label="Tên sản phẩm" name="ten_san_pham">
+                    <a-input v-model:value="productDetails.ten_san_pham" placeholder="Nhập tên sản phẩm" />
+                </a-form-item>
 
-        </a-table>
+                <a-form-item label="Danh mục" name="danh_muc_id">
+                    <a-select v-model:value="productDetails.danh_muc_id" placeholder="Chọn danh mục">
+                        <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc" :value="item.id_danh_muc">
+                            {{ item.ten_danh_muc }}
+                        </a-select-option>
+                    </a-select>
+                </a-form-item>
+
+                <a-form-item label="Giá bán" name="gia_ban">
+                    <a-input-number v-model:value="productDetails.gia_ban" placeholder="Nhập giá bán"
+                        style="width: 100%;" />
+                </a-form-item>
+
+                <!-- Thêm các trường khác tương tự -->
+
+                <a-form-item>
+                    <a-button type="primary" html-type="submit">Lưu</a-button>
+                    <a-button @click="closeDrawer">Hủy</a-button>
+                </a-form-item>
+            </a-form>
+        </a-drawer>
     </div>
 
 </template>
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
-import { EditOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-import { onMounted, ref, render, computed } from 'vue';
+import { EditOutlined, PlusOutlined, DeleteOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue';
+import { onMounted, ref, render, computed, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
 
+// Cache utilities
+const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 phút (đơn vị milliseconds)
+const PRODUCTS_CACHE_KEY = 'cached_products';
+const CTSP_CACHE_PREFIX = 'cached_ctsp_';
+
+// Hàm kiểm tra xem cache có còn hạn hay không
+const isCacheValid = (cacheKey) => {
+    const cacheData = localStorage.getItem(cacheKey);
+    if (!cacheData) return false;
+
+    try {
+        const { timestamp } = JSON.parse(cacheData);
+        return (Date.now() - timestamp) < CACHE_EXPIRY_TIME;
+    } catch (e) {
+        console.error('Lỗi khi đọc cache:', e);
+        return false;
+    }
+};
+
+// Hàm lưu dữ liệu vào cache với timestamp
+const saveToCache = (key, data) => {
+    try {
+        const cacheData = {
+            data: data,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(key, JSON.stringify(cacheData));
+        console.log(`Đã cache dữ liệu: ${key}`);
+    } catch (e) {
+        console.error('Lỗi khi lưu cache:', e);
+    }
+};
+
+// Hàm lấy dữ liệu từ cache
+const getFromCache = (key) => {
+    try {
+        const cacheData = localStorage.getItem(key);
+        if (!cacheData) return null;
+
+        const { data } = JSON.parse(cacheData);
+        return data;
+    } catch (e) {
+        console.error('Lỗi khi đọc cache:', e);
+        return null;
+    }
+};
+
+// Hàm xóa cache
+const clearCache = (key) => {
+    try {
+        localStorage.removeItem(key);
+        console.log(`Đã xóa cache: ${key}`);
+    } catch (e) {
+        console.error('Lỗi khi xóa cache:', e);
+    }
+};
+
+// Hàm xóa tất cả cache liên quan đến sản phẩm
+const clearAllProductsCache = () => {
+    try {
+        // Xóa cache danh sách sản phẩm
+        localStorage.removeItem(PRODUCTS_CACHE_KEY);
+
+        // Xóa tất cả cache CTSP
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith(CTSP_CACHE_PREFIX)) {
+                localStorage.removeItem(key);
+            }
+        }
+        console.log('Đã xóa tất cả cache sản phẩm');
+    } catch (e) {
+        console.error('Lỗi khi xóa tất cả cache:', e);
+    }
+};
+
+// Force refresh cache param
+const forceRefresh = ref(false);
+
+// Thêm biến loading để hiển thị skeleton
+const isLoading = ref(true);
 
 const router = useRouter();
 const open = ref(false);
 const store = useGbStore();
+
+// New refs for variant drawer
+const drawerVisible = ref(false);
+const currentProduct = ref(null);
+
+// Biến lưu thời gian tải trang
+const loadTime = ref(0);
+
+// Function to show variants drawer
+const showVariants = async (product) => {
+    currentProduct.value = product;
+    await getCTSPForProduct(product);
+    drawerVisible.value = true;
+};
+
+// Function to close variant drawer
+const closeVariantDrawer = () => {
+    drawerVisible.value = false;
+    currentProduct.value = null;
+};
 
 const changeRouter = (path) => {
     try {
@@ -217,11 +361,6 @@ const onFinish = async (values) => {
 const showDrawer = () => {
     open.value = true;
 }
-const handleExpand = async (expanded, record) => {
-    if (expanded) {
-        await getCTSPForProduct(record);
-    }
-};
 
 const formState = ref({});
 const fileList = ref([]);
@@ -320,11 +459,11 @@ const columnsCTSP = [
         dataIndex: 'trang_thai',
         key: 'trang_thai',
     },
-    {
-        title: 'Hành động',
-        dataIndex: 'action',
-        key: 'action',
-    },
+    // {
+    //     title: 'Hành động',
+    //     dataIndex: 'action',
+    //     key: 'action',
+    // },
 
 ];
 const data = ref([]);
@@ -334,26 +473,30 @@ const rowSelection = ref({
     onChange: (selectedRowKeys, selectedRows) => {
         rowSelection.value.selectedRowKeys = selectedRowKeys;
 
-        // Lấy danh sách các sản phẩm cha đã bị bỏ chọn
-        const deselectedParents = data.value
-            .filter(item => !selectedRowKeys.includes(item.id_san_pham))
-            .map(item => item.id_san_pham);
+        // Lưu danh sách các sản phẩm đã chọn
+        const selectedProducts = new Set(selectedRowKeys);
 
-        // Xóa các CTSP của các sản phẩm cha đã bị bỏ chọn
-        deselectedParents.forEach(parentId => {
-            const childItems = productCTSPMap.value.get(parentId) || [];
-            const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
-            selectedCTSPKeys.value = selectedCTSPKeys.value.filter(key => !childKeys.includes(key));
-        });
-
-        // Thêm các CTSP mới cho các sản phẩm cha được chọn
+        // Cập nhật chọn CTSP cho các sản phẩm đã chọn
         selectedRowKeys.forEach(async (key) => {
             const record = data.value.find(item => item.id_san_pham === key);
             if (record) {
                 await getCTSPForProduct(record);
                 const childItems = productCTSPMap.value.get(record.id_san_pham) || [];
-                const childKeys = childItems.map(item => item.id_chi_tiet_san_pham);
-                selectedCTSPKeys.value = [...new Set([...selectedCTSPKeys.value, ...childKeys])];
+                childItems.forEach(item => {
+                    if (!selectedCTSPKeys.value.includes(item.id_chi_tiet_san_pham)) {
+                        selectedCTSPKeys.value.push(item.id_chi_tiet_san_pham);
+                    }
+                });
+            }
+        });
+
+        // Loại bỏ CTSP của các sản phẩm bị bỏ chọn
+        data.value.forEach(item => {
+            if (!selectedProducts.has(item.id_san_pham)) {
+                const childItems = productCTSPMap.value.get(item.id_san_pham) || [];
+                selectedCTSPKeys.value = selectedCTSPKeys.value.filter(
+                    key => !childItems.some(child => child.id_chi_tiet_san_pham === key)
+                );
             }
         });
 
@@ -380,12 +523,26 @@ const formatCTSPData = (ctspList) => {
 // Thêm ref để lưu trữ CTSP cho từng sản phẩm
 const productCTSPMap = ref(new Map());
 const getCTSPForProduct = async (record) => {
-    if (!productCTSPMap.value.has(record.id_san_pham)) {
-        await store.getCTSPBySanPham(record.id_san_pham);
+    const productId = record.id_san_pham;
+    const cacheKey = `${CTSP_CACHE_PREFIX}${productId}`;
+
+    if (!productCTSPMap.value.has(productId)) {
+        // Kiểm tra cache trước khi gọi API
+        if (!forceRefresh.value && isCacheValid(cacheKey)) {
+            console.log(`Sử dụng cache cho CTSP của sản phẩm ${productId}`);
+            const cachedData = getFromCache(cacheKey);
+            if (cachedData) {
+                productCTSPMap.value.set(productId, cachedData);
+                return cachedData;
+            }
+        }
+
+        // Nếu không có cache hoặc cache hết hạn, gọi API
+        await store.getCTSPBySanPham(productId);
         const ctspList = store.getCTSPBySanPhams.map(ctsp => ({
             key: ctsp.id_chi_tiet_san_pham,
             id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
-            id_san_pham: record.id_san_pham,
+            id_san_pham: productId,
             ten_san_pham: ctsp.ten_san_pham,
             hinh_anh: ctsp.hinh_anh,
             gia_ban: ctsp.gia_ban,
@@ -394,26 +551,13 @@ const getCTSPForProduct = async (record) => {
             so_luong: ctsp.so_luong,
             trang_thai: ctsp.trang_thai,
         }));
-        productCTSPMap.value.set(record.id_san_pham, ctspList);
+
+        // Lưu vào map và cache
+        productCTSPMap.value.set(productId, ctspList);
+        saveToCache(cacheKey, ctspList);
     }
-    return productCTSPMap.value.get(record.id_san_pham) || [];
-};
-const expandableConfig = {
-    expandIcon: () => null,
-    defaultExpandAllRows: false,
-    expandRowByClick: true,
-    onExpandedRowsChange: (expandedRows) => {
-        console.log("Các row đang mở rộng:", expandedRows);
-    },
-    onExpand: async (expanded, record) => {
-        if (expanded) {
-            console.log("Đang mở rrộng")
-            await getCTSPForProduct(record);
-        }
-        else {
-            console.log("Lỗi")
-        }
-    },
+
+    return productCTSPMap.value.get(productId) || [];
 };
 
 const changeStatusSanPham = async (id, checked) => {
@@ -424,17 +568,19 @@ const changeStatusSanPham = async (id, checked) => {
                 return {
                     ...item,
                     trang_thai: checked ? 'Hoạt động' : 'Không hoạt động'
-
                 };
-
             }
             return item;
-        })
-    } catch (error) {
-        console.log('Lỗi khi thay đổi trạng thái')
-    }
+        });
 
-}
+        // Xóa cache khi có thay đổi
+        clearCache(PRODUCTS_CACHE_KEY);
+        clearCache(`${CTSP_CACHE_PREFIX}${id}`);
+    } catch (error) {
+        console.log('Lỗi khi thay đổi trạng thái');
+    }
+};
+
 const afterOpenChange = bool => {
     console.log('open', bool);
 };
@@ -444,16 +590,24 @@ const handleOk = e => {
     open.value = false;
 };
 
-// Hàm xử lý selection cho CTSP
+// Update the handleCTSPSelection to work with the drawer
 const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
-    selectedCTSPKeys.value = selectedKeys;
+    // Cập nhật lại danh sách CTSP đã chọn, loại bỏ các CTSP cũ của sản phẩm hiện tại
+    const otherProductCTSPs = selectedCTSPKeys.value.filter(key => {
+        // Kiểm tra key có thuộc sản phẩm hiện tại không
+        const currentProductCTSPs = productCTSPMap.value.get(parentId) || [];
+        return !currentProductCTSPs.some(item => item.id_chi_tiet_san_pham === key);
+    });
+
+    // Thêm các CTSP mới được chọn của sản phẩm hiện tại
+    selectedCTSPKeys.value = [...otherProductCTSPs, ...selectedKeys];
 
     // Cập nhật selection của sản phẩm cha
     const childItems = productCTSPMap.value.get(parentId) || [];
     const allChildKeys = childItems.map(item => item.id_chi_tiet_san_pham);
-    const allChildrenSelected = allChildKeys.every(key => selectedKeys.includes(key));
+    const allChildrenSelected = allChildKeys.length > 0 && allChildKeys.every(key => selectedKeys.includes(key));
 
-    const currentParentKeys = rowSelection.value.selectedRowKeys;
+    const currentParentKeys = [...rowSelection.value.selectedRowKeys];
     if (allChildrenSelected && !currentParentKeys.includes(parentId)) {
         rowSelection.value.selectedRowKeys = [...currentParentKeys, parentId];
     } else if (!allChildrenSelected && currentParentKeys.includes(parentId)) {
@@ -494,34 +648,114 @@ const displayData = computed(() => {
 // Tham chiếu tới menuAction component
 const menuActionRef = ref(null);
 
-onMounted(async () => {
-    // Đảm bảo tải cả dữ liệu chi tiết sản phẩm để sử dụng cho bộ lọc
-    await store.getAllCTSP();
-    console.log('Đã tải dữ liệu chi tiết sản phẩm:', store.getAllChiTietSanPham.length);
+// Hàm làm mới dữ liệu
+const refreshData = async () => {
+    try {
+        const startTime = performance.now();
+        message.loading({ content: 'Đang làm mới dữ liệu...', key: 'refreshData' });
 
-    // Kiểm tra flag có vừa thêm sản phẩm mới không
-    if (store.justAddedProduct) {
-        // Nếu vừa thêm sản phẩm, lấy danh sách theo ngày sửa và reset flag
-        await store.getAllSanPhamNgaySua();
-        store.justAddedProduct = false; // Reset flag
-    } else {
-        // Nếu không, lấy danh sách bình thường
+        // Xóa cache và đặt cờ refresh
+        forceRefresh.value = true;
+        clearAllProductsCache();
+        isLoading.value = true;
+
+        // Tải lại dữ liệu từ API
         await store.getAllSP();
-    }
 
-    data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
-        return {
-            stt: index + 1,
-            key: item.id_san_pham,
-            id_san_pham: item.id_san_pham,
-            ma_san_pham: item.ma_san_pham,
-            ten_san_pham: item.ten_san_pham,
-            hinh_anh: item.hinh_anh,
-            chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
-            trang_thai: item.trang_thai,
-            tong_so_luong: item.tong_so_luong,
-        };
-    }));
+        data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
+            return {
+                stt: index + 1,
+                key: item.id_san_pham,
+                id_san_pham: item.id_san_pham,
+                ma_san_pham: item.ma_san_pham,
+                ten_san_pham: item.ten_san_pham,
+                hinh_anh: item.hinh_anh,
+                chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
+                trang_thai: item.trang_thai,
+                tong_so_luong: item.tong_so_luong,
+            };
+        }));
+
+        // Lưu vào cache nếu có dữ liệu
+        if (data.value.length > 0) {
+            saveToCache(PRODUCTS_CACHE_KEY, data.value);
+        }
+
+        const endTime = performance.now();
+        loadTime.value = Math.round(endTime - startTime);
+        message.success({ content: 'Đã làm mới dữ liệu thành công!', key: 'refreshData', duration: 2 });
+    } catch (error) {
+        console.error('Lỗi khi làm mới dữ liệu:', error);
+        message.error({ content: 'Có lỗi xảy ra khi làm mới dữ liệu!', key: 'refreshData', duration: 2 });
+    } finally {
+        isLoading.value = false;
+        forceRefresh.value = false;
+    }
+};
+
+onMounted(async () => {
+    const startTime = performance.now();
+    isLoading.value = true;
+
+    try {
+        // Tải chi tiết sản phẩm cho bộ lọc
+        await store.getAllCTSP();
+        console.log('Đã tải dữ liệu chi tiết sản phẩm:', store.getAllChiTietSanPham.length);
+
+        // Kiểm tra xem có cần refresh cache không
+        if (store.justAddedProduct || store.justUpdatedProduct) {
+            // Nếu vừa thêm hoặc sửa sản phẩm, xóa toàn bộ cache
+            clearAllProductsCache();
+            forceRefresh.value = true;
+
+            // Lấy danh sách theo ngày sửa
+            await store.getAllSanPhamNgaySua();
+            store.justAddedProduct = false;
+            store.justUpdatedProduct = false;
+        } else {
+            // Kiểm tra cache trước khi gọi API
+            if (isCacheValid(PRODUCTS_CACHE_KEY)) {
+                console.log('Sử dụng cache cho danh sách sản phẩm');
+                const cachedProducts = getFromCache(PRODUCTS_CACHE_KEY);
+                if (cachedProducts) {
+                    data.value = cachedProducts;
+                    isLoading.value = false;
+                    return;
+                }
+            }
+
+            // Nếu không có cache hoặc cache hết hạn, gọi API
+            await store.getAllSP();
+        }
+
+        // Xử lý dữ liệu và lưu vào cache
+        data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
+            return {
+                stt: index + 1,
+                key: item.id_san_pham,
+                id_san_pham: item.id_san_pham,
+                ma_san_pham: item.ma_san_pham,
+                ten_san_pham: item.ten_san_pham,
+                hinh_anh: item.hinh_anh,
+                chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
+                trang_thai: item.trang_thai,
+                tong_so_luong: item.tong_so_luong,
+            };
+        }));
+
+        // Lưu vào cache nếu có dữ liệu
+        if (data.value.length > 0) {
+            saveToCache(PRODUCTS_CACHE_KEY, data.value);
+        }
+
+        const endTime = performance.now();
+        loadTime.value = Math.round(endTime - startTime);
+    } catch (error) {
+        console.error('Lỗi khi tải dữ liệu:', error);
+        message.error('Có lỗi xảy ra khi tải dữ liệu sản phẩm');
+    } finally {
+        isLoading.value = false;
+    }
 });
 </script>
 <style scoped>

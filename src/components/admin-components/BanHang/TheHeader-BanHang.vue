@@ -16,7 +16,7 @@
                             Không tìm thấy sản phẩm phù hợp.
                         </div>
                         <div v-else-if="filteredProducts.length > 0">
-                            <div v-for="(product, index) in filteredProducts" :key="product.id" class="product-option"
+                            <div v-for="(product) in filteredProducts" :key="product.id" class="product-option"
                                 @click="handleDropdownClick(product)">
 
                                 <img :src="product.hinh_anh || 'default-product.png'" alt="Product"
@@ -325,6 +325,7 @@ import logo from '../../../images/logo/logo2.png';
 import '../../../config/fonts/Roboto-normal'
 import '../../../config/fonts/Roboto-bold'
 import { toast } from 'vue3-toastify';
+import { thanhToanService } from '@/services/thanhToan';
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const pageSize = ref(5);
 const store = useGbStore();
@@ -433,13 +434,6 @@ const formatCurrency = (value) => {
     return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
-// Hiển thị dropdown khi focus vào input
-// const showDropdown = () => {
-//     this.$nextTick(() => {
-//         this.dropdownVisible = true;
-//     });
-// };
-
 // Xử lý khi người dùng gõ vào ô tìm kiếm
 const handleSearchInput = () => {
     if (!searchQuery.value.trim()) {
@@ -542,6 +536,9 @@ const addToBill = async (product) => {
         dropdownVisible.value = false;
         searchQuery.value = '';
         message.success(`Đã thêm "${product.ten_san_pham}" vào hóa đơn.`);
+        await store.getAllCTSPKM();
+        allProducts.value = store.getAllCTSPKMList;
+
     } catch (error) {
         console.error('Lỗi khi thêm sản phẩm:', error);
         message.error('Đã xảy ra lỗi khi thêm sản phẩm!');
@@ -627,7 +624,8 @@ const updateItemTotal = async (item) => {
         }
         console.log("id hoá đơn truyền vào ", item.id_hoa_don)
         await refreshHoaDon(item.id_hoa_don);
-
+        await store.getAllCTSPKM();
+        allProducts.value = store.getAllCTSPKMList;
     } catch (error) {
         console.error('Lỗi khi cập nhật số lượng:', error);
         message.error('Đã xảy ra lỗi khi cập nhật số lượng!');
@@ -638,7 +636,6 @@ const updateItemTotal = async (item) => {
 const removeFromBill = async (productId) => {
     const currentTab = activeTabData.value;
     if (!currentTab || !currentTab.items) return;
-
     const itemsArray = currentTab.items.value;
     const itemIndex = itemsArray.findIndex(item => item.id_chi_tiet_san_pham === productId);
     if (itemIndex === -1) return;
@@ -647,7 +644,11 @@ const removeFromBill = async (productId) => {
 
     try {
         const result = await store.xoaSPHD(currentTab.hd.id_hoa_don, productId);
-        if (!result) return;
+
+        if (!result || !result.success) {
+            message.error(result.message || 'Không xóa được sản phẩm khỏi hóa đơn!');
+            return;
+        }
 
         // Làm mới danh sách sản phẩm từ server
         await store.getAllSPHD(currentTab.hd.id_hoa_don);
@@ -665,6 +666,8 @@ const removeFromBill = async (productId) => {
         }));
 
         await refreshHoaDon(currentTab.hd.id_hoa_don);
+        await store.getAllCTSPKM();
+        allProducts.value = store.getAllCTSPKMList;
 
         message.info(`Đã xóa "${removedItem.ten_san_pham}" khỏi hóa đơn.`);
     } catch (error) {
@@ -673,9 +676,15 @@ const removeFromBill = async (productId) => {
     }
 };
 
+
 // Hàm tạo mới một tab hóa đơn (Đã sửa)
 const add = async () => {
     try {
+        // Giới hạn số lượng hóa đơn tối đa là 5
+        if (panes.value.length >= 5) {
+            throw new Error('Bạn chỉ có thể tạo tối đa 5 hóa đơn cùng lúc!');
+        }
+
         // Kiểm tra xem người dùng đã đăng nhập và có thông tin chi tiết không
         if (!store.isLoggedIn || !store.userDetails) {
             throw new Error('Người dùng chưa đăng nhập hoặc không có thông tin chi tiết!');
@@ -686,24 +695,21 @@ const add = async () => {
             throw new Error('Chỉ nhân viên mới có thể tạo hóa đơn!');
         }
 
-        // Lấy id_nhan_vien từ userDetails
         const idNhanVien = store.userDetails.idNhanVien;
         if (!idNhanVien) {
             throw new Error('Không tìm thấy ID nhân viên!');
         }
 
         console.log('ID Nhân viên được sử dụng để tạo hóa đơn:', idNhanVien);
-        // Gọi API tạo hóa đơn với id_nhan_vien
+
         const response = await store.createHoaDon(idNhanVien);
         if (!response || response.error) {
             throw new Error(response?.message || 'Không thể tạo hóa đơn');
         }
 
-        // Tăng index cho tab mới
         newTabIndex.value++;
         const newKey = `invoiceTab_${Date.now()}_${newTabIndex.value}`;
 
-        // Thêm tab mới vào danh sách
         panes.value.push({
             title: `Đơn ${panes.value.length + 1}`,
             key: newKey,
@@ -717,7 +723,6 @@ const add = async () => {
                 id_nhan_vien: response.id_nhan_vien,
                 ten_nhan_vien: response.ten_nhan_vien,
                 id_voucher: null,
-                // Các trường mặc định
                 id_khach_hang: null,
                 hinh_thuc_thanh_toan: 'Tiền mặt',
                 phuong_thuc_nhan_hang: 'Nhận tại cửa hàng',
@@ -734,12 +739,12 @@ const add = async () => {
         toast.error(error.message || 'Lỗi khi tạo hóa đơn!');
     }
 };
+
 // Hàm đóng tab hóa đơn (Đã sửa)
 const remove = async (targetKey) => {
     const tabToRemove = panes.value.find(p => p.key === targetKey);
     if (!tabToRemove) return;
 
-    // Kiểm tra và xác nhận nếu có sản phẩm
     if (tabToRemove.items?.value?.length > 0) {
         Modal.confirm({
             title: `Xác nhận hủy hóa đơn "${tabToRemove.title}"`,
@@ -764,14 +769,20 @@ const performRemove = async (tabToRemove, targetKey) => {
                 return;
             }
 
-            // Làm mới danh sách sản phẩm để cập nhật số lượng tồn
+            // Làm mới danh sách sản phẩm
             await store.getAllCTSPKM();
             allProducts.value = store.getAllCTSPKMList;
         }
 
-        // Cập nhật UI chỉ khi xóa thành công
+        // Xóa tab
         panes.value = panes.value.filter(pane => pane.key !== targetKey);
 
+        // ✅ Cập nhật lại tiêu đề tab sau khi xóa
+        panes.value.forEach((pane, index) => {
+            pane.title = `Đơn ${index + 1}`;
+        });
+
+        // Nếu tab đang active bị xóa thì chuyển sang tab gần nhất
         if (activeKey.value === targetKey) {
             const remainingPanes = panes.value;
             activeKey.value = remainingPanes.length > 0
@@ -779,6 +790,7 @@ const performRemove = async (tabToRemove, targetKey) => {
                 : '';
         }
 
+        // Nếu không còn tab nào, tạo tab mới
         if (panes.value.length === 0) {
             await add();
         }
@@ -789,6 +801,7 @@ const performRemove = async (tabToRemove, targetKey) => {
         message.error('Đã xảy ra lỗi khi xóa hóa đơn!');
     }
 };
+
 
 
 // Thêm font Arial tiếng Việt (cần tải file font .ttf và chuyển thành base64)
@@ -809,7 +822,7 @@ const printInvoice = () => {
     const doc = new jsPDF();
     // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
     doc.setFont("Roboto");
-    
+
     // Thêm logo
     const logoWidth = 30; // Chiều rộng logo (mm)
     const logoHeight = 20; // Chiều cao logo (mm)
@@ -836,7 +849,7 @@ const printInvoice = () => {
     doc.setFont("Roboto", "normal");
     doc.text(`Mã hóa đơn: ${activeTabData.value.hd.ma_hoa_don || 'N/A'}`, 20, 86);
     doc.text(`Tên nhân viên: ${activeTabData.value.hd.ten_nhan_vien || 'N/A'}`, 20, 94);
-    doc.text(`Ngày: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
+    doc.text(`Ngày tạo: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
     doc.text(`Tên khách hàng: ${activeTabData.value.hd.khach_hang || 'Khách lẻ'}`, 20, 110);
     // Danh sách sản phẩm
     let y = 120;
@@ -941,11 +954,11 @@ const handlePayment = async () => { // Thêm async nếu gọi API
     }
     if (currentTab.hd.hinh_thuc_thanh_toan === 'Tiền mặt') {
         // Validate tiền khách đưa (nếu cần thiết)
-        // if(currentTab.hd.tien_khach_dua === null || currentTab.hd.tien_khach_dua < currentTab.hd.tong_tien_sau_giam){
-        //     message.error("Vui lòng nhập đủ tiền khách đưa.");
-        //     return;
-        // }
-        // currentTab.hd.tien_du = currentTab.hd.tien_khach_dua - currentTab.hd.tong_tien_sau_giam;
+        if (currentTab.hd.tien_khach_dua === null || currentTab.hd.tien_khach_dua < currentTab.hd.tong_tien_sau_giam) {
+            message.error("Vui lòng nhập đủ tiền khách đưa.");
+            return;
+        }
+        currentTab.hd.tien_du = currentTab.hd.tien_khach_dua - currentTab.hd.tong_tien_sau_giam;
     }
 
 
@@ -992,6 +1005,15 @@ const confirmPrint = async (shouldPrint) => {
             // const res = await store.thanhToanMomo(activeTabData.value.hd.id_hoa_don);
             // Điều hướng đến trang thanh toán MoMo
             // window.location.href = res.payUrl;
+            const payment_info = {
+                productName: "Đơn hàng " + `GB-${activeTabData.value.hd.id_hoa_don}-${new Date().getTime()}`,
+                description: `GB Sport - ${allProducts.value.length} sản phẩm`,
+                returnUrl: "http://localhost:5173/admin/banhang",
+                price: Number(activeTabData.value.hd.tong_tien_sau_giam || 0),
+                cancelUrl: "http://localhost:5173/admin/banhang"
+            }
+            console.log(payment_info);
+            await thanhToanService.handlePayOSPayment(payment_info);
         } catch (error) {
             console.error('Lỗi khi tạo yêu cầu thanh toán Momo:', error);
             message.error('Không thể tạo thanh toán Momo!');
@@ -1001,16 +1023,16 @@ const confirmPrint = async (shouldPrint) => {
 
 
 const updateHinhThucThanhToan = async () => {
-  try {
-    const id = activeTabData.value.hd.id_hoa_don;
-    const hinhThuc = activeTabData.value.hd.hinh_thuc_thanh_toan;
+    try {
+        const id = activeTabData.value.hd.id_hoa_don;
+        const hinhThuc = activeTabData.value.hd.hinh_thuc_thanh_toan;
 
-    await store.updateHinhThucTTHoaDon(id, hinhThuc);
+        await store.updateHinhThucTTHoaDon(id, hinhThuc);
 
-    console.log("Đã cập nhật hình thức thanh toán:", hinhThuc);
-  } catch (err) {
-    console.error("Lỗi cập nhật hình thức thanh toán", err);
-  }
+        console.log("Đã cập nhật hình thức thanh toán:", hinhThuc);
+    } catch (err) {
+        console.error("Lỗi cập nhật hình thức thanh toán", err);
+    }
 };
 
 

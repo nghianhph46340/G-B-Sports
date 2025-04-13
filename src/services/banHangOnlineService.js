@@ -32,6 +32,11 @@ const updateOrderStatus = async (data) => {
     }
 };
 
+const createOrder1 = async (hoaDon) => {
+    const response = await axiosInstance.post(banHangOnline + 'taoHoaDonWeb1', hoaDon);
+    return response.data;
+}
+
 export const banHangOnlineService = {
     createOrder,
     createOrderChiTiet,
@@ -39,5 +44,6 @@ export const banHangOnlineService = {
     getThongTinTimeLine,
     getThongTinHoaDonChiTiet,
     updateOrderStatus,
+    createOrder1
 }
 
