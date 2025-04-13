@@ -31,13 +31,14 @@
                     <template v-if="column.key === 'trang_thai'">
                         <a-switch @change="(checked) => changeStatusSanPham(record.id_san_pham, checked)"
                             :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
-                            :checked="record.trang_thai === 'Hoạt động' ? true : false" />
+                            :checked="record.trang_thai === 'Hoạt động' ? true : false"
+                            :disabled="record.trang_thai === 'Không hoạt động'" />
                     </template>
                     <template v-if="column.key === 'hinh_anh'">
                         <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" />
                     </template>
                     <template v-if="column.key === 'gia_ban'">
-                        {{ record.gia_ban }}
+                        {{ formatCurrency(record.gia_ban) }}
                     </template>
                     <template v-if="column.key === 'action'">
                         <div class="d-flex gap-2">
@@ -91,6 +92,9 @@
                             <a-switch
                                 :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
                                 size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false" />
+                        </template>
+                        <template v-if="column.key === 'gia_ban'">
+                            {{ formatCurrency(ctspRecord.gia_ban) }}
                         </template>
                         <template v-if="column.key === 'action'">
                             <a-button @click="showDrawer" type="" style="color: white;"
@@ -563,21 +567,45 @@ const getCTSPForProduct = async (record) => {
 const changeStatusSanPham = async (id, checked) => {
     try {
         await store.changeStatusSanPham(id);
+
+        // Cập nhật trạng thái cho sản phẩm chính
+        const newStatus = checked ? 'Hoạt động' : 'Không hoạt động';
         data.value = data.value.map(item => {
             if (item.id_san_pham === id) {
                 return {
                     ...item,
-                    trang_thai: checked ? 'Hoạt động' : 'Không hoạt động'
+                    trang_thai: newStatus
                 };
             }
             return item;
         });
 
+        // Cập nhật trạng thái cho tất cả chi tiết sản phẩm liên quan
+        if (productCTSPMap.value.has(id)) {
+            const ctspList = productCTSPMap.value.get(id);
+            if (ctspList && ctspList.length > 0) {
+                const updatedCtspList = ctspList.map(ctsp => ({
+                    ...ctsp,
+                    trang_thai: newStatus
+                }));
+                productCTSPMap.value.set(id, updatedCtspList);
+
+                // Nếu sản phẩm đang hiển thị trong drawer thì cập nhật hiển thị
+                if (currentProduct.value && currentProduct.value.id_san_pham === id) {
+                    currentProduct.value = {
+                        ...currentProduct.value,
+                        trang_thai: newStatus
+                    };
+                }
+            }
+        }
+
         // Xóa cache khi có thay đổi
         clearCache(PRODUCTS_CACHE_KEY);
         clearCache(`${CTSP_CACHE_PREFIX}${id}`);
     } catch (error) {
-        console.log('Lỗi khi thay đổi trạng thái');
+        console.log('Lỗi khi thay đổi trạng thái:', error);
+        message.error('Có lỗi xảy ra khi thay đổi trạng thái sản phẩm');
     }
 };
 
@@ -757,6 +785,15 @@ onMounted(async () => {
         isLoading.value = false;
     }
 });
+
+const formatCurrency = (value) => {
+    if (!value && value !== 0) return '';
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0
+    }).format(value);
+};
 </script>
 <style scoped>
 :deep(.ctsp-table) {

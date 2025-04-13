@@ -111,8 +111,8 @@
 
                 <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
                     style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select>
-                <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
-                    style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select>
+                <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
+                    style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select> -->
 
                 <a-button type="" class="d-flex align-items-center btn-filter" @click="showExportModal">
                     <ExportOutlined class="icon-filler" />

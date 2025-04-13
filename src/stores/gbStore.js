@@ -576,6 +576,16 @@ export const useGbStore = defineStore('gbStore', {
         this.getAllSanPham = sanPhamNgaySua
       }
     },
+
+    async changeStatusCTSP(id) {
+      const changeStatusCTSP = await sanPhamService.changeStatusCTSP(id)
+      if (changeStatusCTSP.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+      }
+    },
     ///////////-----------------Hóa đơn-------------------////////////
     async getAllHoaDon(page = 0, size = 5) {
       try {

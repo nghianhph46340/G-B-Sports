@@ -53,7 +53,15 @@ const getCTSPBySanPham = async (id) => {
 }
 const changeStatusSanPham = async (id) => {
   try {
-    const { data } = await axiosInstance.put(qlsp + 'chuyenTrangThaiSanPham?id=' + id)
+    const { data } = await axiosInstance.put(qlsp + 'changeStatusCTSP?id=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeStatusCTSP = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'chuyenTrangThaiCTSP?id=' + id)
     return data
   } catch (error) {
     console.log(error)
