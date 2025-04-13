@@ -51,7 +51,7 @@
                         <th scope="col">Khách hàng</th>
                         <th scope="col">Tổng tiền(VNĐ)</th>
                         <th scope="col">Phương thức thanh toán</th>
-                        <th scope="col">Trạng thái thanh toán</th>
+                        <th scope="col">Trạng thái hóa đơn</th>
                         <th scope="col">Hình thức nhận hàng</th>
                         <th scope="col">Loại hóa đơn</th>
                         <th scope="col">Thao tác</th>
@@ -68,7 +68,7 @@
                         </td>
                         <td>{{ formatCurrency(hoaDon.tong_tien_sau_giam) }}</td>
                         <td>{{ hoaDon.hinh_thuc_thanh_toan }}</td>
-                        <td>{{ hoaDon.trang_thai_thanh_toan }}</td>
+                        <td>{{ hoaDon.trang_thai }}</td>
                         <td>{{ hoaDon.phuong_thuc_nhan_hang }}</td>
                         <td>{{ hoaDon.loai_hoa_don }}</td>
                         <td>

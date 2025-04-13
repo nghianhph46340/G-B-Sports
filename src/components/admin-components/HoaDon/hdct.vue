@@ -151,7 +151,7 @@
                                 Nhân viên: {{ status.nhan_vien_doi }}
                             </p>
                             <p v-if="status.noi_dung_doi">
-                                Nội dung: {{ status.noi_dung_doi }}
+                                Ghi chú: {{ status.noi_dung_doi }}
                             </p>
                         </a-timeline-item>
                     </a-timeline>
@@ -199,7 +199,7 @@
                                 <a-input v-model:value="statusForm.nhanVienDoi" placeholder="Nhập tên của bạn"
                                     :readonly="isNhanVienDoiReadOnly" />
                             </a-form-item>
-                            <a-form-item label="Lý do chuyển trạng thái" name="noiDungDoi">
+                            <a-form-item label="Ghi chú" name="noiDungDoi">
                                 <a-input v-model:value="statusForm.noiDungDoi" placeholder="Chọn hoặc nhập nội dung"
                                     allow-clear list="noiDungDoiOptions" @focus="handleFocus" @blur="handleBlur" />
                                 <datalist id="noiDungDoiOptions">
@@ -225,13 +225,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -280,11 +280,11 @@
                                 </template>
                                 <template v-if="column.key === 'so_luong'">
                                     <div class="quantity-display">
-                                        <a-button @click="showIncreasePopup(index)" :disabled="cannotEditProduct">
+                                        <a-button @click="showDecreasePopup(index)" :disabled="cannotEditProduct">
                                             <i class="fas fa-minus"></i>
                                         </a-button>
                                         <span>{{ record.so_luong }}</span>
-                                        <a-button @click="showDecreasePopup(index)" :disabled="cannotEditProduct">
+                                        <a-button @click="showIncreasePopup(index)" :disabled="cannotEditProduct">
                                             <i class="fas fa-plus"></i>
                                         </a-button>
                                     </div>
@@ -551,7 +551,7 @@
 
             <!-- Popup chỉnh sửa số lượng -->
             <a-modal v-model:visible="showQuantityPopup" width="350px" class="text-center"
-                :title="popupType === 'increase' ? 'Giảm số lượng' : 'Thêm số lượng'" :footer="null">
+                :title="popupType === 'decrease' ? 'Giảm số lượng' : 'Tăng số lượng'" :footer="null">
                 <div class="popup-input">
                     <label>
                         <span v-if="shouldCalculateSoLuongTon">Số lượng
@@ -563,11 +563,11 @@
                     </label>
                     <label style="width: 100px;">Số lượng:</label>
                     <a-input-number style="width: 150px;" type="number" v-model:value="quantityChange" :min="0"
-                        :max="popupType === 'increase' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : currentProduct.so_luong)" />
+                        :max="popupType === 'decrease' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : currentProduct.so_luong)" />
                 </div>
                 <div class="popup-actions">
                     <a-button type="primary" @click="updateQuantity">
-                        <i :class="popupType === 'increase' ? 'fas fa-minus' : 'fas fa-plus'"></i>
+                        <i :class="popupType === 'decrease' ? 'fas fa-minus' : 'fas fa-plus'"></i>
                     </a-button>
                     <a-button type="default" @click="closeQuantityPopup">Hủy</a-button>
                 </div>
@@ -1144,7 +1144,7 @@ const shouldCalculateSoLuongTon = computed(() => {
 });
 // Tăng số lượng trong Popup
 const increaseQuantityPopup = (index) => {
-    const max = calculateSoLuongTon(store.listCTSP_HD[index]);
+    const max = shouldCalculateSoLuongTon ? calculateSoLuongTon(store.listCTSP_HD[index]) : store.listCTSP_HD[index].so_luong;
     if (quantities.value[index] < max) {
         quantities.value[index]++;
     }
@@ -1162,7 +1162,6 @@ const validateQuantity = (index, max) => {
     if (quantities.value[index] < 0) {
         quantities.value[index] = 0;
     }
-    // Chỉ validate số lượng tối đa nếu trạng thái là "Chờ xác nhận"
     if (shouldCalculateSoLuongTon && quantities.value[index] > max) {
         quantities.value[index] = max;
         toast.error(`Số lượng mua không được vượt quá ${max}`);
@@ -1400,7 +1399,7 @@ const updateQuantity = async () => {
         return;
     }
 
-    if (popupType.value === 'decrease') {
+    if (popupType.value === 'increase') {
         // Tính số lượng tối đa
         const maxQuantity = shouldCalculateSoLuongTon ? calculateSoLuongTon(item) : item.so_luong;
         if (change > maxQuantity) {
@@ -1426,7 +1425,7 @@ const updateQuantity = async () => {
             console.error('Lỗi khi thêm số lượng:', error);
             toast.error('Có lỗi xảy ra khi thêm số lượng');
         }
-    } else if (popupType.value === 'increase') {
+    } else if (popupType.value === 'decrease') {
         const totalQuantity = calculateTotalQuantity();
         const newQuantity = totalQuantity - change;
         if (newQuantity < 1) {
@@ -1472,12 +1471,6 @@ const showRevertButton = computed(() => {
     return firstStatus === 'Chờ xác nhận' && currentStatus === 'Đã xác nhận';
 });
 
-// Hàm xử lý sự kiện "Quay lại trạng thái ban đầu"
-const revertToInitial = () => {
-    if (confirm('Bạn có chắc muốn quay lại trạng thái "Chờ xác nhận" không?')) {
-        store.revertToInitialStatus(store.hoaDonDetail.ma_hoa_don);
-    }
-};
 // Trạng thái modal xác nhận in hóa đơn
 const showPrintConfirm = ref(false);
 
