@@ -320,6 +320,15 @@ const validateForm = () => {
     } else if (!validatePhoneNumber(formData.soDienThoai)) {
         errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
         isValid = false;
+    } else {
+        // Kiểm tra trùng với nhân viên khác, nhưng không báo lỗi nếu trùng với chính mình
+        const isDuplicate = store.nhanVienArr.some(nv =>
+            nv.soDienThoai === formData.soDienThoai && nv.idNhanVien !== formData.idNhanVien
+        );
+        if (isDuplicate) {
+            errors.soDienThoai = 'Số điện thoại này đã tồn tại trong hệ thống';
+            isValid = false;
+        }
     }
 
     // Check email
@@ -329,6 +338,15 @@ const validateForm = () => {
     } else if (!validateEmail(formData.email)) {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
         isValid = false;
+    } else {
+        // Kiểm tra trùng với nhân viên khác, nhưng không báo lỗi nếu trùng với chính mình
+        const isDuplicate = store.nhanVienArr.some(nv =>
+            nv.email?.toLowerCase() === formData.email.toLowerCase() && nv.idNhanVien !== formData.idNhanVien
+        );
+        if (isDuplicate) {
+            errors.email = 'Email này đã tồn tại trong hệ thống';
+            isValid = false;
+        }
     }
 
     // Check địa chỉ
@@ -680,6 +698,38 @@ const suaNhanVien = async () => {
     }
 
     if (validateForm()) {
+        // Lưu thông tin nhân viên ban đầu
+        const nhanVienGoc = await store.getNhanVienById(route.params.id);
+
+        // Kiểm tra xem có thay đổi gì không
+        const isUnchanged =
+            formData.tenNhanVien === nhanVienGoc.tenNhanVien &&
+            formData.gioiTinh === nhanVienGoc.gioiTinh &&
+            dayjs(formData.ngaySinh).format('YYYY-MM-DD') === dayjs(nhanVienGoc.ngaySinh).format('YYYY-MM-DD') &&
+            formData.soDienThoai === nhanVienGoc.soDienThoai &&
+            formData.email === nhanVienGoc.email &&
+            formData.diaChiLienHe === nhanVienGoc.diaChiLienHe.split(',')[0].trim() &&
+            formData.anhNhanVien === nhanVienGoc.anhNhanVien;
+
+        if (isUnchanged) {
+            Modal.confirm({
+                title: 'Thông báo',
+                content: 'Bạn chưa sửa gì, bạn có muốn tiếp tục sửa không?',
+                okText: 'Tiếp tục sửa',
+                cancelText: 'Quay lại danh sách',
+                onOk() {
+                    // Ở lại trang
+                    return;
+                },
+                onCancel() {
+                    // Quay về trang danh sách
+                    window.location.href = '/admin/quanlynhanvien';
+                }
+            });
+            return;
+        }
+
+        // Tiếp tục xử lý khi có thay đổi
         Modal.confirm({
             title: 'Bạn có chắc chắn muốn sửa nhân viên này không?',
             onOk: async () => {

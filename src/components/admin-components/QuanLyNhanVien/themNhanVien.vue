@@ -250,6 +250,9 @@ const validateForm = () => {
     } else if (!validatePhoneNumber(formData.soDienThoai)) {
         errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
         isValid = false;
+    } else if (store.nhanVienArr.some(nv => nv.soDienThoai === formData.soDienThoai)) {
+        errors.soDienThoai = 'Số điện thoại này đã tồn tại trong hệ thống';
+        isValid = false;
     }
 
     // Check email
@@ -258,6 +261,9 @@ const validateForm = () => {
         isValid = false;
     } else if (!validateEmail(formData.email)) {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
+        isValid = false;
+    } else if (store.nhanVienArr.some(nv => nv.email?.toLowerCase() === formData.email.toLowerCase())) {
+        errors.email = 'Email này đã tồn tại trong hệ thống';
         isValid = false;
     }
 
