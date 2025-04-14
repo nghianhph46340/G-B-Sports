@@ -101,7 +101,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, onUnmounted, ref, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
@@ -110,6 +110,7 @@ import { toast } from 'vue3-toastify';
 
 const router = useRouter();
 const store = useGbStore();
+let intervalId = null;
 const pageSize = ref(5);
 const valueTrangThaiDonHang = ref('Chọn trạng thái đơn hàng');
 const trangThaiDonHangOptions = ref([
@@ -191,6 +192,16 @@ const resetFilters = async () => {
 
 onMounted(async () => {
     await fetchData(0);
+    // Tự động cập nhật danh sách hóa đơn sau mỗi 5 giây
+    intervalId = setInterval(async () => {
+        await fetchData(store.currentHoaDon);
+    }, 5000);
+});
+onUnmounted(() => {
+    // Dọn dẹp interval khi component bị hủy
+    if (intervalId) {
+        clearInterval(intervalId);
+    }
 });
 </script>
 

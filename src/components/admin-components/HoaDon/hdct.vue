@@ -555,15 +555,21 @@
                 <div class="popup-input">
                     <label>
                         <span v-if="shouldCalculateSoLuongTon">Số lượng
-                            (Khả dụng: {{ currentProduct ? calculateSoLuongTon(currentProduct) : 0 }})
+                            (Khả dụng: {{ popupType === 'decrease' ? currentProduct.so_luong :
+                            calculateSoLuongTon(currentProduct)
+                            }})
                         </span>
                         <span v-else>Số lượng
-                            (Tổng: {{ currentProduct ? currentProduct.so_luong : 0 }})
+                            (Tổng: {{ popupType === 'decrease' ? currentProduct.so_luong :
+                            currentProduct.so_luong_con_lai }})
                         </span>
                     </label>
                     <label style="width: 100px;">Số lượng:</label>
-                    <a-input-number style="width: 150px;" type="number" v-model:value="quantityChange" :min="0"
+                    <a-input-number v-if="shouldCalculateSoLuongTon" style="width: 150px;" type="number"
+                        v-model:value="quantityChange" :min="0"
                         :max="popupType === 'decrease' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : currentProduct.so_luong)" />
+                    <a-input-number v-else style="width: 150px;" type="number" v-model:value="quantityChange" :min="0"
+                        :max="popupType === 'decrease' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? currentProduct.so_luong : currentProduct.so_luong_con_lai)" />
                 </div>
                 <div class="popup-actions">
                     <a-button type="primary" @click="updateQuantity">
@@ -1144,7 +1150,7 @@ const shouldCalculateSoLuongTon = computed(() => {
 });
 // Tăng số lượng trong Popup
 const increaseQuantityPopup = (index) => {
-    const max = shouldCalculateSoLuongTon ? calculateSoLuongTon(store.listCTSP_HD[index]) : store.listCTSP_HD[index].so_luong;
+    const max = shouldCalculateSoLuongTon ? store.listCTSP_HD[index].so_luong : calculateSoLuongTon(store.listCTSP_HD[index]);
     if (quantities.value[index] < max) {
         quantities.value[index]++;
     }
@@ -1185,7 +1191,7 @@ const addSelectedProducts = async () => {
     // Chỉ validate số lượng khả dụng nếu trạng thái là "Chờ xác nhận"
     for (const product of selectedProducts) {
         const ctsp = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === product.idCTSP);
-        const maxQuantity = shouldCalculateSoLuongTon ? calculateSoLuongTon(ctsp) : ctsp.so_luong;
+        const maxQuantity = shouldCalculateSoLuongTon ? ctsp.so_luong : calculateSoLuongTon(ctsp);
         if (product.soLuongMua > maxQuantity) {
             toast.error(`Số lượng sản phẩm ${ctsp.ten_san_pham} vượt quá số lượng tối đa (${maxQuantity})`);
             return;
@@ -1359,6 +1365,7 @@ const showIncreasePopup = async (index) => {
     popupType.value = 'increase';
     quantityChange.value = 0;
     currentProduct.value = store.chiTietHoaDons[index];
+    console.log('currentProduct:', store.chiTietHoaDons[index]);
 
     if (!store.listCTSP_HD || store.listCTSP_HD.length === 0) {
         await store.getAllCTSP_HD(0, 5, '');
@@ -1395,13 +1402,13 @@ const updateQuantity = async () => {
     const change = quantityChange.value;
 
     if (change <= 0) {
-        toast.error('Số lượng phải lớn hơn 0');
+        toast.error('Số lượng thêm tối thiểu là 1');
         return;
     }
 
     if (popupType.value === 'increase') {
         // Tính số lượng tối đa
-        const maxQuantity = shouldCalculateSoLuongTon ? calculateSoLuongTon(item) : item.so_luong;
+        const maxQuantity = shouldCalculateSoLuongTon ? item.so_luong_con_lai : calculateSoLuongTon(item);
         if (change > maxQuantity) {
             toast.error(`Số lượng thêm không được vượt quá ${maxQuantity}`);
             return;
@@ -1607,6 +1614,7 @@ onMounted(async () => {
     if (maHoaDon) {
         loading.value = true;
         await store.getHoaDonDetail(maHoaDon);
+        await store.getAllCTSP_HD(0, 100, '');
         loading.value = false;
         console.log('trang_thai:', store.hoaDonDetail?.trang_thai);
         console.log('phuong_thuc_nhan_hang:', store.hoaDonDetail?.phuong_thuc_nhan_hang);
