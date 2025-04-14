@@ -932,7 +932,7 @@ export const useGbStore = defineStore('gbStore', {
       // const router = useRouter();
       // router.replace('/login-register/login');
       toast.success('Đăng xuất thành công!')
-      window.location.href = '/login-register/login'
+      window.location.href = '/home'
     },
     //Import excel
     async importExcel(file) {
