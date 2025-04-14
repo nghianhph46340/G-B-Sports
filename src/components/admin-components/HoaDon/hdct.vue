@@ -184,17 +184,16 @@
                     <a-modal v-model:open="showStatusModal" :title="modalTitle" @ok="confirmStatusChange"
                         @cancel="closeStatusModal">
                         <a-form :model="statusForm" layout="vertical">
-                            <a-form-item label="Người xác nhận">
-                                <a-input v-model:value="statusForm.nhanVienDoi" :readonly="isNhanVienDoiReadOnly"
-                                    placeholder="Nhập tên nhân viên" />
+                            <a-form-item label="Người xác nhận" name="nhanVienDoi">
+                                <a-input v-model:value="statusForm.nhanVienDoi" placeholder="Nhập tên của bạn"
+                                    :readonly="isNhanVienDoiReadOnly" />
                             </a-form-item>
-                            <a-form-item label="Nội dung chuyển trạng thái">
-                                <a-select v-model:value="statusForm.noiDungDoi" show-search allow-clear
-                                    placeholder="Chọn hoặc nhập nội dung" :filter-option="filterOption">
-                                    <a-select-option v-for="option in noiDungDoiOptions" :key="option" :value="option">
-                                        {{ option }}
-                                    </a-select-option>
-                                </a-select>
+                            <a-form-item label="Lý do chuyển trạng thái" name="noiDungDoi">
+                                <a-input v-model:value="statusForm.noiDungDoi" placeholder="Chọn hoặc nhập nội dung"
+                                    allow-clear list="noiDungDoiOptions" @focus="handleFocus" @blur="handleBlur" />
+                                <datalist id="noiDungDoiOptions">
+                                    <option v-for="option in noiDungDoiOptions" :key="option" :value="option" />
+                                </datalist>
                             </a-form-item>
                         </a-form>
                         <template #footer>
@@ -215,13 +214,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -254,7 +253,19 @@
                                     Màu: {{ record.ten_mau_sac || 'N/A' }}
                                 </template>
                                 <template v-if="column.key === 'don_gia'">
-                                    {{ formatCurrency(record.gia_ban) }} VNĐ
+                                    <div>
+                                        <span v-if="record.gia_sau_giam && record.gia_sau_giam < record.gia_ban"
+                                            style="color: red;">
+                                            {{ formatCurrency(record.gia_sau_giam) }} VNĐ
+                                        </span>
+                                        <span v-else>
+                                            {{ formatCurrency(record.gia_ban) }} VNĐ
+                                        </span>
+                                        <div v-if="record.gia_sau_giam && record.gia_sau_giam < record.gia_ban"
+                                            class="original-price">
+                                            {{ formatCurrency(record.gia_ban) }} VNĐ
+                                        </div>
+                                    </div>
                                 </template>
                                 <template v-if="column.key === 'so_luong'">
                                     <div class="quantity-display">
@@ -268,7 +279,10 @@
                                     </div>
                                 </template>
                                 <template v-if="column.key === 'thanh_tien'">
-                                    {{ formatCurrency(record.don_gia) }} VNĐ
+                                    <span
+                                        :style="{ color: record.gia_sau_giam && record.gia_sau_giam < record.gia_ban ? 'red' : 'inherit' }">
+                                        {{ formatCurrency(record.don_gia) }} VNĐ
+                                    </span>
                                 </template>
                                 <template v-if="column.key === 'thao_tac'">
                                     <a-button type="danger" size="small" @click="removeProduct(record, index)"
@@ -339,11 +353,6 @@
                                         Sửa
                                     </a-button>
                                 </div>
-                                <!-- <div v-else>
-                                    <a-button type="primary" @click="saveCustomerInfo">Lưu</a-button>
-                                    <a-button style="margin-left: 8px;" type="default"
-                                        @click="cancelEditingCustomer">Hủy</a-button>
-                                </div> -->
                             </a-col>
                         </a-row>
                         <hr>
@@ -353,22 +362,12 @@
                             <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
                             <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
                         </div>
-                        <!-- <div v-else>
-                            <a-form @submit="saveCustomerInfo" layout="vertical">
-                                <a-form-item label="Tên">
-                                    <a-input v-model:value="editedCustomer.hoTen" required />
-                                </a-form-item>
-                                <a-form-item label="Email">
-                                    <a-input v-model:value="editedCustomer.email" type="email" required />
-                                </a-form-item>
-                                <a-form-item label="Phone">
-                                    <a-input v-model:value="editedCustomer.sdtNguoiNhan" required />
-                                </a-form-item>
-                                <a-form-item label="Địa chỉ">
-                                    <a-input v-model:value="editedCustomer.diaChi" required />
-                                </a-form-item>
-                            </a-form>
-                        </div> -->
+                        <div v-else>
+                            <p>Tên: {{ store.hoaDonDetail.ho_ten || 'Chưa xác định' }}</p>
+                            <p>Email: {{ store.hoaDonDetail.email || 'Chưa xác định' }}</p>
+                            <p>Phone: {{ store.hoaDonDetail.sdt_nguoi_nhan || 'Chưa xác định' }}</p>
+                            <p>Địa chỉ: {{ store.hoaDonDetail.dia_chi || 'Chưa xác định' }}</p>
+                        </div>
                         <!-- Drawer cho chỉnh sửa thông tin khách hàng -->
                         <a-drawer v-model:open="isEditingCustomer" title="Chỉnh sửa thông tin khách hàng"
                             placement="right" :width="500" @after-open-change="afterOpenChange">
@@ -420,10 +419,13 @@
                                 <a-divider orientation="left">Danh sách địa chỉ</a-divider>
                                 <a-table :columns="addressColumns" :data-source="addressList" :pagination="false"
                                     row-key="id">
-                                    <template #bodyCell="{ column }">
+                                    <template #bodyCell="{ column, record }">
                                         <template v-if="column.key === 'thao_tac'">
-                                            <a-button type="link">Chọn</a-button>
+                                            <a-button type="link" @click="selectAddress(record)">Chọn</a-button>
                                         </template>
+                                    </template>
+                                    <template #emptyText>
+                                        <span>Không có dữ liệu</span>
                                     </template>
                                 </a-table>
 
@@ -490,21 +492,35 @@
                             {{ index + 1 + (store.currentPage * 5) }}
                         </template>
                         <template v-if="column.key === 'gia_ban'">
-                            {{ formatCurrency(record.gia_ban || 0) }}
+                            <div>
+                                <span v-if="record.gia_sau_giam && record.gia_sau_giam < record.gia_ban"
+                                    style="color: red;">
+                                    {{ formatCurrency(record.gia_sau_giam || 0) }}
+                                </span>
+                                <span v-else>
+                                    {{ formatCurrency(record.gia_ban || 0) }}
+                                </span>
+                                <div v-if="record.gia_sau_giam && record.gia_sau_giam < record.gia_ban"
+                                    class="original-price">
+                                    {{ formatCurrency(record.gia_ban || 0) }}
+                                </div>
+                            </div>
                         </template>
                         <template v-if="column.key === 'so_luong'">
-                            <!-- Tính số lượng khả dụng -->
-                            {{ record.so_luong }} (Khả dụng: {{ calculateSoLuongTon(record) }})
+                            {{ record.so_luong }}
+                            <span v-if="shouldCalculateSoLuongTon">
+                                (Khả dụng: {{ calculateSoLuongTon(record) }})
+                            </span>
                         </template>
                         <template v-if="column.key === 'so_luong_mua'">
                             <div class="quantity-input">
                                 <a-button @click="decreaseQuantityPopup(index)"
                                     :disabled="quantities[index] <= 0">-</a-button>
                                 <a-input-number type="number" v-model:value="quantities[index]" :min="0"
-                                    :max="calculateSoLuongTon(record)"
-                                    @change="validateQuantity(index, calculateSoLuongTon(record))" />
+                                    :max="shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : record.so_luong"
+                                    @change="validateQuantity(index, shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : record.so_luong)" />
                                 <a-button @click="increaseQuantityPopup(index)"
-                                    :disabled="quantities[index] >= calculateSoLuongTon(record)">+</a-button>
+                                    :disabled="quantities[index] >= (shouldCalculateSoLuongTon ? calculateSoLuongTon(record) : record.so_luong)">+</a-button>
                             </div>
                         </template>
                     </template>
@@ -526,10 +542,17 @@
             <a-modal v-model:visible="showQuantityPopup" width="350px" class="text-center"
                 :title="popupType === 'increase' ? 'Giảm số lượng' : 'Thêm số lượng'" :footer="null">
                 <div class="popup-input">
-                    <label>Số lượng (Khả dụng: {{ currentProduct ? calculateSoLuongTon(currentProduct) : 0 }}):</label>
+                    <label>
+                        <span v-if="shouldCalculateSoLuongTon">Số lượng
+                            (Khả dụng: {{ currentProduct ? calculateSoLuongTon(currentProduct) : 0 }})
+                        </span>
+                        <span v-else>Số lượng
+                            (Tổng: {{ currentProduct ? currentProduct.so_luong : 0 }})
+                        </span>
+                    </label>
                     <label style="width: 100px;">Số lượng:</label>
                     <a-input-number style="width: 150px;" type="number" v-model:value="quantityChange" :min="0"
-                        :max="popupType === 'increase' ? currentProduct.so_luong : calculateSoLuongTon(currentProduct)" />
+                        :max="popupType === 'increase' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : currentProduct.so_luong)" />
                 </div>
                 <div class="popup-actions">
                     <a-button type="primary" @click="updateQuantity">
@@ -629,8 +652,17 @@ const tinhList = ref([]);
 const huyenList = ref([]);
 const xaList = ref([]);
 
-// Dữ liệu mẫu cho bảng danh sách địa chỉ (sẽ xử lý luồng sau)
-const addressList = ref([]);
+// Dữ liệu cho bảng danh sách địa chỉ
+const addressList = computed(() => {
+    return store.listDCKHinHD.map(item => ({
+        id: item.idDiaChiKhachHang,
+        dia_chi: `${item.soNha}, ${item.xaPhuong}, ${item.quanHuyen}, ${item.tinhThanhPho}`,
+        soNha: item.soNha,
+        xaPhuong: item.xaPhuong,
+        quanHuyen: item.quanHuyen,
+        tinhThanhPho: item.tinhThanhPho,
+    }));
+});
 
 // Trạng thái chỉnh sửa thông tin khách hàng
 const isEditingCustomer = ref(false);
@@ -710,6 +742,26 @@ const openDrawer = async () => {
     }
     isEditingCustomer.value = true;
 };
+
+// Hàm chọn địa chỉ từ bảng
+const selectAddress = (record) => {
+    editedCustomer.value.diaChiCuThe = record.soNha;
+    editedCustomer.value.xa = record.xaPhuong;
+    editedCustomer.value.huyen = record.quanHuyen;
+    editedCustomer.value.tinh = record.tinhThanhPho;
+
+    // Load danh sách huyện và xã dựa trên tỉnh, huyện đã chọn
+    const provinceCode = findProvinceCode(record.tinhThanhPho);
+    if (provinceCode) {
+        fetchHuyenList(provinceCode).then(() => {
+            const districtCode = findDistrictCode(record.quanHuyen);
+            if (districtCode) {
+                fetchXaList(districtCode);
+            }
+        });
+    }
+};
+
 // Đóng drawer
 const closeDrawer = () => {
     isEditingCustomer.value = false;
@@ -1063,7 +1115,22 @@ const changePage = async (page) => {
         quantities.value = new Array(store.listCTSP_HD.length).fill(0);
     }
 };
+const shouldCalculateSoLuongTon = computed(() => {
+    const trangThai = store.hoaDonDetail?.trang_thai;
+    if (!trangThai) return false;
 
+    // Nếu trạng thái là "Đã cập nhật", kiểm tra trạng thái trước đó
+    let effectiveStatus = trangThai;
+    if (trangThai === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật')
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai;
+        effectiveStatus = previousStatus || 'Chờ xác nhận';
+    }
+
+    // Chỉ tính số lượng khả dụng nếu trạng thái là "Chờ xác nhận"
+    return effectiveStatus === 'Chờ xác nhận';
+});
 // Tăng số lượng trong Popup
 const increaseQuantityPopup = (index) => {
     const max = calculateSoLuongTon(store.listCTSP_HD[index]);
@@ -1084,14 +1151,15 @@ const validateQuantity = (index, max) => {
     if (quantities.value[index] < 0) {
         quantities.value[index] = 0;
     }
-    if (quantities.value[index] > max) {
+    // Chỉ validate số lượng tối đa nếu trạng thái là "Chờ xác nhận"
+    if (shouldCalculateSoLuongTon && quantities.value[index] > max) {
         quantities.value[index] = max;
         toast.error(`Số lượng mua không được vượt quá ${max}`);
     }
 };
 
 // Thêm sản phẩm vào hóa đơn
-const addSelectedProducts = () => {
+const addSelectedProducts = async () => {
     const selectedProducts = store.listCTSP_HD
         .map((item, index) => ({
             idCTSP: item.id_chi_tiet_san_pham,
@@ -1104,16 +1172,17 @@ const addSelectedProducts = () => {
         return;
     }
 
+    // Chỉ validate số lượng khả dụng nếu trạng thái là "Chờ xác nhận"
     for (const product of selectedProducts) {
         const ctsp = store.listCTSP_HD.find(item => item.id_chi_tiet_san_pham === product.idCTSP);
-        const soLuongTon = calculateSoLuongTon(ctsp);
-        if (product.soLuongMua > soLuongTon) {
-            toast.error(`Số lượng sản phẩm ${ctsp.ten_san_pham} vượt quá số lượng khả dụng (${soLuongTon})`);
+        const maxQuantity = shouldCalculateSoLuongTon ? calculateSoLuongTon(ctsp) : ctsp.so_luong;
+        if (product.soLuongMua > maxQuantity) {
+            toast.error(`Số lượng sản phẩm ${ctsp.ten_san_pham} vượt quá số lượng tối đa (${maxQuantity})`);
             return;
         }
     }
 
-    store.addProductsToInvoice(store.hoaDonDetail.ma_hoa_don, selectedProducts);
+    await store.addProductsToInvoice(store.hoaDonDetail.ma_hoa_don, selectedProducts);
     closeAddProductPopup();
 };
 
@@ -1241,12 +1310,6 @@ const isPending = computed(() => {
 const openStatusHistoryDrawer = () => {
     showStatusHistoryDrawer.value = true;
 };
-
-// // Hàm đóng drawer
-// const closeStatusHistoryDrawer = () => {
-//     showStatusHistoryDrawer.value = false;
-// };
-
 // Hàm đảo ngược thứ tự timeline
 const toggleReverseTimeline = () => {
     reverseTimeline.value = !reverseTimeline.value;
@@ -1327,10 +1390,10 @@ const updateQuantity = async () => {
     }
 
     if (popupType.value === 'decrease') {
-        const soLuongTon = calculateSoLuongTon(item);
-        console.log('soLuongTon', soLuongTon);
-        if (change > soLuongTon) {
-            toast.error(`Số lượng thêm không được vượt quá ${soLuongTon}`);
+        // Tính số lượng tối đa
+        const maxQuantity = shouldCalculateSoLuongTon ? calculateSoLuongTon(item) : item.so_luong;
+        if (change > maxQuantity) {
+            toast.error(`Số lượng thêm không được vượt quá ${maxQuantity}`);
             return;
         }
 
@@ -1353,10 +1416,8 @@ const updateQuantity = async () => {
             toast.error('Có lỗi xảy ra khi thêm số lượng');
         }
     } else if (popupType.value === 'increase') {
-        // Giảm số lượng
         const totalQuantity = calculateTotalQuantity();
         const newQuantity = totalQuantity - change;
-        // Validate: Tổng số lượng sau khi giảm phải >= 1
         if (newQuantity < 1) {
             toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm với số lượng tối thiểu là 1!');
             return;
@@ -1423,47 +1484,45 @@ const confirmPrint = (shouldPrint) => {
 };
 const printInvoice = () => {
     const doc = new jsPDF();
-    // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
     doc.setFont("Roboto");
-    // Thêm logo
-    const logoWidth = 30; // Chiều rộng logo (mm)
-    const logoHeight = 20; // Chiều cao logo (mm)
-    const pageWidth = doc.internal.pageSize.getWidth(); // Chiều rộng trang A4 (210mm)
-    const logoX = (pageWidth - logoWidth) / 2; // Căn giữa logo theo chiều ngang
-    doc.addImage(logo, 'PNG', logoX, 10, logoWidth, logoHeight); // Thêm logo vào PDF
-    // Tiêu đề "HÓA ĐƠN BÁN HÀNG"
+    const logoWidth = 30;
+    const logoHeight = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const logoX = (pageWidth - logoWidth) / 2;
+    doc.addImage(logo, 'PNG', logoX, 15, logoWidth, logoHeight); // Logo gần chữ hơn
     doc.setFontSize(18);
     doc.setFont("Roboto", "bold");
-    doc.text("HÓA ĐƠN BÁN HÀNG", 105, 50, { align: "center" });
+    doc.text("HÓA ĐƠN BÁN HÀNG", 105, 45, { align: "center" }); // Chỉnh vị trí chữ "Hóa đơn bán hàng"
     // Thông tin cửa hàng
     doc.setFontSize(16);
     doc.setFont("Roboto", "bold");
-    doc.text("G&B SPORTS", 105, 60, { align: "center" });
+    doc.text("G&B SPORTS", 105, 55, { align: "center" });
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
-    doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 68, { align: "center" });
-    doc.text("Điện thoại: 0123456789", 105, 74, { align: "center" });
+    doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 63, { align: "center" });
+    doc.text("Điện thoại: 0123456789", 105, 69, { align: "center" });
     // Vẽ đường kẻ ngang
     doc.setLineWidth(0.5);
-    doc.line(20, 78, 190, 78);
+    doc.line(20, 73, 190, 73);
     // Thông tin hóa đơn
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
     doc.text(`Mã hóa đơn: ${store.hoaDonDetail.ma_hoa_don || 'N/A'}`, 20, 86);
-    doc.text(`Ngày: ${formatDateTime(store.hoaDonDetail.ngay_tao)}`, 20, 94);
-    doc.text(`Tên khách hàng: ${store.hoaDonDetail.ho_ten || 'Khách lẻ'}`, 20, 102);
+    doc.text(`Tên nhân viên: ${store.hoaDonDetail.ten_nhan_vien || 'N/A'}`, 20, 94);
+    doc.text(`Ngày: ${formatDateTime(store.hoaDonDetail.ngay_tao)}`, 20, 102);
+    doc.text(`Tên khách hàng: ${store.hoaDonDetail.ho_ten || 'Khách lẻ'}`, 20, 110);
     // Danh sách sản phẩm
-    let y = 110;
+    let y = 120;
     doc.setFontSize(12);
     doc.setFont("Roboto", "bold");
     doc.text("Sản phẩm", 20, y);
     // Tiêu đề bảng
-    y += 10;
+    // y += 10;
     doc.setFontSize(10);
     doc.setFont("Roboto", "bold");
     doc.text("Số lượng", 100, y, { align: "center" });
     doc.text("Đơn giá", 130, y, { align: "center" });
-    doc.text("Thành tiền", 170, y, { align: "center" });
+    doc.text("Tổng tiền", 170, y, { align: "center" });
     // Vẽ đường kẻ ngang dưới tiêu đề bảng
     y += 2;
     doc.setLineWidth(0.2);
@@ -1473,23 +1532,37 @@ const printInvoice = () => {
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
     store.chiTietHoaDons.forEach((item, index) => {
-        // Tên sản phẩm
-        const productName = `${index + 1}. ${item.ten_san_pham} (${item.ten_mau_sac} - ${item.kich_thuoc})`;
-        const productLines = doc.splitTextToSize(productName, 80); // Chia nhỏ nếu tên quá dài
+        const productName = `${index + 1}. ${item.ten_san_pham} (Màu: ${item.ten_mau_sac} - Size: ${item.kich_thuoc})`;
+        const productLines = doc.splitTextToSize(productName, 80);
         doc.text(productLines, 20, y);
-
-        // Số lượng
         doc.text(`${item.so_luong}`, 100, y, { align: "center" });
 
         // Đơn giá
-        doc.text(`${formatCurrency(item.gia_ban)} VNĐ`, 130, y, { align: "center" });
+        const donGia = item.gia_sau_giam && item.gia_sau_giam < item.gia_ban ? item.gia_sau_giam : item.gia_ban;
+        if (item.gia_sau_giam && item.gia_sau_giam < item.gia_ban) {
+            doc.setTextColor(255, 0, 0); // Màu đỏ
+        }
+        doc.text(`${formatCurrency(donGia)} VNĐ`, 130, y, { align: "center" });
+        doc.setTextColor(0); // Reset màu về đen
 
         // Thành tiền
-        const thanhTien = item.so_luong * item.gia_ban;
-        doc.text(`${formatCurrency(thanhTien)} VNĐ`, 170, y, { align: "center" });
+        if (item.gia_sau_giam && item.gia_sau_giam < item.gia_ban) {
+            doc.setTextColor(255, 0, 0); // Màu đỏ
+        }
+        doc.text(`${formatCurrency(item.don_gia)} VNĐ`, 170, y, { align: "center" });
+        doc.setTextColor(0); // Reset màu về đen
 
-        // Tăng y dựa trên số dòng của tên sản phẩm
         y += productLines.length * 6 + 4;
+
+        // Hiển thị giá gốc nếu có khuyến mãi
+        if (item.gia_sau_giam && item.gia_sau_giam < item.gia_ban) {
+            doc.setFontSize(8);
+            doc.setTextColor(150); // Màu xám
+            doc.text(`Giá gốc: ${formatCurrency(item.gia_ban)} VNĐ`, 130, y - 2, { align: "center" });
+            doc.setTextColor(0); // Reset màu về đen
+            doc.setFontSize(10);
+            y += 4;
+        }
     });
     // Vẽ đường kẻ ngang sau danh sách sản phẩm
     doc.setLineWidth(0.2);
@@ -1498,17 +1571,24 @@ const printInvoice = () => {
     y += 10;
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
-    doc.text(`Tổng tiền hàng: ${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 20, y);
+    doc.text(`Tổng tiền hàng:`, 115, y, { align: "left" });
+    doc.text(`${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 180, y, { align: "right" });
+
     y += 6;
     const giamGia = (store.hoaDonDetail.tong_tien_truoc_giam || 0) +
         (store.hoaDonDetail.phi_van_chuyen || 0) -
         (store.hoaDonDetail.tong_tien_sau_giam || 0);
-    doc.text(`Giảm giá: ${formatCurrency(giamGia)} VNĐ`, 20, y);
+    doc.text(`Giảm giá:`, 115, y, { align: "left" });
+    doc.text(`-${formatCurrency(giamGia)} VNĐ`, 180, y, { align: "right" });
+
     y += 6;
-    doc.text(`Phí vận chuyển: ${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 20, y);
+    doc.text(`Phí vận chuyển:`, 115, y, { align: "left" });
+    doc.text(`+${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 180, y, { align: "right" });
+
     y += 6;
     doc.setFont("Roboto", "bold");
-    doc.text(`Thành tiền: ${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 20, y);
+    doc.text(`Thành tiền:`, 115, y, { align: "left" });
+    doc.text(`${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 180, y, { align: "right" });
     // Chân trang
     y += 10;
     doc.setFontSize(10);
@@ -1995,6 +2075,7 @@ const getUpdatePosition = (update) => {
     color: #1890ff;
 }
 
+/* =================code mới================== */
 .order-status {
     display: flex;
     flex-direction: row;
@@ -2417,6 +2498,13 @@ const getUpdatePosition = (update) => {
 
     .update-marker {
         top: 32px;
+    }
+
+    .original-price {
+        text-decoration: line-through;
+        color: gray;
+        font-size: 12px;
+        /* Kích thước chữ nhỏ hơn */
     }
 }
 </style>
