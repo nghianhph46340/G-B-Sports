@@ -118,7 +118,7 @@ const toggleUserMenu = () => {
 // Sửa lại hàm xử lý đăng xuất
 const handleLogout = () => {
     showMenu.value = false;
-    store.logout();
+    store.logoutKH();
 
     // Cách 1: Sử dụng window.location để làm mới hoàn toàn trang
     window.location.href = '/home';
