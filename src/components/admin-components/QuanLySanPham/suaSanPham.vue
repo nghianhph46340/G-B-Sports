@@ -618,6 +618,8 @@ const onFinish = async () => {
         }
     } finally {
         loading.value = false;
+        await store.getAllCTSP();
+        await store.getAllSanPhamNgaySua();
     }
 };
 

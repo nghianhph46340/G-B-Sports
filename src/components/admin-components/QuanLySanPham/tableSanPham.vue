@@ -9,11 +9,8 @@
         <menuAction ref="menuActionRef" />
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="ms-3 mb-0">Danh sách sản phẩm</h4>
-            <a-button @click="refreshData" :loading="isLoading" type="primary" size="small">
-                <template #icon>
-                    <ReloadOutlined />
-                </template>
-                Làm mới dữ liệu
+            <a-button @click="refreshData" :loading="isLoading" type="primary" class="refresh-button" shape="circle">
+                <ReloadOutlined />
             </a-button>
         </div>
 
@@ -24,6 +21,22 @@
 
         <!-- Data table -->
         <template v-else>
+            <!-- Thêm bộ lọc trạng thái -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="status-filter">
+                    <a-radio-group v-model:value="statusFilter" @change="handleStatusFilterChange" button-style="solid"
+                        class="custom-radio-group">
+                        <a-radio-button value="">Tất cả</a-radio-button>
+                        <a-radio-button value="Hoạt động">Hoạt động</a-radio-button>
+                        <a-radio-button value="Không hoạt động">Không hoạt động</a-radio-button>
+                    </a-radio-group>
+                    <span class="ms-3" v-if="statusFilter">
+                        <strong>Lọc theo:</strong> {{ statusFilter }}
+                        <span class="badge bg-primary ms-2">{{ filteredCount }} sản phẩm</span>
+                    </span>
+                </div>
+            </div>
+
             <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
                 class="components-table-demo-nested" :row-key="record => record.id_san_pham"
                 :pagination="{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }">
@@ -82,16 +95,44 @@
                 </div>
 
                 <h4>Danh sách biến thể</h4>
+
+                <!-- Thêm bộ lọc trạng thái chi tiết sản phẩm -->
+                <div class="variant-status-filter mb-3">
+                    <a-radio-group v-model:value="ctspStatusFilter" @change="filterCTSPByStatus"
+                        class="custom-radio-group">
+                        <a-radio-button value="">Tất cả</a-radio-button>
+                        <a-radio-button value="Hoạt động">Hoạt động</a-radio-button>
+                        <a-radio-button value="Không hoạt động">Không hoạt động</a-radio-button>
+                    </a-radio-group>
+                    <span class="ms-3" v-if="ctspStatusFilter">
+                        <strong>Lọc theo:</strong> {{ ctspStatusFilter }}
+                        <span class="badge bg-primary ms-2">{{ filteredCTSPCount }} biến thể</span>
+                    </span>
+                </div>
+
+                <!-- Các nút chức năng khi chọn nhiều chi tiết sản phẩm -->
+                <div v-if="selectedCTSPKeys.length >= 2" class="bulk-actions mb-3 d-flex gap-2">
+                    <a-button type="primary" @click="bulkChangeStatus('Hoạt động')" class="bulk-action-btn">
+                        <CheckCircleOutlined />
+                        <span>Chuyển thành Hoạt động</span>
+                    </a-button>
+                    <a-button danger @click="bulkChangeStatus('Không hoạt động')" class="bulk-action-btn">
+                        <StopOutlined />
+                        <span>Chuyển thành Không hoạt động</span>
+                    </a-button>
+                </div>
+
                 <a-table :columns="columnsCTSP" :row-selection="{
                     selectedRowKeys: selectedCTSPKeys,
                     onChange: (keys, rows) => handleCTSPSelection(keys, rows, currentProduct.id_san_pham)
-                }" :data-source="productCTSPMap.get(currentProduct.id_san_pham) || []" :pagination="false"
+                }" :data-source="filteredCTSPData" :pagination="false"
                     :row-key="record => record.id_chi_tiet_san_pham">
                     <template #bodyCell="{ column, record: ctspRecord }">
                         <template v-if="column.key === 'trang_thai'">
                             <a-switch
                                 :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
-                                size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false" />
+                                size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false"
+                                @change="() => changeStatusCTSP(ctspRecord.id_chi_tiet_san_pham)" />
                         </template>
                         <template v-if="column.key === 'gia_ban'">
                             {{ formatCurrency(ctspRecord.gia_ban) }}
@@ -142,11 +183,15 @@
 </template>
 <script setup>
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
-import { EditOutlined, PlusOutlined, DeleteOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons-vue';
+import {
+    EditOutlined, PlusOutlined, DeleteOutlined, EyeOutlined, ReloadOutlined,
+    CheckCircleOutlined, StopOutlined
+} from '@ant-design/icons-vue';
 import { onMounted, ref, render, computed, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
+import { Modal } from 'bootstrap';
 
 // Cache utilities
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 phút (đơn vị milliseconds)
@@ -252,6 +297,7 @@ const showVariants = async (product) => {
 const closeVariantDrawer = () => {
     drawerVisible.value = false;
     currentProduct.value = null;
+    ctspStatusFilter.value = ''; // Reset bộ lọc khi đóng drawer
 };
 
 const changeRouter = (path) => {
@@ -608,6 +654,95 @@ const changeStatusSanPham = async (id, checked) => {
         message.error('Có lỗi xảy ra khi thay đổi trạng thái sản phẩm');
     }
 };
+const changeStatusCTSP = async (id) => {
+    try {
+        // Tìm CTSP và sản phẩm cha liên quan
+        let productId = null;
+        let ctspIndex = -1;
+        let oldStatus = null;
+        let ctspToChange = null;
+
+        // Tìm CTSP trong Map
+        for (const [prodId, ctspList] of productCTSPMap.value.entries()) {
+            const index = ctspList.findIndex(item => item.id_chi_tiet_san_pham === id);
+            if (index !== -1) {
+                productId = prodId;
+                ctspIndex = index;
+                oldStatus = ctspList[index].trang_thai;
+                ctspToChange = ctspList[index];
+                break;
+            }
+        }
+
+        if (productId && ctspIndex !== -1) {
+            // Xác định trạng thái mới của CTSP
+            const newStatus = oldStatus === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động';
+
+            // Kiểm tra điều kiện: Nếu số lượng là 0 và đang cố gắng chuyển sang "Hoạt động"
+            if (ctspToChange.so_luong === 0 && newStatus === 'Hoạt động') {
+                message.error('Không thể chuyển trạng thái chi tiết sản phẩm không còn số lượng sang Hoạt động');
+                return;
+            }
+
+            // Lấy danh sách CTSP và sản phẩm cha
+            const ctspList = [...productCTSPMap.value.get(productId)];
+            const parentProductIndex = data.value.findIndex(item => item.id_san_pham === productId);
+            const parentStatus = parentProductIndex !== -1 ? data.value[parentProductIndex].trang_thai : null;
+
+            // Cập nhật UI cho CTSP
+            ctspList[ctspIndex] = {
+                ...ctspList[ctspIndex],
+                trang_thai: newStatus
+            };
+            productCTSPMap.value.set(productId, ctspList);
+
+            // TRƯỜNG HỢP 1: Sản phẩm cha đang "Hoạt động"
+            if (parentStatus === 'Hoạt động') {
+                // Nếu CTSP chuyển sang "Không hoạt động", kiểm tra xem còn CTSP nào "Hoạt động" không
+                if (newStatus === 'Không hoạt động') {
+                    const hasActiveCtsp = ctspList.some(item => item.trang_thai === 'Hoạt động');
+
+                    // Nếu không còn CTSP nào hoạt động, cập nhật UI của sản phẩm cha
+                    if (!hasActiveCtsp && parentProductIndex !== -1) {
+                        data.value[parentProductIndex].trang_thai = 'Không hoạt động';
+
+                        if (currentProduct.value && currentProduct.value.id_san_pham === productId) {
+                            currentProduct.value.trang_thai = 'Không hoạt động';
+                        }
+                    }
+                }
+            }
+            // TRƯỜNG HỢP 2: Sản phẩm cha đang "Không hoạt động"
+            else if (parentStatus === 'Không hoạt động' && newStatus === 'Hoạt động') {
+                // Nếu CTSP chuyển sang "Hoạt động", cập nhật UI của sản phẩm cha
+                if (parentProductIndex !== -1) {
+                    data.value[parentProductIndex].trang_thai = 'Hoạt động';
+
+                    if (currentProduct.value && currentProduct.value.id_san_pham === productId) {
+                        currentProduct.value.trang_thai = 'Hoạt động';
+                    }
+                }
+            }
+
+            // Gọi API
+            await store.changeStatusCTSP(id);
+
+            // Xóa cache
+            clearCache(`${CTSP_CACHE_PREFIX}${productId}`);
+            clearCache(PRODUCTS_CACHE_KEY);
+
+            message.success(`Đã chuyển trạng thái chi tiết sản phẩm thành ${newStatus}`);
+        } else {
+            // Nếu không tìm thấy, vẫn gọi API
+            await store.changeStatusCTSP(id);
+            // Cập nhật lại danh sách
+            await fetchData();
+        }
+    } catch (error) {
+        console.error('Lỗi khi thay đổi trạng thái:', error);
+        message.error('Đã xảy ra lỗi khi thay đổi trạng thái');
+    }
+};
 
 const afterOpenChange = bool => {
     console.log('open', bool);
@@ -643,17 +778,27 @@ const handleCTSPSelection = (selectedKeys, selectedRows, parentId) => {
     }
 };
 
-// Computed property để xác định danh sách sản phẩm hiển thị
+// Cập nhật hàm xử lý lọc trạng thái
+const handleStatusFilterChange = () => {
+    console.log('Lọc theo trạng thái:', statusFilter.value);
+    // Không cần gọi API, chỉ cần cập nhật biến statusFilter
+    // và để computed displayData tự động lọc lại dữ liệu
+};
+
+// Cập nhật computed property để lọc theo trạng thái
 const displayData = computed(() => {
     // Lấy danh sách sản phẩm đã lọc/tìm kiếm từ store
     const filteredProducts = store.getFilteredProducts;
+
+    // Tạo danh sách sản phẩm từ nguồn dữ liệu
+    let productsToDisplay = [];
 
     // Kiểm tra xem có sản phẩm nào được lọc/tìm kiếm không
     if (filteredProducts && filteredProducts.length > 0) {
         console.log(`Hiển thị ${filteredProducts.length} sản phẩm đã lọc/tìm kiếm`);
 
         // Format dữ liệu để phù hợp với cấu trúc bảng
-        return filteredProducts.map((item, index) => ({
+        productsToDisplay = filteredProducts.map((item, index) => ({
             stt: index + 1,
             key: item.id_san_pham,
             id_san_pham: item.id_san_pham,
@@ -666,11 +811,20 @@ const displayData = computed(() => {
             trang_thai: item.trang_thai,
             tong_so_luong: item.tong_so_luong || 0,
         }));
+    } else {
+        // Nếu không có kết quả lọc hoặc tìm kiếm, hiển thị tất cả sản phẩm
+        console.log(`Hiển thị tất cả ${data.value.length} sản phẩm`);
+        productsToDisplay = data.value;
     }
 
-    // Nếu không có kết quả lọc hoặc tìm kiếm, hiển thị tất cả sản phẩm
-    console.log(`Hiển thị tất cả ${data.value.length} sản phẩm`);
-    return data.value;
+    // Lọc theo trạng thái nếu người dùng đã chọn
+    if (statusFilter.value) {
+        console.log(`Lọc theo trạng thái: ${statusFilter.value}`);
+        return productsToDisplay.filter(item => item.trang_thai === statusFilter.value);
+    }
+
+    // Trả về danh sách không lọc nếu không chọn trạng thái
+    return productsToDisplay;
 });
 
 // Tham chiếu tới menuAction component
@@ -794,6 +948,236 @@ const formatCurrency = (value) => {
         minimumFractionDigits: 0
     }).format(value);
 };
+
+// Hàm làm mới dữ liệu chi tiết
+const fetchData = async () => {
+    try {
+        isLoading.value = true;
+        message.loading({ content: 'Đang cập nhật dữ liệu...', key: 'fetchData' });
+
+        // Xóa cache của sản phẩm hiện tại
+        if (currentProduct.value) {
+            const productId = currentProduct.value.id_san_pham;
+            clearCache(`${CTSP_CACHE_PREFIX}${productId}`);
+
+            // Làm mới dữ liệu CTSP cho sản phẩm hiện tại
+            await store.getCTSPBySanPham(productId);
+            const ctspList = store.getCTSPBySanPhams.map(ctsp => ({
+                key: ctsp.id_chi_tiet_san_pham,
+                id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
+                id_san_pham: productId,
+                ten_san_pham: ctsp.ten_san_pham,
+                hinh_anh: ctsp.hinh_anh,
+                gia_ban: ctsp.gia_ban,
+                mau_sac: ctsp.ten_mau,
+                size: ctsp.gia_tri + ' ' + ctsp.don_vi,
+                so_luong: ctsp.so_luong,
+                trang_thai: ctsp.trang_thai,
+            }));
+
+            // Cập nhật vào Map
+            productCTSPMap.value.set(productId, ctspList);
+
+            // Cập nhật cache mới
+            saveToCache(`${CTSP_CACHE_PREFIX}${productId}`, ctspList);
+        }
+
+        message.success({ content: 'Dữ liệu đã được cập nhật', key: 'fetchData', duration: 2 });
+    } catch (error) {
+        console.error('Lỗi khi cập nhật dữ liệu:', error);
+        message.error({ content: 'Có lỗi xảy ra khi cập nhật dữ liệu', key: 'fetchData', duration: 2 });
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+// Thêm biến lọc trạng thái
+const statusFilter = ref('');
+
+// Thêm biến đếm số lượng sản phẩm hiển thị
+const filteredCount = computed(() => {
+    if (statusFilter.value) {
+        return displayData.value.length;
+    }
+    return null;
+});
+
+// Thêm biến lọc trạng thái chi tiết sản phẩm
+const ctspStatusFilter = ref('');
+
+// Thêm biến đếm số lượng biến thể hiển thị
+const filteredCTSPCount = computed(() => {
+    if (!currentProduct.value) return 0;
+    return filteredCTSPData.value.length;
+});
+
+// Thêm ref để lưu trữ dữ liệu biến thể đã lọc
+const filteredCTSPData = computed(() => {
+    if (!currentProduct.value) return [];
+
+    // Lấy danh sách chi tiết sản phẩm từ Map
+    const ctspList = productCTSPMap.value.get(currentProduct.value.id_san_pham) || [];
+
+    // Nếu không có bộ lọc trạng thái, trả về tất cả
+    if (!ctspStatusFilter.value) {
+        return ctspList;
+    }
+
+    // Lọc theo trạng thái
+    console.log(`Đang lọc ${ctspList.length} chi tiết sản phẩm theo trạng thái: ${ctspStatusFilter.value}`);
+    return ctspList.filter(item => item.trang_thai === ctspStatusFilter.value);
+});
+
+// Hàm xử lý lọc trạng thái chi tiết sản phẩm
+const filterCTSPByStatus = () => {
+    console.log('Lọc theo trạng thái chi tiết:', ctspStatusFilter.value);
+};
+
+// Hàm thay đổi trạng thái cho nhiều chi tiết sản phẩm một lúc
+const bulkChangeStatus = async (newStatus) => {
+    if (!currentProduct.value || selectedCTSPKeys.value.length < 2) {
+        return;
+    }
+
+    const productId = currentProduct.value.id_san_pham;
+    const ctspList = [...productCTSPMap.value.get(productId) || []];
+
+    try {
+        message.loading({ content: `Đang chuyển ${selectedCTSPKeys.value.length} chi tiết sản phẩm thành ${newStatus}...`, key: 'bulkStatusChange' });
+
+        // Kiểm tra nếu đang chuyển sang "Hoạt động"
+        if (newStatus === 'Hoạt động') {
+            // Kiểm tra các sản phẩm có số lượng 0
+            const zeroQuantityItems = ctspList.filter(item =>
+                selectedCTSPKeys.value.includes(item.id_chi_tiet_san_pham) &&
+                item.so_luong === 0
+            );
+
+            if (zeroQuantityItems.length > 0) {
+                message.error({
+                    content: `Không thể chuyển ${zeroQuantityItems.length} chi tiết sản phẩm hết hàng sang trạng thái Hoạt động`,
+                    key: 'bulkStatusChange',
+                    duration: 3
+                });
+
+                // Loại bỏ các sản phẩm có số lượng 0 khỏi danh sách xử lý
+                for (const item of zeroQuantityItems) {
+                    const index = selectedCTSPKeys.value.indexOf(item.id_chi_tiet_san_pham);
+                    if (index !== -1) {
+                        selectedCTSPKeys.value.splice(index, 1);
+                    }
+                }
+
+                // Nếu không còn sản phẩm nào để xử lý, dừng lại
+                if (selectedCTSPKeys.value.length === 0) {
+                    return;
+                }
+
+                // Cập nhật thông báo
+                message.loading({
+                    content: `Đang chuyển ${selectedCTSPKeys.value.length} chi tiết sản phẩm thành ${newStatus}...`,
+                    key: 'bulkStatusChange'
+                });
+            }
+        }
+
+        // Cập nhật UI trước (optimistic update) - chỉ cập nhật chi tiết sản phẩm
+        const updatedCtspList = ctspList.map(item => {
+            if (selectedCTSPKeys.value.includes(item.id_chi_tiet_san_pham)) {
+                return {
+                    ...item,
+                    trang_thai: newStatus
+                };
+            }
+            return item;
+        });
+
+        // Cập nhật Map và UI cho chi tiết sản phẩm
+        productCTSPMap.value.set(productId, updatedCtspList);
+
+        // Gọi API tương ứng với các ID đã chọn
+        for (const ctspId of selectedCTSPKeys.value) {
+            if (newStatus === 'Hoạt động') {
+                // Đối với trạng thái Hoạt động, chỉ gọi API cho các ID có số lượng > 0
+                const ctsp = ctspList.find(item => item.id_chi_tiet_san_pham === ctspId);
+                if (ctsp && ctsp.so_luong > 0) {
+                    await store.changeAllCTSPHoatDong(ctspId);
+                }
+            } else {
+                // Đối với trạng thái Không hoạt động, gọi API cho tất cả ID đã chọn
+                await store.changeAllCTSPKhongHoatDong(ctspId);
+            }
+        }
+
+        // Cập nhật trạng thái sản phẩm cha dựa trên trạng thái của tất cả chi tiết sản phẩm
+        const hasActiveCtsp = updatedCtspList.some(item => item.trang_thai === 'Hoạt động');
+        const parentProductIndex = data.value.findIndex(item => item.id_san_pham === productId);
+
+        if (parentProductIndex !== -1) {
+            // Nếu không còn CTSP nào hoạt động, cập nhật UI sản phẩm cha thành "Không hoạt động"
+            if (!hasActiveCtsp) {
+                data.value[parentProductIndex].trang_thai = 'Không hoạt động';
+
+                if (currentProduct.value && currentProduct.value.id_san_pham === productId) {
+                    currentProduct.value.trang_thai = 'Không hoạt động';
+                }
+            }
+            // Nếu có ít nhất một CTSP hoạt động, cập nhật UI sản phẩm cha thành "Hoạt động"
+            else {
+                data.value[parentProductIndex].trang_thai = 'Hoạt động';
+
+                if (currentProduct.value && currentProduct.value.id_san_pham === productId) {
+                    currentProduct.value.trang_thai = 'Hoạt động';
+                }
+            }
+        }
+
+        // Xóa cache
+        clearCache(`${CTSP_CACHE_PREFIX}${productId}`);
+        clearCache(PRODUCTS_CACHE_KEY);
+
+        // Không gọi fetchData() để tránh lấy lại dữ liệu trước khi server xử lý xong
+        // Thay vào đó, chờ một khoảng thời gian ngắn
+        setTimeout(() => {
+            message.success({
+                content: `Đã chuyển ${selectedCTSPKeys.value.length} chi tiết sản phẩm thành ${newStatus}`,
+                key: 'bulkStatusChange',
+                duration: 2
+            });
+
+            // Reset selection sau khi hoàn thành
+            selectedCTSPKeys.value = [];
+        }, 500);
+
+    } catch (error) {
+        console.error('Lỗi khi thay đổi trạng thái nhiều chi tiết sản phẩm:', error);
+        message.error({
+            content: 'Đã xảy ra lỗi khi thay đổi trạng thái',
+            key: 'bulkStatusChange',
+            duration: 2
+        });
+
+        // Hoàn tác UI nếu có lỗi - sử dụng getCTSPBySanPham thay vì fetchData
+        try {
+            const ctspData = await store.getCTSPBySanPham(productId);
+            const updatedList = ctspData.map(ctsp => ({
+                key: ctsp.id_chi_tiet_san_pham,
+                id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
+                id_san_pham: productId,
+                ten_san_pham: ctsp.ten_san_pham,
+                hinh_anh: ctsp.hinh_anh,
+                gia_ban: ctsp.gia_ban,
+                mau_sac: ctsp.ten_mau,
+                size: ctsp.gia_tri + ' ' + ctsp.don_vi,
+                so_luong: ctsp.so_luong,
+                trang_thai: ctsp.trang_thai,
+            }));
+            productCTSPMap.value.set(productId, updatedList);
+        } catch (fetchError) {
+            console.error('Lỗi khi hoàn tác UI:', fetchError);
+        }
+    }
+};
 </script>
 <style scoped>
 :deep(.ctsp-table) {
@@ -825,5 +1209,357 @@ const formatCurrency = (value) => {
 
 .custom-class {
     z-index: 1000;
+}
+
+/* Style cho bộ lọc trạng thái */
+.status-filter {
+    margin-bottom: 10px;
+}
+
+.status-filter .ant-radio-button-wrapper {
+    margin-right: 5px;
+}
+
+/* Style cho nút lọc trạng thái với màu #f33b47 */
+:deep(.custom-radio-group) {
+    .ant-radio-button-wrapper {
+        color: white;
+        background-color: #f33b47;
+        border-color: #f33b47;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+
+        &:first-child {
+            border-left-color: #f33b47;
+        }
+
+        &:hover {
+            color: white;
+            background-color: #ff6b76;
+            border-color: #ff6b76;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        &.ant-radio-button-wrapper-checked {
+            background-color: #d62a38;
+            border-color: #d62a38;
+            box-shadow: 0 4px 8px rgba(214, 42, 56, 0.3);
+
+            &:before {
+                background-color: #d62a38;
+            }
+        }
+
+        &:focus-within {
+            box-shadow: 0 0 0 3px rgba(243, 59, 71, 0.3);
+        }
+    }
+}
+
+/* Style cho bộ lọc trạng thái trong drawer */
+.variant-status-filter {
+    margin-bottom: 15px;
+}
+
+:deep(.variant-status-filter .custom-radio-group) {
+    .ant-radio-button-wrapper {
+        color: white;
+        background-color: #f33b47;
+        border-color: #f33b47;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+
+        &:first-child {
+            border-left-color: #f33b47;
+        }
+
+        &:hover {
+            color: white;
+            background-color: #ff6b76;
+            border-color: #ff6b76;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        &.ant-radio-button-wrapper-checked {
+            background-color: #d62a38;
+            border-color: #d62a38;
+            box-shadow: 0 4px 8px rgba(214, 42, 56, 0.3);
+
+            &:before {
+                background-color: #d62a38;
+            }
+        }
+
+        &:focus-within {
+            box-shadow: 0 0 0 3px rgba(243, 59, 71, 0.3);
+        }
+    }
+}
+
+/* Style cho các nút bulk action */
+.bulk-actions {
+    margin-top: 10px;
+}
+
+.bulk-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 5px 15px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.bulk-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bulk-action-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bulk-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+}
+
+.bulk-action-btn:hover::before {
+    transform: translateX(0);
+}
+
+:deep(.bulk-action-btn .anticon) {
+    vertical-align: middle;
+    margin-right: 5px;
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.bulk-action-btn:hover :deep(.anticon) {
+    transform: scale(1.2);
+}
+
+/* Style nút primary */
+:deep(.ant-btn-primary) {
+    background: #f33b47;
+    border-color: #f33b47;
+    box-shadow: 0 2px 5px rgba(243, 59, 71, 0.3);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+:deep(.ant-btn-primary:hover),
+:deep(.ant-btn-primary:focus) {
+    background: #ff4d58;
+    border-color: #ff4d58;
+    box-shadow: 0 4px 10px rgba(243, 59, 71, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Style nút danger */
+:deep(.ant-btn-dangerous) {
+    background: #ff4d4f;
+    border-color: #ff4d4f;
+    color: white;
+    box-shadow: 0 2px 5px rgba(255, 77, 79, 0.3);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+:deep(.ant-btn-dangerous:hover),
+:deep(.ant-btn-dangerous:focus) {
+    background: #ff7875;
+    border-color: #ff7875;
+    color: white;
+    box-shadow: 0 4px 10px rgba(255, 77, 79, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Style nút biến thể */
+:deep(.d-flex .ant-btn) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 15px;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.d-flex .ant-btn:hover) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.d-flex .ant-btn .anticon) {
+    transition: transform 0.3s ease;
+}
+
+:deep(.d-flex .ant-btn:hover .anticon) {
+    transform: scale(1.2);
+}
+
+:deep(.btn-warning) {
+    background: #faad14;
+    border-color: #faad14;
+    box-shadow: 0 2px 5px rgba(250, 173, 20, 0.3);
+}
+
+:deep(.btn-warning:hover) {
+    background: #ffc53d;
+    border-color: #ffc53d;
+    box-shadow: 0 4px 10px rgba(250, 173, 20, 0.4);
+}
+
+/* Style cho nút làm mới */
+.refresh-button {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background-color: #f33b47;
+    border-color: #f33b47;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+    position: relative;
+    overflow: hidden;
+}
+
+.refresh-button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.5s, opacity 0.3s;
+}
+
+.refresh-button:hover {
+    transform: rotate(180deg) scale(1.1);
+    background-color: #ff4d58;
+    border-color: #ff4d58;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.refresh-button:hover::after {
+    transform: scale(2);
+    opacity: 1;
+}
+
+.refresh-button:focus {
+    background-color: #d62a38;
+    border-color: #d62a38;
+}
+
+/* Style cho switch */
+:deep(.ant-switch) {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+:deep(.ant-switch:hover) {
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+}
+
+:deep(.ant-switch-handle::before) {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+:deep(.ant-switch-checked:hover .ant-switch-handle::before) {
+    transform: scale(1.1);
+}
+
+/* Style cho checkbox */
+:deep(.ant-checkbox) {
+    .ant-checkbox-inner {
+        border-color: #f33b47;
+        border-radius: 4px;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    &:hover .ant-checkbox-inner {
+        border-color: #ff6b76;
+        box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2);
+    }
+
+    &.ant-checkbox-checked .ant-checkbox-inner {
+        background-color: #f33b47;
+        border-color: #f33b47;
+    }
+
+    &.ant-checkbox-checked:hover .ant-checkbox-inner {
+        background-color: #ff6b76;
+        border-color: #ff6b76;
+    }
+
+    &.ant-checkbox-indeterminate .ant-checkbox-inner::after {
+        background-color: #f33b47;
+    }
+}
+
+/* Style cho checkbox trong bảng */
+:deep(.ant-table-selection) {
+
+    .ant-checkbox-wrapper:hover .ant-checkbox-inner,
+    .ant-checkbox:hover .ant-checkbox-inner {
+        border-color: #ff6b76;
+    }
+
+    .ant-checkbox-checked::after {
+        border-color: #f33b47;
+    }
+
+    .ant-checkbox-checked .ant-checkbox-inner {
+        background-color: #f33b47;
+        border-color: #f33b47;
+        animation: checkboxEffect 0.36s ease-in-out;
+    }
+
+    .ant-checkbox-checked:hover .ant-checkbox-inner {
+        background-color: #ff6b76;
+        border-color: #ff6b76;
+    }
+}
+
+/* Style cho hàng được chọn trong bảng */
+:deep(.ant-table-row-selected > td) {
+    background-color: rgba(243, 59, 71, 0.1) !important;
+}
+
+/* Keyframes for checkbox animation */
+@keyframes checkboxEffect {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 </style>

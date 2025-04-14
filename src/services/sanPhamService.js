@@ -53,7 +53,7 @@ const getCTSPBySanPham = async (id) => {
 }
 const changeStatusSanPham = async (id) => {
   try {
-    const { data } = await axiosInstance.put(qlsp + 'changeStatusCTSP?id=' + id)
+    const { data } = await axiosInstance.put(qlsp + 'chuyenTrangThaiSanPham?id=' + id)
     return data
   } catch (error) {
     console.log(error)
@@ -61,7 +61,7 @@ const changeStatusSanPham = async (id) => {
 }
 const changeStatusCTSP = async (id) => {
   try {
-    const { data } = await axiosInstance.put(qlsp + 'chuyenTrangThaiCTSP?id=' + id)
+    const { data } = await axiosInstance.put(qlsp + 'changeStatusCTSP?id=' + id)
     return data
   } catch (error) {
     console.log(error)
@@ -305,7 +305,22 @@ const exportExcel = async (productIds, fields) => {
     throw error;
   }
 }
-
+const changeAllCTSPHoatDong = async (id) => {
+  try {
+    const response = await axiosInstance.put(qlsp + 'changeAllCTSPHoatDong?id=' + id)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái CTSP:', error)
+  }
+}
+const changeAllCTSPKhongHoatDong = async (id) => {
+  try {
+    const response = await axiosInstance.put(qlsp + 'changeAllCTSPKhongHoatDong?id=' + id)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái CTSP:', error)
+  }
+}
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -332,4 +347,8 @@ export const sanPhamService = {
   getAllCTSPKM,
   searchSanPham,
   exportExcel,
+  changeStatusCTSP,
+  changeAllCTSPHoatDong,
+  changeAllCTSPKhongHoatDong
+
 }

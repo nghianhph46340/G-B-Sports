@@ -1,7 +1,8 @@
 <template>
     <div class="mb-4 d-flex justify-content-between">
         <div class="d-flex gap-2 flex-wrap">
-            <template v-if="!store.checkRouter.includes('/quanlysanpham/add')">
+            <template
+                v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
                 <a-button type="" @click="showFilter" class="d-flex align-items-center btn-filter">
                     <FilterOutlined class="icon-filler" />
                     <span class="button-text">Bộ lọc</span>
@@ -119,6 +120,7 @@
                     <span class="button-text">Xuất excel</span>
                 </a-button>
             </template>
+            <!-- Nhập excel button always visible -->
             <a-button type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
                 <ImportOutlined class="icon-filler" />
                 <span class="button-text">Nhập excel</span>
@@ -304,7 +306,8 @@
                 </template>
             </a-modal>
         </div>
-        <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
+        <template
+            v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
             <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
                 class="d-flex align-items-center">
                 <PlusOutlined />
@@ -392,6 +395,20 @@ const route = useRoute();
 const store = useGbStore();
 const visible = ref(false);
 const value = ref('Hoạt động');
+
+// Function to update store.checkRouter based on the current route
+const updateCheckRouter = () => {
+    store.getPath(route.path);
+    store.getRoutePresent(route.path);
+    console.log('Current path:', route.path);
+    console.log('Updated store.checkRouter:', store.checkRouter);
+};
+
+// Watch for route changes to handle browser back button
+watch(() => route.path, (newPath) => {
+    console.log('Route changed to:', newPath);
+    updateCheckRouter();
+}, { immediate: true });
 
 // Computed property để lấy giá bán lớn nhất
 const maxPriceFromProducts = computed(() => {
@@ -500,10 +517,17 @@ const onClose = () => {
 
 const router = useRouter();
 const changeRouter = (routers) => {
+    // Make sure to update the store before navigation
     store.getPath(routers);
     store.getRoutePresent(route.path);
+    store.getIndex(routers); // Make sure to call getIndex to update menu selection
+
+    // Log for debugging
+    console.log('Navigating to:', routers);
+    console.log('Updated store.checkRouter:', store.checkRouter);
+
+    // Navigate
     router.push(routers);
-    console.log(store.checkRouter);
 };
 
 // Hàm kiểm tra và tải dữ liệu cho bộ lọc
@@ -577,6 +601,7 @@ const loadInitialData = async () => {
 
 onMounted(async () => {
     await loadInitialData();
+    updateCheckRouter(); // Ensure checkRouter is updated when component mounts
 });
 
 const filterProducts = () => {
