@@ -16,28 +16,28 @@ import { set } from 'date-fns'
 export const useGbStore = defineStore('gbStore', {
   state: () => ({
     // Các state hiện tại chung
-            changeLanguage: {},
-            check: true,
-            language: 'EN',
-            status: false,
-            id: 0,
-            checkNoitification: true,
+    changeLanguage: {},
+    check: true,
+    language: 'EN',
+    status: false,
+    id: 0,
+    checkNoitification: true,
     checkRouter: '',
     checkRoutePresent: '',
     indexMenu: ['1'],
     searchs: '', // Dùng chung cho tìm kiếm
     //Sản phẩm
-            getAllSanPham: [],
-            getAllChiTietSanPham: [],
-            searchChiTietSanPham: [],
+    getAllSanPham: [],
+    getAllChiTietSanPham: [],
+    searchChiTietSanPham: [],
     searchSanPham: [],
-            getCTSPBySanPhams: [],
-            getImages: [],
-            danhMucList: [],
-            thuongHieuList: [],
-            chatLieuList: [],
-            mauSacList: [],
-            sizeList: [],
+    getCTSPBySanPhams: [],
+    getImages: [],
+    danhMucList: [],
+    thuongHieuList: [],
+    chatLieuList: [],
+    mauSacList: [],
+    sizeList: [],
     sanPhamById: {},
     // State cho chi tiết sản phẩm
     cTSPBySanPhamFull: [],
@@ -134,7 +134,7 @@ export const useGbStore = defineStore('gbStore', {
   }),
 
   ///Đầu mút2
-    actions: {
+  actions: {
     // BCTK
     async getSoLieu(type = null, startDate = null, endDate = null) {
       try {
@@ -306,24 +306,24 @@ export const useGbStore = defineStore('gbStore', {
     // },
     async getTopSanPhamSapHetHang() {
       try {
-          const response = await bctkService.getTopSanPhamSapHetHang();
-          if (response && Array.isArray(response)) {
-              this.topSanPhamSapHetHang = response.map((item, index) => ({
-                  stt: index + 1,
-                  ma_san_pham: item.ma_san_pham || '',
-                  ten_san_pham: item.ten_san_pham || '',
-                  so_luong: item.so_luong || 0,
-                  gia_ban: item.gia_ban || 0,
-              }));
-          } else {
-              console.warn('Invalid response format for topSanPhamSapHetHang:', response);
-              this.topSanPhamSapHetHang = [];
-          }
-      } catch (error) {
-          console.error('Error in getTopSanPhamSapHetHang:', error);
+        const response = await bctkService.getTopSanPhamSapHetHang();
+        if (response && Array.isArray(response)) {
+          this.topSanPhamSapHetHang = response.map((item, index) => ({
+            stt: index + 1,
+            ma_san_pham: item.ma_san_pham || '',
+            ten_san_pham: item.ten_san_pham || '',
+            so_luong: item.so_luong || 0,
+            gia_ban: item.gia_ban || 0,
+          }));
+        } else {
+          console.warn('Invalid response format for topSanPhamSapHetHang:', response);
           this.topSanPhamSapHetHang = [];
+        }
+      } catch (error) {
+        console.error('Error in getTopSanPhamSapHetHang:', error);
+        this.topSanPhamSapHetHang = [];
       }
-  },
+    },
     //Kết thúc BCTK
 
     //Nhân viên
@@ -331,72 +331,72 @@ export const useGbStore = defineStore('gbStore', {
       const nhanVienArr = await nhanVienService.layDanhSachNhanVien()
       this.nhanVienArr = nhanVienArr
     },
-        async getAllNhanVien(page = 0, size = 5) {
-            try {
+    async getAllNhanVien(page = 0, size = 5) {
+      try {
         const nhanVien = await nhanVienService.getAllNhanVien(page, size)
-                if (nhanVien.error) {
-                    toast.error('Không lấy được dữ liệu')
+        if (nhanVien.error) {
+          toast.error('Không lấy được dữ liệu')
           return
-                } else {
-                    // this.getAllNhanVienArr = nhanVien;
+        } else {
+          // this.getAllNhanVienArr = nhanVien;
           // this.totalItems = 50;  // Tạm thởi hardcode để test
-                    // this.currentPage = page;
+          // this.currentPage = page;
           this.getAllNhanVienArr = nhanVien.content || [] // Lấy danh sách nhân viên
           this.totalPages = nhanVien.totalPages || 0
           this.currentPage = page
           this.totalItems = nhanVien.totalElements || 0
-                }
-            } catch (error) {
+        }
+      } catch (error) {
         console.error(error)
         toast.error('Có lỗi xảy ra')
-            }
-        },
-        async getNhanVienLocTrangThai(page = 0, size = 5, trangThai = this.selectTrangThai) {
-            try {
+      }
+    },
+    async getNhanVienLocTrangThai(page = 0, size = 5, trangThai = this.selectTrangThai) {
+      try {
         let params = { page, size }
-                if (trangThai) {
+        if (trangThai) {
           params.trangThai = trangThai // Chỉ thêm trạng thái nếu có giá trị
-                }
+        }
         const nhanvienFilter = await nhanVienService.getNhanVienLocTrangThai(page, size, trangThai)
-                if (nhanvienFilter.error) {
+        if (nhanvienFilter.error) {
           toast.error('Không lấy được dữ liệu')
           return
-                } else {
+        } else {
           this.getAllNhanVienArr = nhanvienFilter.content || [] // Lấy danh sách nhân viên
           this.totalPages = nhanvienFilter.totalPages || 0
           this.currentPage = page
           this.totalItems = nhanvienFilter.totalElements || 0
           this.selectedTrangThai = trangThai
-                }
-            } catch (error) {
+        }
+      } catch (error) {
         console.error(error)
         toast.error('Có lỗi xảy ra')
-            }
-        },
-        async changeTrangThai(id) {
-            try {
+      }
+    },
+    async changeTrangThai(id) {
+      try {
         // Cập nhật ngay lập tức UI trước khi gọi API
         const nhanVien = this.getAllNhanVienArr.find((nhanVien) => nhanVien.idNhanVien === id)
-                if (nhanVien) {
+        if (nhanVien) {
           nhanVien.trangThai =
             nhanVien.trangThai === 'Đang hoạt động' ? 'Đã nghỉ việc' : 'Đang hoạt động'
-                }
+        }
 
-                //     const chuyenTrangThai = await nhanVienService.changeTrangThai(id);
-                //     if (chuyenTrangThai.error) {
-                //         toast.error('Có lỗi xảy ra');
+        //     const chuyenTrangThai = await nhanVienService.changeTrangThai(id);
+        //     if (chuyenTrangThai.error) {
+        //         toast.error('Có lỗi xảy ra');
         // Gọi API nhưng không chờ phản hồi để tránh lag
         nhanVienService.changeTrangThai(id).then((response) => {
-                    if (response.error) {
+          if (response.error) {
             toast.error('Có lỗi xảy ra')
             // Nếu lỗi, revert trạng thái lại
             nhanVien.trangThai =
               nhanVien.trangThai === 'Đang hoạt động' ? 'Đã nghỉ việc' : 'Đang hoạt động'
-                    } else {
+          } else {
             toast.success('Chuyển trạng thái thành công')
-                    }
+          }
         })
-            } catch (error) {
+      } catch (error) {
         console.error(error)
         toast.error('Có lỗi xảy ra')
       }
@@ -410,7 +410,7 @@ export const useGbStore = defineStore('gbStore', {
           return
         }
         return themNhanVienres
-            } catch (error) {
+      } catch (error) {
         console.error(error)
         toast.error('Có lỗi xảy ra')
       }
@@ -481,74 +481,74 @@ export const useGbStore = defineStore('gbStore', {
         return
       } else {
         this.sanPhamById = sanPhamByIds
-            }
-        },
-        //Lấy danh sách danh mục
-        async getDanhMucList() {
+      }
+    },
+    //Lấy danh sách danh mục
+    async getDanhMucList() {
       const danhMucRespone = await sanPhamService.getDanhMucList()
-            if (danhMucRespone.error) {
+      if (danhMucRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-            } else {
+      } else {
         this.danhMucList = danhMucRespone
-            }
-        },
-        //Lấy danh sách thương hiệu
-        async getThuongHieuList() {
+      }
+    },
+    //Lấy danh sách thương hiệu
+    async getThuongHieuList() {
       const thuongHieuRespone = await sanPhamService.getThuongHieuList()
-            if (thuongHieuRespone.error) {
+      if (thuongHieuRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-            } else {
+      } else {
         this.thuongHieuList = thuongHieuRespone
-            }
-        },
-        //Lấy danh sách chất liệu
-        async getChatLieuList() {
+      }
+    },
+    //Lấy danh sách chất liệu
+    async getChatLieuList() {
       const chatLieuRespone = await sanPhamService.getChatLieuList()
-            if (chatLieuRespone.error) {
+      if (chatLieuRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-            } else {
+      } else {
         this.chatLieuList = chatLieuRespone
-            }
-        },
-        //Lấy danh sách màu sắc
-        async getMauSacList() {
+      }
+    },
+    //Lấy danh sách màu sắc
+    async getMauSacList() {
       const mauSacRespone = await sanPhamService.getMauSacList()
-            if (mauSacRespone.error) {
+      if (mauSacRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-            } else {
+      } else {
         this.mauSacList = mauSacRespone
-            }
-        },
-        //Lấy danh sách size    
-        async getSizeList() {
+      }
+    },
+    //Lấy danh sách size    
+    async getSizeList() {
       const sizeRespone = await sanPhamService.getSizeList()
-            if (sizeRespone.error) {
+      if (sizeRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-            } else {
+      } else {
         this.sizeList = sizeRespone
-            }
-        },
+      }
+    },
 
-        //Cập nhật trạng thái sản phẩm
-        async changeStatusSanPham(id) {
-            try {
+    //Cập nhật trạng thái sản phẩm
+    async changeStatusSanPham(id) {
+      try {
         // Cập nhật ngay lập tức UI trước khi gọi API
         const sanPham = this.getAllSanPham.find((sanPham) => sanPham.id_san_pham === id)
-                if (sanPham) {
+        if (sanPham) {
           sanPham.trang_thai = sanPham.trang_thai === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động'
-                }
+        }
         // Gọi API nhưng không chờ phản hồi để tránh lag
         sanPhamService.changeStatusSanPham(id).then((response) => {
-                    if (response.error) {
+          if (response.error) {
             toast.error('Có lỗi xảy ra')
             sanPham.trang_thai =
               sanPham.trang_thai === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động'
-                    } else {
+          } else {
             toast.success('Chuyển trạng thái thành công')
           }
         })
@@ -674,11 +674,11 @@ export const useGbStore = defineStore('gbStore', {
         }
         toast.success('Cập nhật trạng thái thành công');
         await this.getHoaDonDetail(maHoaDon);
-            } catch (error) {
-                console.error(error);
-                toast.error('Có lỗi xảy ra');
-            }
-        },
+      } catch (error) {
+        console.error(error);
+        toast.error('Có lỗi xảy ra');
+      }
+    },
     async revertToInitialStatus(maHoaDon, nhanVienDoi, noiDungDoi) {
       try {
         const response = await hoaDonService.quayLaiTrangThai(maHoaDon, nhanVienDoi, noiDungDoi);
@@ -698,15 +698,15 @@ export const useGbStore = defineStore('gbStore', {
         const response = await hoaDonService.cancelHoaDon(maHoaDon, nhanVienDoi, noiDungDoi);
         if (response.error) {
           toast.error('Hủy hóa đơn thất bại');
-                    return;
-                }
+          return;
+        }
         toast.success('Hủy hóa đơn thành công');
         await this.getHoaDonDetail(maHoaDon);
-            } catch (error) {
-                console.error(error);
-                toast.error('Có lỗi xảy ra');
-            }
-        },
+      } catch (error) {
+        console.error(error);
+        toast.error('Có lỗi xảy ra');
+      }
+    },
     async updateCustomerInfo(maHoaDon, ttkh) {
       try {
         const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || '';
@@ -812,12 +812,12 @@ export const useGbStore = defineStore('gbStore', {
       toast.success(result.successMessage || 'Đăng ký tài khoản thành công!')
       return { success: true, khachHang: result.khachHang }
     },
-    // Thêm action login
+    // Thêm action login khách hàng
     async login(loginData) {
       const result = await khachHangService.login(loginData)
       if (result.error) {
         if (result.fieldErrors) {
-          return { 
+          return {
             error: true,
             fieldErrors: result.fieldErrors,
           }
@@ -826,6 +826,65 @@ export const useGbStore = defineStore('gbStore', {
         return { error: true }
       }
 
+      // Kiểm tra dữ liệu trả về từ API đăng nhập
+      if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
+        console.error('Dữ liệu tài khoản không hợp lệ:', result)
+        toast.error('Dữ liệu tài khoản không hợp lệ!')
+        return { error: true }
+      }
+      // Lưu thông tin cơ bản
+      this.userInfo = result.taiKhoan
+      this.isLoggedIn = true
+      this.id_roles = result.id_roles
+      this.token = result.token
+      // In thông tin tài khoản cơ bản
+      console.log('Thông tin tài khoản (tai_khoan):', this.userInfo)
+      console.log('ID Roles:', this.id_roles)
+      console.log('Token:', this.token)
+      // Lưu vào sessionStorage
+      sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+      sessionStorage.setItem('isLoggedIn', 'true')
+      sessionStorage.setItem('id_roles', result.id_roles)
+      sessionStorage.setItem('token', result.token)
+      if (loginData.rememberMe) {
+        localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('id_roles', result.id_roles)
+        localStorage.setItem('token', result.token)
+      }
+      // Lấy thông tin chi tiết
+      try {
+        const userDetails = await khachHangService.getUserDetail({
+          username: result.taiKhoan.ten_dang_nhap,
+          id_roles: result.id_roles,
+        })
+        this.userDetails = userDetails
+        // In thông tin chi tiết
+        console.log('Thông tin chi tiết (userDetails):', this.userDetails)
+        sessionStorage.setItem('userDetails', JSON.stringify(userDetails))
+        if (loginData.rememberMe) {
+          localStorage.setItem('userDetails', JSON.stringify(userDetails))
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin chi tiết:', error)
+        toast.error('Không thể lấy thông tin chi tiết tài khoản!')
+      }
+      toast.success(result.successMessage || 'Đăng nhập thành công!')
+      return { success: true, id_roles: result.id_roles }
+    },
+    // Thêm action login thằng làm thêm
+    async loginNV(loginData) {
+      const result = await nhanVienService.login(loginData)
+      if (result.error) {
+        if (result.fieldErrors) {
+          return {
+            error: true,
+            fieldErrors: result.fieldErrors,
+          }
+        }
+        toast.error(result.message || 'Đăng nhập thất bại!')
+        return { error: true }
+      }
       // Kiểm tra dữ liệu trả về từ API đăng nhập
       if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
         console.error('Dữ liệu tài khoản không hợp lệ:', result)
@@ -910,6 +969,56 @@ export const useGbStore = defineStore('gbStore', {
 
     // Đăng xuất
     logout() {
+      // Xóa dữ liệu trong localStorage và sessionStorage
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('id_roles')
+      localStorage.removeItem('userDetails')
+      localStorage.removeItem('token')
+      sessionStorage.removeItem('userInfo')
+      sessionStorage.removeItem('isLoggedIn')
+      sessionStorage.removeItem('id_roles')
+      sessionStorage.removeItem('userDetails')
+      sessionStorage.removeItem('token')
+
+      // Reset trạng thái trong store
+      this.userInfo = null
+      this.isLoggedIn = false
+      this.id_roles = null
+      this.userDetails = null
+      this.token = null
+
+      // const router = useRouter();
+      // router.replace('/login-register/login');
+      toast.success('Đăng xuất thành công!')
+      window.location.href = '/login-register/loginAdmin'
+    },
+    logout() {
+      // Xóa dữ liệu trong localStorage và sessionStorage
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('id_roles')
+      localStorage.removeItem('userDetails')
+      localStorage.removeItem('token')
+      sessionStorage.removeItem('userInfo')
+      sessionStorage.removeItem('isLoggedIn')
+      sessionStorage.removeItem('id_roles')
+      sessionStorage.removeItem('userDetails')
+      sessionStorage.removeItem('token')
+
+      // Reset trạng thái trong store
+      this.userInfo = null
+      this.isLoggedIn = false
+      this.id_roles = null
+      this.userDetails = null
+      this.token = null
+
+      // const router = useRouter();
+      // router.replace('/login-register/login');
+      toast.success('Đăng xuất thành công!')
+      window.location.href = '/login-register/loginAdmin'
+    },
+    logoutKH() {
       // Xóa dữ liệu trong localStorage và sessionStorage
       localStorage.removeItem('userInfo')
       localStorage.removeItem('isLoggedIn')
@@ -1324,18 +1433,17 @@ export const useGbStore = defineStore('gbStore', {
 
     async xoaSPHD(idHoaDon, idCTSP) {
       try {
-        const result = await banHangService.xoaSPHD(idHoaDon, idCTSP)
-        if (!result.success) {
-          toast.error(result.message || 'Không xóa được sản phẩm khỏi hóa đơn')
-          return null
-        }
-        return result.data // Trả về dữ liệu HoaDon
+        const result = await banHangService.xoaSPHD(idHoaDon, idCTSP);
+        return result; // ✨ Trả luôn response object { success, message }
       } catch (error) {
-        console.error('Lỗi từ API:', error.response?.data || error.message)
-        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm')
-        return null
+        console.error('Lỗi từ API:', error.response?.data || error.message);
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm'
+        };
       }
     },
+
 
     async getHoaDonByIdHoaDon(idHD) {
       try {
@@ -1606,26 +1714,7 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
 
-    async searchKhuyenMai(keyword, page = 0, size = 5) {
-      try {
-        const khuyenMaiSearch = await khuyenMaiService.searchKhuyenMai(keyword, page, size)
-        if (khuyenMaiSearch.error) {
-          toast.error('Không tìm thấy khuyến mãi')
-          this.khuyenMaiSearch = []
-          this.khuyenMaiTotalPages = 0
-          this.khuyenMaiCurrentPage = 0
-          this.khuyenMaiTotalItems = 0
-        } else {
-          this.khuyenMaiSearch = khuyenMaiSearch.content || []
-          this.khuyenMaiTotalPages = khuyenMaiSearch.totalPages || 0
-          this.khuyenMaiCurrentPage = page
-          this.khuyenMaiTotalItems = khuyenMaiSearch.totalElements || 0
-        }
-      } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra')
-      }
-    },
+
 
     async offKhuyenMai(id) {
       try {
@@ -1797,30 +1886,30 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     //================= Kết thúc khuyến mãi =================///
-        getPath(path) {
+    getPath(path) {
       this.checkRouter = ''
-            this.checkRouter = path
-        },
-        getRoutePresent(path) {
+      this.checkRouter = path
+    },
+    getRoutePresent(path) {
       this.checkRoutePresent = ''
-            this.checkRoutePresent = path
-        },
-        getIndex(path) {
+      this.checkRoutePresent = path
+    },
+    getIndex(path) {
       this.indexMenu = ['1']
-            switch (path) {
-                case '/admin':
+      switch (path) {
+        case '/admin':
           this.indexMenu = ['1']
           break
-                case '/admin/quanlysanpham':
+        case '/admin/quanlysanpham':
           this.indexMenu = ['3']
           break
-                case '/admin/quanlynhanvien':
+        case '/admin/quanlynhanvien':
           this.indexMenu = ['10']
           break
         case '/admin/quanlyhoadon':
           this.indexMenu = ['8']
           break
-                case '/admin/quanlysanpham/add':
+        case '/admin/quanlysanpham/add':
           this.indexMenu = ['3']
           break
         case '/admin/quanlysanpham/sua':
@@ -1828,10 +1917,10 @@ export const useGbStore = defineStore('gbStore', {
           break
         case '/admin/quanlykhachhang':
           this.indexMenu = ['11'];
-                    break;
+          break;
         case '/admin/banhang':
           this.indexMenu = ['2'];
-                    break;
+          break;
         case '/admin/quanlyvoucher':
           this.indexMenu = ['12']
           break
@@ -1850,44 +1939,44 @@ export const useGbStore = defineStore('gbStore', {
         default:
           this.indexMenu = ['1']
           break
-            }
-        },
+      }
+    },
 
-        // Lấy ảnh sản phẩm
+    // Lấy ảnh sản phẩm
 
-        async getImage(id, anhChinh) {
+    async getImage(id, anhChinh) {
       const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh)
 
-            if (getImageRespone.error) {
+      if (getImageRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-            } else {
-                this.getImages = getImageRespone
-            }
-            return getImageRespone
-        },
-        //Lấy danh sách chi tiết sản phẩm theo sản phẩm
-        async getCTSPBySanPham(id) {
+      } else {
+        this.getImages = getImageRespone
+      }
+      return getImageRespone
+    },
+    //Lấy danh sách chi tiết sản phẩm theo sản phẩm
+    async getCTSPBySanPham(id) {
       const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
-            if (getCTSPBySanPhamRespone.error) {
+      if (getCTSPBySanPhamRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-            } else {
+      } else {
         this.getCTSPBySanPhams = getCTSPBySanPhamRespone
-                try {
-                    const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
+        try {
+          const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
             const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
             ctsp.hinh_anh = (await images.length) > 0 ? images[0].hinh_anh : 'Không có ảnh chính' // Thêm trường hinh_anh vào object ctsp
           })
           this.getCTSPBySanPhams = await Promise.all(imagePromises)
           this.getCTSPBySanPhams = getCTSPBySanPhamRespone
-                } catch (error) {
+        } catch (error) {
           console.log(error)
-                }
-            }
-        },
-        //Lấy danh sách sản phẩm
-        async getAllSP() {
+        }
+      }
+    },
+    //Lấy danh sách sản phẩm
+    async getAllSP() {
       try {
         console.log('Đang tải danh sách sản phẩm')
         const sanPhamResponse = await sanPhamService.getAllSanPham()
@@ -1937,10 +2026,10 @@ export const useGbStore = defineStore('gbStore', {
       } catch (error) {
         console.error('Lỗi trong createCTSP:', error)
         throw error
-            }
-        },
-        //Lấy danh sách chi tiết sản phẩm
-        async getAllCTSP() {
+      }
+    },
+    //Lấy danh sách chi tiết sản phẩm
+    async getAllCTSP() {
       try {
         console.log('Đang tải danh sách chi tiết sản phẩm')
         const chiTietSanPhamResponse = await sanPhamService.getAllChiTietSanPham()
@@ -1976,9 +2065,9 @@ export const useGbStore = defineStore('gbStore', {
         this.getAllChiTietSanPham = []
         return []
       }
-        },
-        //Tìm kiếm chi tiết sản phẩm
-        async searchCTSP(search) {
+    },
+    //Tìm kiếm chi tiết sản phẩm
+    async searchCTSP(search) {
       try {
         const chiTietSanPhamRespone = await sanPhamService.searchChiTietSanPham(search)
         if (chiTietSanPhamRespone && chiTietSanPhamRespone.error) {
@@ -1998,8 +2087,8 @@ export const useGbStore = defineStore('gbStore', {
           return
         }
 
-            try {
-                const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
+        try {
+          const imagePromises = chiTietSanPhamRespone.map(async (ctsp) => {
             if (ctsp && ctsp.id_chi_tiet_san_pham) {
               const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
               ctsp.hinh_anh =
@@ -2011,7 +2100,7 @@ export const useGbStore = defineStore('gbStore', {
           const results = await Promise.all(imagePromises)
           this.searchChiTietSanPham = results.filter((item) => item !== null)
           console.log('Kết quả tìm kiếm chi tiết sản phẩm đã xử lý:', this.searchChiTietSanPham)
-            } catch (error) {
+        } catch (error) {
           console.log('Lỗi khi xử lý hình ảnh:', error)
           this.searchChiTietSanPham = chiTietSanPhamRespone
         }
@@ -2073,50 +2162,50 @@ export const useGbStore = defineStore('gbStore', {
       } catch (error) {
         console.error('Lỗi khi tìm kiếm sản phẩm:', error)
       }
-        },
-        getLangue(check) {
-            const vni = {
+    },
+    getLangue(check) {
+      const vni = {
         nguoiDung: 'Đăng nhập',
         cuaHang: 'Cửa hàng',
         hoTro: 'Hỗ trợ',
         gioHang: 'Giỏ hàng',
         timKiem: 'Bạn đang muốn tìm kiếm gì?',
-            }
-            const eng = {
+      }
+      const eng = {
         nguoiDung: 'Login',
         cuaHang: 'Store',
         hoTro: 'Support',
         gioHang: 'Cart',
         timKiem: 'What are you looking for?',
-            }
-            if (!check) {
-                this.changeLanguage = vni
-                this.check = true
-                this.language = 'EN'
-            } else {
-                this.changeLanguage = eng
-                this.check = false
-                this.language = 'VI'
-            }
-        },
-        showModal(show) {
-            this.status = show
-        },
-        showModalSideBar(id) {
-            this.id = id
-            if (this.status) {
-                id = 0
-                this.id = id
-            }
-        },
-        hideModalSideBar(id) {
-            this.id = 0
-        },
-        showModalSideBar1(show) {
-            this.statusSideBar1 = show
-        },
-        closeNoitification() {
-            this.checkNoitification = false
+      }
+      if (!check) {
+        this.changeLanguage = vni
+        this.check = true
+        this.language = 'EN'
+      } else {
+        this.changeLanguage = eng
+        this.check = false
+        this.language = 'VI'
+      }
+    },
+    showModal(show) {
+      this.status = show
+    },
+    showModalSideBar(id) {
+      this.id = id
+      if (this.status) {
+        id = 0
+        this.id = id
+      }
+    },
+    hideModalSideBar(id) {
+      this.id = 0
+    },
+    showModalSideBar1(show) {
+      this.statusSideBar1 = show
+    },
+    closeNoitification() {
+      this.checkNoitification = false
     },
 
     // Action để áp dụng bộ lọc
@@ -2377,6 +2466,43 @@ export const useGbStore = defineStore('gbStore', {
         return []
       }
     },
+    async getVoucherLocKieuGiamGia(page = 0, size = 5, kieuGiamGia = '') {
+      try {
+        console.log('Calling getVoucherLocKieuGiamGia with:', { page, size, kieuGiamGia });
+        const response = await voucherService.getVoucherLocKieuGiamGia(page, size, kieuGiamGia);
+        console.log('Response from getVoucherLocKieuGiamGia:', response);
+        if (response.error) {
+          toast.error('Không lấy được dữ liệu voucher theo kiểu giảm giá');
+          return;
+        }
+        this.getAllVoucherArr = response.content || [];
+        this.voucherTotalPages = response.totalPages || 0;
+        this.voucherCurrentPage = page;
+      } catch (error) {
+        console.error('Lỗi khi lọc voucher theo kiểu giảm giá:', error);
+        toast.error('Có lỗi xảy ra');
+      }
+    },
+    // Lọc khuyến mãi theo kiểu giảm giá
+    async getKhuyenMaiLocKieuGiamGia(page = 0, size = 5, kieuGiamGia = '') {
+      try {
+        console.log('Calling getKhuyenMaiLocKieuGiamGia with:', { page, size, kieuGiamGia });
+        const response = await khuyenMaiService.getKhuyenMaiLocKieuGiamGia(page, size, kieuGiamGia);
+        console.log('Response from getKhuyenMaiLocKieuGiamGia:', response);
+        if (response.error) {
+          console.error('API returned error:', response);
+          toast.error('Không lấy được dữ liệu khuyến mãi theo kiểu giảm giá');
+          return;
+        }
+        this.getAllKhuyenMaiArr = response.content || [];
+        this.khuyenMaiTotalPages = response.totalPages || 0;
+        this.khuyenMaiCurrentPage = page;
+      } catch (error) {
+        console.error('Lỗi khi gọi API lọc khuyến mãi theo kiểu giảm giá:', error.message, error.stack);
+        toast.error('Có lỗi xảy ra');
+      }
+    },
+
 
     async getAllCL() {
       try {
@@ -2437,12 +2563,42 @@ export const useGbStore = defineStore('gbStore', {
         return []
       }
     },
+
+
+
+
+
+
+
+    async searchKhuyenMai(keyword, page = 0, size = 5) {
+      try {
+        const khuyenMaiSearch = await khuyenMaiService.searchKhuyenMai(keyword, page, size);
+        if (khuyenMaiSearch.error) {
+          toast.error('Không tìm thấy khuyến mãi');
+          this.khuyenMaiSearch = [];
+          this.khuyenMaiTotalPages = 0;
+          this.khuyenMaiCurrentPage = 0;
+          this.khuyenMaiTotalItems = 0;
+        } else {
+          this.khuyenMaiSearch = khuyenMaiSearch.content || [];
+          this.khuyenMaiTotalPages = khuyenMaiSearch.totalPages || 0;
+          this.khuyenMaiCurrentPage = page;
+          this.khuyenMaiTotalItems = khuyenMaiSearch.totalElements || 0;
+        }
+      } catch (error) {
+        console.error('Lỗi khi tìm kiếm khuyến mãi:', error);
+        toast.error('Có lỗi xảy ra');
+        this.khuyenMaiSearch = []; // Đặt về rỗng khi có lỗi
+      }
+    },
+
+
   },
 
-    persist: {
-        enabled: true,
-        strategies: [
-            {
+  persist: {
+    enabled: true,
+    strategies: [
+      {
         key: 'gbStore',
         storage: localStorage,
         paths: ['checkRouter', 'indexMenu', 'language', 'checkNoitification'],

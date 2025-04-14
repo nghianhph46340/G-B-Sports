@@ -34,6 +34,20 @@ const getKhuyenMaiLocTrangThai = async (page, size, trangThai) => {
   }
 };
 
+
+const getKhuyenMaiLocKieuGiamGia = async (page, size, kieuGiamGia) => {
+  try {
+    console.log('Sending request to API:', `api/khuyen-mai/loc-kieu-giam-gia-KM?page=${page}&size=${size}&kieuGiamGia=${kieuGiamGia}`);
+    const { data } = await axiosInstance.get(
+      `api/khuyen-mai/loc-kieu-giam-gia-KM?page=${page}&size=${size}&kieuGiamGia=${kieuGiamGia}`
+    );
+    console.log('Raw API data:', data);
+    return normalizeResponse(data); // Đảm bảo hàm này tồn tại và hoạt động đúng
+  } catch (error) {
+    console.error('Lỗi khi gọi API:', error.message, error.response?.data || error);
+    return { error: true };
+  }
+};
 // Tìm kiếm khuyến mãi
 const searchKhuyenMai = async (keyword, page, size) => {
   try {
@@ -165,4 +179,5 @@ export const khuyenMaiService = {
   getChiTietSanPhamBySanPham,
   updateKhuyenMai,
   getKhuyenMaiById,
+  getKhuyenMaiLocKieuGiamGia,
 };

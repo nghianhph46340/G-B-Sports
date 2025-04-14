@@ -808,7 +808,7 @@ const calculateOrderTotals = () => {
     const invoice = {
         // Thông tin đơn hàng
         hoaDon: {
-            trang_thai: 'Chờ xác nhận',
+            trang_thai: 'Hoàn thành',
             voucher: {
                 id: 1
             },
@@ -926,7 +926,7 @@ const placeOrder = async () => {
             } else if (selectedOnlineMethod.value === 'vnpay') {
                 // Redirect to VNPAY payment gateway
                 message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
-                const response = await banHangOnlineService.createOrder(hoaDon);
+                const response = await banHangOnlineService.createOrder1(hoaDon);
                 const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);

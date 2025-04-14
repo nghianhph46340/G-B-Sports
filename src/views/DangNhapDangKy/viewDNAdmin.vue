@@ -114,7 +114,7 @@ const handleLogin = async () => {
         // Nếu đã tạo hàm loginStaff trong store thì dùng:
         // const result = await gbStore.loginStaff(loginData);
         // Nếu chưa, thì dùng hàm login thông thường:
-        const result = await gbStore.login(loginData);
+        const result = await gbStore.loginNV(loginData);
 
         if (result.error) {
             if (result.fieldErrors) {

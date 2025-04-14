@@ -46,9 +46,9 @@
                                         <div class="product-price-row">
                                             <span class="product-price">{{ product.price }}</span>
                                             <span class="product-old-price" v-if="product.oldPrice">{{ product.oldPrice
-                                            }}</span>
+                                                }}</span>
                                             <span class="product-discount" v-if="product.discount">{{ product.discount
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                         <h6 class="product-name">{{ product.name }}</h6>
                                         <div class="product-meta">
@@ -88,7 +88,7 @@
                         <span class="current-price">{{ selectedProduct?.price }}</span>
                         <span class="old-price" v-if="selectedProduct?.oldPrice">{{ selectedProduct?.oldPrice }}</span>
                         <span class="discount-badge" v-if="selectedProduct?.discount">{{ selectedProduct?.discount
-                            }}</span>
+                        }}</span>
                     </div>
                     <div class="brand-section">
                         <span class="brand-label">Thương hiệu:</span>
