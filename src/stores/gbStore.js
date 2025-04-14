@@ -817,7 +817,7 @@ export const useGbStore = defineStore('gbStore', {
       const result = await khachHangService.login(loginData)
       if (result.error) {
         if (result.fieldErrors) {
-          return {
+          return { 
             error: true,
             fieldErrors: result.fieldErrors,
           }

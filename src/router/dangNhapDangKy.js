@@ -13,6 +13,11 @@ const dangNhapDangKy = [
                 path: "login",
                 name: "login",
                 component: () => import('../views/DangNhapDangKy/viewDangNhap.vue')
+            },
+            {
+                path: "loginAdmin",
+                name: "loginAdmin",
+                component: () => import('../views/DangNhapDangKy/viewDNAdmin.vue')
             }
         ]
     }
