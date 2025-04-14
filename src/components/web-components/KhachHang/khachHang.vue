@@ -193,7 +193,7 @@
                                 placeholder="Nhập lại mật khẩu mới" />
                         </a-form-item>
                         <a-form-item>
-                            <a-button type="primary" @click="changePassword">Đổi mật khẩu</a-button>
+                            <a-button type="primary" @click="changePassword" :loading="isLoading">Đổi mật khẩu</a-button>
                         </a-form-item>
                     </a-form>
                 </a-card>
@@ -267,6 +267,7 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import {
     UserOutlined,
     ShoppingOutlined,
@@ -283,6 +284,8 @@ import { message } from 'ant-design-vue';
 import axiosInstance from '@/config/axiosConfig';
 
 const route = useRoute();
+const router = useRouter();
+const isLoading = ref(false);
 
 // State cho menu
 const selectedMenu = ref(['info']);
@@ -395,15 +398,38 @@ const changePassword = async () => {
     }
 
     try {
-        message.success('Đổi mật khẩu thành công');
+        isLoading.value = true;
+        // Gọi API đổi mật khẩu
+        const response = await axiosInstance.post('api/khach-hang/change-password', {
+            oldPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword
+        });
 
-        // Reset form
-        passwordForm.currentPassword = '';
-        passwordForm.newPassword = '';
-        passwordForm.confirmPassword = '';
+        // Kiểm tra phản hồi từ API
+        if (response.data.successMessage) {
+            message.success(response.data.successMessage);
+
+            // Reset form
+            passwordForm.currentPassword = '';
+            passwordForm.newPassword = '';
+            passwordForm.confirmPassword = '';
+        } else {
+            message.error(response.data.error || 'Có lỗi xảy ra khi đổi mật khẩu');
+        }
     } catch (error) {
-        message.error('Có lỗi xảy ra khi đổi mật khẩu');
+        // Xử lý lỗi từ API
+        if (error.response?.status === 403) {
+            message.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
+            localStorage.removeItem('token');
+            router.push('/login-register/login');
+        } else if (error.response?.data?.error) {
+            message.error(error.response.data.error);
+        } else {
+            message.error('Có lỗi xảy ra khi đổi mật khẩu');
+        }
         console.error(error);
+    } finally {
+        isLoading.value = false;
     }
 };
 

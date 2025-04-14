@@ -19,5 +19,18 @@ axiosInstance.interceptors.request.use(
     },
     (error) => Promise.reject(error)
 );
+// Response Interceptor để xử lý lỗi 403 toàn cục
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 403) {
+            message.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
+            localStorage.removeItem('token');
+            sessionStorage.removeItem('token');
+            router.push('/login-register/login');
+        }
+        return Promise.reject(error);
+    }
+);
 
 export default axiosInstance
