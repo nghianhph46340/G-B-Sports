@@ -74,7 +74,21 @@ const searchNhanVien = async(keyword, page, size) => {
         return {error:true};
     }
 }
-
+// Đăng nhập by thằng làm thêm
+const login = async (loginData) => {
+    try {
+      const { data } = await axiosInstance.post('admin/login_admin', loginData)
+      console.log('Dữ liệu từ API đăng nhập:', data) // In dữ liệu từ API đăng nhập
+      return data
+    } catch (error) {
+      console.error('Lỗi khi đăng nhập:', error)
+      return {
+        error: true,
+        message: error.response?.data?.error || 'Có lỗi xảy ra khi đăng nhập',
+        fieldErrors: error.response?.data?.fieldErrors || null,
+      }
+    }
+  }
 export const nhanVienService = {
     getAllNhanVien,
     getNhanVienLocTrangThai,
@@ -83,5 +97,6 @@ export const nhanVienService = {
     suaNhanViens,
     layDanhSachNhanVien,
     getNhanVienById,
-    searchNhanVien
+    searchNhanVien,
+    login
 }

@@ -225,13 +225,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -2087,6 +2087,7 @@ const getUpdatePosition = (update) => {
     color: #1890ff;
 }
 
+/* =================code mới================== */
 .order-status {
     display: flex;
     flex-direction: row;
@@ -2518,7 +2519,7 @@ const getUpdatePosition = (update) => {
         /* Kích thước chữ nhỏ hơn */
     }
 }
-
+/* ------------------------------------------------------------------------------ */
 .timeline-step.cancelled .timeline-icon {
     background-color: #fff1f0;
     color: #f5222d;

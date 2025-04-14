@@ -812,12 +812,12 @@ export const useGbStore = defineStore('gbStore', {
       toast.success(result.successMessage || 'Đăng ký tài khoản thành công!')
       return { success: true, khachHang: result.khachHang }
     },
-    // Thêm action login
+    // Thêm action login khách hàng
     async login(loginData) {
       const result = await khachHangService.login(loginData)
       if (result.error) {
         if (result.fieldErrors) {
-          return {
+          return { 
             error: true,
             fieldErrors: result.fieldErrors,
           }
@@ -826,6 +826,65 @@ export const useGbStore = defineStore('gbStore', {
         return { error: true }
       }
 
+      // Kiểm tra dữ liệu trả về từ API đăng nhập
+      if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
+        console.error('Dữ liệu tài khoản không hợp lệ:', result)
+        toast.error('Dữ liệu tài khoản không hợp lệ!')
+        return { error: true }
+      }
+      // Lưu thông tin cơ bản
+      this.userInfo = result.taiKhoan
+      this.isLoggedIn = true
+      this.id_roles = result.id_roles
+      this.token = result.token
+      // In thông tin tài khoản cơ bản
+      console.log('Thông tin tài khoản (tai_khoan):', this.userInfo)
+      console.log('ID Roles:', this.id_roles)
+      console.log('Token:', this.token)
+      // Lưu vào sessionStorage
+      sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+      sessionStorage.setItem('isLoggedIn', 'true')
+      sessionStorage.setItem('id_roles', result.id_roles)
+      sessionStorage.setItem('token', result.token)
+      if (loginData.rememberMe) {
+        localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('id_roles', result.id_roles)
+        localStorage.setItem('token', result.token)
+      }
+      // Lấy thông tin chi tiết
+      try {
+        const userDetails = await khachHangService.getUserDetail({
+          username: result.taiKhoan.ten_dang_nhap,
+          id_roles: result.id_roles,
+        })
+        this.userDetails = userDetails
+        // In thông tin chi tiết
+        console.log('Thông tin chi tiết (userDetails):', this.userDetails)
+        sessionStorage.setItem('userDetails', JSON.stringify(userDetails))
+        if (loginData.rememberMe) {
+          localStorage.setItem('userDetails', JSON.stringify(userDetails))
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin chi tiết:', error)
+        toast.error('Không thể lấy thông tin chi tiết tài khoản!')
+      }
+      toast.success(result.successMessage || 'Đăng nhập thành công!')
+      return { success: true, id_roles: result.id_roles }
+    },
+    // Thêm action login thằng làm thêm
+    async loginNV(loginData) {
+      const result = await nhanVienService.login(loginData)
+      if (result.error) {
+        if (result.fieldErrors) {
+          return { 
+            error: true,
+            fieldErrors: result.fieldErrors,
+          }
+        }
+        toast.error(result.message || 'Đăng nhập thất bại!')
+        return { error: true }
+      }
       // Kiểm tra dữ liệu trả về từ API đăng nhập
       if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
         console.error('Dữ liệu tài khoản không hợp lệ:', result)
@@ -932,7 +991,7 @@ export const useGbStore = defineStore('gbStore', {
       // const router = useRouter();
       // router.replace('/login-register/login');
       toast.success('Đăng xuất thành công!')
-      window.location.href = '/login-register/login'
+      window.location.href = '/login-register/loginAdmin'
     },
     //Import excel
     async importExcel(file) {

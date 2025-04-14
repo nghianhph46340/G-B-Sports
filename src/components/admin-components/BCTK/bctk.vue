@@ -43,7 +43,7 @@
                     <div class="card-body row">
                         <div class="col-md-3" style="font-size: 3rem;">🏷️</div>
                         <div class="col-md-8">
-                            <h5 class="card-title">Tổng sản phẩm</h5>
+                            <h5 class="card-title">Số sản phẩm đã bán</h5>
                             <p class="card-text">{{ thongKe.tongSanPham }}</p>
                         </div>
                     </div>
@@ -69,7 +69,7 @@
                     </div>
                 </div>
                 <div class="chart-body">
-                    <apexchart type="line" height="400" :options="chartOptions" :series="series"></apexchart>
+                    <apexchart type="bar" height="400" :options="chartOptions" :series="series"></apexchart>
                 </div>
             </div>
             <div class="col-md-4 mt-4">
@@ -98,8 +98,8 @@
                                     style="margin-left: 10px;" />
                                 <!-- Filter Select cho sản phẩm bán chạy -->
                                 <a-select v-model:value="sellingFilter" show-search placeholder="Chọn thời gian"
-                                    style="width: 120px;margin-right: 0.5px;" :options="options" :filter-option="filterOption"
-                                    @change="handleSellingFilterChange"></a-select>
+                                    style="width: 120px;margin-right: 0.5px;" :options="options"
+                                    :filter-option="filterOption" @change="handleSellingFilterChange"></a-select>
                             </div>
                         </div>
                     </template>
@@ -287,13 +287,12 @@ const series = ref([{
 
 const chartOptions = ref({
     chart: {
-        type: 'line',
+        type: 'bar',
         zoom: { enabled: false },
         toolbar: { show: false }
     },
     stroke: {
-        curve: 'smooth',
-        width: 3
+        width: 0
     },
     grid: {
         borderColor: '#f1f1f1',
@@ -320,16 +319,35 @@ const chartOptions = ref({
     },
     colors: ['#0ea5e9'],
     fill: {
-        type: 'gradient',
-        gradient: {
-            shade: 'light',
-            type: 'vertical',
-            shadeIntensity: 0.5,
-            opacityFrom: 0.7,
-            opacityTo: 0.2,
+        opacity: 1
+    },
+    dataLabels: {
+        enabled: true,
+        formatter: function (value) {
+            if (chartType.value === 'revenue') {
+                return new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND',
+                    maximumFractionDigits: 0
+                }).format(value);
+            }
+            return value.toFixed(0);
+        },
+        style: {
+            fontSize: '12px',
+            colors: ['#333']
+        },
+        offsetY: -20
+    },
+    plotOptions: {
+        bar: {
+            borderRadius: 4,
+            columnWidth: '50%',
+            dataLabels: {
+                position: 'top'
+            }
         }
     },
-    dataLabels: { enabled: false },
     tooltip: {
         theme: 'light',
         y: {
