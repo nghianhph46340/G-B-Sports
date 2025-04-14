@@ -265,7 +265,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import {
     UserOutlined,
     ShoppingOutlined,
@@ -280,6 +281,8 @@ import {
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import axiosInstance from '@/config/axiosConfig';
+
+const route = useRoute();
 
 // State cho menu
 const selectedMenu = ref(['info']);
@@ -514,6 +517,18 @@ const handleDistrictChange = async (value) => {
 // Khởi tạo dữ liệu
 onMounted(async () => {
     await loadProvinces();
+
+    // Đọc tham số tab từ URL
+    if (route.query.tab) {
+        selectedMenu.value = [route.query.tab];
+    }
+});
+
+// Thêm đoạn này để cập nhật khi route thay đổi
+watch(() => route.query.tab, (newTab) => {
+    if (newTab) {
+        selectedMenu.value = [newTab];
+    }
 });
 </script>
 
