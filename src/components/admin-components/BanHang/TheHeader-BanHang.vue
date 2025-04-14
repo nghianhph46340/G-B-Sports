@@ -339,13 +339,14 @@ const danhSachKhachHang = computed(() => {
 });
 const diaChiMap = computed(() => store.diaChiMap);
 
-const chonKhachHang = (khachHang) => {
+const chonKhachHang = async (khachHang) => {
     activeTabData.value.hd.ten_khach_hang = khachHang.tenKhachHang;
     activeTabData.value.hd.so_dien_thoai = khachHang.soDienThoai;
     activeTabData.value.hd.dia_chi = diaChiMap[khachHang.idKhachHang] || "Chưa có địa chỉ";
     activeTabData.value.hd.id_khach_hang = khachHang.idKhachHang;
     store.addKHHD(activeTabData.value.hd.id_hoa_don, khachHang.idKhachHang, khachHang.diaChi, khachHang.tenKhachHang, khachHang.soDienThoai);
-    refreshHoaDon(activeTabData.value.hd.id_hoa_don);
+    await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
+
     open.value = false;
 };
 
@@ -681,9 +682,9 @@ const removeFromBill = async (productId) => {
 const add = async () => {
     try {
         // Giới hạn số lượng hóa đơn tối đa là 5
-        if (panes.value.length >= 5) {
-            throw new Error('Bạn chỉ có thể tạo tối đa 5 hóa đơn cùng lúc!');
-        }
+        // if (panes.value.length >= 5) {
+        //     throw new Error('Bạn chỉ có thể tạo tối đa 5 hóa đơn cùng lúc!');
+        // }
 
         // Kiểm tra xem người dùng đã đăng nhập và có thông tin chi tiết không
         if (!store.isLoggedIn || !store.userDetails) {
@@ -982,6 +983,8 @@ const handlePayment = async () => { // Thêm async nếu gọi API
 
 };
 
+
+
 const confirmPrint = async (shouldPrint) => {
     showPrintConfirm.value = false; // Đóng modal
 
@@ -1013,7 +1016,8 @@ const confirmPrint = async (shouldPrint) => {
                 cancelUrl: "http://localhost:5173/admin/banhang"
             }
             console.log(payment_info);
-            await thanhToanService.handlePayOSPayment(payment_info);
+            const res = await thanhToanService.handlePayOSPayment(payment_info);
+            console.log(res);
         } catch (error) {
             console.error('Lỗi khi tạo yêu cầu thanh toán Momo:', error);
             message.error('Không thể tạo thanh toán Momo!');
@@ -1040,46 +1044,57 @@ const da = ref([]);
 
 // --- Lifecycle Hooks ---
 onMounted(async () => {
+    await loadData(); // Gọi lần đầu
+    setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
+});
+
+async function loadData() {
     try {
-        // Load dữ liệu từ store
         await store.getAllHoaDonCTT();
         await store.getAllCTSPKM();
         await store.getAllNhanVien(0, pageSize.value);
         await store.getAllKhachHangNoPage();
-        // await store.getHoaDonDetail(activeTabData.value.hd.ma_hoa_don);
-        // Gán dữ liệu hóa đơn
         da.value = store.getAllHoaDonCTTArr;
 
-        // Khởi tạo panes từ dữ liệu backend
         panes.value = da.value.map((hd, index) => ({
-            key: `invoiceTab_${index}_${Date.now()}`, // Tạo key duy nhất
+            key: `invoiceTab_${index}_${Date.now()}`,
             title: `Đơn ${index + 1}`,
             closable: true,
             items: ref([]),
             hd: reactive({
                 ...hd,
-                // Đảm bảo các trường quan trọng có giá trị mặc định
                 hinh_thuc_thanh_toan: hd.hinh_thuc_thanh_toan || 'Tiền mặt',
                 phuong_thuc_nhan_hang: hd.phuong_thuc_nhan_hang || 'Nhận tại cửa hàng',
-                isKhachLe: !hd.id_khach_hang // Tự động xác định khách lẻ
+                isKhachLe: !hd.id_khach_hang
             })
         }));
 
-        // Nếu có hóa đơn, chọn tab đầu tiên
         if (panes.value.length > 0) {
             activeKey.value = panes.value[0].key;
         } else {
-            // Nếu không có hóa đơn nào, tạo mới
             await add();
         }
 
-        // Load danh sách sản phẩm
         allProducts.value = store.getAllCTSPKMList;
 
     } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
     }
-});
+}
+
+function setupAutoReloadAtMidnight() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0); // 00:00 của ngày mai
+
+    const timeUntilMidnight = midnight.getTime() - now.getTime();
+
+    // Đợi tới 00:00, rồi gọi loadData, sau đó chạy mỗi 24 giờ
+    setTimeout(() => {
+        loadData(); // chạy lần đầu vào 00:00
+        setInterval(loadData, 24 * 60 * 60 * 1000); // gọi lại mỗi ngày
+    }, timeUntilMidnight);
+}
 
 watch(() => activeKey.value, async (newKey) => {
     const currentTab = panes.value.find(p => p.key === newKey);
