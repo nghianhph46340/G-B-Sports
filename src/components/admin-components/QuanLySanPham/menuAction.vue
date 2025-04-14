@@ -1,7 +1,8 @@
 <template>
     <div class="mb-4 d-flex justify-content-between">
         <div class="d-flex gap-2 flex-wrap">
-            <template v-if="!store.checkRouter.includes('/quanlysanpham/add')">
+            <template
+                v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
                 <a-button type="" @click="showFilter" class="d-flex align-items-center btn-filter">
                     <FilterOutlined class="icon-filler" />
                     <span class="button-text">Bộ lọc</span>
@@ -91,7 +92,7 @@
                         <!-- Bộ lọc Giá -->
                         <div class="filter-group">
                             <div class="filter-title">Giá</div>
-                            <a-slider v-model:value="value2" range :min="0" :max="10000000" :step="100000"
+                            <a-slider v-model:value="value2" range :min="0" :max="maxPriceFromProducts" :step="100000"
                                 :tipFormatter="value => `${value.toLocaleString('vi-VN')} đ`" />
                             <div class="price-range">
                                 <span>{{ value2[0].toLocaleString('vi-VN') }} đ</span>
@@ -111,14 +112,15 @@
 
                 <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
                     style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select>
-                <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
-                    style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select>
+                <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
+                    style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select> -->
 
                 <a-button type="" class="d-flex align-items-center btn-filter" @click="showExportModal">
                     <ExportOutlined class="icon-filler" />
                     <span class="button-text">Xuất excel</span>
                 </a-button>
             </template>
+            <!-- Nhập excel button always visible -->
             <a-button type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
                 <ImportOutlined class="icon-filler" />
                 <span class="button-text">Nhập excel</span>
@@ -304,7 +306,8 @@
                 </template>
             </a-modal>
         </div>
-        <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
+        <template
+            v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
             <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
                 class="d-flex align-items-center">
                 <PlusOutlined />
@@ -393,6 +396,35 @@ const store = useGbStore();
 const visible = ref(false);
 const value = ref('Hoạt động');
 
+// Function to update store.checkRouter based on the current route
+const updateCheckRouter = () => {
+    store.getPath(route.path);
+    store.getRoutePresent(route.path);
+    console.log('Current path:', route.path);
+    console.log('Updated store.checkRouter:', store.checkRouter);
+};
+
+// Watch for route changes to handle browser back button
+watch(() => route.path, (newPath) => {
+    console.log('Route changed to:', newPath);
+    updateCheckRouter();
+}, { immediate: true });
+
+// Computed property để lấy giá bán lớn nhất
+const maxPriceFromProducts = computed(() => {
+    if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
+        return 10000000; // Giá trị mặc định nếu chưa có dữ liệu
+    }
+
+    // Tìm giá bán lớn nhất trong danh sách chi tiết sản phẩm
+    const maxPrice = Math.max(...store.getAllChiTietSanPham.map(item =>
+        item.gia_ban ? Number(item.gia_ban) : 0
+    ));
+
+    // Làm tròn đến hàng trăm nghìn gần nhất và thêm khoảng dư
+    return Math.ceil(maxPrice / 100000) * 100000 + 100000;
+});
+
 // Sử dụng mảng để lưu nhiều giá trị
 const valueDanhMuc = ref([]);
 const valueThuongHieu = ref([]);
@@ -400,6 +432,11 @@ const valueChatLieu = ref([]);
 const valueMauSac = ref([]);
 const valueSize = ref([]);
 const value2 = ref([0, 10000000]);
+
+// Cập nhật value2 khi maxPriceFromProducts thay đổi
+watch(() => maxPriceFromProducts.value, (newMaxPrice) => {
+    value2.value = [0, newMaxPrice];
+}, { immediate: true });
 
 const xemTheo = ref('0');
 
@@ -449,13 +486,13 @@ const listSort = ref([
     { value: '7', label: 'Cũ nhất' },
 ]);
 
-const listXemTheo = ref([
-    { value: '0', label: 'Tất cả sản phẩm' },
-    { value: '1', label: '5 sản phẩm' },
-    { value: '2', label: '10 sản phẩm' },
-    { value: '3', label: '15 sản phẩm' },
-    { value: '4', label: '20 sản phẩm' },
-])
+// const listXemTheo = ref([
+//     { value: '0', label: 'Tất cả sản phẩm' },
+//     { value: '1', label: '5 sản phẩm' },
+//     { value: '2', label: '10 sản phẩm' },
+//     { value: '3', label: '15 sản phẩm' },
+//     { value: '4', label: '20 sản phẩm' },
+// ])
 const luuBien = ref('1');
 const openModalImportExcel = ref(false);
 const fileList = ref([]);
@@ -480,10 +517,17 @@ const onClose = () => {
 
 const router = useRouter();
 const changeRouter = (routers) => {
+    // Make sure to update the store before navigation
     store.getPath(routers);
     store.getRoutePresent(route.path);
+    store.getIndex(routers); // Make sure to call getIndex to update menu selection
+
+    // Log for debugging
+    console.log('Navigating to:', routers);
+    console.log('Updated store.checkRouter:', store.checkRouter);
+
+    // Navigate
     router.push(routers);
-    console.log(store.checkRouter);
 };
 
 // Hàm kiểm tra và tải dữ liệu cho bộ lọc
@@ -557,6 +601,7 @@ const loadInitialData = async () => {
 
 onMounted(async () => {
     await loadInitialData();
+    updateCheckRouter(); // Ensure checkRouter is updated when component mounts
 });
 
 const filterProducts = () => {

@@ -48,10 +48,6 @@ export const useGbStore = defineStore('gbStore', {
     // Cập nhật cấu trúc cho tìm kiếm và lọc
     currentFilter: null, // Bộ lọc hiện tại
 
-    // Danh sách gốc
-    getAllSanPham: [], // Danh sách sản phẩm gốc
-    getAllChiTietSanPham: [], // Danh sách chi tiết sản phẩm gốc
-
     // State cho tìm kiếm
     searchKeyword: '', // Từ khóa tìm kiếm hiện tại
     searchProductIds: [], // Lưu trữ ID của các sản phẩm tìm thấy
@@ -574,6 +570,36 @@ export const useGbStore = defineStore('gbStore', {
         return
       } else {
         this.getAllSanPham = sanPhamNgaySua
+      }
+    },
+    //Chuyển trạng thái chi tiết sản phẩm
+    async changeStatusCTSP(id) {
+      const changeStatusCTSP = await sanPhamService.changeStatusCTSP(id)
+      if (changeStatusCTSP.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+      }
+    },
+    //Chuyển trạng thái All CTSP Hoạt động
+    async changeAllCTSPHoatDong(id) {
+      const changeAllCTSPHoatDong = await sanPhamService.changeAllCTSPHoatDong(id)
+      if (changeAllCTSPHoatDong.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+      }
+    },
+    //Chuyển trạng thái All CTSP Không Hoạt động
+    async changeAllCTSPKhongHoatDong(id) {
+      const changeAllCTSPKhongHoatDong = await sanPhamService.changeAllCTSPKhongHoatDong(id)
+      if (changeAllCTSPKhongHoatDong.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
       }
     },
     ///////////-----------------Hóa đơn-------------------////////////
@@ -1785,12 +1811,16 @@ export const useGbStore = defineStore('gbStore', {
     },
     //================= Kết thúc khuyến mãi =================///
     getPath(path) {
-      this.checkRouter = ''
-      this.checkRouter = path
+      this.checkRouter = '';
+      // Ensure consistent path format (always with leading slash)
+      if (path) {
+        this.checkRouter = path.startsWith('/') ? path : '/' + path;
+        console.log('Path set in store:', this.checkRouter);
+      }
     },
     getRoutePresent(path) {
-      this.checkRoutePresent = ''
-      this.checkRoutePresent = path
+      this.checkRoutePresent = '';
+      this.checkRoutePresent = path;
     },
     getIndex(path) {
       this.indexMenu = ['1']
