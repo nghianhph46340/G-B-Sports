@@ -158,6 +158,7 @@ import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
 import { useRouter } from 'vue-router';
 import dayjs from 'dayjs';
+import { nhanVienService } from '@/services/nhanVienService';
 //--------------------------------------
 // Khai báo biến cho ảnh
 const store = useGbStore();
@@ -193,6 +194,9 @@ const selectedWard = ref('');
 const provinceOptions = ref([]);
 const districtOptions = ref([]);
 const wardOptions = ref([]);
+
+// Thêm state cho danh sách nhân viên
+const adminStaffList = ref([]);
 
 // Hàm filter cho search
 const filterOption = (input, option) => {
@@ -250,7 +254,7 @@ const validateForm = () => {
     } else if (!validatePhoneNumber(formData.soDienThoai)) {
         errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
         isValid = false;
-    } else if (store.nhanVienArr.some(nv => nv.soDienThoai === formData.soDienThoai)) {
+    } else if (adminStaffList.value.some(nv => nv.soDienThoai === formData.soDienThoai)) {
         errors.soDienThoai = 'Số điện thoại này đã tồn tại trong hệ thống';
         isValid = false;
     }
@@ -262,7 +266,7 @@ const validateForm = () => {
     } else if (!validateEmail(formData.email)) {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
         isValid = false;
-    } else if (store.nhanVienArr.some(nv => nv.email?.toLowerCase() === formData.email.toLowerCase())) {
+    } else if (adminStaffList.value.some(nv => nv.email?.toLowerCase() === formData.email.toLowerCase())) {
         errors.email = 'Email này đã tồn tại trong hệ thống';
         isValid = false;
     }
@@ -642,12 +646,25 @@ const themNhanVien = async () => {
     }
 }
 
+const getAdminStaffList = async () => {
+    try {
+        const response = await axiosInstance.get('admin/quan-ly-nhan-vien/listTrangAdmin');
+        adminStaffList.value = response.data;
+        console.log('Danh sách nhân viên admin:', adminStaffList.value);
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách nhân viên admin:', error);
+    }
+};
+
 onMounted(async () => {
     try {
         // Load provinces
         await loadProvinces();
 
-        // Load danh sách nhân viên và tạo mã mới
+        // Thêm: Lấy danh sách nhân viên từ API mới để check trùng
+        await getAdminStaffList();
+
+        // Giữ nguyên phần còn lại
         await store.layDanhSachNhanVien();
         formData.maNhanVien = taoMaNhanVienMoi(store.nhanVienArr);
 

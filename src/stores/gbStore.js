@@ -987,9 +987,6 @@ export const useGbStore = defineStore('gbStore', {
       this.id_roles = null
       this.userDetails = null
       this.token = null
-
-      // const router = useRouter();
-      // router.replace('/login-register/login');
       toast.success('Đăng xuất thành công!')
       window.location.href = '/login-register/loginAdmin'
     },

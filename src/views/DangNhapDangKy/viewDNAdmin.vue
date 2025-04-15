@@ -222,7 +222,7 @@ const handleResetPassword = async () => {
     // Bước 1: Kiểm tra username (email)
     if (!isEmailChecked.value) {
         try {
-            const response = await axiosInstance.post('admin/forgot-password', {
+            const response = await axiosInstance.post('admin/quan-ly-nhan-vien/forgot-password', {
                 email: forgotUsername.value
             });
 
@@ -247,7 +247,7 @@ const handleResetPassword = async () => {
     }
 
     try {
-        const response = await axiosInstance.post('admin/reset-password', {
+        const response = await axiosInstance.post('admin/quan-ly-nhan-vien/reset-password', {
             token: resetToken.value,
             newPassword: newPassword.value
         });

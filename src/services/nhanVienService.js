@@ -13,7 +13,7 @@ const layDanhSachNhanVien = async() => {
 const getAllNhanVien = async(page, size) => {
     try {
         // Đảm bảo page luôn >= 1
-        const {data} = await axiosInstance.get(`admin/quan-ly-nhan-vien?page=${page}&size=${size}`)
+        const {data} = await axiosInstance.get(`admin/quan-ly-nhan-vien/phanTrang?page=${page}&size=${size}`)
         return data;
     } catch (error) {
         console.error('Lỗi API:', error);
@@ -77,7 +77,7 @@ const searchNhanVien = async(keyword, page, size) => {
 // Đăng nhập by thằng làm thêm
 const login = async (loginData) => {
     try {
-      const { data } = await axiosInstance.post('admin/login_admin', loginData)
+      const { data } = await axiosInstance.post('admin/quan-ly-nhan-vien/login_admin', loginData)
       console.log('Dữ liệu từ API đăng nhập:', data) // In dữ liệu từ API đăng nhập
       return data
     } catch (error) {

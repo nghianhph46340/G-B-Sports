@@ -197,6 +197,9 @@ const provinceOptions = ref([]);
 const districtOptions = ref([]);
 const wardOptions = ref([]);
 
+// Thêm state để lưu danh sách nhân viên từ API
+const adminStaffList = ref([]);
+
 // Hàm filter cho search
 const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
@@ -268,6 +271,16 @@ const handleDistrictChange = async (value) => {
     }
 };
 
+// Thêm hàm gọi API listTrangAdmin
+const getAdminStaffList = async () => {
+    try {
+        const response = await axiosInstance.get('admin/quan-ly-nhan-vien/listTrangAdmin');
+        adminStaffList.value = response.data;
+        console.log('Danh sách nhân viên admin:', adminStaffList.value);
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách nhân viên admin:', error);
+    }
+};
 
 const validateForm = () => {
     let isValid = true;
@@ -321,9 +334,9 @@ const validateForm = () => {
         errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
         isValid = false;
     } else {
-        // Kiểm tra trùng với nhân viên khác, nhưng không báo lỗi nếu trùng với chính mình
-        const isDuplicate = store.nhanVienArr.some(nv =>
-            nv.soDienThoai === formData.soDienThoai && nv.idNhanVien !== formData.idNhanVien
+        // Kiểm tra trùng với nhân viên khác trong danh sách admin, nhưng không báo lỗi nếu trùng với chính mình
+        const isDuplicate = adminStaffList.value.some(nv =>
+            nv.soDienThoai?.toLowerCase() === formData.soDienThoai.toLowerCase() && nv.idNhanVien !== formData.idNhanVien
         );
         if (isDuplicate) {
             errors.soDienThoai = 'Số điện thoại này đã tồn tại trong hệ thống';
@@ -339,8 +352,8 @@ const validateForm = () => {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
         isValid = false;
     } else {
-        // Kiểm tra trùng với nhân viên khác, nhưng không báo lỗi nếu trùng với chính mình
-        const isDuplicate = store.nhanVienArr.some(nv =>
+        // Kiểm tra trùng với nhân viên khác trong danh sách admin, nhưng không báo lỗi nếu trùng với chính mình
+        const isDuplicate = adminStaffList.value.some(nv =>
             nv.email?.toLowerCase() === formData.email.toLowerCase() && nv.idNhanVien !== formData.idNhanVien
         );
         if (isDuplicate) {
@@ -792,6 +805,9 @@ onMounted(async () => {
     try {
         // Load provinces trước
         await loadProvinces();
+
+        // Lấy danh sách nhân viên admin để check trùng
+        await getAdminStaffList();
 
         // Lấy thông tin nhân viên
         const nhanVienById = await store.getNhanVienById(route.params.id);
