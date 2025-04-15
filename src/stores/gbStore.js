@@ -853,17 +853,21 @@ export const useGbStore = defineStore('gbStore', {
       this.userInfo = result.taiKhoan
       this.isLoggedIn = true
       this.id_roles = result.id_roles
+      this.token = result.token
       // In thông tin tài khoản cơ bản
       console.log('Thông tin tài khoản (tai_khoan):', this.userInfo)
       console.log('ID Roles:', this.id_roles)
+      console.log('Token:', this.token)
       // Lưu vào sessionStorage
       sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
       sessionStorage.setItem('isLoggedIn', 'true')
       sessionStorage.setItem('id_roles', result.id_roles)
+      sessionStorage.setItem('token', result.token)
       if (loginData.rememberMe) {
         localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('id_roles', result.id_roles)
+        localStorage.setItem('token', result.token)
       }
       // Lấy thông tin chi tiết
       try {
@@ -892,6 +896,7 @@ export const useGbStore = defineStore('gbStore', {
       let isLoggedIn = localStorage.getItem('isLoggedIn')
       let id_roles = localStorage.getItem('id_roles')
       let userDetails = localStorage.getItem('userDetails')
+      let token = localStorage.getItem('token')
 
       // Nếu không có trong localStorage, kiểm tra sessionStorage
       if (!userInfo || isLoggedIn !== 'true') {
@@ -899,6 +904,7 @@ export const useGbStore = defineStore('gbStore', {
         isLoggedIn = sessionStorage.getItem('isLoggedIn')
         id_roles = sessionStorage.getItem('id_roles')
         userDetails = sessionStorage.getItem('userDetails')
+        token = sessionStorage.getItem('token')
       }
 
       if (userInfo && isLoggedIn === 'true') {
@@ -906,12 +912,14 @@ export const useGbStore = defineStore('gbStore', {
         this.isLoggedIn = true
         this.id_roles = id_roles ? parseInt(id_roles) : null
         this.userDetails = userDetails ? JSON.parse(userDetails) : null
+        this.token = token
 
         // In thông tin để kiểm tra
         console.log('Khôi phục trạng thái đăng nhập:')
         console.log('User Info:', this.userInfo)
         console.log('ID Roles:', this.id_roles)
         console.log('User Details:', this.userDetails)
+        console.log('Token:', this.token)
       } else {
         console.log('Không có dữ liệu đăng nhập để khôi phục.')
       }
@@ -924,16 +932,19 @@ export const useGbStore = defineStore('gbStore', {
       localStorage.removeItem('isLoggedIn')
       localStorage.removeItem('id_roles')
       localStorage.removeItem('userDetails')
+      localStorage.removeItem('token')
       sessionStorage.removeItem('userInfo')
       sessionStorage.removeItem('isLoggedIn')
       sessionStorage.removeItem('id_roles')
       sessionStorage.removeItem('userDetails')
+      sessionStorage.removeItem('token')
 
       // Reset trạng thái trong store
       this.userInfo = null
       this.isLoggedIn = false
       this.id_roles = null
       this.userDetails = null
+      this.token = null
 
       // const router = useRouter();
       // router.replace('/login-register/login');

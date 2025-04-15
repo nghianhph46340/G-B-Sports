@@ -1,6 +1,6 @@
 import axiosInstance from "@/config/axiosConfig";
 
-const qlhd = 'qlhd/'; // Base path cho hóa đơn
+const qlhd = 'admin/qlhd/'; // Base path cho hóa đơn
 
 // Lấy danh sách hóa đơn với phân trang
 const getAllHoaDon = async (page = 0, size = 5) => {
