@@ -9,9 +9,9 @@
           <label class="form-check-label" for="active">Đang hoạt động</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="trangThai" id="inactive" value="Đã nghỉ việc"
+          <input class="form-check-input" type="radio" name="trangThai" id="inactive" value="Ngừng hoạt động"
             v-model="selectedTrangThai" @change="fetchData(0)">
-          <label class="form-check-label" for="inactive">Đã nghỉ việc</label>
+          <label class="form-check-label" for="inactive">Ngừng hoạt động</label>
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="trangThai" id="refresh" value=""

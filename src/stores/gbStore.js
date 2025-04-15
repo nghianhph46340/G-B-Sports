@@ -987,34 +987,6 @@ export const useGbStore = defineStore('gbStore', {
       this.id_roles = null
       this.userDetails = null
       this.token = null
-
-      // const router = useRouter();
-      // router.replace('/login-register/login');
-      toast.success('Đăng xuất thành công!')
-      window.location.href = '/login-register/loginAdmin'
-    },
-    logout() {
-      // Xóa dữ liệu trong localStorage và sessionStorage
-      localStorage.removeItem('userInfo')
-      localStorage.removeItem('isLoggedIn')
-      localStorage.removeItem('id_roles')
-      localStorage.removeItem('userDetails')
-      localStorage.removeItem('token')
-      sessionStorage.removeItem('userInfo')
-      sessionStorage.removeItem('isLoggedIn')
-      sessionStorage.removeItem('id_roles')
-      sessionStorage.removeItem('userDetails')
-      sessionStorage.removeItem('token')
-
-      // Reset trạng thái trong store
-      this.userInfo = null
-      this.isLoggedIn = false
-      this.id_roles = null
-      this.userDetails = null
-      this.token = null
-
-      // const router = useRouter();
-      // router.replace('/login-register/login');
       toast.success('Đăng xuất thành công!')
       window.location.href = '/login-register/loginAdmin'
     },

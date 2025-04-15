@@ -91,45 +91,45 @@ const admin = [
                 component: () => import('@/views/admin/Voucher/updateVoucher.vue'),
             },
 
-      {
-        path: 'quanlykhuyenmai',
-        name: 'admin-quan-ly-khuyen-mai',
-        component: () => import('@/views/admin/KhuyenMai/khuyenMai.vue'),
-      },
-      {
-        path: '/admin/quanlykhuyenmai/add',
-        name: 'admin-quan-ly-khuyen-mai-add',
-        component: () => import('@/views/admin/KhuyenMai/addKhuyenMai.vue'),
-      },
-      {
-        path: '/admin/quanlykhuyenmai/update/:id',
-        name: 'admin-quan-ly-khuyen-mai-update',
-        component: () => import('@/views/admin/KhuyenMai/updateKhuyenMai.vue'),
-      },
-      {
-        path: 'quanlykhachhang',
-        name: 'admin-quan-ly-khach-hang',
-        component: () => import('@/views/admin/KhachHang/quanLyKhachHang.vue'),
-      },
-      {
-        path: 'quanlykhachhang/add',
-        name: 'admin-quan-ly-khach-hang-add',
-        component: () => import('@/views/admin/KhachHang/themKH.vue'),
-      },
-      {
-        path: 'quanlykhachhang/update/:id',
-        name: 'admin-quan-ly-khach-hang-update',
-        component: () => import('@/views/admin/KhachHang/suaKH.vue'),
-      },
-      // Sau khi sửa
-      {
-        path: 'quanlykhachhang/detail/:id',
-        name: 'admin-quan-ly-khach-hang-detail',
-        component: () =>
-          import('@/components/admin-components/QuanLyKhachHang/KhachHangDetail.vue'),
-      },
-    ],
-  },
+            {
+                path: 'quanlykhuyenmai',
+                name: 'admin-quan-ly-khuyen-mai',
+                component: () => import('@/views/admin/KhuyenMai/khuyenMai.vue'),
+            },
+            {
+                path: '/admin/quanlykhuyenmai/add',
+                name: 'admin-quan-ly-khuyen-mai-add',
+                component: () => import('@/views/admin/KhuyenMai/addKhuyenMai.vue'),
+            },
+            {
+                path: '/admin/quanlykhuyenmai/update/:id',
+                name: 'admin-quan-ly-khuyen-mai-update',
+                component: () => import('@/views/admin/KhuyenMai/updateKhuyenMai.vue'),
+            },
+            {
+                path: 'quanlykhachhang',
+                name: 'admin-quan-ly-khach-hang',
+                component: () => import('@/views/admin/KhachHang/quanLyKhachHang.vue'),
+            },
+            {
+                path: 'quanlykhachhang/add',
+                name: 'admin-quan-ly-khach-hang-add',
+                component: () => import('@/views/admin/KhachHang/themKH.vue'),
+            },
+            {
+                path: 'quanlykhachhang/update/:id',
+                name: 'admin-quan-ly-khach-hang-update',
+                component: () => import('@/views/admin/KhachHang/suaKH.vue'),
+            },
+            // Sau khi sửa
+            {
+                path: 'quanlykhachhang/detail/:id',
+                name: 'admin-quan-ly-khach-hang-detail',
+                component: () =>
+                    import('@/components/admin-components/QuanLyKhachHang/KhachHangDetail.vue'),
+            },
+        ],
+    },
 ]
 
 export default admin
