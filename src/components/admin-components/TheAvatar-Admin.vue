@@ -7,8 +7,8 @@
 
     <!-- Dropdown với avatar -->
     <a-dropdown>
-      <a-avatar size="large">
-        <template #icon>
+      <a-avatar size="large" :src="store.userDetails?.anhNhanVien">
+        <template #icon v-if="!store.userDetails?.anhNhanVien">
           <UserOutlined />
         </template>
       </a-avatar>
@@ -16,97 +16,107 @@
       <template #overlay>
         <a-menu>
           <a-menu-item key="0">
-            <a target="_blank" style="text-decoration: none;" rel="noopener noreferrer" href="#">
+            <a style="text-decoration: none;" @click="goToProfile">
               Hồ sơ
             </a>
           </a-menu-item>
           <a-menu-item key="1">
-            <a target="_blank" style="text-decoration: none;" rel="noopener noreferrer" href="#">
+            <a style="text-decoration: none;" @click="showPasswordModal = true">
               Đổi mật khẩu
             </a>
           </a-menu-item>
           <a-menu-item key="2">
-            <a target="_blank" style="text-decoration: none;" rel="noopener noreferrer" @click="store.logout()">
+            <a style="text-decoration: none;" @click="store.logout()">
               Đăng xuất
             </a>
           </a-menu-item>
         </a-menu>
       </template>
     </a-dropdown>
-    <!-- <a-form :model="passwordForm" layout="vertical">
-      <a-form-item label="Mật khẩu hiện tại" name="currentPassword">
-        <a-input-password v-model:value="passwordForm.currentPassword" placeholder="Nhập mật khẩu hiện tại" />
-      </a-form-item>
-      <a-form-item label="Mật khẩu mới" name="newPassword">
-        <a-input-password v-model:value="passwordForm.newPassword" placeholder="Nhập mật khẩu mới" />
-      </a-form-item>
-      <a-form-item label="Xác nhận mật khẩu mới" name="confirmPassword">
-        <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="Nhập lại mật khẩu mới" />
-      </a-form-item>
-      <a-form-item>
-        <a-button type="primary" @click="changePassword" :loading="isLoading">Đổi mật khẩu</a-button>
-      </a-form-item>
-    </a-form> -->
+    
+    <!-- Modal đổi mật khẩu -->
+    <a-modal v-model:visible="showPasswordModal" title="Đổi mật khẩu" @ok="changePassword" :confirmLoading="isLoading">
+      <a-form :model="passwordForm" layout="vertical">
+        <a-form-item label="Mật khẩu hiện tại" name="currentPassword">
+          <a-input-password v-model:value="passwordForm.currentPassword" placeholder="Nhập mật khẩu hiện tại" />
+        </a-form-item>
+        <a-form-item label="Mật khẩu mới" name="newPassword">
+          <a-input-password v-model:value="passwordForm.newPassword" placeholder="Nhập mật khẩu mới" />
+        </a-form-item>
+        <a-form-item label="Xác nhận mật khẩu mới" name="confirmPassword">
+          <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="Nhập lại mật khẩu mới" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import { UserOutlined } from '@ant-design/icons-vue';
 import { useGbStore } from '@/stores/gbStore';
-import { onMounted } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { khachHangService } from '@/services/khachHangService';
+import { useRouter } from 'vue-router';
+import { message } from 'ant-design-vue';
+import axiosInstance from '@/config/axiosConfig';
 const store = useGbStore();
-// // Form đổi mật khẩu
-// const passwordForm = reactive({
-//     currentPassword: '',
-//     newPassword: '',
-//     confirmPassword: ''
-// });
-// // Xử lý đổi mật khẩu
-// const changePassword = async () => {
-//     if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-//         return message.error('Vui lòng nhập đầy đủ thông tin');
-//     }
+const router = useRouter();
+const goToProfile = () => {
+  router.push('/admin/profile');
+};
+// Form đổi mật khẩu
+const passwordForm = reactive({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+});
+const isLoading = ref(false);
+const showPasswordModal = ref(false);
+// Xử lý đổi mật khẩu
+const changePassword = async () => {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+        return message.error('Vui lòng nhập đầy đủ thông tin');
+    }
 
-//     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-//         return message.error('Mật khẩu xác nhận không khớp');
-//     }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        return message.error('Mật khẩu xác nhận không khớp');
+    }
 
-//     try {
-//         isLoading.value = true;
-//         // Gọi API đổi mật khẩu
-//         const response = await axiosInstance.post('api/khach-hang/change-password', {
-//             oldPassword: passwordForm.currentPassword,
-//             newPassword: passwordForm.newPassword
-//         });
+    try {
+        isLoading.value = true;
+        // Gọi API đổi mật khẩu
+        const response = await axiosInstance.post('api/khach-hang/change-password', {
+            oldPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword
+        });
 
-//         // Kiểm tra phản hồi từ API
-//         if (response.data.successMessage) {
-//             message.success(response.data.successMessage);
+        // Kiểm tra phản hồi từ API
+        if (response.data.successMessage) {
+            message.success(response.data.successMessage);
 
-//             // Reset form
-//             passwordForm.currentPassword = '';
-//             passwordForm.newPassword = '';
-//             passwordForm.confirmPassword = '';
-//         } else {
-//             message.error(response.data.error || 'Có lỗi xảy ra khi đổi mật khẩu');
-//         }
-//     } catch (error) {
-//         // Xử lý lỗi từ API
-//         if (error.response?.status === 403) {
-//             message.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
-//             localStorage.removeItem('token');
-//             router.push('/login-register/login');
-//         } else if (error.response?.data?.error) {
-//             message.error(error.response.data.error);
-//         } else {
-//             message.error('Có lỗi xảy ra khi đổi mật khẩu');
-//         }
-//         console.error(error);
-//     } finally {
-//         isLoading.value = false;
-//     }
-// };
+            // Reset form
+            passwordForm.currentPassword = '';
+            passwordForm.newPassword = '';
+            passwordForm.confirmPassword = '';
+        } else {
+            message.error(response.data.error || 'Có lỗi xảy ra khi đổi mật khẩu');
+        }
+    } catch (error) {
+        // Xử lý lỗi từ API
+        if (error.response?.status === 403) {
+            message.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
+            localStorage.removeItem('token');
+            router.push('/login-register/login');
+        } else if (error.response?.data?.error) {
+            message.error(error.response.data.error);
+        } else {
+            message.error('Có lỗi xảy ra khi đổi mật khẩu');
+        }
+        console.error(error);
+    } finally {
+        isLoading.value = false;
+    }
+};
 
 // Kiểm tra trạng thái khi component được mount
 onMounted(() => {

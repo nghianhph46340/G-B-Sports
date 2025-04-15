@@ -39,10 +39,12 @@ router.beforeEach((to, from, next) => {
       return;
     }
     
-    // Nhân viên (role 3) chỉ được truy cập 2 trang
+    // Nhân viên (role 3) chỉ được truy cập các trang được cho phép
     if (idRoles === '3') {
-      if (to.path === '/admin/banhang' || to.path.startsWith('/admin/quanlyhoadon')) {
-        next(); // Cho phép truy cập 2 trang được chỉ định
+      if (to.path === '/admin/banhang' || 
+          to.path.startsWith('/admin/quanlyhoadon') || 
+          to.path === '/admin/profile') { // Thêm đường dẫn profile
+        next(); // Cho phép truy cập
       } else if (to.path === '/admin') {
         next('/admin/banhang'); // Chuyển hướng về trang bán hàng
       } else {

@@ -128,6 +128,11 @@ const admin = [
                 component: () =>
                     import('@/components/admin-components/QuanLyKhachHang/KhachHangDetail.vue'),
             },
+            {
+                path: 'profile',
+                name: 'profile',
+                component: () => import('@/components/admin-components/Profile/NhanVien.vue'),
+            },
         ],
     },
 ]
