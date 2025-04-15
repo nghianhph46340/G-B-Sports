@@ -2,7 +2,7 @@
   <div class="d-flex align-items-center">
     <!-- Hiển thị tên tài khoản -->
     <span class="ms-2 me-2" style="font-family: Verdana, Geneva, Tahoma, sans-serif;">
-      {{ store.userDetails?.tenNhanVien || store.userDetails?.tenKhachHang || store.userInfo?.ten_dang_nhap || 'Người dùng' }}
+      {{ store.userDetails?.tenNhanVien }}
     </span>
 
     <!-- Dropdown với avatar -->
@@ -21,6 +21,11 @@
             </a>
           </a-menu-item>
           <a-menu-item key="1">
+            <a target="_blank" style="text-decoration: none;" rel="noopener noreferrer" href="#">
+              Đổi mật khẩu
+            </a>
+          </a-menu-item>
+          <a-menu-item key="2">
             <a target="_blank" style="text-decoration: none;" rel="noopener noreferrer" @click="store.logout()">
               Đăng xuất
             </a>
@@ -28,6 +33,20 @@
         </a-menu>
       </template>
     </a-dropdown>
+    <!-- <a-form :model="passwordForm" layout="vertical">
+      <a-form-item label="Mật khẩu hiện tại" name="currentPassword">
+        <a-input-password v-model:value="passwordForm.currentPassword" placeholder="Nhập mật khẩu hiện tại" />
+      </a-form-item>
+      <a-form-item label="Mật khẩu mới" name="newPassword">
+        <a-input-password v-model:value="passwordForm.newPassword" placeholder="Nhập mật khẩu mới" />
+      </a-form-item>
+      <a-form-item label="Xác nhận mật khẩu mới" name="confirmPassword">
+        <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="Nhập lại mật khẩu mới" />
+      </a-form-item>
+      <a-form-item>
+        <a-button type="primary" @click="changePassword" :loading="isLoading">Đổi mật khẩu</a-button>
+      </a-form-item>
+    </a-form> -->
   </div>
 </template>
 
@@ -37,29 +56,80 @@ import { useGbStore } from '@/stores/gbStore';
 import { onMounted } from 'vue';
 import { khachHangService } from '@/services/khachHangService';
 const store = useGbStore();
+// // Form đổi mật khẩu
+// const passwordForm = reactive({
+//     currentPassword: '',
+//     newPassword: '',
+//     confirmPassword: ''
+// });
+// // Xử lý đổi mật khẩu
+// const changePassword = async () => {
+//     if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+//         return message.error('Vui lòng nhập đầy đủ thông tin');
+//     }
+
+//     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+//         return message.error('Mật khẩu xác nhận không khớp');
+//     }
+
+//     try {
+//         isLoading.value = true;
+//         // Gọi API đổi mật khẩu
+//         const response = await axiosInstance.post('api/khach-hang/change-password', {
+//             oldPassword: passwordForm.currentPassword,
+//             newPassword: passwordForm.newPassword
+//         });
+
+//         // Kiểm tra phản hồi từ API
+//         if (response.data.successMessage) {
+//             message.success(response.data.successMessage);
+
+//             // Reset form
+//             passwordForm.currentPassword = '';
+//             passwordForm.newPassword = '';
+//             passwordForm.confirmPassword = '';
+//         } else {
+//             message.error(response.data.error || 'Có lỗi xảy ra khi đổi mật khẩu');
+//         }
+//     } catch (error) {
+//         // Xử lý lỗi từ API
+//         if (error.response?.status === 403) {
+//             message.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
+//             localStorage.removeItem('token');
+//             router.push('/login-register/login');
+//         } else if (error.response?.data?.error) {
+//             message.error(error.response.data.error);
+//         } else {
+//             message.error('Có lỗi xảy ra khi đổi mật khẩu');
+//         }
+//         console.error(error);
+//     } finally {
+//         isLoading.value = false;
+//     }
+// };
 
 // Kiểm tra trạng thái khi component được mount
 onMounted(() => {
-    console.log('Store trong TheAvatar (onMounted):', store);
-    console.log('User Info trong TheAvatar:', store.userInfo);
-    console.log('User Details trong TheAvatar:', store.userDetails);
+  console.log('Store trong TheAvatar (onMounted):', store);
+  console.log('User Info trong TheAvatar:', store.userInfo);
+  console.log('User Details trong TheAvatar:', store.userDetails);
 
-    // Nếu không có userDetails nhưng đã đăng nhập, thử lấy lại thông tin chi tiết
-    if (store.isLoggedIn && !store.userDetails && store.userInfo?.ten_dang_nhap) {
-        console.log('Khôi phục userDetails từ API...');
-        khachHangService.getUserDetail({
-            username: store.userInfo.ten_dang_nhap,
-            id_roles: store.id_roles
-        }).then(userDetails => {
-            store.userDetails = userDetails;
-            sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
-            if (localStorage.getItem('isLoggedIn') === 'true') {
-                localStorage.setItem('userDetails', JSON.stringify(userDetails));
-            }
-            console.log('User Details sau khi khôi phục:', store.userDetails);
-        }).catch(error => {
-            console.error('Lỗi khi khôi phục userDetails:', error);
-        });
-    }
+  // Nếu không có userDetails nhưng đã đăng nhập, thử lấy lại thông tin chi tiết
+  if (store.isLoggedIn && !store.userDetails && store.userInfo?.ten_dang_nhap) {
+    console.log('Khôi phục userDetails từ API...');
+    khachHangService.getUserDetail({
+      username: store.userInfo.ten_dang_nhap,
+      id_roles: store.id_roles
+    }).then(userDetails => {
+      store.userDetails = userDetails;
+      sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
+      if (localStorage.getItem('isLoggedIn') === 'true') {
+        localStorage.setItem('userDetails', JSON.stringify(userDetails));
+      }
+      console.log('User Details sau khi khôi phục:', store.userDetails);
+    }).catch(error => {
+      console.error('Lỗi khi khôi phục userDetails:', error);
+    });
+  }
 });
 </script>

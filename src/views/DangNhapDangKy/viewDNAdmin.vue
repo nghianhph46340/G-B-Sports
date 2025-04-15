@@ -25,12 +25,13 @@
                     <p>Đăng nhập hệ thống quản trị G&B SPORTS 🔐</p>
                 </div>
 
-                <form @submit.prevent="handleLogin" class="login-form">
+                <!-- Form đăng nhập -->
+                <form v-if="!showForgotPassword" @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
                         <label for="username">
-                            <i class="fas fa-user"></i> Tên đăng nhập
+                            <i class="fas fa-user"></i> Email
                         </label>
-                        <input type="text" id="username" v-model="username" class="form-control"
+                        <input type="email" id="username" v-model="username" class="form-control"
                             placeholder="Nhập tên đăng nhập" required />
                     </div>
 
@@ -53,7 +54,7 @@
                             <input type="checkbox" v-model="rememberMe" />
                             <span>Ghi nhớ đăng nhập</span>
                         </label>
-                        <a href="#" class="forgot-password">Quên mật khẩu?</a>
+                        <a href="#" class="forgot-password" @click.prevent="toggleForgotPassword">Quên mật khẩu?</a>
                     </div>
 
                     <button type="submit" class="login-button" :disabled="isLoading">
@@ -67,6 +68,56 @@
                         </a>
                     </div>
                 </form>
+
+                <!-- Form quên mật khẩu -->
+                <form v-else @submit.prevent="handleResetPassword" class="login-form">
+                    <div class="form-group">
+                        <label for="forgot-username">
+                            <i class="fas fa-user"></i> Email
+                        </label>
+                        <input type="email" id="forgot-username" v-model="forgotUsername" class="form-control"
+                            placeholder="Nhập tên đăng nhập" required :disabled="isEmailChecked" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new-password">
+                            <i class="fas fa-lock"></i> Mật khẩu mới
+                        </label>
+                        <div class="password-input">
+                            <input :type="showNewPassword ? 'text' : 'password'" id="new-password" v-model="newPassword"
+                                class="form-control" placeholder="Nhập mật khẩu mới" :disabled="!isEmailChecked"
+                                required />
+                            <span class="password-toggle" @click="toggleNewPassword">
+                                <EyeInvisibleOutlined v-if="!showNewPassword" />
+                                <EyeOutlined v-else />
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-password">
+                            <i class="fas fa-lock"></i> Nhập lại mật khẩu mới
+                        </label>
+                        <div class="password-input">
+                            <input :type="showConfirmPassword ? 'text' : 'password'" id="confirm-password"
+                                v-model="confirmPassword" class="form-control" placeholder="Nhập lại mật khẩu mới"
+                                :disabled="!isEmailChecked" required />
+                            <span class="password-toggle" @click="toggleConfirmPassword">
+                                <EyeInvisibleOutlined v-if="!showConfirmPassword" />
+                                <EyeOutlined v-else />
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <button type="button" class="cancel-button" @click="toggleForgotPassword">Hủy</button>
+                        <button type="submit" class="action-button" :disabled="isLoading">
+                            <span v-if="!isEmailChecked">Kiểm tra</span>
+                            <span v-else>Xác nhận</span>
+                            <span v-if="isLoading" class="loading-spinner"></span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -78,6 +129,7 @@ import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue';
 import { useGbStore } from '@/stores/gbStore';
+import axiosInstance from "@/config/axiosConfig";
 
 const router = useRouter();
 const gbStore = useGbStore();
@@ -87,33 +139,56 @@ const rememberMe = ref(false);
 const showPassword = ref(false);
 const isLoading = ref(false);
 
+// Các biến cho form quên mật khẩu
+const showForgotPassword = ref(false);
+const forgotUsername = ref('');
+const newPassword = ref('');
+const confirmPassword = ref('');
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
+const isEmailChecked = ref(false);
+const resetToken = ref('');
+
 // Khôi phục trạng thái đăng nhập khi component được tạo
 gbStore.restoreLoginState();
 
 const chuyenTrang = (path) => {
     router.push(path);
-}
+};
 
 const togglePassword = () => {
     showPassword.value = !showPassword.value;
 };
 
+const toggleNewPassword = () => {
+    showNewPassword.value = !showNewPassword.value;
+};
+
+const toggleConfirmPassword = () => {
+    showConfirmPassword.value = !showConfirmPassword.value;
+};
+
+const toggleForgotPassword = () => {
+    showForgotPassword.value = !showForgotPassword.value;
+    // Reset form khi hủy
+    if (!showForgotPassword.value) {
+        forgotUsername.value = '';
+        newPassword.value = '';
+        confirmPassword.value = '';
+        isEmailChecked.value = false;
+        resetToken.value = '';
+    }
+};
+
 const handleLogin = async () => {
     try {
         isLoading.value = true;
-        // Xử lý logic đăng nhập ở đây
-        console.log('Username:', username.value);
-        console.log('Password:', password.value);
-        console.log('RememberMe:', rememberMe.value);
         const loginData = {
             email: username.value,
             password: password.value,
             rememberMe: rememberMe.value
         };
 
-        // Nếu đã tạo hàm loginStaff trong store thì dùng:
-        // const result = await gbStore.loginStaff(loginData);
-        // Nếu chưa, thì dùng hàm login thông thường:
         const result = await gbStore.loginNV(loginData);
 
         if (result.error) {
@@ -129,13 +204,65 @@ const handleLogin = async () => {
             return;
         }
 
-        // Chuyển đến trang quản trị
+        // Chuyển đến trang phù hợp với role
         console.log('Đăng nhập thành công với vai trò:', result.id_roles);
-        router.push('/admin');
-
-        await new Promise(resolve => setTimeout(resolve, 500)); // Giả lập API call
+        
+        // Nhân viên (role 3) chuyển thẳng đến trang bán hàng
+        if (result.id_roles === 3) {
+            router.push('/admin/banhang');
+        } else {
+            // Admin và quản lý đến trang chính
+            router.push('/admin');
+        }
     } catch (error) {
         toast.error('Đăng nhập thất bại. Vui lòng thử lại!');
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const handleResetPassword = async () => {
+    isLoading.value = true;
+
+    // Bước 1: Kiểm tra username (email)
+    if (!isEmailChecked.value) {
+        try {
+            const response = await axiosInstance.post('admin/quan-ly-nhan-vien/forgot-password', {
+                email: forgotUsername.value
+            });
+
+            if (response.data.successMessage) {
+                resetToken.value = response.data.resetToken;
+                isEmailChecked.value = true;
+                toast.success('Tên đăng nhập hợp lệ, vui lòng nhập mật khẩu mới.');
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Có lỗi xảy ra khi kiểm tra tên đăng nhập!');
+        } finally {
+            isLoading.value = false;
+        }
+        return;
+    }
+
+    // Bước 2: Xác nhận đặt lại mật khẩu
+    if (newPassword.value !== confirmPassword.value) {
+        toast.error('Mật khẩu mới và mật khẩu xác nhận không khớp!');
+        isLoading.value = false;
+        return;
+    }
+
+    try {
+        const response = await axiosInstance.post('admin/quan-ly-nhan-vien/reset-password', {
+            token: resetToken.value,
+            newPassword: newPassword.value
+        });
+
+        if (response.data.successMessage) {
+            toast.success('Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.');
+            toggleForgotPassword(); // Ẩn form quên mật khẩu
+        }
+    } catch (error) {
+        toast.error(error.response?.data?.error || 'Có lỗi xảy ra khi đặt lại mật khẩu!');
     } finally {
         isLoading.value = false;
     }
@@ -466,5 +593,37 @@ input[type="checkbox"] {
         top: 20px;
         left: 20px;
     }
+}
+/* Thêm style cho form quên mật khẩu */
+
+.cancel-button {
+    background-color: #ccc;
+    color: black;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.cancel-button:hover {
+    background-color: #bbb;
+}
+
+.action-button {
+    background-color: #d02c39;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.action-button:hover {
+    background-color: #b02330;
+}
+
+.action-button:disabled {
+    background-color: #999;
+    cursor: not-allowed;
 }
 </style>
