@@ -6,7 +6,7 @@
     <!-- <a-table :columns="columns" :data-source="data" :row-selection="rowSelection" :expandable="expandableConfig"
         class="components-table-demo-nested" /> -->
     <div>
-        <menuAction ref="menuActionRef" />
+        <menuAction ref="menuActionRef" @refresh-data="handleMenuActionRefresh" />
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="ms-3 mb-0">Danh sách sản phẩm</h4>
             <a-button @click="refreshData" :loading="isLoading" type="primary" class="refresh-button" shape="circle">
@@ -30,9 +30,11 @@
                         <a-radio-button value="Hoạt động">Hoạt động</a-radio-button>
                         <a-radio-button value="Không hoạt động">Không hoạt động</a-radio-button>
                     </a-radio-group>
-                    <span class="ms-3" v-if="statusFilter">
-                        <strong>Lọc theo:</strong> {{ statusFilter }}
-                        <span class="badge bg-primary ms-2">{{ filteredCount }} sản phẩm</span>
+                    <span class="ms-3">
+                        <span class="badge bg-primary">{{ displayData.length }} sản phẩm</span>
+                        <template v-if="statusFilter">
+                            <strong class="ms-2">Lọc theo: {{ statusFilter }}</strong>
+                        </template>
                     </span>
                 </div>
             </div>
@@ -680,7 +682,7 @@ const changeStatusCTSP = async (id) => {
 
             // Kiểm tra điều kiện: Nếu số lượng là 0 và đang cố gắng chuyển sang "Hoạt động"
             if (ctspToChange.so_luong === 0 && newStatus === 'Hoạt động') {
-                message.error('Không thể chuyển trạng thái chi tiết sản phẩm không còn số lượng sang Hoạt động');
+                message.error('Không thể chuyển trạng thái chi tiết sản phẩm không còn số lượng sang Hoạt động, Vui lòng sửa số lượng sản phẩm');
                 return;
             }
 
@@ -844,6 +846,21 @@ const refreshData = async () => {
         // Tải lại dữ liệu từ API
         await store.getAllSP();
 
+        // Đồng thời cập nhật dữ liệu bộ lọc để bao gồm các giá trị mới
+        console.log('Đang cập nhật dữ liệu bộ lọc...');
+
+        // Tải lại toàn bộ dữ liệu lọc song song (Promise.all để tối ưu thời gian tải)
+        await Promise.all([
+            store.getAllDM(),   // Danh mục
+            store.getAllTH(),   // Thương hiệu
+            store.getAllCL(),   // Chất liệu
+            store.getAllMS(),   // Màu sắc
+            store.getAllKT(),   // Kích thước
+            store.getAllCTSP(), // Chi tiết sản phẩm
+        ]);
+
+        console.log('Đã cập nhật dữ liệu bộ lọc');
+
         data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
             return {
                 stt: index + 1,
@@ -861,6 +878,18 @@ const refreshData = async () => {
         // Lưu vào cache nếu có dữ liệu
         if (data.value.length > 0) {
             saveToCache(PRODUCTS_CACHE_KEY, data.value);
+        }
+
+        // Cập nhật lại menuAction nếu có tham chiếu
+        if (menuActionRef.value && typeof menuActionRef.value.checkAndLoadFilterData === 'function') {
+            try {
+                await menuActionRef.value.checkAndLoadFilterData();
+                console.log('Đã cập nhật dữ liệu lọc trong menuAction');
+            } catch (error) {
+                console.error('Lỗi khi gọi checkAndLoadFilterData:', error);
+            }
+        } else {
+            console.log('menuActionRef không tồn tại hoặc không có phương thức checkAndLoadFilterData');
         }
 
         const endTime = performance.now();
@@ -1176,6 +1205,51 @@ const bulkChangeStatus = async (newStatus) => {
         } catch (fetchError) {
             console.error('Lỗi khi hoàn tác UI:', fetchError);
         }
+    }
+};
+
+// Handler for refresh-data event from menuAction component
+const handleMenuActionRefresh = async () => {
+    console.log('Received refresh-data event from menuAction');
+
+    // Force refresh all data and clear cache
+    forceRefresh.value = true;
+    clearAllProductsCache();
+    isLoading.value = true;
+
+    try {
+        // Make sure to load the latest data by date
+        console.log('Tải dữ liệu sản phẩm mới nhất sau khi import Excel...');
+        await store.getAllSanPhamNgaySua();
+        console.log('Số lượng sản phẩm sau khi refresh:', store.getAllSanPham?.length || 0);
+
+        // Update local data from store
+        data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
+            return {
+                stt: index + 1,
+                key: item.id_san_pham,
+                id_san_pham: item.id_san_pham,
+                ma_san_pham: item.ma_san_pham,
+                ten_san_pham: item.ten_san_pham,
+                hinh_anh: item.hinh_anh,
+                chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
+                trang_thai: item.trang_thai,
+                tong_so_luong: item.tong_so_luong,
+            };
+        }));
+
+        // Update cache
+        if (data.value.length > 0) {
+            saveToCache(PRODUCTS_CACHE_KEY, data.value);
+        }
+
+        message.success('Dữ liệu đã được cập nhật sau khi import Excel');
+    } catch (error) {
+        console.error('Lỗi khi làm mới dữ liệu sau import Excel:', error);
+        message.error('Có lỗi xảy ra khi cập nhật dữ liệu');
+    } finally {
+        isLoading.value = false;
+        forceRefresh.value = false;
     }
 };
 </script>

@@ -35,12 +35,13 @@
                                     </div>
                                 </template>
                                 <template v-else-if="column.key === 'name'">
-                                    <span v-if="!record.isEditing">{{ record.name }}</span>
+                                    <span v-if="!record.isEditing">{{ record.ten_danh_muc }}</span>
                                     <a-input v-else v-model:value="record.editName" />
                                 </template>
-                                <template v-else-if="column.key === 'status'">
-                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
-                                        :unCheckedChildren="'Khóa'"
+                                <template v-else-if="column.key === 'trang_thai'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
+                                        :checkedChildren="'Hoạt động'" :unCheckedChildren="'Khóa'"
                                         @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
@@ -65,7 +66,28 @@
 
                         <a-table :dataSource="brands" :columns="brandColumns" :pagination="false">
                             <template #bodyCell="{ column, record, index }">
-                                <!-- Similar action templates as category -->
+                                <template v-if="column.key === 'action'">
+                                    <div class="attribute-actions">
+                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                            <template #icon><edit-outlined /></template>
+                                        </a-button>
+                                        <a-button type="success" @click="saveEdit(index)" v-else>
+                                            <template #icon><check-outlined /></template>
+                                        </a-button>
+                                        <a-button type="primary" danger @click="deleteAttribute(index)">
+                                            <template #icon><delete-outlined /></template>
+                                        </a-button>
+                                    </div>
+                                </template>
+                                <template v-else-if="column.key === 'name'">
+                                    <span v-if="!record.isEditing">{{ record.ten_thuong_hieu }}</span>
+                                    <a-input v-else v-model:value="record.editName" />
+                                </template>
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
+                                        :unCheckedChildren="'Khóa'"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
+                                </template>
                             </template>
                         </a-table>
                     </div>
@@ -88,7 +110,28 @@
 
                         <a-table :dataSource="materials" :columns="materialColumns" :pagination="false">
                             <template #bodyCell="{ column, record, index }">
-                                <!-- Similar action templates as category -->
+                                <template v-if="column.key === 'action'">
+                                    <div class="attribute-actions">
+                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                            <template #icon><edit-outlined /></template>
+                                        </a-button>
+                                        <a-button type="success" @click="saveEdit(index)" v-else>
+                                            <template #icon><check-outlined /></template>
+                                        </a-button>
+                                        <a-button type="primary" danger @click="deleteAttribute(index)">
+                                            <template #icon><delete-outlined /></template>
+                                        </a-button>
+                                    </div>
+                                </template>
+                                <template v-else-if="column.key === 'name'">
+                                    <span v-if="!record.isEditing">{{ record.ten_chat_lieu }}</span>
+                                    <a-input v-else v-model:value="record.editName" />
+                                </template>
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
+                                        :unCheckedChildren="'Khóa'"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
+                                </template>
                             </template>
                         </a-table>
                     </div>
@@ -111,7 +154,28 @@
 
                         <a-table :dataSource="colors" :columns="colorColumns" :pagination="false">
                             <template #bodyCell="{ column, record, index }">
-                                <!-- Similar action templates as category -->
+                                <template v-if="column.key === 'action'">
+                                    <div class="attribute-actions">
+                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                            <template #icon><edit-outlined /></template>
+                                        </a-button>
+                                        <a-button type="success" @click="saveEdit(index)" v-else>
+                                            <template #icon><check-outlined /></template>
+                                        </a-button>
+                                        <a-button type="primary" danger @click="deleteAttribute(index)">
+                                            <template #icon><delete-outlined /></template>
+                                        </a-button>
+                                    </div>
+                                </template>
+                                <template v-else-if="column.key === 'name'">
+                                    <span v-if="!record.isEditing">{{ record.ten_mau_sac }}</span>
+                                    <a-input v-else v-model:value="record.editName" />
+                                </template>
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
+                                        :unCheckedChildren="'Khóa'"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
+                                </template>
                             </template>
                         </a-table>
                     </div>
@@ -134,7 +198,28 @@
 
                         <a-table :dataSource="sizes" :columns="sizeColumns" :pagination="false">
                             <template #bodyCell="{ column, record, index }">
-                                <!-- Similar action templates as category -->
+                                <template v-if="column.key === 'action'">
+                                    <div class="attribute-actions">
+                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                            <template #icon><edit-outlined /></template>
+                                        </a-button>
+                                        <a-button type="success" @click="saveEdit(index)" v-else>
+                                            <template #icon><check-outlined /></template>
+                                        </a-button>
+                                        <a-button type="primary" danger @click="deleteAttribute(index)">
+                                            <template #icon><delete-outlined /></template>
+                                        </a-button>
+                                    </div>
+                                </template>
+                                <template v-else-if="column.key === 'name'">
+                                    <span v-if="!record.isEditing">{{ record.gia_tri + ' ' + record.don_vi }}</span>
+                                    <a-input v-else v-model:value="record.editName" />
+                                </template>
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
+                                        :unCheckedChildren="'Khóa'"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
+                                </template>
                             </template>
                         </a-table>
                     </div>
@@ -166,13 +251,13 @@ const categoryColumns = [
     {
         title: 'Tên danh mục',
         dataIndex: 'ten_danh_muc',
-        key: 'name',
+        key: 'ten_danh_muc',
         width: '25%'
     },
     {
         title: 'Trạng thái',
         dataIndex: 'trang_thai',
-        key: 'status',
+        key: 'trang_thai',
         width: '15%'
     },
     {
@@ -388,16 +473,13 @@ onMounted(async () => {
 // Load functions
 async function loadCategories() {
     try {
-        const response = await store.getDanhMucList()
+        const response = await store.getAllDM()
         categories.value = response.map(item => ({
+            ...item,
             key: item.id_danh_muc,
-            ma_danh_muc: item.ma_danh_muc,
-            ten_danh_muc: item.ten_danh_muc,
-            trang_thai: item.trang_thai,
-            ngay_tao: item.ngay_tao,
-            ngay_sua: item.ngay_sua,
             isEditing: false,
-            editName: ''
+            editName: '',
+            status: item.trang_thai === 'Hoạt động'
         }))
     } catch (error) {
         console.error('Error loading categories:', error)
@@ -407,16 +489,13 @@ async function loadCategories() {
 
 async function loadBrands() {
     try {
-        const response = await store.getThuongHieuList()
+        const response = await store.getAllTH()
         brands.value = response.map(item => ({
+            ...item,
             key: item.id_thuong_hieu,
-            ma_thuong_hieu: item.ma_thuong_hieu,
-            ten_thuong_hieu: item.ten_thuong_hieu,
-            trang_thai: item.trang_thai,
-            ngay_tao: item.ngay_tao,
-            ngay_sua: item.ngay_sua,
             isEditing: false,
-            editName: ''
+            editName: '',
+            status: item.trang_thai === 'Hoạt động'
         }))
     } catch (error) {
         console.error('Error loading brands:', error)
@@ -426,16 +505,13 @@ async function loadBrands() {
 
 async function loadMaterials() {
     try {
-        const response = await store.getChatLieuList()
+        const response = await store.getAllCL()
         materials.value = response.map(item => ({
+            ...item,
             key: item.id_chat_lieu,
-            ma_chat_lieu: item.ma_chat_lieu,
-            ten_chat_lieu: item.ten_chat_lieu,
-            trang_thai: item.trang_thai,
-            ngay_tao: item.ngay_tao,
-            ngay_sua: item.ngay_sua,
             isEditing: false,
-            editName: ''
+            editName: '',
+            status: item.trang_thai === 'Hoạt động'
         }))
     } catch (error) {
         console.error('Error loading materials:', error)
@@ -445,16 +521,13 @@ async function loadMaterials() {
 
 async function loadColors() {
     try {
-        const response = await store.getMauSacList()
+        const response = await store.getAllMS()
         colors.value = response.map(item => ({
+            ...item,
             key: item.id_mau_sac,
-            ma_mau_sac: item.ma_mau_sac,
-            ten_mau_sac: item.ten_mau_sac,
-            trang_thai: item.trang_thai,
-            ngay_tao: item.ngay_tao,
-            ngay_sua: item.ngay_sua,
             isEditing: false,
-            editName: ''
+            editName: '',
+            status: item.trang_thai === 'Hoạt động'
         }))
     } catch (error) {
         console.error('Error loading colors:', error)
@@ -464,17 +537,13 @@ async function loadColors() {
 
 async function loadSizes() {
     try {
-        const response = await store.getSizeList()
+        const response = await store.getAllKT()
         sizes.value = response.map(item => ({
+            ...item,
             key: item.id_kich_thuoc,
-            ma_kich_thuoc: item.ma_kich_thuoc,
-            gia_tri: item.gia_tri,
-            don_vi: item.don_vi,
-            trang_thai: item.trang_thai,
-            ngay_tao: item.ngay_tao,
-            ngay_sua: item.ngay_sua,
             isEditing: false,
-            editName: ''
+            editName: '',
+            status: item.trang_thai === 'Hoạt động'
         }))
     } catch (error) {
         console.error('Error loading sizes:', error)
@@ -501,13 +570,51 @@ const getCurrentItems = computed(() => {
 
 // Methods for managing attributes
 const addNewAttribute = () => {
+    // Kiểm tra trống
     if (!newAttribute.value.name.trim()) {
         message.warning('Vui lòng nhập tên thuộc tính!')
         return
     }
 
+    // Lấy danh sách hiện tại theo tab
+    let currentList = []
+    let checkField = ''
+    switch (currentTab.value) {
+        case 'category': 
+            currentList = categories.value
+            checkField = 'ten_danh_muc'
+            break
+        case 'brand': 
+            currentList = brands.value
+            checkField = 'ten_thuong_hieu'
+            break
+        case 'material': 
+            currentList = materials.value
+            checkField = 'ten_chat_lieu'
+            break
+        case 'color': 
+            currentList = colors.value
+            checkField = 'ten_mau_sac'
+            break
+        case 'size': 
+            currentList = sizes.value
+            checkField = 'gia_tri'
+            break
+    }
+
+    // Kiểm tra trùng tên
+    const isDuplicate = currentList.some(item => 
+        item[checkField]?.toLowerCase() === newAttribute.value.name.trim().toLowerCase()
+    )
+
+    if (isDuplicate) {
+        message.error('Tên này đã tồn tại, vui lòng nhập tên khác!')
+        return
+    }
+
+    // Nếu không trùng thì thêm mới
     const newItem = {
-        name: newAttribute.value.name,
+        name: newAttribute.value.name.trim(),
         isEditing: false,
         editName: '',
         status: true
@@ -615,5 +722,29 @@ const handleStatusChange = (index, checked) => {
 
 :deep(.ant-switch) {
     min-width: 70px;
+    height: 24px;
+    line-height: 22px;
+    background-color: #ccc;
+}
+
+:deep(.ant-switch-checked) {
+    background-color: #f33b47 !important;
+}
+
+:deep(.ant-switch:hover:not(.ant-switch-disabled)) {
+    background-color: #ff6b76;
+}
+
+:deep(.ant-switch-handle) {
+    width: 20px;
+    height: 20px;
+}
+
+:deep(.ant-switch-checked .ant-switch-handle) {
+    left: calc(100% - 20px - 2px);
+}
+
+:deep(.ant-switch-inner) {
+    margin: 0 25px 0 7px;
 }
 </style>
