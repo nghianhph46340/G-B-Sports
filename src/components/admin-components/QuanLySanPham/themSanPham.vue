@@ -810,6 +810,9 @@ onMounted(() => {
 // Fetch initial data
 onMounted(async () => {
     try {
+        // Load tất cả thuộc tính từ localStorage trước
+        loadAttributesFromLocalStorage();
+
         // Lấy danh sách sản phẩm để tạo mã tự động
         await store.getAllSanPhamNgaySua();
 
@@ -912,23 +915,23 @@ const generateTempId = (prefix) => {
 
 // Create computed properties that combine API data with local data
 const combinedDanhMucList = computed(() => {
-    return [...danhMucList.value, ...newLocalAttributes.danhMuc];
+    return [...danhMucList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.danhMuc];
 });
 
 const combinedThuongHieuList = computed(() => {
-    return [...thuongHieuList.value, ...newLocalAttributes.thuongHieu];
+    return [...thuongHieuList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.thuongHieu];
 });
 
 const combinedChatLieuList = computed(() => {
-    return [...chatLieuList.value, ...newLocalAttributes.chatLieu];
+    return [...chatLieuList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.chatLieu];
 });
 
 const combinedMauSacList = computed(() => {
-    return [...mauSacList.value, ...newLocalAttributes.mauSac];
+    return [...mauSacList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.mauSac];
 });
 
 const combinedSizeList = computed(() => {
-    return [...sizeList.value, ...newLocalAttributes.kichThuoc];
+    return [...sizeList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.kichThuoc];
 });
 
 // Modify to use combined lists
@@ -977,14 +980,30 @@ const updateAvailableColors = () => {
 // Replace the Add functions to add locally instead of calling APIs immediately
 const handleAddDanhMuc = async () => {
     try {
-        // Check if a category with this name already exists
-        const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
-            .find(item => item.ten_danh_muc.toLowerCase() === newDanhMuc.ten_danh_muc.toLowerCase());
-
-        if (existingItem) {
-            message.error('Danh mục này đã tồn tại!');
+        if (!newDanhMuc.ten_danh_muc) {
+            message.error('Vui lòng nhập tên danh mục!');
             return;
         }
+
+        // Chuẩn hóa tên danh mục (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newDanhMuc.ten_danh_muc.trim().toLowerCase();
+
+        // Kiểm tra xem đã có danh mục nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
+            .find(item => item.ten_danh_muc.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu danh mục tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Danh mục này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Danh mục này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa danh mục hiện tại trong newLocalAttributes và thay thế bằng danh mục mới
+        newLocalAttributes.danhMuc = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('dm');
@@ -992,7 +1011,7 @@ const handleAddDanhMuc = async () => {
         // Create a new local category
         const newCategory = {
             id_danh_muc: tempId,
-            ten_danh_muc: newDanhMuc.ten_danh_muc,
+            ten_danh_muc: newDanhMuc.ten_danh_muc.trim(),
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1000,13 +1019,11 @@ const handleAddDanhMuc = async () => {
         // Add to local list
         newLocalAttributes.danhMuc.push(newCategory);
 
-        // If the form doesn't have a category selected, select this one
-        if (!formState.id_danh_muc) {
-            formState.id_danh_muc = tempId;
-        }
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_danh_muc = tempId;
 
         // Lưu ID danh mục mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('danhMuc', tempId);
+        saveLastAddedAttribute('danhMuc', tempId, newCategory.ten_danh_muc);
 
         message.success('Đã thêm danh mục mới (sẽ lưu khi bạn lưu sản phẩm)');
         newDanhMuc.ten_danh_muc = '';
@@ -1019,14 +1036,30 @@ const handleAddDanhMuc = async () => {
 
 const handleAddThuongHieu = async () => {
     try {
-        // Check if a brand with this name already exists
-        const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
-            .find(item => item.ten_thuong_hieu.toLowerCase() === newThuongHieu.ten_thuong_hieu.toLowerCase());
-
-        if (existingItem) {
-            message.error('Thương hiệu này đã tồn tại!');
+        if (!newThuongHieu.ten_thuong_hieu) {
+            message.error('Vui lòng nhập tên thương hiệu!');
             return;
         }
+
+        // Chuẩn hóa tên thương hiệu (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newThuongHieu.ten_thuong_hieu.trim().toLowerCase();
+
+        // Kiểm tra xem đã có thương hiệu nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
+            .find(item => item.ten_thuong_hieu.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu thương hiệu tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Thương hiệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Thương hiệu này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa thương hiệu hiện tại trong newLocalAttributes và thay thế bằng thương hiệu mới
+        newLocalAttributes.thuongHieu = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('th');
@@ -1034,7 +1067,7 @@ const handleAddThuongHieu = async () => {
         // Create a new local brand
         const newBrand = {
             id_thuong_hieu: tempId,
-            ten_thuong_hieu: newThuongHieu.ten_thuong_hieu,
+            ten_thuong_hieu: newThuongHieu.ten_thuong_hieu.trim(),
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1042,13 +1075,11 @@ const handleAddThuongHieu = async () => {
         // Add to local list
         newLocalAttributes.thuongHieu.push(newBrand);
 
-        // If the form doesn't have a brand selected, select this one
-        if (!formState.id_thuong_hieu) {
-            formState.id_thuong_hieu = tempId;
-        }
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_thuong_hieu = tempId;
 
         // Lưu ID thương hiệu mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('thuongHieu', tempId);
+        saveLastAddedAttribute('thuongHieu', tempId, newBrand.ten_thuong_hieu);
 
         message.success('Đã thêm thương hiệu mới (sẽ lưu khi bạn lưu sản phẩm)');
         newThuongHieu.ten_thuong_hieu = '';
@@ -1061,14 +1092,30 @@ const handleAddThuongHieu = async () => {
 
 const handleAddChatLieu = async () => {
     try {
-        // Check if a material with this name already exists
-        const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
-            .find(item => item.ten_chat_lieu.toLowerCase() === newChatLieu.ten_chat_lieu.toLowerCase());
-
-        if (existingItem) {
-            message.error('Chất liệu này đã tồn tại!');
+        if (!newChatLieu.ten_chat_lieu) {
+            message.error('Vui lòng nhập tên chất liệu!');
             return;
         }
+
+        // Chuẩn hóa tên chất liệu (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newChatLieu.ten_chat_lieu.trim().toLowerCase();
+
+        // Kiểm tra xem đã có chất liệu nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
+            .find(item => item.ten_chat_lieu.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu chất liệu tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Chất liệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Chất liệu này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa chất liệu hiện tại trong newLocalAttributes và thay thế bằng chất liệu mới
+        newLocalAttributes.chatLieu = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('cl');
@@ -1076,7 +1123,7 @@ const handleAddChatLieu = async () => {
         // Create a new local material
         const newMaterial = {
             id_chat_lieu: tempId,
-            ten_chat_lieu: newChatLieu.ten_chat_lieu,
+            ten_chat_lieu: newChatLieu.ten_chat_lieu.trim(),
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1084,13 +1131,11 @@ const handleAddChatLieu = async () => {
         // Add to local list
         newLocalAttributes.chatLieu.push(newMaterial);
 
-        // If the form doesn't have a material selected, select this one
-        if (!formState.id_chat_lieu) {
-            formState.id_chat_lieu = tempId;
-        }
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_chat_lieu = tempId;
 
         // Lưu ID chất liệu mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('chatLieu', tempId);
+        saveLastAddedAttribute('chatLieu', tempId, newMaterial.ten_chat_lieu);
 
         message.success('Đã thêm chất liệu mới (sẽ lưu khi bạn lưu sản phẩm)');
         newChatLieu.ten_chat_lieu = '';
@@ -1103,14 +1148,30 @@ const handleAddChatLieu = async () => {
 
 const handleAddMauSac = async () => {
     try {
-        // Check if a color with this name already exists
-        const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
-            .find(item => item.ten_mau_sac.toLowerCase() === newMauSac.ten_mau_sac.toLowerCase());
-
-        if (existingItem) {
-            message.error('Màu sắc này đã tồn tại!');
+        if (!newMauSac.ten_mau_sac) {
+            message.error('Vui lòng nhập tên màu sắc!');
             return;
         }
+
+        // Chuẩn hóa tên màu sắc (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newMauSac.ten_mau_sac.trim().toLowerCase();
+
+        // Kiểm tra xem đã có màu sắc nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
+            .find(item => item.ten_mau_sac.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu màu sắc tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Màu sắc này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Màu sắc này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa màu sắc hiện tại trong newLocalAttributes và thay thế bằng màu sắc mới
+        newLocalAttributes.mauSac = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('ms');
@@ -1118,7 +1179,7 @@ const handleAddMauSac = async () => {
         // Create a new local color
         const newColor = {
             id_mau_sac: tempId,
-            ten_mau_sac: newMauSac.ten_mau_sac,
+            ten_mau_sac: newMauSac.ten_mau_sac.trim(),
             ma_mau_sac: `MS${newLocalAttributes.mauSac.length + 1}`, // Generate a temporary code
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
@@ -1128,7 +1189,7 @@ const handleAddMauSac = async () => {
         newLocalAttributes.mauSac.push(newColor);
 
         // Lưu ID màu sắc mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('mauSac', tempId);
+        saveLastAddedAttribute('mauSac', tempId, newColor.ten_mau_sac);
 
         // Tự động chọn màu sắc mới cho biến thể hiện tại đang mở
         if (variantTypes.value.length > 0) {
@@ -1160,28 +1221,48 @@ const handleAddMauSac = async () => {
 
 const handleAddKichThuoc = async () => {
     try {
-        // Check if a size with this value already exists
-        const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
-            .find(item =>
-                item.gia_tri.toLowerCase() === newKichThuoc.gia_tri.toLowerCase() &&
-                (newKichThuoc.don_vi ? item.don_vi.toLowerCase() === newKichThuoc.don_vi.toLowerCase() : !item.don_vi)
-            );
-
-        if (existingItem) {
-            message.error('Kích thước này đã tồn tại!');
+        if (!newKichThuoc.gia_tri) {
+            message.error('Vui lòng nhập giá trị kích thước!');
             return;
         }
+
+        // Chuẩn hóa giá trị kích thước và đơn vị (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedGiaTri = newKichThuoc.gia_tri.trim().toLowerCase();
+        const normalizedDonVi = newKichThuoc.don_vi ? newKichThuoc.don_vi.trim().toLowerCase() : '';
+
+        // Kiểm tra xem đã có kích thước nào trùng không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
+            .find(item => {
+                const itemGiaTri = item.gia_tri.toString().trim().toLowerCase();
+                const itemDonVi = item.don_vi ? item.don_vi.trim().toLowerCase() : '';
+
+                return itemGiaTri === normalizedGiaTri &&
+                    (normalizedDonVi ? itemDonVi === normalizedDonVi : !itemDonVi);
+            });
+
+        if (existingItem) {
+            // Nếu kích thước tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Kích thước này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Kích thước này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa kích thước hiện tại trong newLocalAttributes và thay thế bằng kích thước mới
+        newLocalAttributes.kichThuoc = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('kt');
 
         // Đảm bảo đơn vị là chuỗi rỗng nếu không được nhập
-        const donVi = newKichThuoc.don_vi || '';
+        const donVi = newKichThuoc.don_vi ? newKichThuoc.don_vi.trim() : '';
 
         // Create a new local size
         const newSize = {
             id_kich_thuoc: tempId,
-            gia_tri: newKichThuoc.gia_tri,
+            gia_tri: newKichThuoc.gia_tri.trim(),
             don_vi: donVi,
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
@@ -1191,7 +1272,7 @@ const handleAddKichThuoc = async () => {
         newLocalAttributes.kichThuoc.push(newSize);
 
         // Lưu ID kích thước mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('kichThuoc', tempId);
+        saveLastAddedAttribute('kichThuoc', tempId, newSize.gia_tri + (donVi ? ' ' + donVi : ''));
 
         // Tự động thêm kích thước mới vào danh sách đã chọn của biến thể hiện tại
         if (variantTypes.value.length > 0) {
@@ -1219,22 +1300,149 @@ const handleAddKichThuoc = async () => {
     }
 };
 
-// Thêm hàm để lưu thuộc tính mới đã thêm vào localStorage
-const saveLastAddedAttribute = (type, id) => {
+// Sửa hàm lưu thuộc tính vào localStorage để chỉ lưu thuộc tính mới nhất
+const saveLastAddedAttribute = (type, id, name) => {
     try {
-        // Lấy dữ liệu hiện tại từ localStorage (nếu có)
-        const existingData = localStorage.getItem('lastAddedAttributes');
-        let attributes = existingData ? JSON.parse(existingData) : {};
+        // Không ghép nối từ localStorage nữa, mà tạo đối tượng mới mỗi lần lưu
+        let attributes = {};
 
-        // Thêm thuộc tính mới vào
-        attributes[type] = id;
+        // Lấy dữ liệu hiện tại từ localStorage để giữ các loại thuộc tính khác
+        const existingData = localStorage.getItem('lastAddedAttributes');
+        if (existingData) {
+            attributes = JSON.parse(existingData);
+        }
+
+        // Thêm/thay thế thuộc tính mới
+        attributes[type] = {
+            id: id,
+            name: name
+        };
 
         // Lưu lại vào localStorage
         localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
 
-        console.log(`Đã lưu ${type} ID mới (${id}) vào localStorage`);
+        console.log(`Đã cập nhật ${type} mới nhất (${name}, ID: ${id}) vào localStorage`);
     } catch (error) {
         console.error('Lỗi khi lưu thuộc tính mới vào localStorage:', error);
+    }
+};
+
+// Thêm hàm để tải thuộc tính từ localStorage trong onMounted
+const loadAttributesFromLocalStorage = () => {
+    try {
+        const storedData = localStorage.getItem('lastAddedAttributes');
+        if (!storedData) return;
+
+        const attributes = JSON.parse(storedData);
+
+        // Xóa mảng newLocalAttributes hiện tại để cập nhật lại từ đầu
+        newLocalAttributes.danhMuc = [];
+        newLocalAttributes.thuongHieu = [];
+        newLocalAttributes.chatLieu = [];
+        newLocalAttributes.mauSac = [];
+        newLocalAttributes.kichThuoc = [];
+
+        // Thêm vào thuộc tính từ localStorage
+        if (attributes.danhMuc) {
+            // Tạo đối tượng mới với ID tạm thời
+            const tempId = generateTempId('dm');
+            const newCategory = {
+                id_danh_muc: tempId,
+                ten_danh_muc: attributes.danhMuc.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.danhMuc.push(newCategory);
+
+            // Tự động chọn danh mục trong form
+            formState.id_danh_muc = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.danhMuc.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.thuongHieu) {
+            const tempId = generateTempId('th');
+            const newBrand = {
+                id_thuong_hieu: tempId,
+                ten_thuong_hieu: attributes.thuongHieu.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.thuongHieu.push(newBrand);
+
+            // Tự động chọn thương hiệu trong form
+            formState.id_thuong_hieu = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.thuongHieu.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.chatLieu) {
+            const tempId = generateTempId('cl');
+            const newMaterial = {
+                id_chat_lieu: tempId,
+                ten_chat_lieu: attributes.chatLieu.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.chatLieu.push(newMaterial);
+
+            // Tự động chọn chất liệu trong form
+            formState.id_chat_lieu = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.chatLieu.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.mauSac) {
+            const tempId = generateTempId('ms');
+            const newColor = {
+                id_mau_sac: tempId,
+                ten_mau_sac: attributes.mauSac.name,
+                ma_mau_sac: `MS${newLocalAttributes.mauSac.length + 1}`,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.mauSac.push(newColor);
+
+            // Cập nhật lại ID trong localStorage
+            attributes.mauSac.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.kichThuoc) {
+            const tempId = generateTempId('kt');
+            // Kiểm tra và tách giá trị và đơn vị từ name (nếu có)
+            let giaTri = attributes.kichThuoc.name;
+            let donVi = '';
+
+            const parts = attributes.kichThuoc.name.split(' ');
+            if (parts.length > 1) {
+                giaTri = parts[0];
+                donVi = parts.slice(1).join(' ');
+            }
+
+            const newSize = {
+                id_kich_thuoc: tempId,
+                gia_tri: giaTri,
+                don_vi: donVi,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.kichThuoc.push(newSize);
+
+            // Cập nhật lại ID trong localStorage
+            attributes.kichThuoc.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        console.log('Đã tải thuộc tính từ localStorage:', newLocalAttributes);
+    } catch (error) {
+        console.error('Lỗi khi tải thuộc tính từ localStorage:', error);
     }
 };
 

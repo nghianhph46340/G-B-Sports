@@ -186,9 +186,11 @@
                     <div class="content-area">
                         <div class="add-form">
                             <div class="d-flex gap-2">
-                                <a-input v-model:value="newAttribute.value" placeholder="Nhập giá trị" class="input-field" style="width: 60%">
+                                <a-input v-model:value="newAttribute.value" placeholder="Nhập giá trị"
+                                    class="input-field" style="width: 60%">
                                 </a-input>
-                                <a-input v-model:value="newAttribute.unit" placeholder="Nhập đơn vị (tùy chọn)" class="input-field" style="width: 30%">
+                                <a-input v-model:value="newAttribute.unit" placeholder="Nhập đơn vị (tùy chọn)"
+                                    class="input-field" style="width: 30%">
                                 </a-input>
                                 <a-button type="primary" @click="addNewAttribute" style="width: 10%">
                                     <plus-outlined />
@@ -571,7 +573,9 @@ const getCurrentItems = computed(() => {
 })
 
 // Methods for managing attributes
-const addNewAttribute = () => {
+const addNewAttribute = async () => {
+    let response;
+    
     switch (currentTab.value) {
         case 'size':
             // Validate cho kích thước
@@ -591,23 +595,14 @@ const addNewAttribute = () => {
                 return
             }
 
-            // Thêm mới kích thước
-            const newSize = {
-                name: `${newAttribute.value.value}${newAttribute.value.unit ? ' ' + newAttribute.value.unit : ''}`,
-                gia_tri: newAttribute.value.value.trim(),
-                don_vi: newAttribute.value.unit.trim(),
-                isEditing: false,
-                editName: '',
-                status: true
-            }
-            sizes.value.push(newSize)
-            // Reset form
-            newAttribute.value.value = ''
-            newAttribute.value.unit = ''
+            response = await store.addKichThuoc(
+                newAttribute.value.value.trim(),
+                newAttribute.value.unit.trim()
+            )
             break
 
         default:
-            // Xử lý các tab khác
+            // Validate cho các thuộc tính khác
             if (!newAttribute.value.name.trim()) {
                 message.warning('Vui lòng nhập tên thuộc tính!')
                 return
@@ -645,22 +640,68 @@ const addNewAttribute = () => {
                 return
             }
 
-            // Thêm mới
-            const newItem = {
-                name: newAttribute.value.name.trim(),
-                isEditing: false,
-                editName: '',
-                status: true
-            }
-
+            // Gọi API thêm mới tương ứng
             switch (currentTab.value) {
-                case 'category': categories.value.push(newItem); break
-                case 'brand': brands.value.push(newItem); break
-                case 'material': materials.value.push(newItem); break
-                case 'color': colors.value.push(newItem); break
+                case 'category':
+                    response = await store.addDanhMuc({
+                        ten_danh_muc: newAttribute.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    })
+                    break
+                case 'brand':
+                    response = await store.addThuongHieu({
+                        ten_thuong_hieu: newAttribute.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    })
+                    break
+                case 'material':
+                    response = await store.addChatLieu({
+                        ten_chat_lieu: newAttribute.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    })
+                    break
+                case 'color':
+                    response = await store.addMauSac({
+                        ten_mau_sac: newAttribute.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    })
+                    break
             }
-            newAttribute.value.name = ''
     }
+
+    // Xử lý response
+    if (!response.success) {
+        message.error(response.message)
+        return
+    }
+
+    // Reset form
+    if (currentTab.value === 'size') {
+        newAttribute.value.value = ''
+        newAttribute.value.unit = ''
+    } else {
+        newAttribute.value.name = ''
+    }
+
+    // Load lại danh sách tương ứng
+    switch (currentTab.value) {
+        case 'category': 
+            await loadCategories()
+            break
+        case 'brand':
+            await loadBrands()
+            break
+        case 'material':
+            await loadMaterials()
+            break
+        case 'color':
+            await loadColors()
+            break
+        case 'size':
+            await loadSizes()
+            break
+    }
+
     message.success('Thêm mới thành công!')
 }
 
