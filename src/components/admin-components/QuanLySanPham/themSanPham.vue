@@ -269,8 +269,8 @@
     </a-modal>
 
     <!-- Add modals for quick-add functionality -->
-    <a-modal v-model:visible="danhMucModalVisible" title="Thêm danh mục mới" @ok="handleAddDanhMuc">
-        <a-form layout="vertical">
+    <a-modal v-model:visible="danhMucModalVisible" title="Thêm danh mục mới" @ok="submitDanhMuc">
+        <a-form layout="vertical" ref="danhMucFormRef" :model="newDanhMuc">
             <a-form-item label="Tên danh mục" name="ten_danh_muc"
                 :rules="[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]">
                 <a-input v-model:value="newDanhMuc.ten_danh_muc" :maxLength="50" show-count />
@@ -278,8 +278,8 @@
         </a-form>
     </a-modal>
 
-    <a-modal v-model:visible="thuongHieuModalVisible" title="Thêm thương hiệu mới" @ok="handleAddThuongHieu">
-        <a-form layout="vertical">
+    <a-modal v-model:visible="thuongHieuModalVisible" title="Thêm thương hiệu mới" @ok="submitThuongHieu">
+        <a-form layout="vertical" ref="thuongHieuFormRef" :model="newThuongHieu">
             <a-form-item label="Tên thương hiệu" name="ten_thuong_hieu"
                 :rules="[{ required: true, message: 'Vui lòng nhập tên thương hiệu!' }]">
                 <a-input v-model:value="newThuongHieu.ten_thuong_hieu" :maxLength="50" show-count />
@@ -287,8 +287,8 @@
         </a-form>
     </a-modal>
 
-    <a-modal v-model:visible="chatLieuModalVisible" title="Thêm chất liệu mới" @ok="handleAddChatLieu">
-        <a-form layout="vertical">
+    <a-modal v-model:visible="chatLieuModalVisible" title="Thêm chất liệu mới" @ok="submitChatLieu">
+        <a-form layout="vertical" ref="chatLieuFormRef" :model="newChatLieu">
             <a-form-item label="Tên chất liệu" name="ten_chat_lieu"
                 :rules="[{ required: true, message: 'Vui lòng nhập tên chất liệu!' }]">
                 <a-input v-model:value="newChatLieu.ten_chat_lieu" :maxLength="50" show-count />
@@ -296,8 +296,8 @@
         </a-form>
     </a-modal>
 
-    <a-modal v-model:visible="mauSacModalVisible" title="Thêm màu sắc mới" @ok="handleAddMauSac">
-        <a-form layout="vertical">
+    <a-modal v-model:visible="mauSacModalVisible" title="Thêm màu sắc mới" @ok="submitMauSac">
+        <a-form layout="vertical" ref="mauSacFormRef" :model="newMauSac">
             <a-form-item label="Tên màu sắc" name="ten_mau_sac"
                 :rules="[{ required: true, message: 'Vui lòng nhập tên màu sắc!' }]">
                 <a-input v-model:value="newMauSac.ten_mau_sac" :maxLength="15" show-count />
@@ -305,13 +305,13 @@
         </a-form>
     </a-modal>
 
-    <a-modal v-model:visible="kichThuocModalVisible" title="Thêm kích thước mới" @ok="handleAddKichThuoc">
-        <a-form layout="vertical">
+    <a-modal v-model:visible="kichThuocModalVisible" title="Thêm kích thước mới" @ok="submitKichThuoc">
+        <a-form layout="vertical" ref="kichThuocFormRef" :model="newKichThuoc">
             <a-form-item label="Giá trị" name="gia_tri"
                 :rules="[{ required: true, message: 'Vui lòng nhập giá trị kích thước!' }]">
                 <a-input v-model:value="newKichThuoc.gia_tri" :maxLength="5" show-count />
             </a-form-item>
-            <a-form-item label="Đơn vị" name="don_vi" :rules="[{ required: true, message: 'Vui lòng nhập đơn vị!' }]">
+            <a-form-item label="Đơn vị" name="don_vi">
                 <a-input v-model:value="newKichThuoc.don_vi" :maxLength="5" show-count />
             </a-form-item>
         </a-form>
@@ -977,14 +977,9 @@ const updateAvailableColors = () => {
 // Replace the Add functions to add locally instead of calling APIs immediately
 const handleAddDanhMuc = async () => {
     try {
-        if (!newDanhMuc.value.ten_danh_muc) {
-            message.error('Vui lòng nhập tên danh mục!');
-            return;
-        }
-
         // Check if a category with this name already exists
         const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
-            .find(item => item.ten_danh_muc.toLowerCase() === newDanhMuc.value.ten_danh_muc.toLowerCase());
+            .find(item => item.ten_danh_muc.toLowerCase() === newDanhMuc.ten_danh_muc.toLowerCase());
 
         if (existingItem) {
             message.error('Danh mục này đã tồn tại!');
@@ -997,7 +992,7 @@ const handleAddDanhMuc = async () => {
         // Create a new local category
         const newCategory = {
             id_danh_muc: tempId,
-            ten_danh_muc: newDanhMuc.value.ten_danh_muc,
+            ten_danh_muc: newDanhMuc.ten_danh_muc,
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1014,7 +1009,7 @@ const handleAddDanhMuc = async () => {
         saveLastAddedAttribute('danhMuc', tempId);
 
         message.success('Đã thêm danh mục mới (sẽ lưu khi bạn lưu sản phẩm)');
-        newDanhMuc.value = { ten_danh_muc: '' };
+        newDanhMuc.ten_danh_muc = '';
         danhMucModalVisible.value = false;
     } catch (error) {
         console.error('Lỗi khi thêm danh mục:', error);
@@ -1024,14 +1019,9 @@ const handleAddDanhMuc = async () => {
 
 const handleAddThuongHieu = async () => {
     try {
-        if (!newThuongHieu.value.ten_thuong_hieu) {
-            message.error('Vui lòng nhập tên thương hiệu!');
-            return;
-        }
-
         // Check if a brand with this name already exists
         const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
-            .find(item => item.ten_thuong_hieu.toLowerCase() === newThuongHieu.value.ten_thuong_hieu.toLowerCase());
+            .find(item => item.ten_thuong_hieu.toLowerCase() === newThuongHieu.ten_thuong_hieu.toLowerCase());
 
         if (existingItem) {
             message.error('Thương hiệu này đã tồn tại!');
@@ -1044,7 +1034,7 @@ const handleAddThuongHieu = async () => {
         // Create a new local brand
         const newBrand = {
             id_thuong_hieu: tempId,
-            ten_thuong_hieu: newThuongHieu.value.ten_thuong_hieu,
+            ten_thuong_hieu: newThuongHieu.ten_thuong_hieu,
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1061,7 +1051,7 @@ const handleAddThuongHieu = async () => {
         saveLastAddedAttribute('thuongHieu', tempId);
 
         message.success('Đã thêm thương hiệu mới (sẽ lưu khi bạn lưu sản phẩm)');
-        newThuongHieu.value = { ten_thuong_hieu: '' };
+        newThuongHieu.ten_thuong_hieu = '';
         thuongHieuModalVisible.value = false;
     } catch (error) {
         console.error('Lỗi khi thêm thương hiệu:', error);
@@ -1071,14 +1061,9 @@ const handleAddThuongHieu = async () => {
 
 const handleAddChatLieu = async () => {
     try {
-        if (!newChatLieu.value.ten_chat_lieu) {
-            message.error('Vui lòng nhập tên chất liệu!');
-            return;
-        }
-
         // Check if a material with this name already exists
         const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
-            .find(item => item.ten_chat_lieu.toLowerCase() === newChatLieu.value.ten_chat_lieu.toLowerCase());
+            .find(item => item.ten_chat_lieu.toLowerCase() === newChatLieu.ten_chat_lieu.toLowerCase());
 
         if (existingItem) {
             message.error('Chất liệu này đã tồn tại!');
@@ -1091,7 +1076,7 @@ const handleAddChatLieu = async () => {
         // Create a new local material
         const newMaterial = {
             id_chat_lieu: tempId,
-            ten_chat_lieu: newChatLieu.value.ten_chat_lieu,
+            ten_chat_lieu: newChatLieu.ten_chat_lieu,
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1108,7 +1093,7 @@ const handleAddChatLieu = async () => {
         saveLastAddedAttribute('chatLieu', tempId);
 
         message.success('Đã thêm chất liệu mới (sẽ lưu khi bạn lưu sản phẩm)');
-        newChatLieu.value = { ten_chat_lieu: '' };
+        newChatLieu.ten_chat_lieu = '';
         chatLieuModalVisible.value = false;
     } catch (error) {
         console.error('Lỗi khi thêm chất liệu:', error);
@@ -1118,14 +1103,9 @@ const handleAddChatLieu = async () => {
 
 const handleAddMauSac = async () => {
     try {
-        if (!newMauSac.value.ten_mau_sac) {
-            message.error('Vui lòng nhập tên màu sắc!');
-            return;
-        }
-
         // Check if a color with this name already exists
         const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
-            .find(item => item.ten_mau_sac.toLowerCase() === newMauSac.value.ten_mau_sac.toLowerCase());
+            .find(item => item.ten_mau_sac.toLowerCase() === newMauSac.ten_mau_sac.toLowerCase());
 
         if (existingItem) {
             message.error('Màu sắc này đã tồn tại!');
@@ -1138,7 +1118,7 @@ const handleAddMauSac = async () => {
         // Create a new local color
         const newColor = {
             id_mau_sac: tempId,
-            ten_mau_sac: newMauSac.value.ten_mau_sac,
+            ten_mau_sac: newMauSac.ten_mau_sac,
             ma_mau_sac: `MS${newLocalAttributes.mauSac.length + 1}`, // Generate a temporary code
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
@@ -1167,7 +1147,7 @@ const handleAddMauSac = async () => {
         }
 
         message.success('Đã thêm màu sắc mới (sẽ lưu khi bạn lưu sản phẩm)');
-        newMauSac.value = { ten_mau_sac: '' };
+        newMauSac.ten_mau_sac = '';
         mauSacModalVisible.value = false;
 
         // Update available colors
@@ -1180,16 +1160,11 @@ const handleAddMauSac = async () => {
 
 const handleAddKichThuoc = async () => {
     try {
-        if (!newKichThuoc.value.gia_tri || !newKichThuoc.value.don_vi) {
-            message.error('Vui lòng nhập đầy đủ thông tin kích thước!');
-            return;
-        }
-
         // Check if a size with this value already exists
         const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
             .find(item =>
-                item.gia_tri.toLowerCase() === newKichThuoc.value.gia_tri.toLowerCase() &&
-                item.don_vi.toLowerCase() === newKichThuoc.value.don_vi.toLowerCase()
+                item.gia_tri.toLowerCase() === newKichThuoc.gia_tri.toLowerCase() &&
+                (newKichThuoc.don_vi ? item.don_vi.toLowerCase() === newKichThuoc.don_vi.toLowerCase() : !item.don_vi)
             );
 
         if (existingItem) {
@@ -1200,11 +1175,14 @@ const handleAddKichThuoc = async () => {
         // Generate a temporary ID
         const tempId = generateTempId('kt');
 
+        // Đảm bảo đơn vị là chuỗi rỗng nếu không được nhập
+        const donVi = newKichThuoc.don_vi || '';
+
         // Create a new local size
         const newSize = {
             id_kich_thuoc: tempId,
-            gia_tri: newKichThuoc.value.gia_tri,
-            don_vi: newKichThuoc.value.don_vi,
+            gia_tri: newKichThuoc.gia_tri,
+            don_vi: donVi,
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1232,7 +1210,8 @@ const handleAddKichThuoc = async () => {
         }
 
         message.success('Đã thêm kích thước mới (sẽ lưu khi bạn lưu sản phẩm)');
-        newKichThuoc.value = { gia_tri: '', don_vi: '' };
+        newKichThuoc.gia_tri = '';
+        newKichThuoc.don_vi = '';
         kichThuocModalVisible.value = false;
     } catch (error) {
         console.error('Lỗi khi thêm kích thước:', error);
@@ -1377,11 +1356,20 @@ const onFinish = async () => {
         for (const tempSizeId of newSizeIds) {
             const sizeItem = newLocalAttributes.kichThuoc.find(item => item.id_kich_thuoc === tempSizeId);
             if (sizeItem) {
-                const response = await store.addKichThuoc(sizeItem.gia_tri, sizeItem.don_vi);
-                if (response.success) {
-                    idMappings.kichThuoc.set(tempSizeId, response.data.id_kich_thuoc);
+                if (sizeItem.don_vi) {
+                    console.log('sizeItem.gia_tri khi ton tai don vi', sizeItem.gia_tri);
+                    const response = await store.addKichThuoc(sizeItem.gia_tri, sizeItem.don_vi);
+                    if (response.success) {
+                        idMappings.kichThuoc.set(tempSizeId, response.data.id_kich_thuoc);
+                    }
                 } else {
-                    throw new Error(`Không thể thêm kích thước: ${response.message || 'Lỗi không xác định'}`);
+                    sizeItem.gia_tri = sizeItem.gia_tri.toString();
+                    sizeItem.don_vi = '';
+                    console.log('sizeItem.gia_tri khi khong ton tai don vi', sizeItem.gia_tri);
+                    const response = await store.addKichThuoc(sizeItem.gia_tri, sizeItem.don_vi);
+                    if (response.success) {
+                        idMappings.kichThuoc.set(tempSizeId, response.data.id_kich_thuoc);
+                    }
                 }
             }
         }
@@ -1650,23 +1638,23 @@ const mauSacModalVisible = ref(false);
 const kichThuocModalVisible = ref(false);
 
 // Add new refs for form data
-const newDanhMuc = ref({
+const newDanhMuc = reactive({
     ten_danh_muc: ''
 });
 
-const newThuongHieu = ref({
+const newThuongHieu = reactive({
     ten_thuong_hieu: ''
 });
 
-const newChatLieu = ref({
+const newChatLieu = reactive({
     ten_chat_lieu: ''
 });
 
-const newMauSac = ref({
+const newMauSac = reactive({
     ten_mau_sac: ''
 });
 
-const newKichThuoc = ref({
+const newKichThuoc = reactive({
     gia_tri: '',
     don_vi: ''
 });
@@ -1690,6 +1678,72 @@ const showAddMauSacModal = () => {
 
 const showAddKichThuocModal = () => {
     kichThuocModalVisible.value = true;
+};
+
+// Thêm refs cho các form
+const danhMucFormRef = ref(null);
+const thuongHieuFormRef = ref(null);
+const chatLieuFormRef = ref(null);
+const mauSacFormRef = ref(null);
+const kichThuocFormRef = ref(null);
+
+// Hiển thị toast modal nếu có lỗi
+const showValidationError = (title, message) => {
+    Modal.error({
+        title: title,
+        content: message,
+    });
+};
+
+// Thêm các hàm xử lý validate và submit
+const submitDanhMuc = () => {
+    if (danhMucFormRef.value) {
+        danhMucFormRef.value.validate().then(() => {
+            handleAddDanhMuc();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitThuongHieu = () => {
+    if (thuongHieuFormRef.value) {
+        thuongHieuFormRef.value.validate().then(() => {
+            handleAddThuongHieu();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitChatLieu = () => {
+    if (chatLieuFormRef.value) {
+        chatLieuFormRef.value.validate().then(() => {
+            handleAddChatLieu();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitMauSac = () => {
+    if (mauSacFormRef.value) {
+        mauSacFormRef.value.validate().then(() => {
+            handleAddMauSac();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitKichThuoc = () => {
+    if (kichThuocFormRef.value) {
+        kichThuocFormRef.value.validate().then(() => {
+            handleAddKichThuoc();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
 };
 </script>
 

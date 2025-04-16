@@ -185,15 +185,15 @@
                 <a-tab-pane key="size" tab="Kích Thước">
                     <div class="content-area">
                         <div class="add-form">
-                            <a-input v-model:value="newAttribute.name" placeholder="Thêm kích thước mới"
-                                class="input-field">
-                                <template #suffix>
-                                    <a-button type="primary" @click="addNewAttribute">
-                                        <plus-outlined />
-                                        Thêm mới
-                                    </a-button>
-                                </template>
-                            </a-input>
+                            <div class="d-flex gap-2">
+                                <a-input v-model:value="newAttribute.value" placeholder="Nhập giá trị" class="input-field" style="width: 60%">
+                                </a-input>
+                                <a-input v-model:value="newAttribute.unit" placeholder="Nhập đơn vị (tùy chọn)" class="input-field" style="width: 30%">
+                                </a-input>
+                                <a-button type="primary" @click="addNewAttribute" style="width: 10%">
+                                    <plus-outlined />
+                                </a-button>
+                            </div>
                         </div>
 
                         <a-table :dataSource="sizes" :columns="sizeColumns" :pagination="false">
@@ -553,7 +553,9 @@ async function loadSizes() {
 
 // New attribute input
 const newAttribute = ref({
-    name: ''
+    name: '', // for other tabs
+    value: '', // for size value
+    unit: ''  // for size unit
 })
 
 // Get current items based on selected tab
@@ -570,65 +572,95 @@ const getCurrentItems = computed(() => {
 
 // Methods for managing attributes
 const addNewAttribute = () => {
-    // Kiểm tra trống
-    if (!newAttribute.value.name.trim()) {
-        message.warning('Vui lòng nhập tên thuộc tính!')
-        return
-    }
-
-    // Lấy danh sách hiện tại theo tab
-    let currentList = []
-    let checkField = ''
     switch (currentTab.value) {
-        case 'category': 
-            currentList = categories.value
-            checkField = 'ten_danh_muc'
+        case 'size':
+            // Validate cho kích thước
+            if (!newAttribute.value.value.trim()) {
+                message.warning('Vui lòng nhập giá trị kích thước!')
+                return
+            }
+
+            // Kiểm tra trùng giá trị
+            const isDuplicateSize = sizes.value.some(item => 
+                item.gia_tri?.toLowerCase() === newAttribute.value.value.trim().toLowerCase() &&
+                item.don_vi?.toLowerCase() === (newAttribute.value.unit?.trim() || '').toLowerCase()
+            )
+
+            if (isDuplicateSize) {
+                message.error('Kích thước này đã tồn tại!')
+                return
+            }
+
+            // Thêm mới kích thước
+            const newSize = {
+                name: `${newAttribute.value.value}${newAttribute.value.unit ? ' ' + newAttribute.value.unit : ''}`,
+                gia_tri: newAttribute.value.value.trim(),
+                don_vi: newAttribute.value.unit.trim(),
+                isEditing: false,
+                editName: '',
+                status: true
+            }
+            sizes.value.push(newSize)
+            // Reset form
+            newAttribute.value.value = ''
+            newAttribute.value.unit = ''
             break
-        case 'brand': 
-            currentList = brands.value
-            checkField = 'ten_thuong_hieu'
-            break
-        case 'material': 
-            currentList = materials.value
-            checkField = 'ten_chat_lieu'
-            break
-        case 'color': 
-            currentList = colors.value
-            checkField = 'ten_mau_sac'
-            break
-        case 'size': 
-            currentList = sizes.value
-            checkField = 'gia_tri'
-            break
+
+        default:
+            // Xử lý các tab khác
+            if (!newAttribute.value.name.trim()) {
+                message.warning('Vui lòng nhập tên thuộc tính!')
+                return
+            }
+
+            // Lấy danh sách hiện tại theo tab
+            let currentList = []
+            let checkField = ''
+            switch (currentTab.value) {
+                case 'category': 
+                    currentList = categories.value
+                    checkField = 'ten_danh_muc'
+                    break
+                case 'brand': 
+                    currentList = brands.value
+                    checkField = 'ten_thuong_hieu'
+                    break
+                case 'material': 
+                    currentList = materials.value
+                    checkField = 'ten_chat_lieu'
+                    break
+                case 'color': 
+                    currentList = colors.value
+                    checkField = 'ten_mau_sac'
+                    break
+            }
+
+            // Kiểm tra trùng tên
+            const isDuplicate = currentList.some(item => 
+                item[checkField]?.toLowerCase() === newAttribute.value.name.trim().toLowerCase()
+            )
+
+            if (isDuplicate) {
+                message.error('Tên này đã tồn tại!')
+                return
+            }
+
+            // Thêm mới
+            const newItem = {
+                name: newAttribute.value.name.trim(),
+                isEditing: false,
+                editName: '',
+                status: true
+            }
+
+            switch (currentTab.value) {
+                case 'category': categories.value.push(newItem); break
+                case 'brand': brands.value.push(newItem); break
+                case 'material': materials.value.push(newItem); break
+                case 'color': colors.value.push(newItem); break
+            }
+            newAttribute.value.name = ''
     }
-
-    // Kiểm tra trùng tên
-    const isDuplicate = currentList.some(item => 
-        item[checkField]?.toLowerCase() === newAttribute.value.name.trim().toLowerCase()
-    )
-
-    if (isDuplicate) {
-        message.error('Tên này đã tồn tại, vui lòng nhập tên khác!')
-        return
-    }
-
-    // Nếu không trùng thì thêm mới
-    const newItem = {
-        name: newAttribute.value.name.trim(),
-        isEditing: false,
-        editName: '',
-        status: true
-    }
-
-    switch (currentTab.value) {
-        case 'category': categories.value.push(newItem); break
-        case 'brand': brands.value.push(newItem); break
-        case 'material': materials.value.push(newItem); break
-        case 'color': colors.value.push(newItem); break
-        case 'size': sizes.value.push(newItem); break
-    }
-
-    newAttribute.value.name = ''
     message.success('Thêm mới thành công!')
 }
 

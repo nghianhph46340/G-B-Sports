@@ -699,9 +699,9 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
 
-    async addKichThuoc(kichThuocData) {
+    async addKichThuoc(giaTri, donVi) {
       try {
-        const response = await sanPhamService.addKichThuoc(kichThuocData);
+        const response = await sanPhamService.addKichThuoc(giaTri, donVi);
         if (response.error) {
           return { success: false, message: response.message || 'Thêm kích thước thất bại' };
         }
