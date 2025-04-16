@@ -316,13 +316,6 @@
         </template>
     </div>
 
-    <div class="menu-container d-flex" v-if="filteredCount"
-        style="margin-left:30px; margin-top: 10px; margin-bottom: 10px">
-        <span style="font-weight: 500;">
-            Hiển thị: {{ filteredCount }} sản phẩm
-        </span>
-    </div>
-
     <a-modal v-model:open="exportModalVisible" title="Xuất Excel" width="700px">
         <div class="export-modal-content">
             <p>Chọn các trường thông tin bạn muốn xuất:</p>
@@ -367,7 +360,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue';
 import * as XLSX from 'xlsx';
 import {
     FilterOutlined,
@@ -391,6 +384,9 @@ import { message } from 'ant-design-vue';
 import { Upload } from 'ant-design-vue';
 import { storeToRefs } from 'pinia';
 
+// Định nghĩa các events
+const emit = defineEmits(['refresh-data']);
+
 const route = useRoute();
 const store = useGbStore();
 const visible = ref(false);
@@ -404,11 +400,87 @@ const updateCheckRouter = () => {
     console.log('Updated store.checkRouter:', store.checkRouter);
 };
 
+// Thêm hàm loadFilterData để tải lại dữ liệu cho bộ lọc
+const loadFilterData = async () => {
+    console.log('Đang tải lại dữ liệu cho bộ lọc...');
+    try {
+        await Promise.all([
+            store.getAllDM(),   // Danh mục
+            store.getAllTH(),   // Thương hiệu
+            store.getAllCL(),   // Chất liệu
+            store.getAllMS(),   // Màu sắc
+            store.getAllKT(),   // Kích thước
+        ]);
+        console.log('Đã tải lại dữ liệu cho bộ lọc thành công');
+        store.needFilterRefresh = false;
+    } catch (error) {
+        console.error('Lỗi khi tải lại dữ liệu cho bộ lọc:', error);
+    }
+};
+
+// Thêm hàm để xử lý sự kiện filter-data-updated
+const handleFilterDataUpdated = () => {
+    console.log('Đã nhận sự kiện filter-data-updated');
+    loadFilterData().then(() => {
+        // Kiểm tra xem có thuộc tính mới để thêm vào bộ lọc không
+        checkAndSelectNewAttributes();
+    });
+};
+
+// Thêm hàm mới để kiểm tra và chọn các thuộc tính mới
+const checkAndSelectNewAttributes = () => {
+    // Lấy thuộc tính mới từ localStorage nếu có
+    const lastAddedAttributes = localStorage.getItem('lastAddedAttributes');
+    if (lastAddedAttributes) {
+        try {
+            const attributes = JSON.parse(lastAddedAttributes);
+            console.log('Đã tìm thấy thuộc tính mới cần chọn:', attributes);
+
+            // Thêm thuộc tính mới vào các lựa chọn
+            if (attributes.danhMuc) {
+                valueDanhMuc.value = [...valueDanhMuc.value, attributes.danhMuc];
+            }
+            if (attributes.thuongHieu) {
+                valueThuongHieu.value = [...valueThuongHieu.value, attributes.thuongHieu];
+            }
+            if (attributes.chatLieu) {
+                valueChatLieu.value = [...valueChatLieu.value, attributes.chatLieu];
+            }
+            if (attributes.mauSac) {
+                valueMauSac.value = [...valueMauSac.value, attributes.mauSac];
+            }
+            if (attributes.kichThuoc) {
+                valueSize.value = [...valueSize.value, attributes.kichThuoc];
+            }
+
+            // Xóa khỏi localStorage sau khi sử dụng
+            localStorage.removeItem('lastAddedAttributes');
+
+            console.log('Đã cập nhật các giá trị đã chọn trong bộ lọc:');
+            console.log('- Danh mục:', valueDanhMuc.value);
+            console.log('- Thương hiệu:', valueThuongHieu.value);
+            console.log('- Chất liệu:', valueChatLieu.value);
+            console.log('- Màu sắc:', valueMauSac.value);
+            console.log('- Kích thước:', valueSize.value);
+        } catch (error) {
+            console.error('Lỗi khi xử lý thuộc tính mới:', error);
+        }
+    }
+};
+
 // Watch for route changes to handle browser back button
 watch(() => route.path, (newPath) => {
     console.log('Route changed to:', newPath);
     updateCheckRouter();
 }, { immediate: true });
+
+// Watch cho needFilterRefresh để tải lại dữ liệu khi cần
+watch(() => store.needFilterRefresh, (newValue) => {
+    if (newValue) {
+        console.log('Phát hiện needFilterRefresh = true, tải lại dữ liệu bộ lọc');
+        loadFilterData();
+    }
+});
 
 // Computed property để lấy giá bán lớn nhất
 const maxPriceFromProducts = computed(() => {
@@ -572,36 +644,34 @@ const checkAndLoadFilterData = async () => {
     }
 };
 
-// Hàm tải dữ liệu ban đầu
-const loadInitialData = async () => {
+// Tải dữ liệu ban đầu
+onMounted(async () => {
+    console.log('Menu Action component mounted');
     try {
-        console.log('Đang tải dữ liệu ban đầu...');
+        value2.value = [0, maxPriceFromProducts.value];
+        await store.getAllCTSP();
+        await store.getAllDM();   // Thay thế loadDanhMuc
+        await store.getAllTH();   // Thay thế loadThuongHieu
+        await store.getAllCL();   // Thay thế loadChatLieu
+        await store.getAllMS();   // Thay thế loadMauSac
+        await store.getAllKT();   // Thay thế loadKichThuoc
 
-        // Tải dữ liệu sản phẩm nếu chưa có
-        if (store.getAllSanPham.length === 0) {
-            await store.getAllSP();
-            console.log('Đã tải:', store.getAllSanPham.length, 'sản phẩm');
+        // Đăng ký sự kiện lắng nghe filter-data-updated
+        window.addEventListener('filter-data-updated', handleFilterDataUpdated);
+
+        // Kiểm tra nếu cần refresh bộ lọc
+        if (store.needFilterRefresh) {
+            loadFilterData();
         }
-
-        // Tải dữ liệu chi tiết sản phẩm nếu chưa có
-        if (store.getAllChiTietSanPham.length === 0) {
-            await store.getAllCTSP();
-            console.log('Đã tải:', store.getAllChiTietSanPham.length, 'chi tiết sản phẩm');
-        }
-
-        // Tải các dữ liệu cho bộ lọc
-        await checkAndLoadFilterData();
-
-        console.log('Hoàn tất tải dữ liệu ban đầu');
     } catch (error) {
         console.error('Lỗi khi tải dữ liệu ban đầu:', error);
-        message.error('Có lỗi khi tải dữ liệu, vui lòng thử lại');
+        message.error('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau!');
     }
-};
+});
 
-onMounted(async () => {
-    await loadInitialData();
-    updateCheckRouter(); // Ensure checkRouter is updated when component mounts
+// Hủy đăng ký sự kiện khi component bị hủy
+onBeforeUnmount(() => {
+    window.removeEventListener('filter-data-updated', handleFilterDataUpdated);
 });
 
 const filterProducts = () => {
@@ -789,9 +859,42 @@ const saveExcelImport = async () => {
             message.success(`Đã lưu thành công ${dataToSave.length} sản phẩm!`);
             importExcelModal.value = false;
 
+            // Cập nhật store
+            console.log('Bắt đầu tải dữ liệu sản phẩm mới nhất...');
             await store.getAllSanPhamNgaySua();
+            console.log('Dữ liệu sản phẩm mới nhất đã được tải:', store.getAllSanPham?.length || 0);
             store.justAddedProduct = true;
-            router.push('/admin/quanlysanpham');
+
+            // Cập nhật dữ liệu bộ lọc để bao gồm các giá trị mới
+            message.loading({ content: 'Đang cập nhật dữ liệu bộ lọc...', key: 'updateFilter' });
+
+            // Tải lại toàn bộ dữ liệu lọc
+            await Promise.all([
+                store.getAllDM(),   // Danh mục
+                store.getAllTH(),   // Thương hiệu
+                store.getAllCL(),   // Chất liệu
+                store.getAllMS(),   // Màu sắc
+                store.getAllKT(),   // Kích thước
+            ]);
+
+            console.log('Đã cập nhật dữ liệu bộ lọc sau khi import Excel');
+            message.success({ content: 'Dữ liệu bộ lọc đã được cập nhật', key: 'updateFilter', duration: 2 });
+
+            // Xóa cache sản phẩm nếu có
+            try {
+                localStorage.removeItem('cached_products');
+                console.log('Đã xóa cache sản phẩm');
+            } catch (e) {
+                console.error('Lỗi khi xóa cache:', e);
+            }
+
+            // Emit event để thông báo component cha làm mới dữ liệu
+            emit('refresh-data');
+
+            // Chuyển hướng trang với setTimeout để đảm bảo dữ liệu đã được cập nhật
+            setTimeout(() => {
+                router.push('/admin/quanlysanpham');
+            }, 300);
         }
     } catch (error) {
         console.error('Lỗi khi lưu dữ liệu:', error);
@@ -1087,6 +1190,7 @@ const updateSelectedRows = (rows) => {
 
 // Expose để component cha có thể gọi
 defineExpose({
+    checkAndLoadFilterData,
     updateSelectedRows
 });
 

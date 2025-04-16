@@ -321,6 +321,58 @@ const changeAllCTSPKhongHoatDong = async (id) => {
     console.error('Lỗi khi cập nhật trạng thái CTSP:', error)
   }
 }
+
+// Add new service methods for adding items
+const addDanhMuc = async (danhMucData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addDanhMuc?tenDanhMuc=' + danhMucData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addDanhMuc:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm danh mục' };
+  }
+};
+
+const addThuongHieu = async (thuongHieuData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addThuongHieu?tenThuongHieu=' + thuongHieuData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addThuongHieu:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm thương hiệu' };
+  }
+};
+
+const addChatLieu = async (chatLieuData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addChatLieu?tenChatLieu=' + chatLieuData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addChatLieu:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm chất liệu' };
+  }
+};
+
+const addMauSac = async (mauSacData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addMauSac?tenMauSac=' + mauSacData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addMauSac:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm màu sắc' };
+  }
+};
+
+const addKichThuoc = async (giaTri, donVi) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addSize?giaTri=' + giaTri + '&donVi=' + donVi);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addKichThuoc:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm kích thước' };
+  }
+};
+
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -349,6 +401,10 @@ export const sanPhamService = {
   exportExcel,
   changeStatusCTSP,
   changeAllCTSPHoatDong,
-  changeAllCTSPKhongHoatDong
-
+  changeAllCTSPKhongHoatDong,
+  addDanhMuc,
+  addThuongHieu,
+  addChatLieu,
+  addMauSac,
+  addKichThuoc,
 }
