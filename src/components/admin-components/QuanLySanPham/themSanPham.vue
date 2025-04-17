@@ -12,7 +12,7 @@
                     { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
                     { validator: validateProductName }
                 ]">
-                    <a-input v-model:value="formState.ten_san_pham" />
+                    <a-input v-model:value="formState.ten_san_pham" :maxLength="100" show-count />
                 </a-form-item>
                 <!-- <a-form-item label="Giới tính" name="gioi_tinh"
                     :rules="[{ required: true, message: 'Vui lòng chọn giới tính!' }]">
@@ -40,31 +40,49 @@
 
                 <a-form-item label="Danh mục" name="id_danh_muc"
                     :rules="[{ required: true, message: 'Vui lòng chọn danh mục!' }]">
-                    <a-select v-model:value="formState.id_danh_muc" placeholder="Chọn danh mục">
-                        <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc" :value="item.id_danh_muc">
-                            {{ item.ten_danh_muc }}
-                        </a-select-option>
-                    </a-select>
+                    <div class="d-flex gap-2">
+                        <a-select v-model:value="formState.id_danh_muc" placeholder="Chọn danh mục" class="flex-grow-1">
+                            <a-select-option v-for="item in combinedDanhMucList" :key="item.id_danh_muc"
+                                :value="item.id_danh_muc">
+                                {{ item.ten_danh_muc }}
+                            </a-select-option>
+                        </a-select>
+                        <a-button type="primary" @click="showAddDanhMucModal">
+                            <plus-outlined />
+                        </a-button>
+                    </div>
                 </a-form-item>
 
                 <a-form-item label="Thương hiệu" name="id_thuong_hieu"
                     :rules="[{ required: true, message: 'Vui lòng chọn thương hiệu!' }]">
-                    <a-select v-model:value="formState.id_thuong_hieu" placeholder="Chọn thương hiệu">
-                        <a-select-option v-for="item in thuongHieuList" :key="item.id_thuong_hieu"
-                            :value="item.id_thuong_hieu">
-                            {{ item.ten_thuong_hieu }}
-                        </a-select-option>
-                    </a-select>
+                    <div class="d-flex gap-2">
+                        <a-select v-model:value="formState.id_thuong_hieu" placeholder="Chọn thương hiệu"
+                            class="flex-grow-1">
+                            <a-select-option v-for="item in combinedThuongHieuList" :key="item.id_thuong_hieu"
+                                :value="item.id_thuong_hieu">
+                                {{ item.ten_thuong_hieu }}
+                            </a-select-option>
+                        </a-select>
+                        <a-button type="primary" @click="showAddThuongHieuModal">
+                            <plus-outlined />
+                        </a-button>
+                    </div>
                 </a-form-item>
 
                 <a-form-item label="Chất liệu" name="id_chat_lieu"
                     :rules="[{ required: true, message: 'Vui lòng chọn chất liệu!' }]">
-                    <a-select v-model:value="formState.id_chat_lieu" placeholder="Chọn chất liệu">
-                        <a-select-option v-for="item in chatLieuList" :key="item.id_chat_lieu"
-                            :value="item.id_chat_lieu">
-                            {{ item.ten_chat_lieu }}
-                        </a-select-option>
-                    </a-select>
+                    <div class="d-flex gap-2">
+                        <a-select v-model:value="formState.id_chat_lieu" placeholder="Chọn chất liệu"
+                            class="flex-grow-1">
+                            <a-select-option v-for="item in combinedChatLieuList" :key="item.id_chat_lieu"
+                                :value="item.id_chat_lieu">
+                                {{ item.ten_chat_lieu }}
+                            </a-select-option>
+                        </a-select>
+                        <a-button type="primary" @click="showAddChatLieuModal">
+                            <plus-outlined />
+                        </a-button>
+                    </div>
                 </a-form-item>
 
                 <a-form-item label="Mô tả" name="mo_ta">
@@ -119,26 +137,36 @@
                             <div class="col-md-6">
                                 <a-form-item label="Màu sắc"
                                     :rules="[{ required: true, message: 'Vui lòng chọn màu sắc!' }]">
-                                    <a-select v-model:value="variantType.id_mau_sac" placeholder="Chọn màu sắc"
-                                        @change="() => updateAvailableSizes(typeIndex)">
-                                        <a-select-option v-for="color in availableColors" :key="color.id_mau_sac"
-                                            :value="color.id_mau_sac">
-                                            {{ color.ma_mau_sac + ' ' + color.ten_mau_sac }}
-                                        </a-select-option>
-                                    </a-select>
+                                    <div class="d-flex gap-2">
+                                        <a-select v-model:value="variantType.id_mau_sac" placeholder="Chọn màu sắc"
+                                            @change="() => updateAvailableSizes(typeIndex)" class="flex-grow-1">
+                                            <a-select-option v-for="color in combinedMauSacList" :key="color.id_mau_sac"
+                                                :value="color.id_mau_sac">
+                                                {{ color.ma_mau_sac + ' ' + color.ten_mau_sac }}
+                                            </a-select-option>
+                                        </a-select>
+                                        <a-button type="primary" @click="showAddMauSacModal">
+                                            <plus-outlined />
+                                        </a-button>
+                                    </div>
                                 </a-form-item>
                             </div>
                             <div class="col-md-6">
                                 <a-form-item label="Kích thước"
                                     :rules="[{ required: true, message: 'Vui lòng chọn ít nhất một kích thước!' }]">
-                                    <a-select v-model:value="variantType.selectedSizes" mode="multiple"
-                                        placeholder="Chọn kích thước"
-                                        @change="(values) => handleSizeChange(values, typeIndex)">
-                                        <a-select-option v-for="size in sizeList" :key="size.id_kich_thuoc"
-                                            :value="size.id_kich_thuoc">
-                                            {{ size.gia_tri }}
-                                        </a-select-option>
-                                    </a-select>
+                                    <div class="d-flex gap-2">
+                                        <a-select v-model:value="variantType.selectedSizes" mode="multiple"
+                                            placeholder="Chọn kích thước" class="flex-grow-1"
+                                            @change="(values) => handleSizeChange(values, typeIndex)">
+                                            <a-select-option v-for="size in combinedSizeList" :key="size.id_kich_thuoc"
+                                                :value="size.id_kich_thuoc">
+                                                {{ size.gia_tri }}
+                                            </a-select-option>
+                                        </a-select>
+                                        <a-button type="primary" @click="showAddKichThuocModal">
+                                            <plus-outlined />
+                                        </a-button>
+                                    </div>
                                 </a-form-item>
                             </div>
                         </div>
@@ -215,10 +243,14 @@
                     </div>
                 </div>
 
-                <div class="mt-3" v-if="variants.length > 0">
-                    <a-button type="primary" html-type="submit" :loading="loading" @click="onFinish">
-                        Lưu tất cả
+                <!-- Thêm nút lưu ở đây, bên ngoài tất cả các điều kiện v-if khác -->
+                <div class="mt-4 text-center" v-if="isProductValidated && variantTypes.length > 0">
+                    <a-button type="primary" size="large" html-type="submit" :loading="loading" @click="onFinish">
+                        <PlusOutlined /> Lưu tất cả biến thể
                     </a-button>
+                    <div class="mt-2 text-muted">
+                        Tổng số biến thể: {{ variants.length }}
+                    </div>
                 </div>
             </template>
 
@@ -235,10 +267,59 @@
     <a-modal :visible="previewVisible" :title="previewTitle" :footer="null" @cancel="handleCancel">
         <img alt="example" style="width: 100%" :src="previewImage" />
     </a-modal>
+
+    <!-- Add modals for quick-add functionality -->
+    <a-modal v-model:visible="danhMucModalVisible" title="Thêm danh mục mới" @ok="submitDanhMuc">
+        <a-form layout="vertical" ref="danhMucFormRef" :model="newDanhMuc">
+            <a-form-item label="Tên danh mục" name="ten_danh_muc"
+                :rules="[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]">
+                <a-input v-model:value="newDanhMuc.ten_danh_muc" :maxLength="50" show-count />
+            </a-form-item>
+        </a-form>
+    </a-modal>
+
+    <a-modal v-model:visible="thuongHieuModalVisible" title="Thêm thương hiệu mới" @ok="submitThuongHieu">
+        <a-form layout="vertical" ref="thuongHieuFormRef" :model="newThuongHieu">
+            <a-form-item label="Tên thương hiệu" name="ten_thuong_hieu"
+                :rules="[{ required: true, message: 'Vui lòng nhập tên thương hiệu!' }]">
+                <a-input v-model:value="newThuongHieu.ten_thuong_hieu" :maxLength="50" show-count />
+            </a-form-item>
+        </a-form>
+    </a-modal>
+
+    <a-modal v-model:visible="chatLieuModalVisible" title="Thêm chất liệu mới" @ok="submitChatLieu">
+        <a-form layout="vertical" ref="chatLieuFormRef" :model="newChatLieu">
+            <a-form-item label="Tên chất liệu" name="ten_chat_lieu"
+                :rules="[{ required: true, message: 'Vui lòng nhập tên chất liệu!' }]">
+                <a-input v-model:value="newChatLieu.ten_chat_lieu" :maxLength="50" show-count />
+            </a-form-item>
+        </a-form>
+    </a-modal>
+
+    <a-modal v-model:visible="mauSacModalVisible" title="Thêm màu sắc mới" @ok="submitMauSac">
+        <a-form layout="vertical" ref="mauSacFormRef" :model="newMauSac">
+            <a-form-item label="Tên màu sắc" name="ten_mau_sac"
+                :rules="[{ required: true, message: 'Vui lòng nhập tên màu sắc!' }]">
+                <a-input v-model:value="newMauSac.ten_mau_sac" :maxLength="15" show-count />
+            </a-form-item>
+        </a-form>
+    </a-modal>
+
+    <a-modal v-model:visible="kichThuocModalVisible" title="Thêm kích thước mới" @ok="submitKichThuoc">
+        <a-form layout="vertical" ref="kichThuocFormRef" :model="newKichThuoc">
+            <a-form-item label="Giá trị" name="gia_tri"
+                :rules="[{ required: true, message: 'Vui lòng nhập giá trị kích thước!' }]">
+                <a-input v-model:value="newKichThuoc.gia_tri" :maxLength="5" show-count />
+            </a-form-item>
+            <a-form-item label="Đơn vị" name="don_vi">
+                <a-input v-model:value="newKichThuoc.don_vi" :maxLength="5" show-count />
+            </a-form-item>
+        </a-form>
+    </a-modal>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, onBeforeUnmount, nextTick } from 'vue';
+import { ref, reactive, onMounted, watch, onBeforeUnmount, nextTick, computed } from 'vue';
 import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
@@ -290,36 +371,6 @@ const sizeList = ref([]); // Danh sách size từ API
 
 // Thêm state cho dạng biến thể
 const variantTypes = ref([]);
-const availableColors = ref([]);
-const variantColumns = ref([
-    {
-        title: 'Màu sắc',
-        dataIndex: 'mau_sac_name',
-        key: 'mau_sac_name',
-    },
-    {
-        title: 'Kích thước',
-        dataIndex: 'kich_thuoc_name',
-        key: 'kich_thuoc_name',
-    },
-    {
-        title: 'Số lượng',
-        dataIndex: 'so_luong',
-        key: 'so_luong',
-    },
-    {
-        title: 'Giá bán',
-        dataIndex: 'gia_ban',
-        key: 'gia_ban',
-        customRender: ({ text }) => {
-            return text ? text.toLocaleString('vi-VN') + ' đ' : '0 đ';
-        }
-    },
-    {
-        title: 'Thao tác',
-        key: 'action',
-    }
-]);
 
 // Thêm state cho preview ảnh
 const previewVisible = ref(false);
@@ -411,6 +462,7 @@ const validateForm = async () => {
         await formRef.value.validate();
         console.log('Form validated successfully');
         isProductValidated.value = true;
+        console.log('isProductValidated set to true');
         message.success('Thông tin sản phẩm hợp lệ, bạn có thể thêm biến thể');
     } catch (errorInfo) {
         console.log('Validation failed:', errorInfo);
@@ -444,17 +496,6 @@ const removeVariantType = (index) => {
 
     // Cập nhật lại danh sách màu có sẵn
     updateAvailableColors();
-};
-
-// Cập nhật danh sách màu có sẵn (loại bỏ các màu đã được chọn)
-const updateAvailableColors = () => {
-    if (!mauSacList.value) return;
-
-    const usedColorIds = variantTypes.value
-        .filter(vt => vt.id_mau_sac)
-        .map(vt => vt.id_mau_sac);
-
-    availableColors.value = mauSacList.value.filter(color => !usedColorIds.includes(color.id_mau_sac));
 };
 
 //uploadẢnh
@@ -601,12 +642,16 @@ const updateVariantsFromType = (typeIndex) => {
 
     // Nếu chưa chọn màu hoặc chưa chọn kích thước nào thì không tạo biến thể
     if (!type.id_mau_sac || !type.selectedSizes || type.selectedSizes.length === 0) {
+        console.log('No valid color or sizes selected');
         return;
     }
 
-    // Tìm thông tin màu sắc
-    const colorInfo = mauSacList.value.find(c => c.id_mau_sac === type.id_mau_sac);
-    if (!colorInfo) return;
+    // Tìm thông tin màu sắc trong danh sách kết hợp (API + local)
+    const colorInfo = combinedMauSacList.value.find(c => c.id_mau_sac === type.id_mau_sac);
+    if (!colorInfo) {
+        console.error('Color not found:', type.id_mau_sac);
+        return;
+    }
 
     // Đảm bảo giá và số lượng có giá trị hợp lệ
     const safePrice = type.gia_ban !== null && type.gia_ban !== undefined ? type.gia_ban : 1000;
@@ -614,8 +659,11 @@ const updateVariantsFromType = (typeIndex) => {
 
     // Tạo biến thể mới cho mỗi kích thước đã chọn
     type.selectedSizes.forEach(sizeId => {
-        const sizeInfo = sizeList.value.find(s => s.id_kich_thuoc === sizeId);
-        if (!sizeInfo) return;
+        const sizeInfo = combinedSizeList.value.find(s => s.id_kich_thuoc === sizeId);
+        if (!sizeInfo) {
+            console.error('Size not found:', sizeId);
+            return;
+        }
 
         // Tạo biến thể mới với giá trị an toàn
         variants.value.push({
@@ -632,14 +680,20 @@ const updateVariantsFromType = (typeIndex) => {
 
     // Thông báo cập nhật thành công
     console.log(`Đã cập nhật ${variants.value.filter(v => v.id_mau_sac === type.id_mau_sac).length} biến thể với màu ${colorInfo.ten_mau_sac}`);
+    console.log('Total variants:', variants.value.length);
 };
 
 // Lấy danh sách biến thể từ một dạng biến thể
 const getVariantsFromType = (typeIndex) => {
     const type = variantTypes.value[typeIndex];
-    if (!type.id_mau_sac) return [];
+    if (!type.id_mau_sac) {
+        console.log(`No color selected for variant type #${typeIndex + 1}`);
+        return [];
+    }
 
-    return variants.value.filter(v => v.id_mau_sac === type.id_mau_sac);
+    const result = variants.value.filter(v => v.id_mau_sac === type.id_mau_sac);
+    console.log(`Found ${result.length} variants for type #${typeIndex + 1} with color ID ${type.id_mau_sac}`);
+    return result;
 };
 
 // Xóa một biến thể cụ thể bằng id màu sắc và id kích thước
@@ -756,6 +810,9 @@ onMounted(() => {
 // Fetch initial data
 onMounted(async () => {
     try {
+        // Load tất cả thuộc tính từ localStorage trước
+        loadAttributesFromLocalStorage();
+
         // Lấy danh sách sản phẩm để tạo mã tự động
         await store.getAllSanPhamNgaySua();
 
@@ -833,6 +890,563 @@ const validateFormData = (data) => {
     return true;
 };
 
+// Add new refs for storing local attributes that haven't been saved to DB yet
+const newLocalAttributes = reactive({
+    danhMuc: [],
+    thuongHieu: [],
+    chatLieu: [],
+    mauSac: [],
+    kichThuoc: []
+});
+
+// Create maps to store temp IDs for new attributes
+const tempIdMaps = reactive({
+    danhMuc: new Map(),
+    thuongHieu: new Map(),
+    chatLieu: new Map(),
+    mauSac: new Map(),
+    kichThuoc: new Map()
+});
+
+// Generate a temporary negative ID to identify unsaved items
+const generateTempId = (prefix) => {
+    return `temp_${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+};
+
+// Create computed properties that combine API data with local data
+const combinedDanhMucList = computed(() => {
+    return [...danhMucList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.danhMuc];
+});
+
+const combinedThuongHieuList = computed(() => {
+    return [...thuongHieuList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.thuongHieu];
+});
+
+const combinedChatLieuList = computed(() => {
+    return [...chatLieuList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.chatLieu];
+});
+
+const combinedMauSacList = computed(() => {
+    return [...mauSacList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.mauSac];
+});
+
+const combinedSizeList = computed(() => {
+    return [...sizeList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.kichThuoc];
+});
+
+// Modify to use combined lists
+const availableColors = ref([]);
+const variantColumns = ref([
+    {
+        title: 'Màu sắc',
+        dataIndex: 'mau_sac_name',
+        key: 'mau_sac_name',
+    },
+    {
+        title: 'Kích thước',
+        dataIndex: 'kich_thuoc_name',
+        key: 'kich_thuoc_name',
+    },
+    {
+        title: 'Số lượng',
+        dataIndex: 'so_luong',
+        key: 'so_luong',
+    },
+    {
+        title: 'Giá bán',
+        dataIndex: 'gia_ban',
+        key: 'gia_ban',
+        customRender: ({ text }) => {
+            return text ? text.toLocaleString('vi-VN') + ' đ' : '0 đ';
+        }
+    },
+    {
+        title: 'Thao tác',
+        key: 'action',
+    }
+]);
+
+// Modify to use combined lists
+const updateAvailableColors = () => {
+    if (!mauSacList.value && newLocalAttributes.mauSac.length === 0) return;
+
+    const usedColorIds = variantTypes.value
+        .filter(vt => vt.id_mau_sac)
+        .map(vt => vt.id_mau_sac);
+
+    availableColors.value = combinedMauSacList.value.filter(color => !usedColorIds.includes(color.id_mau_sac));
+};
+
+// Replace the Add functions to add locally instead of calling APIs immediately
+const handleAddDanhMuc = async () => {
+    try {
+        if (!newDanhMuc.ten_danh_muc) {
+            message.error('Vui lòng nhập tên danh mục!');
+            return;
+        }
+
+        // Chuẩn hóa tên danh mục (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newDanhMuc.ten_danh_muc.trim().toLowerCase();
+
+        // Kiểm tra xem đã có danh mục nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
+            .find(item => item.ten_danh_muc.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu danh mục tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Danh mục này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Danh mục này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa danh mục hiện tại trong newLocalAttributes và thay thế bằng danh mục mới
+        newLocalAttributes.danhMuc = [];
+
+        // Generate a temporary ID
+        const tempId = generateTempId('dm');
+
+        // Create a new local category
+        const newCategory = {
+            id_danh_muc: tempId,
+            ten_danh_muc: newDanhMuc.ten_danh_muc.trim(),
+            trang_thai: 'Hoạt động',
+            _isNew: true // Mark as new to identify later
+        };
+
+        // Add to local list
+        newLocalAttributes.danhMuc.push(newCategory);
+
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_danh_muc = tempId;
+
+        // Lưu ID danh mục mới vào localStorage để component menuAction có thể chọn nó
+        saveLastAddedAttribute('danhMuc', tempId, newCategory.ten_danh_muc);
+
+        message.success('Đã thêm danh mục mới (sẽ lưu khi bạn lưu sản phẩm)');
+        newDanhMuc.ten_danh_muc = '';
+        danhMucModalVisible.value = false;
+    } catch (error) {
+        console.error('Lỗi khi thêm danh mục:', error);
+        message.error('Có lỗi xảy ra khi thêm danh mục!');
+    }
+};
+
+const handleAddThuongHieu = async () => {
+    try {
+        if (!newThuongHieu.ten_thuong_hieu) {
+            message.error('Vui lòng nhập tên thương hiệu!');
+            return;
+        }
+
+        // Chuẩn hóa tên thương hiệu (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newThuongHieu.ten_thuong_hieu.trim().toLowerCase();
+
+        // Kiểm tra xem đã có thương hiệu nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
+            .find(item => item.ten_thuong_hieu.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu thương hiệu tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Thương hiệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Thương hiệu này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa thương hiệu hiện tại trong newLocalAttributes và thay thế bằng thương hiệu mới
+        newLocalAttributes.thuongHieu = [];
+
+        // Generate a temporary ID
+        const tempId = generateTempId('th');
+
+        // Create a new local brand
+        const newBrand = {
+            id_thuong_hieu: tempId,
+            ten_thuong_hieu: newThuongHieu.ten_thuong_hieu.trim(),
+            trang_thai: 'Hoạt động',
+            _isNew: true // Mark as new to identify later
+        };
+
+        // Add to local list
+        newLocalAttributes.thuongHieu.push(newBrand);
+
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_thuong_hieu = tempId;
+
+        // Lưu ID thương hiệu mới vào localStorage để component menuAction có thể chọn nó
+        saveLastAddedAttribute('thuongHieu', tempId, newBrand.ten_thuong_hieu);
+
+        message.success('Đã thêm thương hiệu mới (sẽ lưu khi bạn lưu sản phẩm)');
+        newThuongHieu.ten_thuong_hieu = '';
+        thuongHieuModalVisible.value = false;
+    } catch (error) {
+        console.error('Lỗi khi thêm thương hiệu:', error);
+        message.error('Có lỗi xảy ra khi thêm thương hiệu!');
+    }
+};
+
+const handleAddChatLieu = async () => {
+    try {
+        if (!newChatLieu.ten_chat_lieu) {
+            message.error('Vui lòng nhập tên chất liệu!');
+            return;
+        }
+
+        // Chuẩn hóa tên chất liệu (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newChatLieu.ten_chat_lieu.trim().toLowerCase();
+
+        // Kiểm tra xem đã có chất liệu nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
+            .find(item => item.ten_chat_lieu.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu chất liệu tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Chất liệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Chất liệu này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa chất liệu hiện tại trong newLocalAttributes và thay thế bằng chất liệu mới
+        newLocalAttributes.chatLieu = [];
+
+        // Generate a temporary ID
+        const tempId = generateTempId('cl');
+
+        // Create a new local material
+        const newMaterial = {
+            id_chat_lieu: tempId,
+            ten_chat_lieu: newChatLieu.ten_chat_lieu.trim(),
+            trang_thai: 'Hoạt động',
+            _isNew: true // Mark as new to identify later
+        };
+
+        // Add to local list
+        newLocalAttributes.chatLieu.push(newMaterial);
+
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_chat_lieu = tempId;
+
+        // Lưu ID chất liệu mới vào localStorage để component menuAction có thể chọn nó
+        saveLastAddedAttribute('chatLieu', tempId, newMaterial.ten_chat_lieu);
+
+        message.success('Đã thêm chất liệu mới (sẽ lưu khi bạn lưu sản phẩm)');
+        newChatLieu.ten_chat_lieu = '';
+        chatLieuModalVisible.value = false;
+    } catch (error) {
+        console.error('Lỗi khi thêm chất liệu:', error);
+        message.error('Có lỗi xảy ra khi thêm chất liệu!');
+    }
+};
+
+const handleAddMauSac = async () => {
+    try {
+        if (!newMauSac.ten_mau_sac) {
+            message.error('Vui lòng nhập tên màu sắc!');
+            return;
+        }
+
+        // Chuẩn hóa tên màu sắc (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedInput = newMauSac.ten_mau_sac.trim().toLowerCase();
+
+        // Kiểm tra xem đã có màu sắc nào trùng tên không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
+            .find(item => item.ten_mau_sac.trim().toLowerCase() === normalizedInput);
+
+        if (existingItem) {
+            // Nếu màu sắc tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Màu sắc này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Màu sắc này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa màu sắc hiện tại trong newLocalAttributes và thay thế bằng màu sắc mới
+        newLocalAttributes.mauSac = [];
+
+        // Generate a temporary ID
+        const tempId = generateTempId('ms');
+
+        // Create a new local color
+        const newColor = {
+            id_mau_sac: tempId,
+            ten_mau_sac: newMauSac.ten_mau_sac.trim(),
+            ma_mau_sac: `MS${newLocalAttributes.mauSac.length + 1}`, // Generate a temporary code
+            trang_thai: 'Hoạt động',
+            _isNew: true // Mark as new to identify later
+        };
+
+        // Add to local list
+        newLocalAttributes.mauSac.push(newColor);
+
+        // Lưu ID màu sắc mới vào localStorage để component menuAction có thể chọn nó
+        saveLastAddedAttribute('mauSac', tempId, newColor.ten_mau_sac);
+
+        // Tự động chọn màu sắc mới cho biến thể hiện tại đang mở
+        if (variantTypes.value.length > 0) {
+            // Tìm biến thể đầu tiên chưa có màu sắc hoặc biến thể cuối cùng
+            const targetTypeIndex = variantTypes.value.findIndex(type => !type.id_mau_sac);
+            const index = targetTypeIndex >= 0 ? targetTypeIndex : variantTypes.value.length - 1;
+
+            // Gán màu sắc mới cho biến thể
+            if (index >= 0) {
+                variantTypes.value[index].id_mau_sac = tempId;
+                console.log(`Đã tự động chọn màu sắc mới (${newColor.ten_mau_sac}) cho biến thể #${index + 1}`);
+
+                // Cập nhật các biến thể từ dạng biến thể
+                updateVariantsFromType(index);
+            }
+        }
+
+        message.success('Đã thêm màu sắc mới (sẽ lưu khi bạn lưu sản phẩm)');
+        newMauSac.ten_mau_sac = '';
+        mauSacModalVisible.value = false;
+
+        // Update available colors
+        updateAvailableColors();
+    } catch (error) {
+        console.error('Lỗi khi thêm màu sắc:', error);
+        message.error('Có lỗi xảy ra khi thêm màu sắc!');
+    }
+};
+
+const handleAddKichThuoc = async () => {
+    try {
+        if (!newKichThuoc.gia_tri) {
+            message.error('Vui lòng nhập giá trị kích thước!');
+            return;
+        }
+
+        // Chuẩn hóa giá trị kích thước và đơn vị (loại bỏ khoảng trắng thừa và chuyển thành chữ thường)
+        const normalizedGiaTri = newKichThuoc.gia_tri.trim().toLowerCase();
+        const normalizedDonVi = newKichThuoc.don_vi ? newKichThuoc.don_vi.trim().toLowerCase() : '';
+
+        // Kiểm tra xem đã có kích thước nào trùng không - kiểm tra trên toàn bộ danh sách
+        const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
+            .find(item => {
+                const itemGiaTri = item.gia_tri.toString().trim().toLowerCase();
+                const itemDonVi = item.don_vi ? item.don_vi.trim().toLowerCase() : '';
+
+                return itemGiaTri === normalizedGiaTri &&
+                    (normalizedDonVi ? itemDonVi === normalizedDonVi : !itemDonVi);
+            });
+
+        if (existingItem) {
+            // Nếu kích thước tồn tại nhưng không hoạt động, thông báo cụ thể
+            if (existingItem.trang_thai === 'Không hoạt động') {
+                message.error('Kích thước này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+            } else {
+                message.error('Kích thước này đã tồn tại!');
+            }
+            return;
+        }
+
+        // Xóa kích thước hiện tại trong newLocalAttributes và thay thế bằng kích thước mới
+        newLocalAttributes.kichThuoc = [];
+
+        // Generate a temporary ID
+        const tempId = generateTempId('kt');
+
+        // Đảm bảo đơn vị là chuỗi rỗng nếu không được nhập
+        const donVi = newKichThuoc.don_vi ? newKichThuoc.don_vi.trim() : '';
+
+        // Create a new local size
+        const newSize = {
+            id_kich_thuoc: tempId,
+            gia_tri: newKichThuoc.gia_tri.trim(),
+            don_vi: donVi,
+            trang_thai: 'Hoạt động',
+            _isNew: true // Mark as new to identify later
+        };
+
+        // Add to local list
+        newLocalAttributes.kichThuoc.push(newSize);
+
+        // Lưu ID kích thước mới vào localStorage để component menuAction có thể chọn nó
+        saveLastAddedAttribute('kichThuoc', tempId, newSize.gia_tri + (donVi ? ' ' + donVi : ''));
+
+        // Tự động thêm kích thước mới vào danh sách đã chọn của biến thể hiện tại
+        if (variantTypes.value.length > 0) {
+            // Tìm biến thể đầu tiên đã có màu sắc hoặc biến thể cuối cùng
+            const targetTypeIndex = variantTypes.value.findIndex(type => type.id_mau_sac);
+            const index = targetTypeIndex >= 0 ? targetTypeIndex : variantTypes.value.length - 1;
+
+            if (index >= 0 && variantTypes.value[index].selectedSizes) {
+                // Thêm kích thước mới vào danh sách đã chọn
+                variantTypes.value[index].selectedSizes.push(tempId);
+                console.log(`Đã tự động thêm kích thước mới (${newSize.gia_tri} ${newSize.don_vi}) vào biến thể #${index + 1}`);
+
+                // Cập nhật danh sách biến thể
+                handleSizeChange(variantTypes.value[index].selectedSizes, index);
+            }
+        }
+
+        message.success('Đã thêm kích thước mới (sẽ lưu khi bạn lưu sản phẩm)');
+        newKichThuoc.gia_tri = '';
+        newKichThuoc.don_vi = '';
+        kichThuocModalVisible.value = false;
+    } catch (error) {
+        console.error('Lỗi khi thêm kích thước:', error);
+        message.error('Có lỗi xảy ra khi thêm kích thước!');
+    }
+};
+
+// Sửa hàm lưu thuộc tính vào localStorage để chỉ lưu thuộc tính mới nhất
+const saveLastAddedAttribute = (type, id, name) => {
+    try {
+        // Không ghép nối từ localStorage nữa, mà tạo đối tượng mới mỗi lần lưu
+        let attributes = {};
+
+        // Lấy dữ liệu hiện tại từ localStorage để giữ các loại thuộc tính khác
+        const existingData = localStorage.getItem('lastAddedAttributes');
+        if (existingData) {
+            attributes = JSON.parse(existingData);
+        }
+
+        // Thêm/thay thế thuộc tính mới
+        attributes[type] = {
+            id: id,
+            name: name
+        };
+
+        // Lưu lại vào localStorage
+        localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+
+        console.log(`Đã cập nhật ${type} mới nhất (${name}, ID: ${id}) vào localStorage`);
+    } catch (error) {
+        console.error('Lỗi khi lưu thuộc tính mới vào localStorage:', error);
+    }
+};
+
+// Thêm hàm để tải thuộc tính từ localStorage trong onMounted
+const loadAttributesFromLocalStorage = () => {
+    try {
+        const storedData = localStorage.getItem('lastAddedAttributes');
+        if (!storedData) return;
+
+        const attributes = JSON.parse(storedData);
+
+        // Xóa mảng newLocalAttributes hiện tại để cập nhật lại từ đầu
+        newLocalAttributes.danhMuc = [];
+        newLocalAttributes.thuongHieu = [];
+        newLocalAttributes.chatLieu = [];
+        newLocalAttributes.mauSac = [];
+        newLocalAttributes.kichThuoc = [];
+
+        // Thêm vào thuộc tính từ localStorage
+        if (attributes.danhMuc) {
+            // Tạo đối tượng mới với ID tạm thời
+            const tempId = generateTempId('dm');
+            const newCategory = {
+                id_danh_muc: tempId,
+                ten_danh_muc: attributes.danhMuc.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.danhMuc.push(newCategory);
+
+            // Tự động chọn danh mục trong form
+            formState.id_danh_muc = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.danhMuc.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.thuongHieu) {
+            const tempId = generateTempId('th');
+            const newBrand = {
+                id_thuong_hieu: tempId,
+                ten_thuong_hieu: attributes.thuongHieu.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.thuongHieu.push(newBrand);
+
+            // Tự động chọn thương hiệu trong form
+            formState.id_thuong_hieu = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.thuongHieu.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.chatLieu) {
+            const tempId = generateTempId('cl');
+            const newMaterial = {
+                id_chat_lieu: tempId,
+                ten_chat_lieu: attributes.chatLieu.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.chatLieu.push(newMaterial);
+
+            // Tự động chọn chất liệu trong form
+            formState.id_chat_lieu = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.chatLieu.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.mauSac) {
+            const tempId = generateTempId('ms');
+            const newColor = {
+                id_mau_sac: tempId,
+                ten_mau_sac: attributes.mauSac.name,
+                ma_mau_sac: `MS${newLocalAttributes.mauSac.length + 1}`,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.mauSac.push(newColor);
+
+            // Cập nhật lại ID trong localStorage
+            attributes.mauSac.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.kichThuoc) {
+            const tempId = generateTempId('kt');
+            // Kiểm tra và tách giá trị và đơn vị từ name (nếu có)
+            let giaTri = attributes.kichThuoc.name;
+            let donVi = '';
+
+            const parts = attributes.kichThuoc.name.split(' ');
+            if (parts.length > 1) {
+                giaTri = parts[0];
+                donVi = parts.slice(1).join(' ');
+            }
+
+            const newSize = {
+                id_kich_thuoc: tempId,
+                gia_tri: giaTri,
+                don_vi: donVi,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.kichThuoc.push(newSize);
+
+            // Cập nhật lại ID trong localStorage
+            attributes.kichThuoc.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        console.log('Đã tải thuộc tính từ localStorage:', newLocalAttributes);
+    } catch (error) {
+        console.error('Lỗi khi tải thuộc tính từ localStorage:', error);
+    }
+};
+
+// Modify onFinish to save new attributes first, then use their IDs to save the product
 const onFinish = async () => {
     if (!isProductValidated.value) {
         message.error('Vui lòng xác nhận thông tin sản phẩm trước');
@@ -854,7 +1468,7 @@ const onFinish = async () => {
             // Validate giá của biến thể
             if (!useCommonPrice.value) {
                 if (!variant.gia_ban || variant.gia_ban < 1000) {
-                    throw new Error(`Giá bán của biến thể #${index + 1} phải lớn hơn 1000!`);
+                    throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
                 }
             }
         }
@@ -876,7 +1490,153 @@ const onFinish = async () => {
             }
         }
 
-        console.log('FormState trước khi gửi:', formState);
+        // 1. First, save any new attributes and get their real IDs
+        const idMappings = {
+            danhMuc: new Map(),
+            thuongHieu: new Map(),
+            chatLieu: new Map(),
+            mauSac: new Map(),
+            kichThuoc: new Map()
+        };
+
+        // 1.1 Save Danh Mục if needed
+        if (formState.id_danh_muc && formState.id_danh_muc.toString().startsWith('temp_')) {
+            const danhMucItem = newLocalAttributes.danhMuc.find(item => item.id_danh_muc === formState.id_danh_muc);
+            if (danhMucItem) {
+                const response = await store.addDanhMuc(danhMucItem.ten_danh_muc);
+                if (response.success) {
+                    idMappings.danhMuc.set(formState.id_danh_muc, response.data.id_danh_muc);
+                    formState.id_danh_muc = response.data.id_danh_muc;
+                } else {
+                    throw new Error(`Không thể thêm danh mục: ${response.message || 'Lỗi không xác định'}`);
+                }
+            }
+        }
+
+        // 1.2 Save Thương Hiệu if needed
+        if (formState.id_thuong_hieu && formState.id_thuong_hieu.toString().startsWith('temp_')) {
+            const thuongHieuItem = newLocalAttributes.thuongHieu.find(item => item.id_thuong_hieu === formState.id_thuong_hieu);
+            if (thuongHieuItem) {
+                const response = await store.addThuongHieu(thuongHieuItem.ten_thuong_hieu);
+                if (response.success) {
+                    idMappings.thuongHieu.set(formState.id_thuong_hieu, response.data.id_thuong_hieu);
+                    formState.id_thuong_hieu = response.data.id_thuong_hieu;
+                } else {
+                    throw new Error(`Không thể thêm thương hiệu: ${response.message || 'Lỗi không xác định'}`);
+                }
+            }
+        }
+
+        // 1.3 Save Chất Liệu if needed
+        if (formState.id_chat_lieu && formState.id_chat_lieu.toString().startsWith('temp_')) {
+            const chatLieuItem = newLocalAttributes.chatLieu.find(item => item.id_chat_lieu === formState.id_chat_lieu);
+            if (chatLieuItem) {
+                const response = await store.addChatLieu(chatLieuItem.ten_chat_lieu);
+                if (response.success) {
+                    idMappings.chatLieu.set(formState.id_chat_lieu, response.data.id_chat_lieu);
+                    formState.id_chat_lieu = response.data.id_chat_lieu;
+                } else {
+                    throw new Error(`Không thể thêm chất liệu: ${response.message || 'Lỗi không xác định'}`);
+                }
+            }
+        }
+
+        // 1.4 Save all new colors used in variants
+        const usedColorIds = new Set(variants.value.map(v => v.id_mau_sac));
+        const newColorIds = Array.from(usedColorIds).filter(id => id.toString().startsWith('temp_'));
+
+        for (const tempColorId of newColorIds) {
+            const colorItem = newLocalAttributes.mauSac.find(item => item.id_mau_sac === tempColorId);
+            if (colorItem) {
+                const response = await store.addMauSac(colorItem.ten_mau_sac);
+                if (response.success) {
+                    idMappings.mauSac.set(tempColorId, response.data.id_mau_sac);
+                } else {
+                    throw new Error(`Không thể thêm màu sắc: ${response.message || 'Lỗi không xác định'}`);
+                }
+            }
+        }
+
+        // 1.5 Save all new sizes used in variants
+        const usedSizeIds = new Set(variants.value.map(v => v.id_kich_thuoc));
+        const newSizeIds = Array.from(usedSizeIds).filter(id => id.toString().startsWith('temp_'));
+
+        for (const tempSizeId of newSizeIds) {
+            const sizeItem = newLocalAttributes.kichThuoc.find(item => item.id_kich_thuoc === tempSizeId);
+            if (sizeItem) {
+                if (sizeItem.don_vi) {
+                    console.log('sizeItem.gia_tri khi ton tai don vi', sizeItem.gia_tri);
+                    const response = await store.addKichThuoc(sizeItem.gia_tri, sizeItem.don_vi);
+                    if (response.success) {
+                        idMappings.kichThuoc.set(tempSizeId, response.data.id_kich_thuoc);
+                    }
+                } else {
+                    sizeItem.gia_tri = sizeItem.gia_tri.toString();
+                    sizeItem.don_vi = '';
+                    console.log('sizeItem.gia_tri khi khong ton tai don vi', sizeItem.gia_tri);
+                    const response = await store.addKichThuoc(sizeItem.gia_tri, sizeItem.don_vi);
+                    if (response.success) {
+                        idMappings.kichThuoc.set(tempSizeId, response.data.id_kich_thuoc);
+                    }
+                }
+            }
+        }
+
+        // 2. Update variants with real IDs before saving
+        const updatedVariants = variants.value.map(variant => {
+            const variantCopy = { ...variant };
+
+            // Replace temporary color ID with real ID if needed
+            if (variant.id_mau_sac.toString().startsWith('temp_') && idMappings.mauSac.has(variant.id_mau_sac)) {
+                variantCopy.id_mau_sac = idMappings.mauSac.get(variant.id_mau_sac);
+
+                // Also update the color name if needed
+                const newColorItem = newLocalAttributes.mauSac.find(item => item.id_mau_sac === variant.id_mau_sac);
+                if (newColorItem) {
+                    // Get the updated color from the API response
+                    const realColor = mauSacList.value.find(c => c.id_mau_sac === variantCopy.id_mau_sac);
+                    if (realColor) {
+                        variantCopy.mau_sac_name = `${realColor.ma_mau_sac} ${realColor.ten_mau_sac}`;
+                    }
+                }
+            }
+
+            // Replace temporary size ID with real ID if needed
+            if (variant.id_kich_thuoc.toString().startsWith('temp_') && idMappings.kichThuoc.has(variant.id_kich_thuoc)) {
+                variantCopy.id_kich_thuoc = idMappings.kichThuoc.get(variant.id_kich_thuoc);
+
+                // Also update the size name if needed
+                const newSizeItem = newLocalAttributes.kichThuoc.find(item => item.id_kich_thuoc === variant.id_kich_thuoc);
+                if (newSizeItem) {
+                    // Get the updated size from the API response
+                    const realSize = sizeList.value.find(s => s.id_kich_thuoc === variantCopy.id_kich_thuoc);
+                    if (realSize) {
+                        variantCopy.kich_thuoc_name = realSize.gia_tri;
+                    }
+                }
+            }
+
+            return variantCopy;
+        });
+
+        // Also update variant types to use real IDs to maintain UI consistency
+        variantTypes.value.forEach(type => {
+            if (type.id_mau_sac && type.id_mau_sac.toString().startsWith('temp_') && idMappings.mauSac.has(type.id_mau_sac)) {
+                type.id_mau_sac = idMappings.mauSac.get(type.id_mau_sac);
+            }
+
+            if (type.selectedSizes) {
+                type.selectedSizes = type.selectedSizes.map(sizeId => {
+                    if (sizeId.toString().startsWith('temp_') && idMappings.kichThuoc.has(sizeId)) {
+                        return idMappings.kichThuoc.get(sizeId);
+                    }
+                    return sizeId;
+                });
+            }
+        });
+
+        // 3. Now save the product with updated IDs
+        console.log('FormState trước khi gửi với các ID thật:', formState);
         const response = await store.createSanPham(formState);
         console.log('Response nhận được:', response);
 
@@ -891,19 +1651,19 @@ const onFinish = async () => {
             throw new Error('Không nhận được ID sản phẩm từ server');
         }
 
-        // Tạo các biến thể CTSP
-        await Promise.all(variants.value.map(async (variant) => {
+        // 4. Create variants with real IDs
+        await Promise.all(updatedVariants.map(async (variant) => {
             // Upload ảnh cho từng biến thể nếu có
             const variantImages = [];
 
-            // Xử lý tất cả các ảnh trong fileList của dạng biến thể
+            // Find the variant type for this variant
             const variantTypeIndex = variantTypes.value.findIndex(type =>
                 type.id_mau_sac === variant.id_mau_sac &&
                 type.selectedSizes.includes(variant.id_kich_thuoc)
             );
 
             if (variantTypeIndex !== -1 && variantTypes.value[variantTypeIndex].fileList && variantTypes.value[variantTypeIndex].fileList.length > 0) {
-                // Sử dụng ảnh từ dạng biến thể
+                // Upload images from variant type
                 for (let i = 0; i < variantTypes.value[variantTypeIndex].fileList.length; i++) {
                     const fileItem = variantTypes.value[variantTypeIndex].fileList[i];
                     if (fileItem && fileItem.originFileObj) {
@@ -918,16 +1678,17 @@ const onFinish = async () => {
                 }
             }
 
-            // Nếu không có ảnh biến thể, sử dụng ảnh sản phẩm chính
+            // If no variant images, use main product image
             if (variantImages.length === 0 && imageUrl) {
                 variantImages.push(imageUrl);
             }
 
-            console.log('Variant data before create:', {
+            console.log('Variant data with real IDs before create:', {
                 ...variant,
                 id_san_pham: productId,
                 hinh_anh: variantImages
             });
+
             await store.createCTSP({
                 ...variant,
                 id_san_pham: productId,
@@ -936,13 +1697,25 @@ const onFinish = async () => {
                 ngay_sua: new Date().toISOString(),
                 hinh_anh: variantImages
             });
-
         }));
+
         message.success(response.message || 'Thêm sản phẩm và biến thể thành công!');
         await store.getAllSanPhamNgaySua();
 
+        // Refresh all attribute lists
+        await store.getDanhMucList();
+        await store.getThuongHieuList();
+        await store.getChatLieuList();
+        await store.getMauSacList();
+        await store.getSizeList();
+
         // Đánh dấu vừa thêm sản phẩm mới
         store.justAddedProduct = true;
+        // Đánh dấu cần refresh bộ lọc
+        store.needFilterRefresh = true;
+
+        // Emit một event toàn cục để thông báo cần refresh bộ lọc
+        window.dispatchEvent(new CustomEvent('filter-data-updated'));
 
         router.push('/admin/quanlysanpham');
     } catch (error) {
@@ -1064,6 +1837,122 @@ const someAsyncFunction = async () => {
         // Xử lý lỗi
     }
 };
+
+// Add new refs for modals
+const danhMucModalVisible = ref(false);
+const thuongHieuModalVisible = ref(false);
+const chatLieuModalVisible = ref(false);
+const mauSacModalVisible = ref(false);
+const kichThuocModalVisible = ref(false);
+
+// Add new refs for form data
+const newDanhMuc = reactive({
+    ten_danh_muc: ''
+});
+
+const newThuongHieu = reactive({
+    ten_thuong_hieu: ''
+});
+
+const newChatLieu = reactive({
+    ten_chat_lieu: ''
+});
+
+const newMauSac = reactive({
+    ten_mau_sac: ''
+});
+
+const newKichThuoc = reactive({
+    gia_tri: '',
+    don_vi: ''
+});
+
+// Add functions to show modals
+const showAddDanhMucModal = () => {
+    danhMucModalVisible.value = true;
+};
+
+const showAddThuongHieuModal = () => {
+    thuongHieuModalVisible.value = true;
+};
+
+const showAddChatLieuModal = () => {
+    chatLieuModalVisible.value = true;
+};
+
+const showAddMauSacModal = () => {
+    mauSacModalVisible.value = true;
+};
+
+const showAddKichThuocModal = () => {
+    kichThuocModalVisible.value = true;
+};
+
+// Thêm refs cho các form
+const danhMucFormRef = ref(null);
+const thuongHieuFormRef = ref(null);
+const chatLieuFormRef = ref(null);
+const mauSacFormRef = ref(null);
+const kichThuocFormRef = ref(null);
+
+// Hiển thị toast modal nếu có lỗi
+const showValidationError = (title, message) => {
+    Modal.error({
+        title: title,
+        content: message,
+    });
+};
+
+// Thêm các hàm xử lý validate và submit
+const submitDanhMuc = () => {
+    if (danhMucFormRef.value) {
+        danhMucFormRef.value.validate().then(() => {
+            handleAddDanhMuc();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitThuongHieu = () => {
+    if (thuongHieuFormRef.value) {
+        thuongHieuFormRef.value.validate().then(() => {
+            handleAddThuongHieu();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitChatLieu = () => {
+    if (chatLieuFormRef.value) {
+        chatLieuFormRef.value.validate().then(() => {
+            handleAddChatLieu();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitMauSac = () => {
+    if (mauSacFormRef.value) {
+        mauSacFormRef.value.validate().then(() => {
+            handleAddMauSac();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
+
+const submitKichThuoc = () => {
+    if (kichThuocFormRef.value) {
+        kichThuocFormRef.value.validate().then(() => {
+            handleAddKichThuoc();
+        }).catch(error => {
+            console.log('Validate Failed:', error);
+        });
+    }
+};
 </script>
 
 <style scoped>
@@ -1129,5 +2018,90 @@ const someAsyncFunction = async () => {
 
 .ant-empty {
     margin: 32px 0;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+/* Styling for plus buttons */
+:deep(.ant-btn-primary) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+}
+
+/* Style for plus buttons next to inputs */
+.d-flex.gap-2 .ant-btn-primary {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 4px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+}
+
+.d-flex.gap-2 .ant-btn-primary:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.d-flex.gap-2 .ant-btn-primary:active {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.d-flex.gap-2 .ant-btn-primary .anticon {
+    font-size: 14px;
+}
+
+/* Style for the "Add Variant Type" button */
+.d-flex.justify-content-between .ant-btn-primary {
+    padding: 0 15px;
+    height: 32px;
+    min-width: 150px;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.d-flex.justify-content-between .ant-btn-primary:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.d-flex.justify-content-between .ant-btn-primary:active {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.d-flex.justify-content-between .ant-btn-primary .anticon {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Match input height */
+:deep(.ant-input),
+:deep(.ant-select),
+:deep(.ant-input-number) {
+    height: 32px;
+}
+
+:deep(.ant-select-selector) {
+    height: 32px !important;
+    line-height: 32px !important;
+}
+
+:deep(.ant-select-selection-item) {
+    line-height: 32px !important;
+}
+
+:deep(.ant-input-number-input) {
+    height: 32px;
 }
 </style>

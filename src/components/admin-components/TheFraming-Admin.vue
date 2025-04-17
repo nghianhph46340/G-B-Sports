@@ -2,7 +2,8 @@
     <a-layout class="" style="min-height: 100vh">
         <a-layout-sider class="sider " v-model:collapsed="collapsed" :trigger="null" collapsible theme="light">
             <div class="logo p-3 " style="text-align: center;">
-                <img class="w-50 " src="../../images/logo/logo2.png" alt="Logo" />
+                <img class="w-50 " style="cursor: pointer;" src="../../images/logo/logo2.png"
+                    @click="changeRoute('/home')" alt="Logo" />
             </div>
 
             <a-menu class="" v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" theme="light"
@@ -133,11 +134,23 @@ const updateOpenKeys = () => {
 };
 
 const changeRoute = (path) => {
+    // Update all store properties related to navigation
     store.getPath(path);
+    store.getRoutePresent(route.path);
     store.getIndex(path);
+
+    // Log for debugging
+    console.log('TheFraming - Navigating to:', path);
+    console.log('TheFraming - Updated store.checkRouter:', store.checkRouter);
+    console.log('TheFraming - Updated selectedKeys:', store.indexMenu);
+
+    // Update selectedKeys from store
+    selectedKeys.value = store.indexMenu;
+
+    // Navigate
     router.push(path);
-    console.log(store.checkRouter);
-    // Cập nhật openKeys khi thay đổi route
+
+    // Update menu open state after route change
     setTimeout(() => {
         updateOpenKeys();
     }, 100);
@@ -163,7 +176,20 @@ onMounted(() => {
     store.getIndex(route.path);
     selectedKeys.value = store.indexMenu;
     updateOpenKeys();
-})
+
+    // Add event listener for browser back/forward buttons
+    window.addEventListener('popstate', () => {
+        console.log('Browser back/forward button used');
+        // Update store with current route
+        store.getPath(route.path);
+        store.getRoutePresent(route.path);
+        store.getIndex(route.path);
+
+        // Update UI
+        selectedKeys.value = store.indexMenu;
+        updateOpenKeys();
+    });
+});
 </script>
 <style scoped>
 :deep(.ant-menu-item-selected) {
