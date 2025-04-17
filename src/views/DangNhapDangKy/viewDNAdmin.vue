@@ -9,7 +9,7 @@
             <div class="breadcrumb-content">
                 <a @click="chuyenTrang('/home')" class="breadcrumb-link" style="cursor: pointer;">Trang chủ</a>
                 <span class="separator">/</span>
-                <span class="current">Đăng nhập</span>
+                <span class="current">Đăng nhập quản trị</span>
             </div>
         </div>
         <!-- Form đăng nhập -->
@@ -22,17 +22,17 @@
                             style="width:150px">
                     </a>
 
-                    <p>Chào mừng bạn đến với G&B SPORTS! 👋</p>
+                    <p>Đăng nhập hệ thống quản trị G&B SPORTS 🔐</p>
                 </div>
 
                 <!-- Form đăng nhập -->
                 <form v-if="!showForgotPassword" @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
-                        <label for="email">
-                            <i class="fas fa-envelope"></i> Email
+                        <label for="username">
+                            <i class="fas fa-user"></i> Tên đăng nhập
                         </label>
-                        <input type="email" id="email" v-model="email" class="form-control"
-                            placeholder="Nhập email của bạn" required />
+                        <input type="text" id="username" v-model="username" class="form-control"
+                            placeholder="Nhập tên đăng nhập" required />
                     </div>
 
                     <div class="form-group">
@@ -62,20 +62,21 @@
                         <span v-else class="loading-spinner"></span>
                     </button>
 
-                    <div class="signup-prompt">
-                        Bạn chưa có tài khoản? <a @click="chuyenTrang('/login-register/register')"
-                            class="signup-link">Đăng ký</a>
+                    <div class="customer-login-prompt">
+                        <a @click="chuyenTrang('/login-register/login')" class="customer-link">
+                            Đăng nhập dành cho khách hàng
+                        </a>
                     </div>
                 </form>
 
                 <!-- Form quên mật khẩu -->
                 <form v-else @submit.prevent="handleResetPassword" class="login-form">
                     <div class="form-group">
-                        <label for="forgot-email">
-                            <i class="fas fa-envelope"></i> Email
+                        <label for="forgot-username">
+                            <i class="fas fa-user"></i> Tên đăng nhập
                         </label>
-                        <input type="email" id="forgot-email" v-model="forgotEmail" class="form-control"
-                            placeholder="Nhập email của bạn" required :disabled="isEmailChecked" />
+                        <input type="text" id="forgot-username" v-model="forgotUsername" class="form-control"
+                            placeholder="Nhập tên đăng nhập" required :disabled="isEmailChecked" />
                     </div>
 
                     <div class="form-group">
@@ -132,7 +133,7 @@ import axiosInstance from "@/config/axiosConfig";
 
 const router = useRouter();
 const gbStore = useGbStore();
-const email = ref('');
+const username = ref('');
 const password = ref('');
 const rememberMe = ref(false);
 const showPassword = ref(false);
@@ -140,7 +141,7 @@ const isLoading = ref(false);
 
 // Các biến cho form quên mật khẩu
 const showForgotPassword = ref(false);
-const forgotEmail = ref('');
+const forgotUsername = ref('');
 const newPassword = ref('');
 const confirmPassword = ref('');
 const showNewPassword = ref(false);
@@ -171,7 +172,7 @@ const toggleForgotPassword = () => {
     showForgotPassword.value = !showForgotPassword.value;
     // Reset form khi hủy
     if (!showForgotPassword.value) {
-        forgotEmail.value = '';
+        forgotUsername.value = '';
         newPassword.value = '';
         confirmPassword.value = '';
         isEmailChecked.value = false;
@@ -183,11 +184,12 @@ const handleLogin = async () => {
     try {
         isLoading.value = true;
         const loginData = {
-            email: email.value,
+            email: username.value,
             password: password.value,
             rememberMe: rememberMe.value
         };
-        const result = await gbStore.login(loginData);
+
+        const result = await gbStore.loginNV(loginData);
 
         if (result.error) {
             if (result.fieldErrors) {
@@ -196,15 +198,22 @@ const handleLogin = async () => {
             return;
         }
 
-        // Chỉ cho phép tài khoản khách hàng đăng nhập
-        if (result.id_roles !== 4) {
-            toast.error('Tài khoản không hợp lệ hoặc không có quyền truy cập!');
+        // Kiểm tra role
+        if (result.id_roles === 4) {
+            toast.error('Tài khoản không có quyền truy cập hệ thống quản trị!');
             return;
         }
 
-        // Khách hàng luôn chuyển đến home
-        router.push('/home');
-
+        // Chuyển đến trang phù hợp với role
+        console.log('Đăng nhập thành công với vai trò:', result.id_roles);
+        
+        // Nhân viên (role 3) chuyển thẳng đến trang bán hàng
+        if (result.id_roles === 3) {
+            router.push('/admin/banhang');
+        } else {
+            // Admin và quản lý đến trang chính
+            router.push('/admin');
+        }
     } catch (error) {
         toast.error('Đăng nhập thất bại. Vui lòng thử lại!');
     } finally {
@@ -215,20 +224,20 @@ const handleLogin = async () => {
 const handleResetPassword = async () => {
     isLoading.value = true;
 
-    // Bước 1: Kiểm tra email
+    // Bước 1: Kiểm tra username (email)
     if (!isEmailChecked.value) {
         try {
-            const response = await axiosInstance.post('api/khach-hang/forgot-password', {
-                email: forgotEmail.value
+            const response = await axiosInstance.post('admin/quan-ly-nhan-vien/forgot-password', {
+                email: forgotUsername.value
             });
 
             if (response.data.successMessage) {
                 resetToken.value = response.data.resetToken;
                 isEmailChecked.value = true;
-                toast.success('Email hợp lệ, vui lòng nhập mật khẩu mới.');
+                toast.success('Tên đăng nhập hợp lệ, vui lòng nhập mật khẩu mới.');
             }
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Có lỗi xảy ra khi kiểm tra email!');
+            toast.error(error.response?.data?.error || 'Có lỗi xảy ra khi kiểm tra tên đăng nhập!');
         } finally {
             isLoading.value = false;
         }
@@ -243,7 +252,7 @@ const handleResetPassword = async () => {
     }
 
     try {
-        const response = await axiosInstance.post('api/khach-hang/reset-password', {
+        const response = await axiosInstance.post('admin/quan-ly-nhan-vien/reset-password', {
             token: resetToken.value,
             newPassword: newPassword.value
         });
@@ -273,7 +282,8 @@ const handleResetPassword = async () => {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('https://cdn.hpdecor.vn/wp-content/uploads/2022/01/cua-hang-quan-ao-the-thao.jpg');
+    /* Thay đổi ảnh nền phù hợp với admin */
+    background-image: url('https://img.freepik.com/free-photo/business-concept-with-view-glasses_23-2149666090.jpg');
     background-size: cover;
     background-position: center;
     z-index: 1;
@@ -286,8 +296,8 @@ const handleResetPassword = async () => {
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.7) 0%,
-            rgba(255, 255, 255, 0.4) 100%);
+            rgba(0, 0, 0, 0.7) 0%,
+            rgba(0, 0, 0, 0.5) 100%);
     backdrop-filter: blur(2px);
     z-index: 2;
 }
@@ -303,15 +313,15 @@ const handleResetPassword = async () => {
 }
 
 .login-box {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(12px);
     border-radius: 24px;
     padding: 40px;
     width: 100%;
     max-width: 480px;
     box-shadow:
-        0 10px 30px rgba(0, 0, 0, 0.1),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+        0 10px 30px rgba(0, 0, 0, 0.2),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
     animation: fadeIn 0.6s ease-out;
 }
 
@@ -357,18 +367,18 @@ const handleResetPassword = async () => {
 .form-control {
     width: 100%;
     padding: 14px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(4px);
     border-radius: 12px;
     font-size: 15px;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .form-control:focus {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(0, 0, 0, 0.2);
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1);
 }
 
 .password-input {
@@ -490,24 +500,7 @@ input[type="checkbox"] {
     accent-color: #000000;
 }
 
-@media (max-width: 480px) {
-    .login-box {
-        padding: 24px;
-        margin: 20px;
-    }
-
-    .login-header h2 {
-        font-size: 24px;
-    }
-
-    .form-options {
-        flex-direction: column;
-        gap: 12px;
-        align-items: flex-start;
-    }
-}
-
-.signup-prompt {
+.customer-login-prompt {
     text-align: center;
     margin-top: 24px;
     padding-top: 24px;
@@ -516,7 +509,7 @@ input[type="checkbox"] {
     font-size: 15px;
 }
 
-.signup-link {
+.customer-link {
     color: #000;
     font-weight: 600;
     text-decoration: none;
@@ -524,7 +517,7 @@ input[type="checkbox"] {
     cursor: pointer;
 }
 
-.signup-link:hover {
+.customer-link:hover {
     opacity: 0.7;
     text-decoration: underline;
 }
@@ -543,7 +536,7 @@ input[type="checkbox"] {
 }
 
 .breadcrumb-link {
-    color: #000;
+    color: #fff;
     text-decoration: none;
     font-weight: normal;
     transition: all 0.2s ease;
@@ -557,7 +550,7 @@ input[type="checkbox"] {
     height: 1px;
     bottom: -2px;
     left: 0;
-    background-color: #000;
+    background-color: #fff;
     transition: width 0.2s ease;
 }
 
@@ -566,28 +559,43 @@ input[type="checkbox"] {
 }
 
 .breadcrumb-link:hover {
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 .breadcrumb .separator {
     margin: 0 8px;
-    color: #000;
+    color: #fff;
     font-weight: normal;
 }
 
 .breadcrumb .current {
-    color: #000;
+    color: #fff;
     font-weight: 600;
 }
 
 @media (max-width: 480px) {
+    .login-box {
+        padding: 24px;
+        margin: 20px;
+    }
+
+    .login-header h2 {
+        font-size: 24px;
+    }
+
+    .form-options {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
     .breadcrumb {
         top: 20px;
         left: 20px;
     }
 }
-
 /* Thêm style cho form quên mật khẩu */
+
 .cancel-button {
     background-color: #ccc;
     color: black;

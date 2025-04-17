@@ -9,9 +9,9 @@
           <label class="form-check-label" for="active">Đang hoạt động</label>
         </div>
         <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="trangThai" id="inactive" value="Đã nghỉ việc"
+          <input class="form-check-input" type="radio" name="trangThai" id="inactive" value="Ngừng hoạt động"
             v-model="selectedTrangThai" @change="fetchData(0)">
-          <label class="form-check-label" for="inactive">Đã nghỉ việc</label>
+          <label class="form-check-label" for="inactive">Ngừng hoạt động</label>
         </div>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="trangThai" id="refresh" value=""
@@ -67,7 +67,7 @@
               </td>
               <td>{{ nhanVien.maNhanVien }}</td>
               <td>{{ nhanVien.tenNhanVien }}</td>
-              <td>{{ nhanVien.gioiTinh ? "Nam" : "Nữ" }}</td>
+              <td>{{ nhanVien.gioiTinh? "Nam" : "Nữ" }}</td>
               <td>{{ nhanVien.ngaySinh }}</td>
               <td>{{ nhanVien.soDienThoai }}</td>
               <td>{{ nhanVien.diaChiLienHe }}</td>
@@ -161,7 +161,7 @@ const dataNhanVien = computed(() => {
       idNhanVien: item.idNhanVien,
       maNhanVien: item.maNhanVien,
       tenNhanVien: item.tenNhanVien,
-      gioiTinh: item.gioiTinh ? "Nam" : "Nữ",
+      gioiTinh: item.gioiTinh,
       ngaySinh: item.ngaySinh,
       soDienThoai: item.soDienThoai,
       diaChiLienHe: item.diaChiLienHe,

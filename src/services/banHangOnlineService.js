@@ -32,6 +32,20 @@ const updateOrderStatus = async (data) => {
     }
 };
 
+const createOrder1 = async (hoaDon) => {
+    const response = await axiosInstance.post(banHangOnline + 'taoHoaDonWeb1', hoaDon);
+    return response.data;
+}
+// Giỏ hàng của KH có tài khoản
+const getGioHang = async (idKhachHang) => {
+    const response = await axiosInstance.get('/gioHangWeb/gioHangByKH?idKhachHang=' +idKhachHang);
+    return response.data;
+}
+// Lấy danh sách địa chỉ của khách hàng
+const getDanhSachDiaChi = async (idKhachHang) => {
+    const response = await axiosInstance.get('/gioHangWeb/danhSachDiaChi?idKhachHang=' + idKhachHang);
+    return response.data;
+}
 export const banHangOnlineService = {
     createOrder,
     createOrderChiTiet,
@@ -39,5 +53,8 @@ export const banHangOnlineService = {
     getThongTinTimeLine,
     getThongTinHoaDonChiTiet,
     updateOrderStatus,
+    createOrder1,
+    getGioHang,
+    getDanhSachDiaChi
 }
 
