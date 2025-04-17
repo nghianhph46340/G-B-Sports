@@ -498,11 +498,16 @@ const columnsCTSP = [
         title: 'Số lượng',
         dataIndex: 'so_luong',
         key: 'so_luong',
+        sorter: (a, b) => a.so_luong - b.so_luong,
+        sortDirections: ['ascend', 'descend'],
     },
     {
         title: 'Giá',
         dataIndex: 'gia_ban',
-        key: 'gia_ban'
+        key: 'gia_ban',
+        sorter: (a, b) => a.gia_ban - b.gia_ban,
+        sortDirections: ['ascend', 'descend'],
+        render: (text) => formatCurrency(text)
     },
     {
         title: 'Trạng thái',
@@ -514,7 +519,6 @@ const columnsCTSP = [
     //     dataIndex: 'action',
     //     key: 'action',
     // },
-
 ];
 const data = ref([]);
 const selectedCTSPKeys = ref([]);
