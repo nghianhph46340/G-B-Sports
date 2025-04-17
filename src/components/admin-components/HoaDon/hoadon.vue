@@ -1,12 +1,22 @@
 <template>
-    <div class="container">
-        <div class="d-flex justify-content-start align-items-center pb-2">
-            <a-form-item name="range-time-picker" label="Thời gian" class="mb-2 ms-4">
-                <a-range-picker v-model:value="formState['range-time-picker']" show-time format="DD-MM-YYYY HH:mm:ss"
-                    value-format="YYYY-MM-DD HH:mm:ss" :placeholder="['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']" />
-            </a-form-item>
-            <button class="btn btn-outline-primary d-flex align-items-center ms-2 mb-2" style="height: 32px"
-                @click="filterData">Lọc</button>
+    <!-- <div class="container"> -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <a-form-item name="range-time-picker" label="Thời gian" class="mb-0">
+                    <a-range-picker v-model:value="formState['range-time-picker']" show-time
+                        format="DD-MM-YYYY HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss"
+                        :placeholder="['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']" 
+                        @change="handleDateChange" />
+                </a-form-item>
+                <button class="btn btn-outline-primary d-flex align-items-center" style="height: 32px"
+                    @click="filterData">
+                    Lọc
+                </button>
+            </div>
+            <div class="search-container">
+                <input type="text" class="form-control" placeholder="Tìm kiếm hóa đơn..." v-model="searchKeyword"
+                    @input="handleSearch" />
+            </div>
         </div>
 
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
@@ -27,9 +37,9 @@
             <div class="d-flex flex-wrap gap-2 mt-2 status-strip">
                 <a-badge :count="totalHoaDonCount" :overflow-count="999">
                     <button class="btn d-flex align-items-center flex-fill" :class="{
-                        'btn-primary': valueTrangThaiDonHang === 'Chọn trạng thái đơn hàng',
-                        'btn-outline-primary': valueTrangThaiDonHang !== 'Chọn trạng thái đơn hàng',
-                    }" @click="handleTrangThaiChange('Chọn trạng thái đơn hàng')">
+                        'btn-primary': valueTrangThaiDonHang === 'Tất cả',
+                        'btn-outline-primary': valueTrangThaiDonHang !== 'Tất cả',
+                    }" @click="handleTrangThaiChange('Tất cả')">
                         Tất cả
                     </button>
                 </a-badge>
@@ -97,22 +107,22 @@
             <button class="btn buttonPT" @click="fetchData(store.currentHoaDon + 1)"
                 :disabled="store.currentHoaDon >= store.totalHoaDon - 1">Next</button>
         </div>
-    </div>
+    <!-- </div> -->
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { onMounted, onUnmounted, ref, computed, reactive, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
-import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { toast } from 'vue3-toastify';
 
 const router = useRouter();
 const store = useGbStore();
+const searchKeyword = ref('');
 let intervalId = null;
 const pageSize = ref(5);
-const valueTrangThaiDonHang = ref('Chọn trạng thái đơn hàng');
+const valueTrangThaiDonHang = ref('Tất cả');
 const trangThaiDonHangOptions = ref([
     { label: 'Chờ xác nhận', value: 'Chờ xác nhận' },
     { label: 'Đã cập nhật', value: 'Đã cập nhật' },
@@ -145,56 +155,92 @@ const totalHoaDonCount = computed(() => {
     return Object.values(countByTrangThai.value).reduce((sum, count) => sum + count, 0);
 });
 
-const calculateCounts = async () => {
-    try {
-        const countsFromServer = await store.getHoaDonCountsByStatus();
-        countByTrangThai.value = countsFromServer;
-        console.log('Số lượng theo trạng thái:', countByTrangThai.value);
-    } catch (error) {
-        console.error('Lỗi khi tính số lượng:', error);
-        trangThaiDonHangOptions.value.forEach(option => {
-            countByTrangThai.value[option.value] = 0;
-        });
-    }
+const calculateCounts = () => {
+    // Khởi tạo đối tượng đếm số lượng theo trạng thái
+    const counts = {};
+
+    // Duyệt qua danh sách hóa đơn và đếm số lượng theo trạng thái
+    store.getAllHoaDonArr.forEach((hoaDon) => {
+        const trangThai = hoaDon.trang_thai || 'Không xác định';
+        counts[trangThai] = (counts[trangThai] || 0) + 1;
+    });
+
+    // Cập nhật `countByTrangThai`
+    countByTrangThai.value = counts;
+
+    console.log('Số lượng theo trạng thái:', countByTrangThai.value);
+};
+// Hàm xử lý tìm kiếm
+const handleSearch = () => {
+    store.searchHoaDon(searchKeyword.value, 0, pageSize.value);
+    // calculateCounts();
 };
 
-const fetchData = async (page) => {
-    await store.getAllHoaDon(page, pageSize.value);
-    await calculateCounts();
+// Theo dõi thay đổi của `searchKeyword` để tự động tìm kiếm
+watch(searchKeyword, (newKeyword) => {
+    if (!newKeyword || newKeyword.trim() === '') {
+        // Nếu từ khóa rỗng, lấy lại tất cả hóa đơn
+        fetchData(0);
+    }
+});
+
+const fetchData = async (page = 0) => {
+    store.currentHoaDon = page;
+
+    if (searchKeyword.value.trim()) {
+        // Nếu có từ khóa tìm kiếm, gọi API tìm kiếm
+        await store.searchHoaDon(searchKeyword.value, page, pageSize.value);
+    } else if (valueTrangThaiDonHang.value === 'Tất cả') {
+        // Lấy tất cả hóa đơn nếu không chọn trạng thái cụ thể
+        await store.getAllHoaDon(page, pageSize.value);
+    } else {
+        // Lọc hóa đơn theo trạng thái đã chọn
+        await store.filterByTrangThai(valueTrangThaiDonHang.value, page, pageSize.value);
+    }
+
+    // Cập nhật số lượng hóa đơn theo trạng thái
+    // calculateCounts();
 };
 
 const handleTrangThaiChange = async (value) => {
     console.log(`Trạng thái đã chọn: ${value}, Số lượng: ${countByTrangThai.value[value] || 0}`);
     valueTrangThaiDonHang.value = value;
-    if (value === 'Chọn trạng thái đơn hàng') {
-        await fetchData(0);
-    } else {
-        await store.filterByTrangThai(value, 0, pageSize.value);
-        await calculateCounts();
-    }
-};
 
+    // Reset về trang đầu tiên khi thay đổi trạng thái
+    await fetchData(0);
+};
+const isFilteringByDate = ref(false); // Mặc định không lọc theo ngày
 const filterData = async () => {
     const [tuNgay, denNgay] = formState['range-time-picker'] || [];
     if (!tuNgay || !denNgay) {
         toast.warning('Vui lòng chọn đầy đủ khoảng thời gian!');
         return;
     }
+    isFilteringByDate.value = true; // Bật trạng thái lọc theo ngày
     await store.filterByDate(tuNgay, denNgay, 0, pageSize.value);
-    await calculateCounts();
+    // calculateCounts();
 };
-
+const handleDateChange = (value) => {
+    if (!value || value.length === 0) {
+        // Nếu giá trị bị xóa, hủy trạng thái lọc
+        resetFilters();
+    }
+};
 const resetFilters = async () => {
-    valueTrangThaiDonHang.value = 'Chọn trạng thái đơn hàng';
+    valueTrangThaiDonHang.value = 'Tất cả';
     formState['range-time-picker'] = [];
-    await fetchData(0);
+    isFilteringByDate.value = false; // Tắt trạng thái lọc theo ngày
+    await fetchData(0); // Lấy lại tất cả hóa đơn
 };
 
 onMounted(async () => {
-    await fetchData(0);
+    await fetchData(0); // Mặc định lấy tất cả hóa đơn
     // Tự động cập nhật danh sách hóa đơn sau mỗi 5 giây
     intervalId = setInterval(async () => {
-        await fetchData(store.currentHoaDon);
+        if (!isFilteringByDate.value) {
+            // Chỉ làm mới nếu không lọc theo ngày
+            await fetchData(store.currentHoaDon);
+        }
     }, 5000);
 });
 onUnmounted(() => {
@@ -245,7 +291,7 @@ onUnmounted(() => {
 .status-strip .btn {
     flex: 1;
     /* Chia đều chiều rộng */
-    min-width: 145px;
+    min-width: 148px;
     /* Đảm bảo nút không quá nhỏ */
     height: 32px;
     font-size: 14px;
@@ -270,5 +316,21 @@ onUnmounted(() => {
     background-color: #f33b47;
     /* Đảm bảo màu đỏ */
     color: white;
+}
+
+.d-flex {
+    display: flex;
+    align-items: center;
+}
+
+.search-container {
+    width: 25%;
+    /* Đặt chiều rộng cho ô tìm kiếm */
+}
+
+.form-control {
+    height: 32px;
+    /* Đảm bảo chiều cao bằng với nút lọc */
+    font-size: 14px;
 }
 </style>
