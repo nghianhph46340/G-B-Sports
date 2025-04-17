@@ -193,7 +193,8 @@
                                 placeholder="Nhập lại mật khẩu mới" />
                         </a-form-item>
                         <a-form-item>
-                            <a-button type="primary" @click="changePassword">Đổi mật khẩu</a-button>
+                            <a-button type="primary" @click="changePassword" :loading="isLoading">Đổi mật
+                                khẩu</a-button>
                         </a-form-item>
                     </a-form>
                 </a-card>
@@ -265,7 +266,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import {
     UserOutlined,
     ShoppingOutlined,
@@ -280,6 +283,12 @@ import {
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import axiosInstance from '@/config/axiosConfig';
+import { useGbStore } from '@/stores/gbStore';
+import { toast } from 'vue3-toastify';
+const route = useRoute();
+const router = useRouter();
+const isLoading = ref(false);
+const store = useGbStore();
 
 // State cho menu
 const selectedMenu = ref(['info']);
@@ -374,9 +383,9 @@ const getOrderStatusColor = (status) => {
 const updateProfile = async () => {
     try {
         // Gọi API cập nhật thông tin
-        message.success('Cập nhật thông tin thành công');
+        toast.success('Cập nhật thông tin thành công');
     } catch (error) {
-        message.error('Có lỗi xảy ra khi cập nhật thông tin');
+        toast.error('Có lỗi xảy ra khi cập nhật thông tin');
         console.error(error);
     }
 };
@@ -384,23 +393,59 @@ const updateProfile = async () => {
 // Xử lý đổi mật khẩu
 const changePassword = async () => {
     if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-        return message.error('Vui lòng nhập đầy đủ thông tin');
+        return toast.error('Vui lòng nhập đầy đủ thông tin');
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        return message.error('Mật khẩu xác nhận không khớp');
+        return toast.error('Mật khẩu xác nhận không khớp');
     }
 
     try {
-        message.success('Đổi mật khẩu thành công');
+        isLoading.value = true;
+        // Gọi API đổi mật khẩu
+        const response = await axiosInstance.post('api/khach-hang/change-password', {
+            oldPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword
+        });
 
-        // Reset form
-        passwordForm.currentPassword = '';
-        passwordForm.newPassword = '';
-        passwordForm.confirmPassword = '';
+        // Kiểm tra phản hồi từ API
+        if (response.data.successMessage) {
+            toast.success(response.data.successMessage + 'Vui lòng đăng nhập lại!');
+
+            // Reset form
+            passwordForm.currentPassword = '';
+            passwordForm.newPassword = '';
+            passwordForm.confirmPassword = '';
+            localStorage.removeItem('userInfo')
+            localStorage.removeItem('isLoggedIn')
+            localStorage.removeItem('id_roles')
+            localStorage.removeItem('userDetails')
+            localStorage.removeItem('token')
+            sessionStorage.removeItem('userInfo')
+            sessionStorage.removeItem('isLoggedIn')
+            sessionStorage.removeItem('id_roles')
+            sessionStorage.removeItem('userDetails')
+            sessionStorage.removeItem('token')
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+            router.push('/login-register/login');
+        } else {
+            toast.error(response.data.error || 'Có lỗi xảy ra khi đổi mật khẩu');
+        }
     } catch (error) {
-        message.error('Có lỗi xảy ra khi đổi mật khẩu');
+        // Xử lý lỗi từ API
+        if (error.response?.status === 403) {
+            toast.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
+            localStorage.removeItem('token');
+            router.push('/login-register/login');
+        } else if (error.response?.data?.error) {
+            toast.error(error.response.data.error);
+        } else {
+            toast.error('Có lỗi xảy ra khi đổi mật khẩu');
+        }
         console.error(error);
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -437,11 +482,11 @@ const editAddress = (address) => {
 
 const deleteAddress = async (addressId) => {
     try {
-        message.success('Xóa địa chỉ thành công');
+        toast.success('Xóa địa chỉ thành công');
         // Tải lại danh sách địa chỉ
         addresses.value = addresses.value.filter(item => item.id !== addressId);
     } catch (error) {
-        message.error('Có lỗi xảy ra khi xóa địa chỉ');
+        toast.error('Có lỗi xảy ra khi xóa địa chỉ');
         console.error(error);
     }
 };
@@ -462,11 +507,11 @@ const saveAddress = async () => {
         // Giả lập lưu địa chỉ
         addressData.id = Date.now();
         addresses.value.push(addressData);
-        message.success('Thêm địa chỉ thành công');
+        toast.success('Thêm địa chỉ thành công');
 
         addressModal.visible = false;
     } catch (error) {
-        message.error('Có lỗi xảy ra khi lưu địa chỉ');
+        toast.error('Có lỗi xảy ra khi lưu địa chỉ');
         console.error(error);
     }
 };
@@ -514,6 +559,18 @@ const handleDistrictChange = async (value) => {
 // Khởi tạo dữ liệu
 onMounted(async () => {
     await loadProvinces();
+
+    // Đọc tham số tab từ URL
+    if (route.query.tab) {
+        selectedMenu.value = [route.query.tab];
+    }
+});
+
+// Thêm đoạn này để cập nhật khi route thay đổi
+watch(() => route.query.tab, (newTab) => {
+    if (newTab) {
+        selectedMenu.value = [newTab];
+    }
 });
 </script>
 

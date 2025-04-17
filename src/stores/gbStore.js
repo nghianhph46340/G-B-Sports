@@ -11,6 +11,7 @@ import { useRoute } from 'vue-router'
 import { khachHangService } from '@/services/khachHangService'
 import { banHangService } from '@/services/banHangService'
 import { bctkService } from '@/services/bctkService'
+import { banHangOnlineService } from '@/services/banHangOnlineService'
 import router from '@/router'
 import { set } from 'date-fns'
 export const useGbStore = defineStore('gbStore', {
@@ -131,10 +132,35 @@ export const useGbStore = defineStore('gbStore', {
     tiLeTrangThai: [],
     loading: false,
     error: null,
+    //Giỏ hàng của khấch hàng có tài khoản
+    gioHang: [],
+    // Danh sách địa chỉ của khách hàng
+    danhSachDiaChi: [],
   }),
 
   ///Đầu mút2
-  actions: {
+    actions: {
+    //Giỏ hàng của khấch hàng có tài khoản
+    async getGioHang(idKhachHang) {
+      try {
+        const response = await banHangOnlineService.getGioHang(idKhachHang)
+        this.gioHang = response
+      } catch (error) {
+        console.error('Lỗi trong getGioHang:', error)
+        toast.error('Có lỗi xảy ra khi lấy giỏ hàng')
+      }
+    },
+    // Danh sách địa chỉ của khách hàng
+    async getDanhSachDiaChi(idKhachHang) {
+      try {
+        const response = await banHangOnlineService.getDanhSachDiaChi(idKhachHang)
+        this.danhSachDiaChi = response
+        console.log('Danh sách địa chỉ:', this.danhSachDiaChi)
+      } catch (error) {
+        console.error('Lỗi trong getDanhSachDiaChi:', error)
+        toast.error('Có lỗi xảy ra khi lấy danh sách địa chỉ')
+      }
+    },
     // BCTK
     async getSoLieu(type = null, startDate = null, endDate = null) {
       try {
@@ -306,7 +332,7 @@ export const useGbStore = defineStore('gbStore', {
     // },
     async getTopSanPhamSapHetHang() {
       try {
-        const response = await bctkService.getTopSanPhamSapHetHang()
+        const response = await bctkService.getTopSanPhamSapHetHang();
         if (response && Array.isArray(response)) {
           this.topSanPhamSapHetHang = response.map((item, index) => ({
             stt: index + 1,
@@ -314,14 +340,14 @@ export const useGbStore = defineStore('gbStore', {
             ten_san_pham: item.ten_san_pham || '',
             so_luong: item.so_luong || 0,
             gia_ban: item.gia_ban || 0,
-          }))
+          }));
         } else {
-          console.warn('Invalid response format for topSanPhamSapHetHang:', response)
-          this.topSanPhamSapHetHang = []
+          console.warn('Invalid response format for topSanPhamSapHetHang:', response);
+          this.topSanPhamSapHetHang = [];
         }
       } catch (error) {
-        console.error('Error in getTopSanPhamSapHetHang:', error)
-        this.topSanPhamSapHetHang = []
+        console.error('Error in getTopSanPhamSapHetHang:', error);
+        this.topSanPhamSapHetHang = [];
       }
     },
     //Kết thúc BCTK
@@ -439,6 +465,7 @@ export const useGbStore = defineStore('gbStore', {
     async searchNhanVien(keyword, page = 0, size = 5) {
       try {
         const searchNhanVienRes = await nhanVienService.searchNhanVien(keyword, page, size)
+        // console.log('Kết quả tìm kiếm nhân viên:', searchNhanVienRes) 
         if (searchNhanVienRes.error) {
           toast.error('Có lỗi xảy ra')
           this.nhanVienSearch = []
@@ -829,7 +856,7 @@ export const useGbStore = defineStore('gbStore', {
       toast.success(result.successMessage || 'Đăng ký tài khoản thành công!')
       return { success: true, khachHang: result.khachHang }
     },
-    // Thêm action login
+    // Thêm action login khách hàng
     async login(loginData) {
       const result = await khachHangService.login(loginData)
       if (result.error) {
@@ -843,6 +870,65 @@ export const useGbStore = defineStore('gbStore', {
         return { error: true }
       }
 
+      // Kiểm tra dữ liệu trả về từ API đăng nhập
+      if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
+        console.error('Dữ liệu tài khoản không hợp lệ:', result)
+        toast.error('Dữ liệu tài khoản không hợp lệ!')
+        return { error: true }
+      }
+      // Lưu thông tin cơ bản
+      this.userInfo = result.taiKhoan
+      this.isLoggedIn = true
+      this.id_roles = result.id_roles
+      this.token = result.token
+      // In thông tin tài khoản cơ bản
+      console.log('Thông tin tài khoản (tai_khoan):', this.userInfo)
+      console.log('ID Roles:', this.id_roles)
+      console.log('Token:', this.token)
+      // Lưu vào sessionStorage
+      sessionStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+      sessionStorage.setItem('isLoggedIn', 'true')
+      sessionStorage.setItem('id_roles', result.id_roles)
+      sessionStorage.setItem('token', result.token)
+      if (loginData.rememberMe) {
+        localStorage.setItem('userInfo', JSON.stringify(result.taiKhoan))
+        localStorage.setItem('isLoggedIn', 'true')
+        localStorage.setItem('id_roles', result.id_roles)
+        localStorage.setItem('token', result.token)
+      }
+      // Lấy thông tin chi tiết
+      try {
+        const userDetails = await khachHangService.getUserDetail({
+          username: result.taiKhoan.ten_dang_nhap,
+          id_roles: result.id_roles,
+        })
+        this.userDetails = userDetails
+        // In thông tin chi tiết
+        console.log('Thông tin chi tiết (userDetails):', this.userDetails)
+        sessionStorage.setItem('userDetails', JSON.stringify(userDetails))
+        if (loginData.rememberMe) {
+          localStorage.setItem('userDetails', JSON.stringify(userDetails))
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin chi tiết:', error)
+        toast.error('Không thể lấy thông tin chi tiết tài khoản!')
+      }
+      toast.success(result.successMessage || 'Đăng nhập thành công!')
+      return { success: true, id_roles: result.id_roles }
+    },
+    // Thêm action login thằng làm thêm
+    async loginNV(loginData) {
+      const result = await nhanVienService.login(loginData)
+      if (result.error) {
+        if (result.fieldErrors) {
+          return {
+            error: true,
+            fieldErrors: result.fieldErrors,
+          }
+        }
+        toast.error(result.message || 'Đăng nhập thất bại!')
+        return { error: true }
+      }
       // Kiểm tra dữ liệu trả về từ API đăng nhập
       if (!result.taiKhoan || !result.taiKhoan.ten_dang_nhap) {
         console.error('Dữ liệu tài khoản không hợp lệ:', result)
@@ -945,11 +1031,33 @@ export const useGbStore = defineStore('gbStore', {
       this.id_roles = null
       this.userDetails = null
       this.token = null
+      toast.success('Đăng xuất thành công!')
+      window.location.href = '/login-register/loginAdmin'
+    },
+    logoutKH() {
+      // Xóa dữ liệu trong localStorage và sessionStorage
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('isLoggedIn')
+      localStorage.removeItem('id_roles')
+      localStorage.removeItem('userDetails')
+      localStorage.removeItem('token')
+      sessionStorage.removeItem('userInfo')
+      sessionStorage.removeItem('isLoggedIn')
+      sessionStorage.removeItem('id_roles')
+      sessionStorage.removeItem('userDetails')
+      sessionStorage.removeItem('token')
+
+      // Reset trạng thái trong store
+      this.userInfo = null
+      this.isLoggedIn = false
+      this.id_roles = null
+      this.userDetails = null
+      this.token = null
 
       // const router = useRouter();
       // router.replace('/login-register/login');
       toast.success('Đăng xuất thành công!')
-      window.location.href = '/login-register/login'
+      window.location.href = '/home'
     },
     //Import excel
     async importExcel(file) {
@@ -1644,6 +1752,8 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
+
+
 
     async offKhuyenMai(id) {
       try {
@@ -2496,6 +2606,12 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
 
+
+
+
+
+
+
     async searchKhuyenMai(keyword, page = 0, size = 5) {
       try {
         const khuyenMaiSearch = await khuyenMaiService.searchKhuyenMai(keyword, page, size)
@@ -2517,6 +2633,8 @@ export const useGbStore = defineStore('gbStore', {
         this.khuyenMaiSearch = [] // Đặt về rỗng khi có lỗi
       }
     },
+
+
   },
 
   persist: {

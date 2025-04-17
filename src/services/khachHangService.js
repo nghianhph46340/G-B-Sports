@@ -139,7 +139,7 @@ const getUserDetail = async ({ username, id_roles }) => {
     let userDetails = null
     if ([1, 2, 3].includes(id_roles)) {
       // Gọi API lấy thông tin nhân viên
-      const response = await axiosInstance.get(`admin/details?tenDangNhap=${username}`)
+      const response = await axiosInstance.get(`admin/quan-ly-nhan-vien/details?tenDangNhap=${username}`)
       userDetails = response.data
       console.log('Thông tin nhân viên từ API:', userDetails)
     } else if (id_roles === 4) {
