@@ -4,44 +4,48 @@
             <h2 class="page-title">Quản Lý Thuộc Tính Sản Phẩm</h2>
 
             <a-tabs v-model:activeKey="currentTab">
-                <!-- Danh mục -->
+                <!-- Tab Danh Mục -->
                 <a-tab-pane key="category" tab="Danh Mục">
                     <div class="content-area">
                         <div class="add-form">
-                            <a-input v-model:value="newAttribute.name" placeholder="Thêm danh mục mới"
-                                class="input-field">
+                            <a-input v-model:value="newAttribute.name" :placeholder="isEditing ? 'Sửa danh mục' : 'Thêm danh mục mới'" class="input-field">
                                 <template #suffix>
-                                    <a-button type="primary" @click="addNewAttribute">
-                                        <plus-outlined />
-                                        Thêm mới
+                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
+                                        <template #icon>
+                                            <plus-outlined v-if="!isEditing" />
+                                            <edit-outlined v-else />
+                                        </template>
+                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
                                     </a-button>
                                 </template>
                             </a-input>
                         </div>
 
-                        <a-table :dataSource="categories" :columns="categoryColumns" :pagination="false">
+                        <a-table :dataSource="getCurrentPageData" :columns="categoryColumns" :pagination="{
+                            total: getCurrentItems.length,
+                            pageSize: 5,
+                            current: currentPage,
+                            onChange: onPageChange,
+                            showSizeChanger: false
+                        }">
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                        <a-button type="primary" @click="startEdit(index)">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="success" @click="saveEdit(index)" v-else>
-                                            <template #icon><check-outlined /></template>
                                         </a-button>
                                         <a-button type="primary" danger @click="deleteAttribute(index)">
                                             <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'name'">
+                                <template v-else-if="column.key === 'ten_danh_muc'">
                                     <span v-if="!record.isEditing">{{ record.ten_danh_muc }}</span>
                                     <a-input v-else v-model:value="record.editName" />
                                 </template>
                                 <template v-else-if="column.key === 'trang_thai'">
                                     <a-switch v-model:checked="record.status"
                                         :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
-                                        :checkedChildren="'Hoạt động'" :unCheckedChildren="'Khóa'"
                                         @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
@@ -49,22 +53,30 @@
                     </div>
                 </a-tab-pane>
 
-                <!-- Thương hiệu -->
+                <!-- Tab Thương Hiệu -->
                 <a-tab-pane key="brand" tab="Thương Hiệu">
                     <div class="content-area">
                         <div class="add-form">
-                            <a-input v-model:value="newAttribute.name" placeholder="Thêm thương hiệu mới"
-                                class="input-field">
+                            <a-input v-model:value="newAttribute.name" :placeholder="isEditing ? 'Sửa thương hiệu' : 'Thêm thương hiệu mới'" class="input-field">
                                 <template #suffix>
-                                    <a-button type="primary" @click="addNewAttribute">
-                                        <plus-outlined />
-                                        Thêm mới
+                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
+                                        <template #icon>
+                                            <plus-outlined v-if="!isEditing" />
+                                            <edit-outlined v-else />
+                                        </template>
+                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
                                     </a-button>
                                 </template>
                             </a-input>
                         </div>
 
-                        <a-table :dataSource="brands" :columns="brandColumns" :pagination="false">
+                        <a-table :dataSource="getCurrentPageData" :columns="brandColumns" :pagination="{
+                            total: getCurrentItems.length,
+                            pageSize: 5,
+                            current: currentPage,
+                            onChange: onPageChange,
+                            showSizeChanger: false
+                        }">
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
@@ -79,13 +91,13 @@
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'name'">
+                                <template v-else-if="column.key === 'ten_thuong_hieu'">
                                     <span v-if="!record.isEditing">{{ record.ten_thuong_hieu }}</span>
                                     <a-input v-else v-model:value="record.editName" />
                                 </template>
                                 <template v-else-if="column.key === 'status'">
-                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
-                                        :unCheckedChildren="'Khóa'"
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
                                         @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
@@ -93,43 +105,48 @@
                     </div>
                 </a-tab-pane>
 
-                <!-- Chất liệu -->
+                <!-- Tab Chất Liệu -->
                 <a-tab-pane key="material" tab="Chất Liệu">
                     <div class="content-area">
                         <div class="add-form">
-                            <a-input v-model:value="newAttribute.name" placeholder="Thêm chất liệu mới"
-                                class="input-field">
+                            <a-input v-model:value="newAttribute.name" :placeholder="isEditing ? 'Sửa chất liệu' : 'Thêm chất liệu mới'" class="input-field">
                                 <template #suffix>
-                                    <a-button type="primary" @click="addNewAttribute">
-                                        <plus-outlined />
-                                        Thêm mới
+                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
+                                        <template #icon>
+                                            <plus-outlined v-if="!isEditing" />
+                                            <edit-outlined v-else />
+                                        </template>
+                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
                                     </a-button>
                                 </template>
                             </a-input>
                         </div>
 
-                        <a-table :dataSource="materials" :columns="materialColumns" :pagination="false">
+                        <a-table :dataSource="getCurrentPageData" :columns="materialColumns" :pagination="{
+                            total: getCurrentItems.length,
+                            pageSize: 5,
+                            current: currentPage,
+                            onChange: onPageChange,
+                            showSizeChanger: false
+                        }">
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                        <a-button type="primary" @click="startEdit(index)">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="success" @click="saveEdit(index)" v-else>
-                                            <template #icon><check-outlined /></template>
                                         </a-button>
                                         <a-button type="primary" danger @click="deleteAttribute(index)">
                                             <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'name'">
+                                <template v-else-if="column.key === 'ten_chat_lieu'">
                                     <span v-if="!record.isEditing">{{ record.ten_chat_lieu }}</span>
                                     <a-input v-else v-model:value="record.editName" />
                                 </template>
-                                <template v-else-if="column.key === 'status'">
-                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
-                                        :unCheckedChildren="'Khóa'"
+                                <template v-else-if="column.key === 'trang_thai'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
                                         @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
@@ -137,43 +154,48 @@
                     </div>
                 </a-tab-pane>
 
-                <!-- Màu sắc -->
+                <!-- Tab Màu Sắc -->
                 <a-tab-pane key="color" tab="Màu Sắc">
                     <div class="content-area">
                         <div class="add-form">
-                            <a-input v-model:value="newAttribute.name" placeholder="Thêm màu sắc mới"
-                                class="input-field">
+                            <a-input v-model:value="newAttribute.name" :placeholder="isEditing ? 'Sửa màu sắc' : 'Thêm màu sắc mới'" class="input-field">
                                 <template #suffix>
-                                    <a-button type="primary" @click="addNewAttribute">
-                                        <plus-outlined />
-                                        Thêm mới
+                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
+                                        <template #icon>
+                                            <plus-outlined v-if="!isEditing" />
+                                            <edit-outlined v-else />
+                                        </template>
+                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
                                     </a-button>
                                 </template>
                             </a-input>
                         </div>
 
-                        <a-table :dataSource="colors" :columns="colorColumns" :pagination="false">
+                        <a-table :dataSource="getCurrentPageData" :columns="colorColumns" :pagination="{
+                            total: getCurrentItems.length,
+                            pageSize: 5,
+                            current: currentPage,
+                            onChange: onPageChange,
+                            showSizeChanger: false
+                        }">
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                        <a-button type="primary" @click="startEdit(index)">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="success" @click="saveEdit(index)" v-else>
-                                            <template #icon><check-outlined /></template>
                                         </a-button>
                                         <a-button type="primary" danger @click="deleteAttribute(index)">
                                             <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'name'">
+                                <template v-else-if="column.key === 'ten_mau_sac'">
                                     <span v-if="!record.isEditing">{{ record.ten_mau_sac }}</span>
                                     <a-input v-else v-model:value="record.editName" />
                                 </template>
-                                <template v-else-if="column.key === 'status'">
-                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
-                                        :unCheckedChildren="'Khóa'"
+                                <template v-else-if="column.key === 'trang_thai'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
                                         @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
@@ -181,45 +203,51 @@
                     </div>
                 </a-tab-pane>
 
-                <!-- Kích thước -->
+                <!-- Tab Kích Thước -->
                 <a-tab-pane key="size" tab="Kích Thước">
                     <div class="content-area">
                         <div class="add-form">
                             <div class="d-flex gap-2">
-                                <a-input v-model:value="newAttribute.value" placeholder="Nhập giá trị"
+                                <a-input v-model:value="newAttribute.value" :placeholder="isEditing ? 'Sửa giá trị' : 'Nhập giá trị'"
                                     class="input-field" style="width: 60%">
                                 </a-input>
-                                <a-input v-model:value="newAttribute.unit" placeholder="Nhập đơn vị (tùy chọn)"
+                                <a-input v-model:value="newAttribute.unit" :placeholder="isEditing ? 'Sửa đơn vị' : 'Nhập đơn vị (tùy chọn)'"
                                     class="input-field" style="width: 30%">
                                 </a-input>
-                                <a-button type="primary" @click="addNewAttribute" style="width: 10%">
-                                    <plus-outlined />
+                                <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute" style="width: 10%">
+                                    <template #icon>
+                                        <plus-outlined v-if="!isEditing" />
+                                        <edit-outlined v-else />
+                                    </template>
                                 </a-button>
                             </div>
                         </div>
 
-                        <a-table :dataSource="sizes" :columns="sizeColumns" :pagination="false">
+                        <a-table :dataSource="getCurrentPageData" :columns="sizeColumns" :pagination="{
+                            total: getCurrentItems.length,
+                            pageSize: 5,
+                            current: currentPage,
+                            onChange: onPageChange,
+                            showSizeChanger: false
+                        }">
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(index)" v-if="!record.isEditing">
+                                        <a-button type="primary" @click="startEdit(index)">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="success" @click="saveEdit(index)" v-else>
-                                            <template #icon><check-outlined /></template>
                                         </a-button>
                                         <a-button type="primary" danger @click="deleteAttribute(index)">
                                             <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'name'">
-                                    <span v-if="!record.isEditing">{{ record.gia_tri + ' ' + record.don_vi }}</span>
+                                <template v-else-if="column.key === 'kich_thuoc'">
+                                    <span v-if="!record.isEditing">{{ record.gia_tri }} {{ record.don_vi }}</span>
                                     <a-input v-else v-model:value="record.editName" />
                                 </template>
-                                <template v-else-if="column.key === 'status'">
-                                    <a-switch v-model:checked="record.status" :checkedChildren="'Hoạt động'"
-                                        :unCheckedChildren="'Khóa'"
+                                <template v-else-if="column.key === 'trang_thai'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
                                         @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
@@ -241,6 +269,8 @@ import dayjs from 'dayjs'
 
 const store = useGbStore()
 const currentTab = ref('category')
+const isEditing = ref(false)
+const editingItem = ref(null)
 
 // Cấu hình cột cho từng bảng
 const categoryColumns = [
@@ -259,7 +289,7 @@ const categoryColumns = [
     {
         title: 'Trạng thái',
         dataIndex: 'trang_thai',
-        key: 'trang_thai',
+        key: 'status',
         width: '15%'
     },
     {
@@ -293,7 +323,7 @@ const brandColumns = [
     {
         title: 'Tên thương hiệu',
         dataIndex: 'ten_thuong_hieu',
-        key: 'name',
+        key: 'ten_thuong_hieu',
         width: '25%'
     },
     {
@@ -333,7 +363,7 @@ const materialColumns = [
     {
         title: 'Tên chất liệu',
         dataIndex: 'ten_chat_lieu',
-        key: 'name',
+        key: 'ten_chat_lieu',
         width: '25%'
     },
     {
@@ -373,7 +403,7 @@ const colorColumns = [
     {
         title: 'Tên màu sắc',
         dataIndex: 'ten_mau_sac',
-        key: 'name',
+        key: 'ten_mau_sac',
         width: '25%'
     },
     {
@@ -411,10 +441,11 @@ const sizeColumns = [
         width: '15%'
     },
     {
-        title: 'Giá trị',
+        title: 'Kích thước',
         dataIndex: 'gia_tri',
-        key: 'name',
-        width: '20%'
+        key: 'kich_thuoc',
+        width: '25%',
+        customRender: ({ record }) => `${record.gia_tri} ${record.don_vi}`
     },
     {
         title: 'Đơn vị',
@@ -574,8 +605,13 @@ const getCurrentItems = computed(() => {
 
 // Methods for managing attributes
 const addNewAttribute = async () => {
+    if (isEditing.value) {
+        await saveEdit()
+        return
+    }
+
     let response;
-    
+
     switch (currentTab.value) {
         case 'size':
             // Validate cho kích thước
@@ -585,7 +621,7 @@ const addNewAttribute = async () => {
             }
 
             // Kiểm tra trùng giá trị
-            const isDuplicateSize = sizes.value.some(item => 
+            const isDuplicateSize = sizes.value.some(item =>
                 item.gia_tri?.toLowerCase() === newAttribute.value.value.trim().toLowerCase() &&
                 item.don_vi?.toLowerCase() === (newAttribute.value.unit?.trim() || '').toLowerCase()
             )
@@ -612,26 +648,26 @@ const addNewAttribute = async () => {
             let currentList = []
             let checkField = ''
             switch (currentTab.value) {
-                case 'category': 
+                case 'category':
                     currentList = categories.value
                     checkField = 'ten_danh_muc'
                     break
-                case 'brand': 
+                case 'brand':
                     currentList = brands.value
                     checkField = 'ten_thuong_hieu'
                     break
-                case 'material': 
+                case 'material':
                     currentList = materials.value
                     checkField = 'ten_chat_lieu'
                     break
-                case 'color': 
+                case 'color':
                     currentList = colors.value
                     checkField = 'ten_mau_sac'
                     break
             }
 
             // Kiểm tra trùng tên
-            const isDuplicate = currentList.some(item => 
+            const isDuplicate = currentList.some(item =>
                 item[checkField]?.toLowerCase() === newAttribute.value.name.trim().toLowerCase()
             )
 
@@ -643,28 +679,16 @@ const addNewAttribute = async () => {
             // Gọi API thêm mới tương ứng
             switch (currentTab.value) {
                 case 'category':
-                    response = await store.addDanhMuc({
-                        ten_danh_muc: newAttribute.value.name.trim(),
-                        trang_thai: 'Hoạt động'
-                    })
+                    response = await store.addDanhMuc(newAttribute.value.name.trim())
                     break
                 case 'brand':
-                    response = await store.addThuongHieu({
-                        ten_thuong_hieu: newAttribute.value.name.trim(),
-                        trang_thai: 'Hoạt động'
-                    })
+                    response = await store.addThuongHieu(newAttribute.value.name.trim())
                     break
                 case 'material':
-                    response = await store.addChatLieu({
-                        ten_chat_lieu: newAttribute.value.name.trim(),
-                        trang_thai: 'Hoạt động'
-                    })
+                    response = await store.addChatLieu(newAttribute.value.name.trim())
                     break
                 case 'color':
-                    response = await store.addMauSac({
-                        ten_mau_sac: newAttribute.value.name.trim(),
-                        trang_thai: 'Hoạt động'
-                    })
+                    response = await store.addMauSac(newAttribute.value.name.trim())
                     break
             }
     }
@@ -685,7 +709,7 @@ const addNewAttribute = async () => {
 
     // Load lại danh sách tương ứng
     switch (currentTab.value) {
-        case 'category': 
+        case 'category':
             await loadCategories()
             break
         case 'brand':
@@ -707,18 +731,129 @@ const addNewAttribute = async () => {
 
 const startEdit = (index) => {
     const items = getCurrentItems.value
-    items[index].isEditing = true
-    items[index].editName = items[index].name
+    const item = items[index]
+    isEditing.value = true
+    editingItem.value = item
+    
+    switch (currentTab.value) {
+        case 'category':
+            newAttribute.value.name = item.ten_danh_muc
+            break
+        case 'brand':
+            newAttribute.value.name = item.ten_thuong_hieu
+            break
+        case 'material':
+            newAttribute.value.name = item.ten_chat_lieu
+            break
+        case 'color':
+            newAttribute.value.name = item.ten_mau_sac
+            break
+        case 'size':
+            newAttribute.value.value = item.gia_tri
+            newAttribute.value.unit = item.don_vi || ''
+            break
+    }
 }
 
-const saveEdit = (index) => {
-    const items = getCurrentItems.value
-    if (items[index].editName.trim()) {
-        items[index].name = items[index].editName
-        items[index].isEditing = false
+const saveEdit = async () => {
+    if (!editingItem.value) return
+
+    let updateData
+    switch (currentTab.value) {
+        case 'category':
+            updateData = {
+                id_danh_muc: editingItem.value.id_danh_muc,
+                ma_danh_muc: editingItem.value.ma_danh_muc,
+                ten_danh_muc: newAttribute.value.name.trim(),
+                trang_thai: editingItem.value.status ? 'Hoạt động' : 'Không hoạt động',
+                ngay_tao: editingItem.value.ngay_tao,
+                ngay_sua: new Date().toISOString()
+            }
+            break
+        case 'brand':
+            updateData = {
+                id_thuong_hieu: editingItem.value.id_thuong_hieu,
+                ma_thuong_hieu: editingItem.value.ma_thuong_hieu,
+                ten_thuong_hieu: newAttribute.value.name.trim(),
+                trang_thai: editingItem.value.status ? 'Hoạt động' : 'Không hoạt động',
+                ngay_tao: editingItem.value.ngay_tao,
+                ngay_sua: new Date().toISOString()
+            }
+            break
+        case 'material':
+            updateData = {
+                id_chat_lieu: editingItem.value.id_chat_lieu,
+                ma_chat_lieu: editingItem.value.ma_chat_lieu,
+                ten_chat_lieu: newAttribute.value.name.trim(),
+                trang_thai: editingItem.value.status ? 'Hoạt động' : 'Không hoạt động',
+                ngay_tao: editingItem.value.ngay_tao,
+                ngay_sua: new Date().toISOString()
+            }
+            break
+        case 'color':
+            updateData = {
+                id_mau_sac: editingItem.value.id_mau_sac,
+                ma_mau_sac: editingItem.value.ma_mau_sac,
+                ten_mau_sac: newAttribute.value.name.trim(),
+                trang_thai: editingItem.value.status ? 'Hoạt động' : 'Không hoạt động',
+                ngay_tao: editingItem.value.ngay_tao,
+                ngay_sua: new Date().toISOString()
+            }
+            break
+        case 'size':
+            updateData = {
+                id_kich_thuoc: editingItem.value.id_kich_thuoc,
+                ma_kich_thuoc: editingItem.value.ma_kich_thuoc,
+                gia_tri: newAttribute.value.value.trim(),
+                don_vi: newAttribute.value.unit.trim(),
+                trang_thai: editingItem.value.status ? 'Hoạt động' : 'Không hoạt động',
+                ngay_tao: editingItem.value.ngay_tao,
+                ngay_sua: new Date().toISOString()
+            }
+            break
+    }
+
+    try {
+        let response
+        switch (currentTab.value) {
+            case 'category':
+                response = await store.updateDanhMuc(updateData)
+                break
+            case 'brand':
+                response = await store.updateThuongHieu(updateData)
+                break
+            case 'material':
+                response = await store.updateChatLieu(updateData)
+                break
+            case 'color':
+                response = await store.updateMauSac(updateData)
+                break
+            case 'size':
+                response = await store.updateKichThuoc(updateData)
+                break
+        }
+
+        if (!response.success) {
+            message.error(response.message || 'Có lỗi xảy ra khi cập nhật')
+            return
+        }
+
         message.success('Cập nhật thành công!')
-    } else {
-        message.warning('Tên thuộc tính không được để trống!')
+        resetForm()
+        await loadCurrentTab()
+    } catch (error) {
+        console.error('Error updating:', error)
+        message.error('Có lỗi xảy ra khi cập nhật')
+    }
+}
+
+const resetForm = () => {
+    isEditing.value = false
+    editingItem.value = null
+    newAttribute.value = {
+        name: '',
+        value: '',
+        unit: ''
     }
 }
 
@@ -745,10 +880,52 @@ const deleteAttribute = (index) => {
     })
 }
 
-const handleStatusChange = (index, checked) => {
+const handleStatusChange = async (index, checked) => {
     const items = getCurrentItems.value
-    items[index].status = checked
-    message.success(`${items[index].name} đã ${checked ? 'được kích hoạt' : 'bị khóa'}`)
+    const item = items[index]
+
+    // Optimistic update - cập nhật UI trước
+    item.status = checked
+    item.trang_thai = checked ? 'Hoạt động' : 'Không hoạt động'
+
+    try {
+        // Gọi API tương ứng theo tab
+        switch (currentTab.value) {
+            case 'category':
+                await store.changeTrangThaiDanhMuc(item.id_danh_muc)
+                break
+            case 'brand':
+                await store.changeTrangThaiThuongHieu(item.id_thuong_hieu)
+                break
+            case 'material':
+                await store.changeTrangThaiChatLieu(item.id_chat_lieu)
+                break
+            case 'color':
+                await store.changeTrangThaiMauSac(item.id_mau_sac)
+                break
+            case 'size':
+                await store.changeTrangThaiKichThuoc(item.id_kich_thuoc)
+                break
+        }
+    } catch (error) {
+        // Nếu lỗi, hoàn tác UI
+        item.status = !checked
+        item.trang_thai = !checked ? 'Hoạt động' : 'Không hoạt động'
+        message.error('Có lỗi xảy ra khi chuyển trạng thái')
+    }
+}
+
+const currentPage = ref(1)
+
+const getCurrentPageData = computed(() => {
+    const items = getCurrentItems.value
+    const startIndex = (currentPage.value - 1) * 5
+    const endIndex = startIndex + 5
+    return items.slice(startIndex, endIndex)
+})
+
+const onPageChange = (page) => {
+    currentPage.value = page
 }
 </script>
 

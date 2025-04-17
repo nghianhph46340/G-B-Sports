@@ -711,6 +711,133 @@ export const useGbStore = defineStore('gbStore', {
         return { success: false, message: 'Có lỗi xảy ra khi thêm kích thước' };
       }
     },
+    ///Update thuộc tính sản phẩm
+    async updateDanhMuc(danhMucData) {
+      try {
+        const response = await sanPhamService.updateDanhMuc(danhMucData);
+        if (response.error) {
+          return { success: false, message: response.message || 'Cập nhật danh mục thất bại' };
+        }
+        return { success: true, data: response };
+      } catch (error) {
+        console.error('Lỗi khi cập nhật danh mục:', error);
+        return { success: false, message: 'Có lỗi xảy ra khi cập nhật danh mucch' };
+      }
+    },
+    async updateThuongHieu(thuongHieuData) {
+      try {
+        const response = await sanPhamService.updateThuongHieu(thuongHieuData);
+        if (response.error) {
+          return { success: false, message: response.message || 'Cập nhật thương hiệu thất bại' };
+        }
+        return { success: true, data: response };
+      } catch (error) {
+        console.error('Lỗi khi cập nhật thương hiệu:', error);
+        return { success: false, message: 'Có lỗi xảy ra khi cập nhật thương hiệu' };
+      }
+    },
+    async updateChatLieu(chatLieuData) {
+      try {
+        const response = await sanPhamService.updateChatLieu(chatLieuData);
+        if (response.error) {
+          return { success: false, message: response.message || 'Cập nhật chất liệu thất bại' };
+        }
+        return { success: true, data: response };
+      } catch (error) {
+        console.error('Lỗi khi cập nhật chất liệu:', error);
+        return { success: false, message: 'Có lỗi xảy ra khi cập nhật chất liệu' };
+      }
+    },
+    async updateMauSac(mauSacData) {
+      try {
+        const response = await sanPhamService.updateMauSac(mauSacData);
+        if (response.error) {
+          return { success: false, message: response.message || 'Cập nhật màu sắc thất bại' };
+        }
+        return { success: true, data: response };
+      } catch (error) {
+        console.error('Lỗi khi cập nhật màu sắc:', error);
+        return { success: false, message: 'Có lỗi xảy ra khi cập nhật màu sắc' };
+      }
+    },
+    async updateKichThuoc(kichThuocData) {
+      try {
+        const response = await sanPhamService.updateKichThuoc(kichThuocData);
+        if (response.error) {
+          return { success: false, message: response.message || 'Cập nhật kích thước thất bại' };
+        }
+        return { success: true, data: response };
+      } catch (error) {
+        console.error('Lỗi khi cập nhật kích thước:', error);
+        return { success: false, message: 'Có lỗi xảy ra khi cập nhật kích thước' };
+      }
+    },
+    //Chuyển trạng thái thuộc tính
+    async changeTrangThaiDanhMuc(id) {
+      try {
+        const response = await sanPhamService.changeTrangThaiDanhMuc(id)
+        if (response.error) {
+          toast.error('Có lỗi xảy ra')
+          return
+        }
+        toast.success('Chuyển trạng thái thành công')
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra')
+      }
+    },
+    async changeTrangThaiThuongHieu(id) {
+      try {
+        const response = await sanPhamService.changeTrangThaiThuongHieu(id)
+        if (response.error) {
+          toast.error('Có lỗi xảy ra')
+          return
+        }
+        toast.success('Chuyển trạng thái thành công')
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra')
+      }
+    },
+    async changeTrangThaiChatLieu(id) {
+      try {
+        const response = await sanPhamService.changeTrangThaiChatLieu(id)
+        if (response.error) {
+          toast.error('Có lỗi xảy ra')
+          return
+        }
+        toast.success('Chuyển trạng thái thành công')
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra')
+      }
+    },
+    async changeTrangThaiMauSac(id) {
+      try {
+        const response = await sanPhamService.changeTrangThaiMauSac(id)
+        if (response.error) {
+          toast.error('Có lỗi xảy ra')
+          return
+        }
+        toast.success('Chuyển trạng thái thành công')
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra')
+      }
+    },
+    async changeTrangThaiKichThuoc(id) {
+      try {
+        const response = await sanPhamService.changeTrangThaiKichThuoc(id)
+        if (response.error) {
+          toast.error('Có lỗi xảy ra')
+          return
+        }
+        toast.success('Chuyển trạng thái thành công')
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lỗi xảy ra')
+      }
+    },
     ///////////-----------------Hóa đơn-------------------////////////
     async getAllHoaDon(page = 0, size = 5) {
       try {

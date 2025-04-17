@@ -550,12 +550,12 @@ watch(() => store.getFilteredProducts, (newValue) => {
 
 const listSort = ref([
     { value: '1', label: 'Sắp xếp theo' },
-    { value: '2', label: 'Tên tăng dần' },
-    { value: '3', label: 'Tên giảm dần' },
-    { value: '4', label: 'Giá tăng dần' },
-    { value: '5', label: 'Giá giảm dần' },
-    { value: '6', label: 'Mới nhất' },
-    { value: '7', label: 'Cũ nhất' },
+    { value: '2', label: 'Mã sản phẩm tăng dần' },
+    { value: '3', label: 'Mã sản phẩm giảm dần' },
+    { value: '4', label: 'Tên tăng dần' },
+    { value: '5', label: 'Tên giảm dần' },
+    { value: '6', label: 'Số lượng tăng dần' },
+    { value: '7', label: 'Số lượng giảm dần' },
 ]);
 
 // const listXemTheo = ref([
@@ -1386,6 +1386,20 @@ const handleSelectAllFields = (e) => {
 watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
     selectAllFields.value = newVal.every(v => v === true);
 }, { deep: true });
+
+// Watch for sorting option changes
+watch(() => luuBien.value, (newValue) => {
+    if (newValue !== '1') {
+        console.log('Sorting option changed to:', newValue);
+        // Dispatch a custom event that can be caught by the table component
+        const sortEvent = new CustomEvent('sort-option-changed', {
+            detail: {
+                option: newValue
+            }
+        });
+        window.dispatchEvent(sortEvent);
+    }
+});
 </script>
 
 <style scoped>

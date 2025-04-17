@@ -41,7 +41,8 @@
 
             <a-table :columns="columns" :row-selection="rowSelection" :data-source="displayData"
                 class="components-table-demo-nested" :row-key="record => record.id_san_pham"
-                :pagination="{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }">
+                :pagination="{ pageSize: 10, showSizeChanger: true, pageSizeOptions: ['10', '20', '50'] }"
+                :scroll="{ x: 1300 }" @change="handleTableChange">
                 <template #bodyCell="{ column, record }">
                     <template v-if="column.key === 'trang_thai'">
                         <a-switch @change="(checked) => changeStatusSanPham(record.id_san_pham, checked)"
@@ -63,7 +64,7 @@
                             </a-button>
                             <a-button type="primary" @click="() => showVariants(record)"
                                 class="d-flex align-items-center">
-                                <EyeOutlined />Biến thể
+                                <EyeOutlined />
                             </a-button>
                         </div>
                     </template>
@@ -189,7 +190,7 @@ import {
     EditOutlined, PlusOutlined, DeleteOutlined, EyeOutlined, ReloadOutlined,
     CheckCircleOutlined, StopOutlined
 } from '@ant-design/icons-vue';
-import { onMounted, ref, render, computed, watch } from 'vue';
+import { onMounted, ref, render, computed, watch, onBeforeUnmount } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
@@ -418,6 +419,7 @@ const formState = ref({});
 const fileList = ref([]);
 const loading = ref(false);
 
+// Update the columns to include options for both highest and lowest price
 const columns = [
     {
         title: '#',
@@ -431,54 +433,50 @@ const columns = [
         title: 'Mã sản phẩm',
         dataIndex: 'ma_san_pham',
         key: 'ma_san_pham',
-        width: '9%',
+        width: '8%',
+        sorter: (a, b) => a.ma_san_pham.localeCompare(b.ma_san_pham),
+        sortDirections: ['ascend', 'descend'],
     },
     {
         title: 'Tên sản phẩm',
         dataIndex: 'ten_san_pham',
         key: 'ten_san_pham',
-        width: '17%',
+        width: '15%',
+        sorter: (a, b) => a.ten_san_pham.localeCompare(b.ten_san_pham),
+        sortDirections: ['ascend', 'descend'],
     },
     {
         title: 'Hình ảnh',
         dataIndex: 'hinh_anh',
         key: 'hinh_anh',
-        width: '10%',
+        width: '8%',
     },
     {
         title: 'SL',
         dataIndex: 'tong_so_luong',
         key: 'tong_so_luong',
-        width: '7%',
+        width: '8%',
+        sorter: (a, b) => a.tong_so_luong - b.tong_so_luong,
+        sortDirections: ['ascend', 'descend'],
     },
-    // {
-    //     title: 'Giới tính',
-    //     dataIndex: 'gioi_tinh',
-    //     key: 'gioi_tinh',
-    //     width: '10%',
-    // },
-
     {
         title: 'Danh mục/Thương hiệu/Chất liệu',
         dataIndex: 'chi_muc',
         key: 'chi_muc',
-        width: '28%',
+        width: '22%',
     },
     {
         title: 'Trạng thái',
         dataIndex: 'trang_thai',
         key: 'trang_thai',
         width: '10%',
-
     },
-
     {
         title: 'Hành động',
         dataIndex: 'action',
         key: 'action',
-        width: '30%',
+        width: '25%',
     },
-
 ];
 const columnsCTSP = [
     // {
@@ -800,19 +798,43 @@ const displayData = computed(() => {
         console.log(`Hiển thị ${filteredProducts.length} sản phẩm đã lọc/tìm kiếm`);
 
         // Format dữ liệu để phù hợp với cấu trúc bảng
-        productsToDisplay = filteredProducts.map((item, index) => ({
-            stt: index + 1,
-            key: item.id_san_pham,
-            id_san_pham: item.id_san_pham,
-            ma_san_pham: item.ma_san_pham,
-            ten_san_pham: item.ten_san_pham,
-            hinh_anh: item.hinh_anh,
-            chi_muc: (item.ten_danh_muc || '') + "/" +
-                (item.ten_thuong_hieu || '') + "/" +
-                (item.ten_chat_lieu || ''),
-            trang_thai: item.trang_thai,
-            tong_so_luong: item.tong_so_luong || 0,
-        }));
+        productsToDisplay = filteredProducts.map((item, index) => {
+            // Try to get the prices from the cached data if available
+            let highestPrice = 0;
+            let lowestPrice = 0;
+            const productId = item.id_san_pham;
+
+            if (productCTSPMap.value.has(productId)) {
+                const variants = productCTSPMap.value.get(productId);
+                if (variants && variants.length > 0) {
+                    const prices = variants
+                        .map(variant => variant.gia_ban || 0)
+                        .filter(price => price > 0);
+
+                    if (prices.length > 0) {
+                        highestPrice = Math.max(...prices);
+                        lowestPrice = Math.min(...prices);
+                    }
+                }
+            }
+
+            return {
+                stt: index + 1,
+                key: item.id_san_pham,
+                id_san_pham: item.id_san_pham,
+                ma_san_pham: item.ma_san_pham,
+                ten_san_pham: item.ten_san_pham,
+                hinh_anh: item.hinh_anh,
+                chi_muc: (item.ten_danh_muc || '') + "/" +
+                    (item.ten_thuong_hieu || '') + "/" +
+                    (item.ten_chat_lieu || ''),
+                trang_thai: item.trang_thai,
+                tong_so_luong: item.tong_so_luong || 0,
+                gia_cao_nhat: highestPrice,
+                gia_thap_nhat: lowestPrice,
+                ngay_cap_nhat: item.ngay_cap_nhat || ''
+            };
+        });
     } else {
         // Nếu không có kết quả lọc hoặc tìm kiếm, hiển thị tất cả sản phẩm
         console.log(`Hiển thị tất cả ${data.value.length} sản phẩm`);
@@ -862,6 +884,9 @@ const refreshData = async () => {
         console.log('Đã cập nhật dữ liệu bộ lọc');
 
         data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
+            // Get the product prices (highest and lowest)
+            const prices = await getProductPrices(item.id_san_pham);
+
             return {
                 stt: index + 1,
                 key: item.id_san_pham,
@@ -871,7 +896,10 @@ const refreshData = async () => {
                 hinh_anh: item.hinh_anh,
                 chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
                 trang_thai: item.trang_thai,
-                tong_so_luong: item.tong_so_luong,
+                tong_so_luong: item.tong_so_luong || 0,
+                gia_cao_nhat: prices.highest,
+                gia_thap_nhat: prices.lowest,
+                ngay_cap_nhat: item.ngay_cap_nhat || '' // Don't use current date as fallback
             };
         }));
 
@@ -905,6 +933,9 @@ const refreshData = async () => {
 };
 
 onMounted(async () => {
+    // Add event listener for external sorting
+    window.addEventListener('sort-option-changed', handleExternalSort);
+
     const startTime = performance.now();
     isLoading.value = true;
 
@@ -941,6 +972,9 @@ onMounted(async () => {
 
         // Xử lý dữ liệu và lưu vào cache
         data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
+            // Get the product prices (highest and lowest)
+            const prices = await getProductPrices(item.id_san_pham);
+
             return {
                 stt: index + 1,
                 key: item.id_san_pham,
@@ -950,7 +984,10 @@ onMounted(async () => {
                 hinh_anh: item.hinh_anh,
                 chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
                 trang_thai: item.trang_thai,
-                tong_so_luong: item.tong_so_luong,
+                tong_so_luong: item.tong_so_luong || 0,
+                gia_cao_nhat: prices.highest,
+                gia_thap_nhat: prices.lowest,
+                ngay_cap_nhat: item.ngay_cap_nhat || '' // Don't use current date as fallback
             };
         }));
 
@@ -969,6 +1006,11 @@ onMounted(async () => {
     }
 });
 
+onBeforeUnmount(() => {
+    // Remove event listener
+    window.removeEventListener('sort-option-changed', handleExternalSort);
+});
+
 const formatCurrency = (value) => {
     if (!value && value !== 0) return '';
     return new Intl.NumberFormat('vi-VN', {
@@ -976,6 +1018,17 @@ const formatCurrency = (value) => {
         currency: 'VND',
         minimumFractionDigits: 0
     }).format(value);
+};
+
+// Add this function near the formatCurrency function
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
 };
 
 // Hàm làm mới dữ liệu chi tiết
@@ -1225,6 +1278,9 @@ const handleMenuActionRefresh = async () => {
 
         // Update local data from store
         data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
+            // Get the product prices (highest and lowest)
+            const prices = await getProductPrices(item.id_san_pham);
+
             return {
                 stt: index + 1,
                 key: item.id_san_pham,
@@ -1234,7 +1290,10 @@ const handleMenuActionRefresh = async () => {
                 hinh_anh: item.hinh_anh,
                 chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
                 trang_thai: item.trang_thai,
-                tong_so_luong: item.tong_so_luong,
+                tong_so_luong: item.tong_so_luong || 0,
+                gia_cao_nhat: prices.highest,
+                gia_thap_nhat: prices.lowest,
+                ngay_cap_nhat: item.ngay_cap_nhat || '' // Don't use current date as fallback
             };
         }));
 
@@ -1252,6 +1311,276 @@ const handleMenuActionRefresh = async () => {
         forceRefresh.value = false;
     }
 };
+
+// Function to get the highest price for a product from its variants
+const getHighestPrice = async (productId) => {
+    try {
+        // First check if we already have loaded CTSP for this product
+        if (productCTSPMap.value.has(productId)) {
+            const variants = productCTSPMap.value.get(productId);
+            if (variants && variants.length > 0) {
+                // Find the highest price among variants
+                return Math.max(...variants.map(variant => variant.gia_ban || 0));
+            }
+            return 0;
+        }
+
+        // If not loaded, load from API or cache
+        const cacheKey = `${CTSP_CACHE_PREFIX}${productId}`;
+        if (!forceRefresh.value && isCacheValid(cacheKey)) {
+            const cachedVariants = getFromCache(cacheKey);
+            if (cachedVariants && cachedVariants.length > 0) {
+                return Math.max(...cachedVariants.map(variant => variant.gia_ban || 0));
+            }
+        }
+
+        // If no cached data, load from API
+        await store.getCTSPBySanPham(productId);
+        const variants = store.getCTSPBySanPhams;
+        if (variants && variants.length > 0) {
+            const formattedVariants = variants.map(ctsp => ({
+                key: ctsp.id_chi_tiet_san_pham,
+                id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
+                id_san_pham: productId,
+                ten_san_pham: ctsp.ten_san_pham,
+                hinh_anh: ctsp.hinh_anh,
+                gia_ban: ctsp.gia_ban,
+                mau_sac: ctsp.ten_mau,
+                size: ctsp.gia_tri + ' ' + ctsp.don_vi,
+                so_luong: ctsp.so_luong,
+                trang_thai: ctsp.trang_thai,
+            }));
+
+            // Store the variants in the map for future use
+            productCTSPMap.value.set(productId, formattedVariants);
+            saveToCache(cacheKey, formattedVariants);
+
+            return Math.max(...formattedVariants.map(variant => variant.gia_ban || 0));
+        }
+
+        return 0;
+    } catch (error) {
+        console.error('Error getting highest price for product:', error);
+        return 0;
+    }
+};
+
+// Function to get highest and lowest prices for a product from its variants
+const getProductPrices = async (productId) => {
+    try {
+        // First check if we already have loaded CTSP for this product
+        if (productCTSPMap.value.has(productId)) {
+            const variants = productCTSPMap.value.get(productId);
+            if (variants && variants.length > 0) {
+                // Get all prices from variants (ignore 0 or null prices)
+                const prices = variants
+                    .map(variant => variant.gia_ban || 0)
+                    .filter(price => price > 0);
+
+                if (prices.length > 0) {
+                    return {
+                        highest: Math.max(...prices),
+                        lowest: Math.min(...prices)
+                    };
+                }
+                return { highest: 0, lowest: 0 };
+            }
+            return { highest: 0, lowest: 0 };
+        }
+
+        // If not loaded, load from API or cache
+        const cacheKey = `${CTSP_CACHE_PREFIX}${productId}`;
+        if (!forceRefresh.value && isCacheValid(cacheKey)) {
+            const cachedVariants = getFromCache(cacheKey);
+            if (cachedVariants && cachedVariants.length > 0) {
+                const prices = cachedVariants
+                    .map(variant => variant.gia_ban || 0)
+                    .filter(price => price > 0);
+
+                if (prices.length > 0) {
+                    return {
+                        highest: Math.max(...prices),
+                        lowest: Math.min(...prices)
+                    };
+                }
+                return { highest: 0, lowest: 0 };
+            }
+        }
+
+        // If no cached data, load from API
+        await store.getCTSPBySanPham(productId);
+        const variants = store.getCTSPBySanPhams;
+
+        if (variants && variants.length > 0) {
+            const formattedVariants = variants.map(ctsp => ({
+                key: ctsp.id_chi_tiet_san_pham,
+                id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
+                id_san_pham: productId,
+                ten_san_pham: ctsp.ten_san_pham,
+                hinh_anh: ctsp.hinh_anh,
+                gia_ban: ctsp.gia_ban,
+                mau_sac: ctsp.ten_mau,
+                size: ctsp.gia_tri + ' ' + ctsp.don_vi,
+                so_luong: ctsp.so_luong,
+                trang_thai: ctsp.trang_thai,
+            }));
+
+            // Store the variants in the map for future use
+            productCTSPMap.value.set(productId, formattedVariants);
+            saveToCache(cacheKey, formattedVariants);
+
+            const prices = formattedVariants
+                .map(variant => variant.gia_ban || 0)
+                .filter(price => price > 0);
+
+            if (prices.length > 0) {
+                return {
+                    highest: Math.max(...prices),
+                    lowest: Math.min(...prices)
+                };
+            }
+        }
+
+        return { highest: 0, lowest: 0 };
+    } catch (error) {
+        console.error('Error getting prices for product:', error);
+        return { highest: 0, lowest: 0 };
+    }
+};
+
+// Handle table change events (sorting, pagination, etc.)
+const handleTableChange = (pagination, filters, sorter) => {
+    console.log('Table params changed:', { pagination, filters, sorter });
+
+    // Process sorting if sorter is provided
+    if (sorter) {
+        console.log(`Sorting by ${sorter.field}, order: ${sorter.order}`);
+    }
+};
+
+// Function to handle sorting from menu dropdown
+const handleExternalSort = (event) => {
+    const sortOption = event.detail.option;
+    console.log('Received external sort event with option:', sortOption);
+
+    // Apply the sorting based on the option
+    let sortedData = [...displayData.value]; // Create a copy to avoid reactivity issues
+
+    switch (sortOption) {
+        case '2': // Mã sản phẩm ascending
+            sortedData.sort((a, b) => a.ma_san_pham.localeCompare(b.ma_san_pham));
+            break;
+        case '3': // Mã sản phẩm descending
+            sortedData.sort((a, b) => b.ma_san_pham.localeCompare(a.ma_san_pham));
+            break;
+        case '4': // Name ascending
+            sortedData.sort((a, b) => a.ten_san_pham.localeCompare(b.ten_san_pham));
+            break;
+        case '5': // Name descending
+            sortedData.sort((a, b) => b.ten_san_pham.localeCompare(a.ten_san_pham));
+            break;
+        case '6': // Quantity ascending
+            sortedData.sort((a, b) => a.tong_so_luong - b.tong_so_luong);
+            break;
+        case '7': // Quantity descending
+            sortedData.sort((a, b) => b.tong_so_luong - a.tong_so_luong);
+            break;
+        default:
+            // No sorting
+            break;
+    }
+
+    // Update data with sorted array
+    if (sortOption !== '1') {
+        data.value = sortedData;
+
+        // Force re-render
+        isLoading.value = true;
+        setTimeout(() => {
+            isLoading.value = false;
+        }, 100);
+    }
+};
+
+// Add the event listener to the existing onMounted function
+onMounted(async () => {
+    // Add event listener for external sorting
+    window.addEventListener('sort-option-changed', handleExternalSort);
+
+    const startTime = performance.now();
+    isLoading.value = true;
+
+    try {
+        // Tải chi tiết sản phẩm cho bộ lọc
+        await store.getAllCTSP();
+        console.log('Đã tải dữ liệu chi tiết sản phẩm:', store.getAllChiTietSanPham.length);
+
+        // Kiểm tra xem có cần refresh cache không
+        if (store.justAddedProduct || store.justUpdatedProduct) {
+            // Nếu vừa thêm hoặc sửa sản phẩm, xóa toàn bộ cache
+            clearAllProductsCache();
+            forceRefresh.value = true;
+
+            // Lấy danh sách theo ngày sửa
+            await store.getAllSanPhamNgaySua();
+            store.justAddedProduct = false;
+            store.justUpdatedProduct = false;
+        } else {
+            // Kiểm tra cache trước khi gọi API
+            if (isCacheValid(PRODUCTS_CACHE_KEY)) {
+                console.log('Sử dụng cache cho danh sách sản phẩm');
+                const cachedProducts = getFromCache(PRODUCTS_CACHE_KEY);
+                if (cachedProducts) {
+                    data.value = cachedProducts;
+                    isLoading.value = false;
+                    return;
+                }
+            }
+
+            // Nếu không có cache hoặc cache hết hạn, gọi API
+            await store.getAllSP();
+        }
+
+        // Xử lý dữ liệu và lưu vào cache
+        data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
+            // Get the product prices (highest and lowest)
+            const prices = await getProductPrices(item.id_san_pham);
+
+            return {
+                stt: index + 1,
+                key: item.id_san_pham,
+                id_san_pham: item.id_san_pham,
+                ma_san_pham: item.ma_san_pham,
+                ten_san_pham: item.ten_san_pham,
+                hinh_anh: item.hinh_anh,
+                chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
+                trang_thai: item.trang_thai,
+                tong_so_luong: item.tong_so_luong || 0,
+                gia_cao_nhat: prices.highest,
+                gia_thap_nhat: prices.lowest,
+                ngay_cap_nhat: item.ngay_cap_nhat || '' // Don't use current date as fallback
+            };
+        }));
+
+        // Lưu vào cache nếu có dữ liệu
+        if (data.value.length > 0) {
+            saveToCache(PRODUCTS_CACHE_KEY, data.value);
+        }
+
+        const endTime = performance.now();
+        loadTime.value = Math.round(endTime - startTime);
+    } catch (error) {
+        console.error('Lỗi khi tải dữ liệu:', error);
+        message.error('Có lỗi xảy ra khi tải dữ liệu sản phẩm');
+    } finally {
+        isLoading.value = false;
+    }
+});
+
+onBeforeUnmount(() => {
+    // Remove event listener
+    window.removeEventListener('sort-option-changed', handleExternalSort);
+});
 </script>
 <style scoped>
 :deep(.ctsp-table) {
