@@ -1068,6 +1068,15 @@ export const useGbStore = defineStore('gbStore', {
       await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
       return response.khachHang // Trả về thông tin khách hàng vừa thêm
     },
+    async themKhachHangBH(khachHangData) {
+      const response = await khachHangService.themKhachHangBH(khachHangData)
+      if (response.error) {
+        throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng bán hàng') // Ném lỗi để component xử lý
+      }
+      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
+      return response.khachHang // Trả về thông tin khách hàng vừa thêm
+    },
+
 
     // Lấy thông tin khách hàng để chỉnh sửa
     async getKhachHangByIdForEdit(id) {
@@ -1255,9 +1264,9 @@ export const useGbStore = defineStore('gbStore', {
         throw error
       }
     },
-    async addSPHD(idHoaDon, idCTSP, soLuong, giaBan) {
+    async addSPHD(idHoaDon, idCTSP, soLuong) {
       try {
-        const hoaDon = await banHangService.addSPHD(idHoaDon, idCTSP, soLuong, giaBan)
+        const hoaDon = await banHangService.addSPHD(idHoaDon, idCTSP, soLuong)
         if (hoaDon.error) {
           toast.error('Không thêm được sản phẩm vào hoá đơn')
           return
@@ -1311,9 +1320,9 @@ export const useGbStore = defineStore('gbStore', {
         throw error
       }
     },
-    async giamSPHD(idHoaDon, idCTSP, soLuong, giaBan) {
+    async giamSPHD(idHoaDon, idCTSP, soLuong) {
       try {
-        const hoaDon = await banHangService.giamSPHD(idHoaDon, idCTSP, soLuong, giaBan)
+        const hoaDon = await banHangService.giamSPHD(idHoaDon, idCTSP, soLuong)
         if (hoaDon.error) {
           toast.error('Không giảm được sản phẩm hoá đơn')
           return
@@ -1423,6 +1432,21 @@ export const useGbStore = defineStore('gbStore', {
         const result = await hoaDonService.updateHinhThucTTHoaDon(idHD, hinhThucThanhToan)
         if (result.error) {
           toast.error(result.message || 'Không update được hình thức thanh toán')
+          return null
+        }
+        return result
+      } catch (error) {
+        console.error(error)
+        toast.error('Có lị xảy ra')
+        throw error
+      }
+    },
+
+    async setSPHD(idHoaDon, idCTSP, soLuong) {
+      try {
+        const result = await banHangService.setSPHD(idHoaDon, idCTSP, soLuong)
+        if (result.error) {
+          toast.error(result.message || 'Không thêm được khách hàng hoá đơn')
           return null
         }
         return result
