@@ -204,11 +204,16 @@ const handleLogin = async () => {
             return;
         }
 
-        // Chuyển đến trang quản trị
+        // Chuyển đến trang phù hợp với role
         console.log('Đăng nhập thành công với vai trò:', result.id_roles);
-        router.push('/admin');
-
-        await new Promise(resolve => setTimeout(resolve, 500)); // Giả lập API call
+        
+        // Nhân viên (role 3) chuyển thẳng đến trang bán hàng
+        if (result.id_roles === 3) {
+            router.push('/admin/banhang');
+        } else {
+            // Admin và quản lý đến trang chính
+            router.push('/admin');
+        }
     } catch (error) {
         toast.error('Đăng nhập thất bại. Vui lòng thử lại!');
     } finally {

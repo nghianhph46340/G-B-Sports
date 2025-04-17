@@ -143,23 +143,30 @@ import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRoute } from 'vue-router';
+import { banHangOnlineService } from '@/services/banHangOnlineService';
+import { toast } from 'vue3-toastify';
 
 const route = useRoute();
 const router = useRouter();
 const store = useGbStore();
 const cartItems = ref([]);
 const selectedItems = ref([]);
+const idKhachHang = ref(null);
+const gioHang = ref([]);
 
 // Tải giỏ hàng từ localStorage
 const loadCartFromLocalStorage = () => {
     try {
-        const savedCart = localStorage.getItem('gb-sport-cart');
-        if (savedCart) {
-            cartItems.value = JSON.parse(savedCart);
-            console.log('Đã tải giỏ hàng:', cartItems.value.length, 'sản phẩm');
-        } else {
-            cartItems.value = [];
-            console.log('Không có sản phẩm trong giỏ hàng');
+        // Chỉ dùng localStorage khi không đăng nhập
+        if (!sessionStorage.getItem('id_khach_hang')) {
+            const savedCart = localStorage.getItem('gb-sport-cart');
+            if (savedCart) {
+                cartItems.value = JSON.parse(savedCart);
+                console.log('Đã tải giỏ hàng từ localStorage:', cartItems.value.length, 'sản phẩm');
+            } else {
+                cartItems.value = [];
+                console.log('Không có sản phẩm trong giỏ hàng');
+            }
         }
     } catch (error) {
         console.error('Lỗi khi tải giỏ hàng:', error);
@@ -487,10 +494,63 @@ const debugCartStructure = () => {
     }
 };
 
+// Cập nhật hàm getGioHang để gán dữ liệu vào cartItems
+const getGioHang = async () => {
+    try {
+        // Lấy userDetails từ sessionStorage
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        console.log('userDetails string:', userDetailsStr);
+        
+        if (userDetailsStr) {
+            const userDetails = JSON.parse(userDetailsStr);
+            console.log('userDetails parsed:', userDetails);
+            
+            if (userDetails && userDetails.idKhachHang) {
+                idKhachHang.value = userDetails.idKhachHang;
+                console.log('Đang gọi API với idKhachHang:', idKhachHang.value);
+                
+                try {
+                    const response = await banHangOnlineService.getGioHang(idKhachHang.value);
+                    gioHang.value = response;
+                    
+                    // Chuyển đổi dữ liệu từ API sang định dạng cartItems
+                    if (response && Array.isArray(response)) {
+                        cartItems.value = response.map(item => ({
+                            id: item.id_chi_tiet_san_pham,
+                            name: item.ten_san_pham,
+                            price: item.gia_ban || 0,
+                            originalPrice: item.gia_goc || 0,
+                            quantity: item.so_luong || 1,
+                            maxQuantity: item.so_luong_ton || 10,
+                            image: item.hinh_anh,
+                            color: item.ten_mau_sac,
+                            size: item.ten_kich_thuoc
+                        }));
+                        console.log('cartItems:thu: ', cartItems.value);
+                        console.log('Đã tải giỏ hàng từ tài khoản:', cartItems.value.length, 'sản phẩm');
+                    }
+                } catch (error) {
+                    console.error('Lỗi API getGioHang:', error);
+                    loadCartFromLocalStorage();
+                }
+            } else {
+                console.log('Không tìm thấy idKhachHang trong userDetails');
+                loadCartFromLocalStorage();
+            }
+        } else {
+            console.log('Không có userDetails trong sessionStorage');
+            loadCartFromLocalStorage();
+        }
+    } catch (error) {
+        console.error('Lỗi trong getGioHang:', error);
+        loadCartFromLocalStorage();
+    }
+};
+
 // Mở rộng hàm onMounted để tải cả danh sách sản phẩm và debug
 onMounted(async () => {
     console.log('DEBUG - Component GioHang mounted');
-    loadCartFromLocalStorage();
+    await getGioHang(); // Ưu tiên load giỏ hàng từ tài khoản trước
     debugCartStructure();
     await loadProductsIfNeeded();
     await store.getAllSP();
