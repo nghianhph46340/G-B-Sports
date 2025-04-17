@@ -225,13 +225,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                    }}</p>
+                                }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -387,7 +387,7 @@
                                     <a-input v-model:value="editedCustomer.hoTen" placeholder="Nhập tên người nhận" />
                                 </a-form-item>
                                 <a-form-item label="Email" name="email">
-                                    <a-input v-model:value="editedCustomer.email" type="email"
+                                    <a-input v-model:value="editedCustomer.email" type="text"
                                         placeholder="Nhập email" />
                                 </a-form-item>
                                 <a-form-item label="Số điện thoại" name="sdtNguoiNhan">
@@ -441,8 +441,9 @@
                                 </a-table>
 
                                 <a-form-item>
-                                    <a-button type="primary" html-type="submit">Lưu</a-button>
-                                    <a-button type="default" @click="closeDrawer">Hủy</a-button>
+                                    <a-button type="primary" html-type="submit" style="margin-right:10px">Lưu</a-button>
+                                    <a-button type="default" @click="closeDrawer" style="margin-right:auto">Hủy</a-button>
+                                    <a-button type="default" @click="editedCustomer">Xóa form</a-button>
                                 </a-form-item>
                             </a-form>
                         </a-drawer>
@@ -556,12 +557,12 @@
                     <label>
                         <span v-if="shouldCalculateSoLuongTon">Số lượng
                             (Khả dụng: {{ popupType === 'decrease' ? currentProduct.so_luong :
-                            calculateSoLuongTon(currentProduct)
+                                calculateSoLuongTon(currentProduct)
                             }})
                         </span>
                         <span v-else>Số lượng
                             (Tổng: {{ popupType === 'decrease' ? currentProduct.so_luong :
-                            currentProduct.so_luong_con_lai }})
+                                currentProduct.so_luong_con_lai }})
                         </span>
                     </label>
                     <label style="width: 100px;">Số lượng:</label>
@@ -602,7 +603,7 @@ import '../../../config/fonts/Roboto-bold'
 import logo from '../../../images/logo/logo2.png';
 
 // Ant Design Vue components
-import { Row as ARow, Col as ACol, Button as AButton, Divider as ADivider, Form as AForm, FormItem as AFormItem, Input as AInput, Textarea as ATextarea, Table as ATable, Modal as AModal, InputNumber as AInputNumber, Spin as ASpin } from 'ant-design-vue';
+import { Row as ARow, Col as ACol, Button as AButton, Divider as ADivider, Form as AForm, FormItem as AFormItem, Input as AInput, Textarea as ATextarea, Table as ATable, Modal as AModal, InputNumber as AInputNumber, Spin as ASpin, message } from 'ant-design-vue';
 
 const store = useGbStore();
 const route = useRoute();
@@ -862,25 +863,84 @@ const handleHuyenChange = async (value) => {
         await fetchXaList(districtCode);
     }
 };
+const validateCustomerInfo = () => {
+    // Kiểm tra các trường bắt buộc không được để trống
+    if (!editedCustomer.value.hoTen) {
+        message.error('Vui lòng nhập tên người nhận!');
+        return false;
+    } else if (editedCustomer.value.hoTen.length > 60) {
+        message.error('Tên người nhận không được vượt quá 60 ký tự!');
+        return false;
+    }
+    if (!editedCustomer.value.email) {
+        message.error('Vui lòng nhập email!');
+        return false;
+    }
+    // Kiểm tra định dạng email
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    if (!emailRegex.test(editedCustomer.value.email)) {
+        message.error('Email không đúng định dạng!');
+        return false;
+    }
+    if (!editedCustomer.value.sdtNguoiNhan) {
+        message.error('Vui lòng nhập số điện thoại!');
+        return false;
+    }
+    // Kiểm tra định dạng số điện thoại Việt Nam
+    const phoneRegex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
+    if (!phoneRegex.test(editedCustomer.value.sdtNguoiNhan)) {
+        message.error('Số điện thoại không đúng định dạng!(VD: 0912345678)');
+        return false;
+    }
+    if (!editedCustomer.value.tinh) {
+        message.error('Vui lòng chọn tỉnh/thành phố!');
+        return false;
+    }
+    if (!editedCustomer.value.huyen) {
+        message.error('Vui lòng chọn quận/huyện!');
+        return false;
+    }
+    if (!editedCustomer.value.xa) {
+        message.error('Vui lòng chọn xã/phường!');
+        return false;
+    }
+    if (!editedCustomer.value.diaChiCuThe) {
+        message.error('Vui lòng nhập địa chỉ cụ thể!');
+        return false;
+    }
+    return true;
+};
 // Lưu thông tin khách hàng
 const saveCustomerInfo = () => {
-    if (confirm('Bạn có đồng ý sửa thông tin khách hàng không?')) {
-        // Ghép địa chỉ từ các trường
-        if (editedCustomer.value.tinh && editedCustomer.value.huyen && editedCustomer.value.xa && editedCustomer.value.diaChiCuThe) {
-            editedCustomer.value.diaChi = `${editedCustomer.value.diaChiCuThe}, ${editedCustomer.value.xa}, ${editedCustomer.value.huyen}, ${editedCustomer.value.tinh}`;
-        } else {
-            editedCustomer.value.diaChi = editedCustomer.value.diaChiCuThe || '';
-        }
-        // Gọi hàm cập nhật thông tin khách hàng
-        store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, {
-            hoTen: editedCustomer.value.hoTen,
-            email: editedCustomer.value.email,
-            sdtNguoiNhan: editedCustomer.value.sdtNguoiNhan,
-            diaChi: editedCustomer.value.diaChi,
-        });
-        // Đóng drawer
-        closeDrawer();
+    if (!validateCustomerInfo()) {
+        return;
     }
+    AModal.confirm({
+        title: 'Xác nhận',
+        content: 'Bạn có đồng ý sửa thông tin khách hàng không?',
+        onOk: () => {
+            // Ghép địa chỉ từ các trường
+            if (
+                editedCustomer.value.tinh &&
+                editedCustomer.value.huyen &&
+                editedCustomer.value.xa &&
+                editedCustomer.value.diaChiCuThe
+            ) {
+                editedCustomer.value.diaChi = `${editedCustomer.value.diaChiCuThe}, ${editedCustomer.value.xa}, ${editedCustomer.value.huyen}, ${editedCustomer.value.tinh}`;
+            } else {
+                editedCustomer.value.diaChi = editedCustomer.value.diaChiCuThe || '';
+            }
+
+            // Gọi hàm cập nhật thông tin khách hàng
+            store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, {
+                hoTen: editedCustomer.value.hoTen,
+                email: editedCustomer.value.email,
+                sdtNguoiNhan: editedCustomer.value.sdtNguoiNhan,
+                diaChi: editedCustomer.value.diaChi,
+            });
+            closeDrawer();
+        },
+    });
 };
 // Hàm xử lý sau khi drawer mở/đóng
 const afterOpenChange = (visible) => {
@@ -1073,10 +1133,14 @@ const startEditingNote = () => {
 
 // Lưu ghi chú
 const saveNote = () => {
-    if (confirm('Bạn có đồng ý sửa ghi chú không?')) {
-        store.updateNote(store.hoaDonDetail.ma_hoa_don, editedNote.value);
-        isEditingNote.value = false;
-    }
+    AModal.confirm({
+        title: 'Xác nhận',
+        content: 'Bạn có đồng ý sửa ghi chú không?',
+        onOk: () => {
+            store.updateNote(store.hoaDonDetail.ma_hoa_don, editedNote.value);
+            isEditingNote.value = false;
+        },
+    });
 };
 
 // Hủy chỉnh sửa ghi chú
@@ -1169,8 +1233,8 @@ const validateQuantity = (index, max) => {
         quantities.value[index] = 0;
     }
     if (shouldCalculateSoLuongTon && quantities.value[index] > max) {
-        quantities.value[index] = max;
         toast.error(`Số lượng mua không được vượt quá ${max}`);
+        quantities.value[index] = max;
     }
 };
 
@@ -1284,9 +1348,8 @@ const confirmStatusChange = () => {
         toast.error('Vui lòng nhập tên nhân viên!');
         return;
     }
-    if (!statusForm.value.noiDungDoi) {
-        toast.error('Vui lòng chọn hoặc nhập nội dung chuyển trạng thái!');
-        return;
+    if (!statusForm.value.noiDungDoi || statusForm.value.noiDungDoi.trim() === '') {
+        statusForm.value.noiDungDoi = 'Không có ghi chú';
     }
 
     if (modalAction.value === 'change') {
@@ -1440,7 +1503,7 @@ const updateQuantity = async () => {
             return;
         }
         if (change >= item.so_luong) {
-            toast.error(`Số lượng giảm không được vượt quá ${item.so_luong}`);
+            toast.error(`Số lượng giảm phải nhỏ hơn ${item.so_luong} hoặc hãy xóa sản phẩm khỏi hóa đơn!`);
             return;
         }
         try {
@@ -1466,16 +1529,19 @@ const updateQuantity = async () => {
 
 // Computed property để kiểm tra điều kiện hiển thị nút "Quay lại"
 const showRevertButton = computed(() => {
-    if (store.trangThaiHistory.length === 0) {
-        console.log('trangThaiHistory rỗng');
-        return false;
+    const currentStatus = store.hoaDonDetail?.trang_thai;
+
+    // Nếu trạng thái hiện tại là "Đã cập nhật", kiểm tra trạng thái trước đó
+    if (currentStatus === 'Đã cập nhật') {
+        const previousStatus = store.trangThaiHistory
+            .filter(history => history.trang_thai !== 'Đã cập nhật') // Bỏ qua các trạng thái "Đã cập nhật"
+            .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen))[0]?.trang_thai; // Lấy trạng thái trước đó
+
+        return previousStatus === 'Đã xác nhận'; // Hiển thị nút nếu trạng thái trước đó là "Đã xác nhận"
     }
-    const firstStatus = store.trangThaiHistory[0].trang_thai;
-    const currentStatus = store.hoaDonDetail.trang_thai;
-    console.log('First Status:', firstStatus);
-    console.log('Current Status:', currentStatus);
-    console.log('Show Revert Button:', firstStatus === 'Chờ xác nhận' && currentStatus === 'Đã xác nhận');
-    return firstStatus === 'Chờ xác nhận' && currentStatus === 'Đã xác nhận';
+
+    // Nếu trạng thái hiện tại không phải "Đã cập nhật", kiểm tra trực tiếp
+    return currentStatus === 'Đã xác nhận';
 });
 
 // Trạng thái modal xác nhận in hóa đơn
@@ -1491,7 +1557,10 @@ const confirmPrint = (shouldPrint) => {
     showPrintConfirm.value = false;
     if (shouldPrint) {
         printInvoice();
+        toast.success('Xuất hóa đơn thành công!');
+        return;
     }
+    toast.warning('Xuất hóa đơn không thành công!');
 };
 const printInvoice = () => {
     const doc = new jsPDF();
@@ -2519,6 +2588,7 @@ const getUpdatePosition = (update) => {
         /* Kích thước chữ nhỏ hơn */
     }
 }
+
 /* ------------------------------------------------------------------------------ */
 .timeline-step.cancelled .timeline-icon {
     background-color: #fff1f0;
