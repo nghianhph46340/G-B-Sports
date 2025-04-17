@@ -66,8 +66,8 @@
                                 <a-form-item label="Email" name="email" required class="form-item">
                                     <a-input v-model:value="customer.email" placeholder="Nhập email" />
                                 </a-form-item>
-                                <a-form-item label="Tỉnh/Thành phố" name="tinh_thanh" required class="form-item">
-                                    <a-select v-model:value="customer.tinh_thanh" placeholder="Chọn Tỉnh/Thành phố"
+                                <a-form-item label="Tỉnh/Thành phố" name="tinh_thanh_pho" required class="form-item">
+                                    <a-select v-model:value="customer.tinh_thanh_pho" placeholder="Chọn Tỉnh/Thành phố"
                                         @change="handleProvinceChange" :loading="loadingProvinces">
                                         <a-select-option v-for="province in provinces" :key="province.code"
                                             :value="province.name">
@@ -80,7 +80,7 @@
                                 <a-form-item label="Quận/Huyện" name="quan_huyen" required class="form-item">
                                     <a-select v-model:value="customer.quan_huyen" placeholder="Chọn Quận/Huyện"
                                         @change="handleDistrictChange" :loading="loadingDistricts"
-                                        :disabled="!customer.tinh_thanh">
+                                        :disabled="!customer.tinh_thanh_pho">
                                         <a-select-option v-for="district in districts" :key="district.code"
                                             :value="district.name">
                                             {{ district.name }}
@@ -97,16 +97,9 @@
                                 </a-form-item>
                             </div>
                             <div class="form-row">
-                                <a-form-item label="Địa chỉ cụ thể" name="dia_chi_cu_the" required
-                                    class="form-item full-width">
-                                    <a-textarea v-model:value="customer.dia_chi_cu_the"
-                                        placeholder="Số nhà, tên đường..." :rows="2" />
-                                </a-form-item>
-                            </div>
-                            <div class="form-row">
-                                <a-form-item name="mac_dinh" class="form-item checkbox-item">
-                                    <a-checkbox v-model:checked="customer.mac_dinh">Đặt làm địa chỉ mặc
-                                        định</a-checkbox>
+                                <a-form-item label="Địa chỉ cụ thể" name="so_nha" required class="form-item full-width">
+                                    <a-textarea v-model:value="customer.so_nha" placeholder="Số nhà, tên đường..."
+                                        :rows="2" />
                                 </a-form-item>
                             </div>
                         </a-form>
@@ -226,7 +219,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -267,52 +260,37 @@
                         </a-button>
                     </div>
                 </div>
+                <div class="section-box address-info">
+                    <h2 class="section-title">Thông tin địa chỉ</h2>
+
+                    <!-- Danh sách địa chỉ của khách hàng đã đăng nhập -->
+                    <div v-if="store.danhSachDiaChi && store.danhSachDiaChi.length > 0" class="address-list">
+                        <a-radio-group v-model:value="selectedAddressId" class="address-radio-group">
+                            <div v-for="(address, index) in store.danhSachDiaChi" :key="index" class="address-item">
+                                <!-- Sử dụng index làm value cho radio -->
+                                <a-radio :value="index" class="address-radio">
+                                    <div class="address-content">
+                                        <p class="address-name">{{ customer.ho_ten }}
+                                            <span v-if="address.dia_chi_mac_dinh === 'true'" class="default-tag">[Mặc định]</span>
+                                        </p>
+                                        <p class="address-phone">{{ customer.so_dien_thoai }}</p>
+                                        <p class="address-email">{{ customer.email }}</p>
+                                        <p class="address-full">
+                                            {{ address.so_nha }}, {{ address.xa_phuong }}, {{ address.quan_huyen }}, {{ address.tinh_thanh_pho }}
+                                        </p>
+                                    </div>
+                                </a-radio>
+                            </div>
+                        </a-radio-group>
+                    </div>
+                    <div v-else class="empty-address-message">
+                        Chưa có địa chỉ nào.
+                    </div>
+                </div>
             </div>
+
         </div>
 
-        <!-- Address Modal -->
-        <a-modal v-model:visible="addressModalVisible" :title="isEditingAddress ? 'Sửa địa chỉ' : 'Thêm địa chỉ mới'"
-            @ok="saveAddress" :zIndex="1050" :mask-closable="false" class="address-modal">
-            <a-form :model="addressForm" layout="vertical">
-                <a-form-item label="Họ tên người nhận" name="ten_nguoi_nhan" required>
-                    <a-input v-model:value="addressForm.ten_nguoi_nhan" placeholder="Nhập họ tên người nhận" />
-                </a-form-item>
-                <a-form-item label="Số điện thoại" name="so_dien_thoai" required>
-                    <a-input v-model:value="addressForm.so_dien_thoai" placeholder="Nhập số điện thoại" />
-                </a-form-item>
-                <a-form-item label="Tỉnh/Thành phố" name="tinh_thanh" required>
-                    <a-select v-model:value="addressForm.tinh_thanh" placeholder="Chọn Tỉnh/Thành phố"
-                        @change="handleProvinceChange" :loading="loadingProvinces">
-                        <a-select-option v-for="province in provinces" :key="province.code" :value="province.name">
-                            {{ province.name }}
-                        </a-select-option>
-                    </a-select>
-                </a-form-item>
-                <a-form-item label="Quận/Huyện" name="quan_huyen" required>
-                    <a-select v-model:value="addressForm.quan_huyen" placeholder="Chọn Quận/Huyện"
-                        @change="handleDistrictChange" :loading="loadingDistricts" :disabled="!addressForm.tinh_thanh">
-                        <a-select-option v-for="district in districts" :key="district.code" :value="district.name">
-                            {{ district.name }}
-                        </a-select-option>
-                    </a-select>
-                </a-form-item>
-                <a-form-item label="Phường/Xã" name="xa_phuong" required>
-                    <a-select v-model:value="addressForm.xa_phuong" placeholder="Chọn Phường/Xã" :loading="loadingWards"
-                        :disabled="!addressForm.quan_huyen">
-                        <a-select-option v-for="ward in wards" :key="ward.code" :value="ward.name">
-                            {{ ward.name }}
-                        </a-select-option>
-                    </a-select>
-                </a-form-item>
-                <a-form-item label="Địa chỉ cụ thể" name="dia_chi_cu_the" required>
-                    <a-textarea v-model:value="addressForm.dia_chi_cu_the" placeholder="Số nhà, tên đường..."
-                        :rows="2" />
-                </a-form-item>
-                <a-form-item name="mac_dinh">
-                    <a-checkbox v-model:checked="addressForm.mac_dinh">Đặt làm địa chỉ mặc định</a-checkbox>
-                </a-form-item>
-            </a-form>
-        </a-modal>
 
         <!-- Voucher Modal -->
         <a-modal v-model:visible="voucherModalVisible" title="Chọn voucher" :footer="null" class="voucher-modal"
@@ -348,11 +326,12 @@
                 <a-button @click="voucherModalVisible = false">Đóng</a-button>
             </div>
         </a-modal>
+
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { message, Form, Modal } from 'ant-design-vue';
 import axios from 'axios';
@@ -383,36 +362,15 @@ const customer = ref({
     ho_ten: '',
     so_dien_thoai: '',
     email: '',
-    tinh_thanh: '',
+    tinh_thanh_pho: '',
     quan_huyen: '',
     xa_phuong: '',
-    dia_chi_cu_the: '',
-    mac_dinh: false
+    so_nha: '',
+    dia_chi_mac_dinh: 0  // Dùng 0 thay vì false
 });
 
 // Customer addresses
-const customerAddresses = ref([
-    {
-        id: 1,
-        ten_nguoi_nhan: 'Nguyễn Văn A',
-        so_dien_thoai: '0987654321',
-        tinh_thanh: 'Hồ Chí Minh',
-        quan_huyen: 'Quận 1',
-        xa_phuong: 'Phường Bến Nghé',
-        dia_chi_cu_the: '123 Đường Lê Lợi',
-        mac_dinh: true
-    },
-    {
-        id: 2,
-        ten_nguoi_nhan: 'Nguyễn Văn A',
-        so_dien_thoai: '0987654321',
-        tinh_thanh: 'Hà Nội',
-        quan_huyen: 'Quận Hai Bà Trưng',
-        xa_phuong: 'Phường Bách Khoa',
-        dia_chi_cu_the: '456 Đường Lê Thanh Nghị',
-        mac_dinh: false
-    }
-]);
+const customerAddresses = ref([]);
 const selectedAddressId = ref(1);
 
 // Payment methods
@@ -437,11 +395,12 @@ const addressForm = reactive({
     id: null,
     ten_nguoi_nhan: '',
     so_dien_thoai: '',
-    tinh_thanh: '',
+    email: '',
+    tinh_thanh_pho: '',
     quan_huyen: '',
     xa_phuong: '',
-    dia_chi_cu_the: '',
-    mac_dinh: false
+    so_nha: '',
+    dia_chi_mac_dinh: false
 });
 
 // Location data for address form
@@ -472,7 +431,7 @@ const validationRules = {
         { required: true, message: 'Vui lòng nhập email', trigger: 'blur' },
         { type: 'email', message: 'Email không hợp lệ', trigger: 'blur' }
     ],
-    tinh_thanh: [
+    tinh_thanh_pho: [
         { required: true, message: 'Vui lòng chọn Tỉnh/Thành phố', trigger: 'change' }
     ],
     quan_huyen: [
@@ -481,7 +440,7 @@ const validationRules = {
     xa_phuong: [
         { required: true, message: 'Vui lòng chọn Phường/Xã', trigger: 'change' }
     ],
-    dia_chi_cu_the: [
+    so_nha: [
         { required: true, message: 'Vui lòng nhập địa chỉ cụ thể', trigger: 'blur' },
         { min: 5, message: 'Địa chỉ phải có ít nhất 5 ký tự', trigger: 'blur' }
     ]
@@ -564,26 +523,59 @@ const fetchCustomerData = async () => {
     }
 };
 
-// Fetch customer addresses
+// Kiểm tra trạng thái đăng nhập
+const isLoggedIn = computed(() => {
+    return sessionStorage.getItem('isLoggedIn') === 'true';
+});
+
+// Lấy danh sách địa chỉ khi KH đăng nhập
 const fetchCustomerAddresses = async () => {
     try {
-        // In a real app, this would fetch from an API
-        // await store.getCustomerAddresses();
-        // customerAddresses.value = store.customerAddresses;
-        // Set the default address as selected
-        const defaultAddress = customerAddresses.value.find(addr => addr.mac_dinh);
-        if (defaultAddress) {
-            selectedAddressId.value = defaultAddress.id;
-        } else if (customerAddresses.value.length > 0) {
-            selectedAddressId.value = customerAddresses.value[0].id;
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        if (!userDetailsStr) return;
+
+        const userDetails = JSON.parse(userDetailsStr);
+        if (!userDetails || !userDetails.idKhachHang) return;
+
+        // Điền thông tin cơ bản
+        customer.value.ho_ten = userDetails.tenKhachHang || '';
+        customer.value.so_dien_thoai = userDetails.soDienThoai || '';
+        customer.value.email = userDetails.email || '';
+
+        // Gọi API lấy danh sách địa chỉ
+        await store.getDanhSachDiaChi(userDetails.idKhachHang);
+        console.log('Danh sách địa chỉ từ API:', store.danhSachDiaChi);
+
+        if (store.danhSachDiaChi && store.danhSachDiaChi.length > 0) {
+            // Tìm index của địa chỉ mặc định
+            const defaultAddressIndex = store.danhSachDiaChi.findIndex(addr => addr.dia_chi_mac_dinh === 'true');
+            
+            // Nếu có địa chỉ mặc định, chọn nó. Nếu không, chọn địa chỉ đầu tiên
+            const selectedIndex = defaultAddressIndex !== -1 ? defaultAddressIndex : 0;
+            
+            // Set selectedAddressId để chọn radio button
+            selectedAddressId.value = selectedIndex;
+            
+            // Lấy địa chỉ được chọn
+            const selectedAddr = store.danhSachDiaChi[selectedIndex];
+            
+            // Cập nhật thông tin địa chỉ vào form
+            if (selectedAddr) {
+                customer.value = {
+                    ...customer.value, // Giữ thông tin cá nhân
+                    tinh_thanh_pho: selectedAddr.tinh_thanh_pho,
+                    quan_huyen: selectedAddr.quan_huyen,
+                    xa_phuong: selectedAddr.xa_phuong,
+                    so_nha: selectedAddr.so_nha
+                };
+                console.log('Đã set địa chỉ mặc định:', selectedAddr);
+            }
         }
-        console.log('Fetched customer addresses');
     } catch (error) {
-        console.error('Error fetching customer addresses:', error);
+        console.error('Lỗi khi lấy danh sách địa chỉ:', error);
         message.error('Không thể tải địa chỉ khách hàng');
     }
 };
-
 // Fetch order items from cart
 const fetchOrderItems = async () => {
     try {
@@ -660,11 +652,11 @@ const showAddAddressModal = () => {
         id: null,
         ten_nguoi_nhan: customer.value.ho_ten,
         so_dien_thoai: customer.value.so_dien_thoai,
-        tinh_thanh: '',
+        tinh_thanh_pho: '',
         quan_huyen: '',
         xa_phuong: '',
-        dia_chi_cu_the: '',
-        mac_dinh: false
+        so_nha: '',
+        dia_chi_mac_dinh: false
     });
     addressModalVisible.value = true;
 };
@@ -672,12 +664,16 @@ const showAddAddressModal = () => {
 // Edit existing address
 const editAddress = (address) => {
     isEditingAddress.value = true;
-    Object.assign(addressForm, { ...address });
+    Object.assign(addressForm, {
+        ...address,
+        // Chuyển đổi 0/1 sang boolean
+        dia_chi_mac_dinh: address.dia_chi_mac_dinh === 1
+    });
     addressModalVisible.value = true;
 
     // Load districts and wards for the selected address
-    if (addressForm.tinh_thanh) {
-        handleProvinceChange(addressForm.tinh_thanh);
+    if (addressForm.tinh_thanh_pho) {
+        handleProvinceChange(addressForm.tinh_thanh_pho);
     }
     if (addressForm.quan_huyen) {
         handleDistrictChange(addressForm.quan_huyen);
@@ -685,59 +681,73 @@ const editAddress = (address) => {
 };
 
 // Save address (add new or update existing)
-const saveAddress = () => {
+const saveAddress = async () => {
     // Validate form
     if (!addressForm.ten_nguoi_nhan || !addressForm.so_dien_thoai ||
-        !addressForm.tinh_thanh || !addressForm.quan_huyen ||
-        !addressForm.xa_phuong || !addressForm.dia_chi_cu_the) {
+        !addressForm.tinh_thanh_pho || !addressForm.quan_huyen ||
+        !addressForm.xa_phuong || !addressForm.so_nha) {
         message.error('Vui lòng điền đầy đủ thông tin địa chỉ');
         return;
     }
 
-    let newAddressId; // Khai báo biến ở đầu hàm để có thể truy cập ở mọi nơi trong hàm
+    try {
+        // Lấy thông tin người dùng từ sessionStorage
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        if (!userDetailsStr) {
+            message.error('Vui lòng đăng nhập để lưu địa chỉ');
+            return;
+        }
 
-    if (isEditingAddress.value) {
-        // Update existing address
-        const index = customerAddresses.value.findIndex(addr => addr.id === addressForm.id);
-        if (index !== -1) {
-            customerAddresses.value[index] = { ...addressForm };
+        const userDetails = JSON.parse(userDetailsStr);
+        if (!userDetails || !userDetails.idKhachHang) {
+            message.error('Không tìm thấy thông tin khách hàng');
+            return;
+        }
 
-            // If setting as default, update other addresses
-            if (addressForm.mac_dinh) {
-                customerAddresses.value.forEach((addr, i) => {
-                    if (i !== index) {
-                        addr.mac_dinh = false;
-                    }
-                });
-            }
+        // Xử lý kiểu dữ liệu cho địa chỉ mặc định
+        addressForm.dia_chi_mac_dinh = addressForm.dia_chi_mac_dinh ? 1 : 0;
 
-            newAddressId = addressForm.id;
+        if (isEditingAddress.value) {
+            // Gọi API cập nhật địa chỉ
+            await banHangOnlineService.updateAddress(addressForm);
             message.success('Cập nhật địa chỉ thành công');
-        }
-    } else {
-        // Add new address
-        newAddressId = customerAddresses.value.length > 0
-            ? Math.max(...customerAddresses.value.map(addr => addr.id)) + 1
-            : 1;
+        } else {
+            // Thêm ID khách hàng vào form
+            addressForm.id_khach_hang = userDetails.idKhachHang;
 
-        const newAddress = { ...addressForm, id: newAddressId };
-
-        // If setting as default, update other addresses
-        if (newAddress.mac_dinh) {
-            customerAddresses.value.forEach(addr => {
-                addr.mac_dinh = false;
-            });
+            // Gọi API thêm địa chỉ mới
+            await banHangOnlineService.addAddress(addressForm);
+            message.success('Thêm địa chỉ mới thành công');
         }
 
-        customerAddresses.value.push(newAddress);
-        message.success('Thêm địa chỉ mới thành công');
+        // Tải lại danh sách địa chỉ
+        await store.getDanhSachDiaChi(userDetails.idKhachHang);
+
+        // Nếu đây là địa chỉ mặc định, chọn nó và cập nhật thông tin giao hàng
+        if (addressForm.dia_chi_mac_dinh === 1) {
+            // Tìm địa chỉ vừa thêm/sửa trong danh sách đã tải lại
+            const updatedAddress = store.danhSachDiaChi.find(
+                addr => addr.so_nha === addressForm.so_nha &&
+                    addr.xa_phuong === addressForm.xa_phuong &&
+                    addr.quan_huyen === addressForm.quan_huyen
+            );
+
+            if (updatedAddress) {
+                selectedAddressId.value = updatedAddress.id;
+                // Cập nhật thông tin địa chỉ vào form giao hàng
+                customer.value.tinh_thanh_pho = updatedAddress.tinh_thanh_pho;
+                customer.value.quan_huyen = updatedAddress.quan_huyen;
+                customer.value.xa_phuong = updatedAddress.xa_phuong;
+                customer.value.so_nha = updatedAddress.so_nha;
+            }
+        }
+
+        // Đóng modal
+        addressModalVisible.value = false;
+    } catch (error) {
+        console.error('Lỗi khi lưu địa chỉ:', error);
+        message.error('Có lỗi xảy ra khi lưu địa chỉ');
     }
-
-    // Set as selected address
-    selectedAddressId.value = newAddressId;
-
-    // Close modal
-    addressModalVisible.value = false;
 };
 
 // Apply coupon code
@@ -813,7 +823,7 @@ const calculateOrderTotals = () => {
                 id: 1
             },
             sdt_nguoi_nhan: customer.value.so_dien_thoai,
-            dia_chi: customer.value.dia_chi_cu_the + ', ' + customer.value.xa_phuong + ', ' + customer.value.quan_huyen + ', ' + customer.value.tinh_thanh,
+            dia_chi: customer.value.so_nha + ', ' + customer.value.xa_phuong + ', ' + customer.value.quan_huyen + ', ' + customer.value.tinh_thanh_pho,
             email: customer.value.email,
             tong_tien_truoc_giam: subtotal.value,
             tong_tien_sau_giam: grandTotal.value,
@@ -1222,16 +1232,30 @@ const selectVoucher = (voucher) => {
 
 // Đặt ở cuối script setup, trước khi đóng thẻ script
 // Theo dõi sự thay đổi của selectedAddressId để cập nhật địa chỉ hiển thị
-watch(selectedAddressId, (newId) => {
-    if (newId) {
-        console.log('Selected address ID changed:', newId);
-        // Có thể thêm logic cập nhật hiển thị địa chỉ ở đây nếu cần
+watch(selectedAddressId, (newIndex) => {
+    if (typeof newIndex === 'number' && store.danhSachDiaChi && store.danhSachDiaChi[newIndex]) {
+        const selectedAddr = store.danhSachDiaChi[newIndex];
+        
+        if (selectedAddr) {
+            console.log('Đã tìm thấy địa chỉ được chọn:', selectedAddr);
+            
+            // Cập nhật thông tin địa chỉ vào form
+            customer.value = {
+                ...customer.value, // Giữ nguyên thông tin cá nhân hiện tại
+                tinh_thanh_pho: selectedAddr.tinh_thanh_pho,
+                quan_huyen: selectedAddr.quan_huyen,
+                xa_phuong: selectedAddr.xa_phuong,
+                so_nha: selectedAddr.so_nha
+            };
+            
+            console.log('Đã cập nhật form với thông tin mới:', customer.value);
+        }
     }
 });
 
 // Address deletion
 const confirmDeleteAddress = (address) => {
-    if (address.mac_dinh) {
+    if (address.dia_chi_mac_dinh) {
         message.warning('Không thể xóa địa chỉ mặc định');
         return;
     }
@@ -1256,7 +1280,7 @@ const deleteAddress = (addressId) => {
         if (selectedAddressId.value === addressId) {
             if (customerAddresses.value.length > 0) {
                 // Find default address or use the first one
-                const defaultAddress = customerAddresses.value.find(addr => addr.mac_dinh);
+                const defaultAddress = customerAddresses.value.find(addr => addr.dia_chi_mac_dinh);
                 selectedAddressId.value = defaultAddress ? defaultAddress.id : customerAddresses.value[0].id;
             } else {
                 selectedAddressId.value = null;
@@ -2231,5 +2255,43 @@ const selectedAddress = computed(() => {
     .shipping-form {
         padding: 15px;
     }
+}
+
+.default-tag {
+    font-size: 12px;
+    color: #52c41a;
+    font-weight: normal;
+    margin-left: 8px;
+}
+
+.empty-address-message {
+    color: #999;
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+.add-address-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.section-header .section-title {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.section-header .section-title::after {
+    display: none;
 }
 </style>

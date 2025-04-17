@@ -82,6 +82,8 @@ import { useGbStore } from '@/stores/gbStore';
 import TheHeaderSearchModal from './TheHeaderSearchModal.vue';
 import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
+import { banHangOnlineService } from '@/services/banHangOnlineService';
+
 const store = useGbStore();
 const animatedIcon = ref(null);
 const cartItemCount = ref(0); // Số lượng sản phẩm trong giỏ hàng
@@ -135,27 +137,41 @@ const closeMenuOnOutsideClick = (event) => {
     }
 };
 
-// Hàm tải giỏ hàng từ localStorage và cập nhật số lượng
-const updateCartCount = () => {
+// Hàm tải giỏ hàng và cập nhật số lượng
+const updateCartCount = async () => {
     try {
+        // Kiểm tra xem khách hàng đã đăng nhập chưa
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        
+        if (userDetailsStr) {
+            const userDetails = JSON.parse(userDetailsStr);
+            
+            if (userDetails && userDetails.idKhachHang) {
+                // Nếu đã đăng nhập, lấy giỏ hàng từ API
+                const response = await banHangOnlineService.getGioHang(userDetails.idKhachHang);
+                
+                if (response && Array.isArray(response)) {
+                    // Tính tổng số lượng sản phẩm từ API
+                    cartItemCount.value = response.reduce((total, item) => total + (item.so_luong || 1), 0);
+                    console.log('Số lượng sản phẩm trong giỏ hàng của KH đã đăng nhập:', cartItemCount.value);
+                } else {
+                    cartItemCount.value = 0;
+                }
+                return; // Kết thúc hàm sau khi đã xử lý KH đăng nhập
+            }
+        }
+        
+        // Nếu không đăng nhập hoặc không có idKhachHang, lấy từ localStorage
         const savedCart = localStorage.getItem('gb-sport-cart');
         if (savedCart) {
             const cartItems = JSON.parse(savedCart);
-            // Tính tổng số lượng sản phẩm trong giỏ hàng
             cartItemCount.value = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
         } else {
             cartItemCount.value = 0;
         }
     } catch (error) {
-        console.error('Lỗi khi tải giỏ hàng từ localStorage:', error);
+        console.error('Lỗi khi cập nhật số lượng giỏ hàng:', error);
         cartItemCount.value = 0;
-    }
-};
-
-// Lắng nghe sự kiện storage change để cập nhật giỏ hàng khi có thay đổi
-const handleStorageChange = (event) => {
-    if (event.key === 'gb-sport-cart') {
-        updateCartCount();
     }
 };
 
@@ -166,14 +182,10 @@ const navigateTo = (path) => {
 };
 
 // Cập nhật lại onMounted để thêm listener document.click
-onMounted(() => {
-    // Tải giỏ hàng ban đầu
-    updateCartCount();
-
-    // Lắng nghe sự kiện storage change
-    window.addEventListener('storage', handleStorageChange);
-
-    // Lắng nghe sự kiện custom để cập nhật giỏ hàng
+onMounted(async () => {
+    await updateCartCount();
+    
+    // Lắng nghe sự kiện 'cart-updated' nếu có
     window.addEventListener('cart-updated', updateCartCount);
 
     // Thêm lắng nghe click bên ngoài để đóng dropdown
@@ -182,7 +194,6 @@ onMounted(() => {
 
 // Làm sạch listener khi component bị hủy
 onBeforeUnmount(() => {
-    window.removeEventListener('storage', handleStorageChange);
     window.removeEventListener('cart-updated', updateCartCount);
     document.removeEventListener('click', closeMenuOnOutsideClick);
     clearInterval(checkCartInterval);

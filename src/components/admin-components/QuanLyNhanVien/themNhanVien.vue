@@ -203,6 +203,30 @@ const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
 };
 
+// Thêm hàm kiểm tra tên nhân viên
+const validateTenNhanVien = (ten) => {
+    // Kiểm tra xem chuỗi có chứa ít nhất một ký tự không phải số
+    const hasNonNumber = /[^0-9]/.test(ten);
+    
+    // Kiểm tra không chứa ký tự đặc biệt (chỉ cho phép chữ cái, số và khoảng trắng)
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(ten);
+    
+    // Kiểm tra độ dài từ 2-50 ký tự, không chứa toàn số và không có ký tự đặc biệt
+    return ten.length >= 2 && ten.length <= 50 && hasNonNumber && !hasSpecialChar;
+};
+
+// Thêm hàm kiểm tra địa chỉ cụ thể
+const validateDiaChi = (diaChi) => {
+    // Kiểm tra xem chuỗi có chứa ít nhất một ký tự không phải số
+    const hasNonNumber = /[^0-9]/.test(diaChi);
+    
+    // Kiểm tra không chứa các ký tự đặc biệt không được phép
+    const hasInvalidChar = /[@$!^%&*<>{}]/.test(diaChi);
+    
+    // Kiểm tra độ dài từ 2-100 ký tự, không chứa toàn số và không có ký tự đặc biệt không được phép
+    return diaChi.length >= 2 && diaChi.length <= 100 && hasNonNumber && !hasInvalidChar;
+};
+
 const validateForm = () => {
     let isValid = true;
 
@@ -221,8 +245,14 @@ const validateForm = () => {
     if (!formData.tenNhanVien.trim()) {
         errors.tenNhanVien = 'Vui lòng nhập tên nhân viên';
         isValid = false;
-    } else if (formData.tenNhanVien.length > 50) {
-        errors.tenNhanVien = 'Tên nhân viên không được quá 50 ký tự';
+    } else if (!validateTenNhanVien(formData.tenNhanVien.trim())) {
+        if (formData.tenNhanVien.trim().length < 2 || formData.tenNhanVien.trim().length > 50) {
+            errors.tenNhanVien = 'Tên nhân viên phải từ 2 đến 50 ký tự';
+        } else if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(formData.tenNhanVien.trim())) {
+            errors.tenNhanVien = 'Tên nhân viên không được chứa ký tự đặc biệt';
+        } else {
+            errors.tenNhanVien = 'Tên nhân viên không được chứa toàn số';
+        }
         isValid = false;
     }
 
@@ -252,7 +282,7 @@ const validateForm = () => {
         errors.soDienThoai = 'Vui lòng nhập số điện thoại';
         isValid = false;
     } else if (!validatePhoneNumber(formData.soDienThoai)) {
-        errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
+        errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678 hoặc 09123456789)';
         isValid = false;
     } else if (adminStaffList.value.some(nv => nv.soDienThoai === formData.soDienThoai)) {
         errors.soDienThoai = 'Số điện thoại này đã tồn tại trong hệ thống';
@@ -262,6 +292,12 @@ const validateForm = () => {
     // Check email
     if (!formData.email.trim()) {
         errors.email = 'Vui lòng nhập email';
+        isValid = false;
+    } else if (formData.email.length < 6 || formData.email.length > 320) {
+        errors.email = 'Email phải có độ dài từ 6 đến 320 ký tự';
+        isValid = false;
+    } else if (/[\(\),;:<>\[\]"\\\s]/.test(formData.email)) {
+        errors.email = 'Email không được chứa các ký tự đặc biệt như (), , : ; < > [ ] " \\ và khoảng trắng';
         isValid = false;
     } else if (!validateEmail(formData.email)) {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
@@ -290,8 +326,14 @@ const validateForm = () => {
     if (!formData.diaChiLienHe.trim()) {
         errors.diaChiLienHe = 'Vui lòng nhập địa chỉ cụ thể';
         isValid = false;
-    } else if (formData.diaChiLienHe.length > 200) {
-        errors.diaChiLienHe = 'Địa chỉ không được quá 200 ký tự';
+    } else if (!validateDiaChi(formData.diaChiLienHe.trim())) {
+        if (formData.diaChiLienHe.trim().length < 2 || formData.diaChiLienHe.trim().length > 100) {
+            errors.diaChiLienHe = 'Địa chỉ phải từ 2 đến 100 ký tự';
+        } else if (/[@$!^%&*<>{}]/.test(formData.diaChiLienHe.trim())) {
+            errors.diaChiLienHe = 'Địa chỉ không được chứa các ký tự đặc biệt (@, $, !, ^, %, &, *, <, >, {, })';
+        } else {
+            errors.diaChiLienHe = 'Địa chỉ không được chứa toàn số';
+        }
         isValid = false;
     }
 
@@ -307,18 +349,30 @@ const validateForm = () => {
 
 // Cập nhật hàm validatePhoneNumber để chặt chẽ hơn
 const validatePhoneNumber = (phone) => {
-    // Số điện thoại Việt Nam: bắt đầu bằng 0, theo sau là 9 chữ số
-    // Hỗ trợ các đầu số: 03, 05, 07, 08, 09
-    const regex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
+    // Số điện thoại Việt Nam: bắt đầu bằng 0, theo sau là 9 hoặc 10 chữ số
+    // Ví dụ hợp lệ: 10 số (03x...), 11 số (01x...) nếu cần
+    const regex = /^0\d{9,10}$/;
     return regex.test(phone);
 };
 
-// Cập nhật hàm validateEmail để chặt chẽ hơn
+// Cập nhật hàm validateEmail
 const validateEmail = (email) => {
-    // RFC 5322 Official Standard
-    const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    return regex.test(email) && email.length <= 100;
+    // Kiểm tra độ dài email từ 6-320 ký tự
+    if (email.length < 6 || email.length > 320) {
+        return false;
+    }
+
+    // Kiểm tra các ký tự đặc biệt không được phép và khoảng trắng
+    const hasInvalidChar = /[\(\),;:<>\[\]"\\\s]/.test(email);
+    if (hasInvalidChar) {
+        return false;
+    }
+
+    // Kiểm tra format email cơ bản
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    return emailRegex.test(email);
 };
+
 // Tính tuổi
 const calculateAge = (birthdate) => {
     const today = new Date();

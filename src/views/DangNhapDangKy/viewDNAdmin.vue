@@ -29,9 +29,9 @@
                 <form v-if="!showForgotPassword" @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
                         <label for="username">
-                            <i class="fas fa-user"></i> Email
+                            <i class="fas fa-user"></i> Tên đăng nhập
                         </label>
-                        <input type="email" id="username" v-model="username" class="form-control"
+                        <input type="text" id="username" v-model="username" class="form-control"
                             placeholder="Nhập tên đăng nhập" required />
                     </div>
 
@@ -73,9 +73,9 @@
                 <form v-else @submit.prevent="handleResetPassword" class="login-form">
                     <div class="form-group">
                         <label for="forgot-username">
-                            <i class="fas fa-user"></i> Email
+                            <i class="fas fa-user"></i> Tên đăng nhập
                         </label>
-                        <input type="email" id="forgot-username" v-model="forgotUsername" class="form-control"
+                        <input type="text" id="forgot-username" v-model="forgotUsername" class="form-control"
                             placeholder="Nhập tên đăng nhập" required :disabled="isEmailChecked" />
                     </div>
 
