@@ -79,10 +79,10 @@
     <div class="text">
         <div class="row ">
             <div class="col-8 text-center">
-                <div class="table-responsive mt-4">
+                <div class="table-responsive mt-4" style="max-height: 350px; overflow-y: auto;">
                     <table class="table table-hover">
-                        <thead>
-                            <tr class="">
+                        <thead class="sticky-top bg-white" style="top: 0; z-index: 1;">
+                            <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Ảnh</th>
                                 <th scope="col">Tên sản phẩm</th>
@@ -112,8 +112,10 @@
                                 <td>
                                     <a-space direction="vertical">
                                         <a-input-number v-model:value="item.so_luong" :min="1"
-                                            :max="item.so_luong_ton_goc" @change="updateItemTotal(item)"
+                                            :max="item.so_luong_ton_goc + item.so_luong"
+                                            @change="updateItemTotal(item)"
                                             style="width: 80px;" />
+
                                     </a-space>
                                 </td>
                                 <td>{{ formatCurrency(item.gia_ban || item.gia_sau_giam) }}</td>
@@ -128,6 +130,8 @@
                         </tbody>
                     </table>
                 </div>
+
+                <FormKhachHangBH />
             </div>
             <div class="col-4">
                 <form v-if="activeTabData && activeTabData.hd" @submit.prevent="handlePayment">
@@ -326,6 +330,7 @@ import '../../../config/fonts/Roboto-normal'
 import '../../../config/fonts/Roboto-bold'
 import { toast } from 'vue3-toastify';
 import { thanhToanService } from '@/services/thanhToan';
+import FormKhachHangBH from './formKhachHangBH.vue';
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const pageSize = ref(5);
 const store = useGbStore();
@@ -339,13 +344,14 @@ const danhSachKhachHang = computed(() => {
 });
 const diaChiMap = computed(() => store.diaChiMap);
 
-const chonKhachHang = (khachHang) => {
+const chonKhachHang = async (khachHang) => {
     activeTabData.value.hd.ten_khach_hang = khachHang.tenKhachHang;
     activeTabData.value.hd.so_dien_thoai = khachHang.soDienThoai;
     activeTabData.value.hd.dia_chi = diaChiMap[khachHang.idKhachHang] || "Chưa có địa chỉ";
     activeTabData.value.hd.id_khach_hang = khachHang.idKhachHang;
     store.addKHHD(activeTabData.value.hd.id_hoa_don, khachHang.idKhachHang, khachHang.diaChi, khachHang.tenKhachHang, khachHang.soDienThoai);
-    refreshHoaDon(activeTabData.value.hd.id_hoa_don);
+    await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
+
     open.value = false;
 };
 
@@ -569,44 +575,37 @@ const isPaymentDisabled = computed(() => {
 // Cập nhật tổng tiền khi số lượng thay đổi trong bảng hóa đơn
 const updateItemTotal = async (item) => {
     const productInfo = allProducts.value.find(p => p.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham);
-    // Tìm sản phẩm chính xác bằng id_chi_tiet_san_pham thay vì chỉ id_hoa_don
-    const sphd = store.getAllSPHDArr;
-    const sphdItem = sphd.find(sp =>
+    const sphdItem = store.getAllSPHDArr.find(sp =>
         sp.id_hoa_don === item.id_hoa_don &&
         sp.id_chi_tiet_san_pham === item.id_chi_tiet_san_pham
     );
-    // Kiểm tra số lượng tồn
-    if (productInfo && item.so_luong > productInfo.so_luong) {
-        message.warning(`Số lượng tồn của "${item.ten_san_pham}" không đủ (${productInfo.so_luong_ton}). Đã đặt lại số lượng tối đa.`);
-        item.so_luong = productInfo.so_luong;
+
+    const soLuongTonKho = productInfo ? productInfo.so_luong : 0;
+    const soLuongTrongHD = sphdItem ? sphdItem.so_luong : 0;
+    let soLuongMoi = item.so_luong;
+
+    // 1. Nếu nhập ≤ 0 → đặt lại 1
+    if (soLuongMoi <= 0) {
+        soLuongMoi = 1;
     }
-    if (item.so_luong <= 0) {
-        item.so_luong = 1;
+
+    // 2. Nếu nhập vượt quá tồn + trong hóa đơn → giới hạn lại
+    const gioiHanToiDa = soLuongTrongHD + soLuongTonKho;
+    if (soLuongMoi > gioiHanToiDa) {
+        message.warning(`Tồn kho không đủ. Đặt lại số lượng tối đa là ${gioiHanToiDa}`);
+        soLuongMoi = gioiHanToiDa;
     }
+
+    // Cập nhật lại item trong UI
+    item.so_luong = soLuongMoi;
 
     try {
-        // Nếu sphd tồn tại (sản phẩm đã có trong hóa đơn)
-        if (sphdItem && sphdItem.so_luong > item.so_luong) {
-            console.log("vào giảm số lượng")
-            await store.giamSPHD(
-                item.id_hoa_don,
-                item.id_chi_tiet_san_pham,
-                sphdItem.so_luong - item.so_luong,
-                item.gia_ban
-            );
-        } else if (sphdItem && sphdItem.so_luong < item.so_luong) {
-            console.log("vào tăng số lượng")
-            await store.addSPHD(
-                item.id_hoa_don,
-                item.id_chi_tiet_san_pham,
-                item.so_luong - sphdItem.so_luong,
-                item.gia_ban
-            );
-        }
+        // 🔄 Gọi API mới: set lại số lượng mong muốn
+        await store.setSPHD(item.id_hoa_don, item.id_chi_tiet_san_pham, soLuongMoi);
 
-
-        // Tải lại danh sách sản phẩm từ backend để đồng bộ
+        // Làm mới lại dữ liệu hóa đơn
         await store.getAllSPHD(item.id_hoa_don);
+
         const currentTab = activeTabData.value;
         if (currentTab) {
             currentTab.items.value = store.getAllSPHDArr.map(hd => ({
@@ -622,7 +621,7 @@ const updateItemTotal = async (item) => {
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
-        console.log("id hoá đơn truyền vào ", item.id_hoa_don)
+
         await refreshHoaDon(item.id_hoa_don);
         await store.getAllCTSPKM();
         allProducts.value = store.getAllCTSPKMList;
@@ -631,6 +630,10 @@ const updateItemTotal = async (item) => {
         message.error('Đã xảy ra lỗi khi cập nhật số lượng!');
     }
 };
+
+
+
+
 
 // Xóa sản phẩm khỏi hóa đơn chi tiết của tab hiện tại
 const removeFromBill = async (productId) => {
@@ -681,9 +684,9 @@ const removeFromBill = async (productId) => {
 const add = async () => {
     try {
         // Giới hạn số lượng hóa đơn tối đa là 5
-        if (panes.value.length >= 5) {
-            throw new Error('Bạn chỉ có thể tạo tối đa 5 hóa đơn cùng lúc!');
-        }
+        // if (panes.value.length >= 5) {
+        //     throw new Error('Bạn chỉ có thể tạo tối đa 5 hóa đơn cùng lúc!');
+        // }
 
         // Kiểm tra xem người dùng đã đăng nhập và có thông tin chi tiết không
         if (!store.isLoggedIn || !store.userDetails) {
@@ -861,7 +864,7 @@ const printInvoice = () => {
     doc.setFont("Roboto", "bold");
     doc.text("Số lượng", 100, y, { align: "center" });
     doc.text("Đơn giá", 130, y, { align: "center" });
-    doc.text("Thành tiền", 170, y, { align: "center" });
+    doc.text("Tổng tiền", 170, y, { align: "center" });
     // Vẽ đường kẻ ngang dưới tiêu đề bảng
     y += 2;
     doc.setLineWidth(0.2);
@@ -982,6 +985,8 @@ const handlePayment = async () => { // Thêm async nếu gọi API
 
 };
 
+
+
 const confirmPrint = async (shouldPrint) => {
     showPrintConfirm.value = false; // Đóng modal
 
@@ -1013,7 +1018,8 @@ const confirmPrint = async (shouldPrint) => {
                 cancelUrl: "http://localhost:5173/admin/banhang"
             }
             console.log(payment_info);
-            await thanhToanService.handlePayOSPayment(payment_info);
+            const res = await thanhToanService.handlePayOSPayment(payment_info);
+            console.log(res);
         } catch (error) {
             console.error('Lỗi khi tạo yêu cầu thanh toán Momo:', error);
             message.error('Không thể tạo thanh toán Momo!');
@@ -1040,46 +1046,57 @@ const da = ref([]);
 
 // --- Lifecycle Hooks ---
 onMounted(async () => {
+    await loadData(); // Gọi lần đầu
+    setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
+});
+
+async function loadData() {
     try {
-        // Load dữ liệu từ store
         await store.getAllHoaDonCTT();
         await store.getAllCTSPKM();
         await store.getAllNhanVien(0, pageSize.value);
         await store.getAllKhachHangNoPage();
-        // await store.getHoaDonDetail(activeTabData.value.hd.ma_hoa_don);
-        // Gán dữ liệu hóa đơn
         da.value = store.getAllHoaDonCTTArr;
 
-        // Khởi tạo panes từ dữ liệu backend
         panes.value = da.value.map((hd, index) => ({
-            key: `invoiceTab_${index}_${Date.now()}`, // Tạo key duy nhất
+            key: `invoiceTab_${index}_${Date.now()}`,
             title: `Đơn ${index + 1}`,
             closable: true,
             items: ref([]),
             hd: reactive({
                 ...hd,
-                // Đảm bảo các trường quan trọng có giá trị mặc định
                 hinh_thuc_thanh_toan: hd.hinh_thuc_thanh_toan || 'Tiền mặt',
                 phuong_thuc_nhan_hang: hd.phuong_thuc_nhan_hang || 'Nhận tại cửa hàng',
-                isKhachLe: !hd.id_khach_hang // Tự động xác định khách lẻ
+                isKhachLe: !hd.id_khach_hang
             })
         }));
 
-        // Nếu có hóa đơn, chọn tab đầu tiên
         if (panes.value.length > 0) {
             activeKey.value = panes.value[0].key;
         } else {
-            // Nếu không có hóa đơn nào, tạo mới
             await add();
         }
 
-        // Load danh sách sản phẩm
         allProducts.value = store.getAllCTSPKMList;
 
     } catch (error) {
         console.error("Lỗi khi tải dữ liệu:", error);
     }
-});
+}
+
+function setupAutoReloadAtMidnight() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0); // 00:00 của ngày mai
+
+    const timeUntilMidnight = midnight.getTime() - now.getTime();
+
+    // Đợi tới 00:00, rồi gọi loadData, sau đó chạy mỗi 24 giờ
+    setTimeout(() => {
+        loadData(); // chạy lần đầu vào 00:00
+        setInterval(loadData, 24 * 60 * 60 * 1000); // gọi lại mỗi ngày
+    }, timeUntilMidnight);
+}
 
 watch(() => activeKey.value, async (newKey) => {
     const currentTab = panes.value.find(p => p.key === newKey);

@@ -53,9 +53,9 @@ const getAllSPHD = async(idHoaDon) => {
     }
 }
 
-const addSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
+const addSPHD = async(idHoaDon, idCTSP, soLuong) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `addSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}&giaBan=${giaBan}`);
+        const { data } = await axiosInstance.post(banHang + `addSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}`);
         return data;
     } catch (error) {
         console.error('Lỗi API thêm sp hoá đơn:', error);
@@ -74,12 +74,22 @@ const themSPHDMoi = async (idHoaDon, idCTSP, soLuong, giaBan) => {
     }
 };
 
-const giamSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
+const giamSPHD = async(idHoaDon, idCTSP, soLuong) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `giamSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}&giaBan=${giaBan}`);
+        const { data } = await axiosInstance.post(banHang + `giamSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}`);
         return data;
     } catch (error) {
         console.error('Lỗi API giảm sp hoá đơn:', error);
+        return { error: true };
+    }
+}
+
+const setSPHD = async(idHoaDon, idCTSP, soLuong) => {
+    try {
+        const { data } = await axiosInstance.post(banHang + `setSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuongMoi=${soLuong}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API set sp hoá đơn:', error);
         return { error: true };
     }
 }
@@ -183,5 +193,6 @@ export const banHangService = {
     getHoaDonByIdHoaDon,
     addKhHD,
     setTrangThaiNhanHang,
-    thanhToanMomo
+    thanhToanMomo,
+    setSPHD
 }

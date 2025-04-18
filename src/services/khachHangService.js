@@ -155,6 +155,16 @@ const getUserDetail = async ({ username, id_roles }) => {
   }
 }
 
+const themKhachHangBH = async (data) => {
+  try {
+    const response = await axiosInstance.post('/api/khach-hang/add/banhang', data)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi thêm khách hàng:', error)
+    return { error: true, message: 'Có lị xảy ra khi thêm khách hàng' }
+  }
+}
+
 export const khachHangService = {
   getAllKhachHang,
   themKhachHang,
@@ -166,4 +176,5 @@ export const khachHangService = {
   registerKhachHang,
   login,
   getUserDetail,
+  themKhachHangBH
 }
