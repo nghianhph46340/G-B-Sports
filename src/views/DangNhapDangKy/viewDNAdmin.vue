@@ -181,6 +181,17 @@ const toggleForgotPassword = () => {
 };
 
 const handleLogin = async () => {
+    // Kiểm tra đầu vào
+    if (!username.value || !password.value) {
+        toast.error('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!');
+        return;
+    }
+
+    if (password.value.includes(' ')) {
+        toast.error('Mật khẩu không được chứa khoảng trắng!');
+        return;
+    }
+
     try {
         isLoading.value = true;
         const loginData = {

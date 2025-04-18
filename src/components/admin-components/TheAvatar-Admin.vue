@@ -20,11 +20,11 @@
               Hồ sơ
             </a>
           </a-menu-item>
-          <a-menu-item key="0">
+          <!-- <a-menu-item key="0">
             <a target="_blank" style="text-decoration: none;" rel="noopener noreferrer" href="#">
               Đổi mật khẩu
             </a>
-          </a-menu-item>
+          </a-menu-item> -->
           <a-menu-item key="1">
             <a style="text-decoration: none;" @click="showPasswordModal = true">
               Đổi mật khẩu
@@ -79,20 +79,34 @@ const isLoading = ref(false);
 const showPasswordModal = ref(false);
 // Xử lý đổi mật khẩu
 const changePassword = async () => {
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    // Kiểm tra trống
+    if (!currentPassword || !newPassword || !confirmPassword) {
         return message.error('Vui lòng nhập đầy đủ thông tin');
     }
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    // Kiểm tra mật khẩu mới độ dài tối thiểu
+    if (newPassword.length < 6) {
+        return message.error('Mật khẩu mới phải có ít nhất 6 ký tự');
+    }
+
+    // Không chứa khoảng trắng
+    if (/\s/.test(newPassword)) {
+        return message.error('Mật khẩu mới không được chứa khoảng trắng');
+    }
+
+    // Kiểm tra khớp mật khẩu xác nhận
+    if (newPassword !== confirmPassword) {
         return message.error('Mật khẩu xác nhận không khớp');
     }
 
     try {
         isLoading.value = true;
-        // Gọi API đổi mật khẩu
+
         const response = await axiosInstance.post('api/khach-hang/change-password', {
-            oldPassword: passwordForm.currentPassword,
-            newPassword: passwordForm.newPassword
+            oldPassword: currentPassword,
+            newPassword
         });
 
         // Kiểm tra phản hồi từ API
@@ -103,6 +117,7 @@ const changePassword = async () => {
             passwordForm.currentPassword = '';
             passwordForm.newPassword = '';
             passwordForm.confirmPassword = '';
+            showPasswordModal.value = false; // Đóng modal nếu muốn
         } else {
             message.error(response.data.error || 'Có lỗi xảy ra khi đổi mật khẩu');
         }
@@ -111,7 +126,7 @@ const changePassword = async () => {
         if (error.response?.status === 403) {
             message.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
             localStorage.removeItem('token');
-            router.push('/login-register/login');
+            router.push('/login-register/loginAdmin');
         } else if (error.response?.data?.error) {
             message.error(error.response.data.error);
         } else {
