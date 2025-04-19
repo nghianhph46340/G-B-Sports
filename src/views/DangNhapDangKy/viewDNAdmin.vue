@@ -71,7 +71,7 @@
 
                 <!-- Form quên mật khẩu -->
                 <form v-else @submit.prevent="handleResetPassword" class="login-form">
-                    <div class="form-group">
+                    <div class="form-group" v-if="!isTokenValid">
                         <label for="forgot-username">
                             <i class="fas fa-user"></i> Tên đăng nhập
                         </label>
@@ -85,7 +85,7 @@
                         </label>
                         <div class="password-input">
                             <input :type="showNewPassword ? 'text' : 'password'" id="new-password" v-model="newPassword"
-                                class="form-control" placeholder="Nhập mật khẩu mới" :disabled="!isEmailChecked"
+                                class="form-control" placeholder="Nhập mật khẩu mới" :disabled="!isTokenValid"
                                 required />
                             <span class="password-toggle" @click="toggleNewPassword">
                                 <EyeInvisibleOutlined v-if="!showNewPassword" />
@@ -101,7 +101,7 @@
                         <div class="password-input">
                             <input :type="showConfirmPassword ? 'text' : 'password'" id="confirm-password"
                                 v-model="confirmPassword" class="form-control" placeholder="Nhập lại mật khẩu mới"
-                                :disabled="!isEmailChecked" required />
+                                :disabled="!isTokenValid" required />
                             <span class="password-toggle" @click="toggleConfirmPassword">
                                 <EyeInvisibleOutlined v-if="!showConfirmPassword" />
                                 <EyeOutlined v-else />
@@ -124,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue';
@@ -147,10 +147,36 @@ const confirmPassword = ref('');
 const showNewPassword = ref(false);
 const showConfirmPassword = ref(false);
 const isEmailChecked = ref(false);
+const isTokenValid = ref(false);
 const resetToken = ref('');
 
 // Khôi phục trạng thái đăng nhập khi component được tạo
 gbStore.restoreLoginState();
+
+// Kiểm tra token từ query parameter khi component được mounted
+onMounted(async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    resetToken.value = urlParams.get('token');
+
+    if (resetToken.value) {
+        showForgotPassword.value = true; // Mở form quên mật khẩu
+        isEmailChecked.value = true; // Giả lập đã kiểm tra email
+
+        try {
+            isLoading.value = true;
+            const response = await axiosInstance.get(`admin/quan-ly-nhan-vien/reset-password?token=${resetToken.value}`);
+            if (response.data.successMessage) {
+                isTokenValid.value = true;
+                toast.success(response.data.successMessage);
+            }
+        } catch (error) {
+            isTokenValid.value = false;
+            toast.error(error.response?.data?.error || 'Token không hợp lệ!');
+        } finally {
+            isLoading.value = false;
+        }
+    }
+});
 
 const chuyenTrang = (path) => {
     router.push(path);
@@ -176,7 +202,9 @@ const toggleForgotPassword = () => {
         newPassword.value = '';
         confirmPassword.value = '';
         isEmailChecked.value = false;
+        isTokenValid.value = false;
         resetToken.value = '';
+        router.replace({ query: {} }); // Xóa token trong URL
     }
 };
 
@@ -237,15 +265,26 @@ const handleResetPassword = async () => {
 
     // Bước 1: Kiểm tra username (email)
     if (!isEmailChecked.value) {
+        if (!forgotUsername.value) {
+            toast.error('Vui lòng nhập tên đăng nhập!');
+            isLoading.value = false;
+            return;
+        }
+        // if (forgotUsername.value.includes(' ')) {
+        //     toast.error('Tên đăng nhập không tồn tại!');
+        //     isLoading.value = false;
+        //     return;
+        // }
         try {
             const response = await axiosInstance.post('admin/quan-ly-nhan-vien/forgot-password', {
                 email: forgotUsername.value
             });
 
             if (response.data.successMessage) {
-                resetToken.value = response.data.resetToken;
+                // resetToken.value = response.data.resetToken;
                 isEmailChecked.value = true;
-                toast.success('Tên đăng nhập hợp lệ, vui lòng nhập mật khẩu mới.');
+                toast.success(response.data.successMessage);
+                // toast.success('Tên đăng nhập hợp lệ, vui lòng nhập mật khẩu mới.');
             }
         } catch (error) {
             toast.error(error.response?.data?.error || 'Có lỗi xảy ra khi kiểm tra tên đăng nhập!');
@@ -256,6 +295,16 @@ const handleResetPassword = async () => {
     }
 
     // Bước 2: Xác nhận đặt lại mật khẩu
+    if (!isTokenValid.value) {
+        toast.error('Vui lòng kiểm tra gmail để xác nhận đặt lại mật khẩu!');
+        isLoading.value = false;
+        return;
+    }
+    if (!newPassword.value || !confirmPassword.value) {
+        toast.error('Vui lòng nhập đầy đủ mật khẩu mới và xác nhận!');
+        isLoading.value = false;
+        return;
+    }
     if (newPassword.value.includes(' ')) {
         toast.error('Mật khẩu mới không được chứa khoảng trắng!');
         isLoading.value = false;
