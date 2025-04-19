@@ -396,6 +396,13 @@ const changePassword = async () => {
         return toast.error('Vui lòng nhập đầy đủ thông tin');
     }
 
+    if (passwordForm.newPassword.length < 6) {
+        return toast.error('Mật khẩu mới phải có ít nhất 6 ký tự');
+    }
+    if (passwordForm.newPassword.length > 20) {
+        return toast.error('Mật khẩu mới không được vượt quá 20 ký tự');
+    }
+
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
         return toast.error('Mật khẩu xác nhận không khớp');
     }

@@ -180,6 +180,16 @@ const toggleForgotPassword = () => {
 };
 
 const handleLogin = async () => {
+    // Kiểm tra đầu vào
+    if (!email.value || !password.value) {
+        toast.error('Vui lòng nhập đầy đủ email và mật khẩu!');
+        return;
+    }
+
+    if (password.value.includes(' ')) {
+        toast.error('Mật khẩu không được chứa khoảng trắng!');
+        return;
+    }
     try {
         isLoading.value = true;
         const loginData = {
@@ -236,6 +246,21 @@ const handleResetPassword = async () => {
     }
 
     // Bước 2: Xác nhận đặt lại mật khẩu
+    if (newPassword.value.includes(' ')) {
+        toast.error('Mật khẩu mới không được chứa khoảng trắng!');
+        isLoading.value = false;
+        return;
+    }
+    if (newPassword.value.length < 6) {
+        toast.error('Mật khẩu mới phải có ít nhất 6 ký tự!');
+        isLoading.value = false;
+        return;
+    }
+    if (newPassword.value.length > 20) {
+        toast.error('Mật khẩu mới không được vượt quá 20 ký tự!');
+        isLoading.value = false;
+        return;
+    }
     if (newPassword.value !== confirmPassword.value) {
         toast.error('Mật khẩu mới và mật khẩu xác nhận không khớp!');
         isLoading.value = false;

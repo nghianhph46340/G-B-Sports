@@ -40,7 +40,7 @@
     </a-dropdown>
     
     <!-- Modal đổi mật khẩu -->
-    <a-modal v-model:visible="showPasswordModal" title="Đổi mật khẩu" @ok="changePassword" :confirmLoading="isLoading">
+    <a-modal v-model:visible="showPasswordModal" title="Đổi mật khẩu" @ok="changePassword" :confirmLoading="isLoading" @cancel="resetPasswordForm">
       <a-form :model="passwordForm" layout="vertical">
         <a-form-item label="Mật khẩu hiện tại" name="currentPassword">
           <a-input-password v-model:value="passwordForm.currentPassword" placeholder="Nhập mật khẩu hiện tại" />
@@ -75,6 +75,12 @@ const passwordForm = reactive({
     newPassword: '',
     confirmPassword: ''
 });
+const resetPasswordForm = () => {
+    passwordForm.currentPassword = '';
+    passwordForm.newPassword = '';
+    passwordForm.confirmPassword = '';
+    showPasswordModal.value = false; // Đóng modal
+};
 const isLoading = ref(false);
 const showPasswordModal = ref(false);
 // Xử lý đổi mật khẩu
@@ -89,6 +95,9 @@ const changePassword = async () => {
     // Kiểm tra mật khẩu mới độ dài tối thiểu
     if (newPassword.length < 6) {
         return message.error('Mật khẩu mới phải có ít nhất 6 ký tự');
+    }
+    if (newPassword.length > 20) {
+        return message.error('Mật khẩu mới không được quá 20 ký tự');
     }
 
     // Không chứa khoảng trắng

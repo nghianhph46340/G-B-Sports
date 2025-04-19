@@ -256,6 +256,21 @@ const handleResetPassword = async () => {
     }
 
     // Bước 2: Xác nhận đặt lại mật khẩu
+    if (newPassword.value.includes(' ')) {
+        toast.error('Mật khẩu mới không được chứa khoảng trắng!');
+        isLoading.value = false;
+        return;
+    }
+    if (newPassword.value.length < 6) {
+        toast.error('Mật khẩu mới phải có ít nhất 6 ký tự!');
+        isLoading.value = false;
+        return;
+    }
+    if (newPassword.value.length > 20) {
+        toast.error('Mật khẩu mới không được vượt quá 20 ký tự!');
+        isLoading.value = false;
+        return;
+    }
     if (newPassword.value !== confirmPassword.value) {
         toast.error('Mật khẩu mới và mật khẩu xác nhận không khớp!');
         isLoading.value = false;
