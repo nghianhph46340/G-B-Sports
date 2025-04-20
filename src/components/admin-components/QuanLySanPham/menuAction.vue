@@ -115,7 +115,7 @@
                 <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
                     style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select> -->
 
-                <a-button type="" class="d-flex align-items-center btn-filter" @click="showExportModal" :disabled="disabledByRoles">
+                <a-button type="" class="d-flex align-items-center btn-filter" @click="showExportModal">
                     <ExportOutlined class="icon-filler" />
                     <span class="button-text">Xuất excel</span>
                 </a-button>
@@ -1387,7 +1387,6 @@ watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
     selectAllFields.value = newVal.every(v => v === true);
 }, { deep: true });
 
-const disabledByRoles = computed(() => store.id_roles === 3);
 // Watch for sorting option changes
 watch(() => luuBien.value, (newValue) => {
     if (newValue !== '1') {

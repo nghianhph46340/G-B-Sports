@@ -383,6 +383,16 @@ const rules = {
 const validateProductName = async (_, value) => {
     if (!value) return Promise.reject('Tên sản phẩm không được để trống');
 
+    // Kiểm tra nếu tên sản phẩm chỉ chứa số
+    if (/^\d+$/.test(value)) {
+        return Promise.reject('Tên sản phẩm không được chỉ chứa số');
+    }
+
+    // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt (chỉ cho phép chữ cái, số, dấu cách, và dấu gạch ngang)
+    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(value)) {
+        return Promise.reject('Tên sản phẩm không được chứa ký tự đặc biệt');
+    }
+
     // Lấy ID sản phẩm hiện tại từ route
     const currentProductId = route.params.id;
 
