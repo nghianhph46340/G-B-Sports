@@ -8,43 +8,20 @@
                 <a-tab-pane key="category" tab="Danh Mục">
                     <div class="content-area">
                         <div class="add-form">
-                            <template v-if="currentTab === 'size'">
-                                <div class="d-flex gap-2">
-                                    <a-input v-model:value="newAttribute.value" 
-                                        :placeholder="isEditing ? 'Sửa giá trị' : 'Nhập giá trị'"
-                                        class="input-field"
-                                        style="width: 60%">
-                                    </a-input>
-                                    <a-input v-model:value="newAttribute.unit"
-                                        :placeholder="isEditing ? 'Sửa đơn vị' : 'Nhập đơn vị (tùy chọn)'"
-                                        class="input-field"
-                                        style="width: 30%">
-                                    </a-input>
-                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute"
-                                        style="width: 10%">
+                            <a-input v-model:value="newAttribute.name" placeholder="Thêm danh mục mới"
+                                class="input-field" :status="validationStatus.category" @blur="validateNewAttribute">
+                                <template #suffix>
+                                    <a-button type="primary" @click="addNewAttribute" :disabled="!isValidNewAttr">
                                         <template #icon>
-                                            <plus-outlined v-if="!isEditing" />
-                                            <edit-outlined v-else />
+                                            <plus-outlined />
                                         </template>
-                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
+                                        Thêm mới
                                     </a-button>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <a-input v-model:value="newAttribute.name"
-                                    :placeholder="isEditing ? `Sửa ${getAttributeLabel()}` : `Thêm ${getAttributeLabel()} mới`"
-                                    class="input-field">
-                                    <template #suffix>
-                                        <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
-                                            <template #icon>
-                                                <plus-outlined v-if="!isEditing" />
-                                                <edit-outlined v-else />
-                                            </template>
-                                            {{ isEditing ? 'Sửa' : 'Thêm mới' }}
-                                        </a-button>
-                                    </template>
-                                </a-input>
-                            </template>
+                                </template>
+                            </a-input>
+                            <div v-if="validationError.category" class="validation-error">
+                                {{ validationError.category }}
+                            </div>
                         </div>
 
                         <a-table :dataSource="getCurrentPageData" :columns="categoryColumns" :pagination="{
@@ -54,29 +31,18 @@
                             onChange: onPageChange,
                             showSizeChanger: false
                         }">
-                            <template #bodyCell="{ column, record }">
+                            <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(record)">
+                                        <a-button type="primary" @click="showEditModal(record, 'category')">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="primary" danger @click="deleteAttribute(record)">
-                                            <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'ten_danh_muc'">
-                                    <span v-if="!record.isEditing">{{ record.ten_danh_muc }}</span>
-                                    <a-input v-else v-model:value="record.editName" />
-                                </template>
-                                <template v-else-if="column.key === 'trang_thai'">
-                                    <a-switch
-                                        v-model:checked="record.status"
-                                        :checked="record.trang_thai === 'Hoạt động'"
-                                        checked-children="Hoạt động"
-                                        un-checked-children="Không hoạt động"
-                                        @change="(checked) => handleStatusChange(record.key, checked)"
-                                    />
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
                         </a-table>
@@ -87,43 +53,20 @@
                 <a-tab-pane key="brand" tab="Thương Hiệu">
                     <div class="content-area">
                         <div class="add-form">
-                            <template v-if="currentTab === 'size'">
-                                <div class="d-flex gap-2">
-                                    <a-input v-model:value="newAttribute.value" 
-                                        :placeholder="isEditing ? 'Sửa giá trị' : 'Nhập giá trị'"
-                                        class="input-field"
-                                        style="width: 60%">
-                                    </a-input>
-                                    <a-input v-model:value="newAttribute.unit"
-                                        :placeholder="isEditing ? 'Sửa đơn vị' : 'Nhập đơn vị (tùy chọn)'"
-                                        class="input-field"
-                                        style="width: 30%">
-                                    </a-input>
-                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute"
-                                        style="width: 10%">
+                            <a-input v-model:value="newAttribute.name" placeholder="Thêm thương hiệu mới"
+                                class="input-field" :status="validationStatus.brand" @blur="validateNewAttribute">
+                                <template #suffix>
+                                    <a-button type="primary" @click="addNewAttribute" :disabled="!isValidNewAttr">
                                         <template #icon>
-                                            <plus-outlined v-if="!isEditing" />
-                                            <edit-outlined v-else />
+                                            <plus-outlined />
                                         </template>
-                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
+                                        Thêm mới
                                     </a-button>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <a-input v-model:value="newAttribute.name"
-                                    :placeholder="isEditing ? `Sửa ${getAttributeLabel()}` : `Thêm ${getAttributeLabel()} mới`"
-                                    class="input-field">
-                                    <template #suffix>
-                                        <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
-                                            <template #icon>
-                                                <plus-outlined v-if="!isEditing" />
-                                                <edit-outlined v-else />
-                                            </template>
-                                            {{ isEditing ? 'Sửa' : 'Thêm mới' }}
-                                        </a-button>
-                                    </template>
-                                </a-input>
-                            </template>
+                                </template>
+                            </a-input>
+                            <div v-if="validationError.brand" class="validation-error">
+                                {{ validationError.brand }}
+                            </div>
                         </div>
 
                         <a-table :dataSource="getCurrentPageData" :columns="brandColumns" :pagination="{
@@ -136,26 +79,15 @@
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(record)">
+                                        <a-button type="primary" @click="showEditModal(record, 'brand')">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="primary" danger @click="deleteAttribute(record)">
-                                            <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'ten_thuong_hieu'">
-                                    <span v-if="!record.isEditing">{{ record.ten_thuong_hieu }}</span>
-                                    <a-input v-else v-model:value="record.editName" />
-                                </template>
                                 <template v-else-if="column.key === 'status'">
-                                    <a-switch
-                                        v-model:checked="record.status"
-                                        :checked="record.trang_thai === 'Hoạt động'"
-                                        checked-children="Hoạt động"
-                                        un-checked-children="Không hoạt động"
-                                        @change="(checked) => handleStatusChange(record.key, checked)"
-                                    />
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
                         </a-table>
@@ -166,43 +98,20 @@
                 <a-tab-pane key="material" tab="Chất Liệu">
                     <div class="content-area">
                         <div class="add-form">
-                            <template v-if="currentTab === 'size'">
-                                <div class="d-flex gap-2">
-                                    <a-input v-model:value="newAttribute.value" 
-                                        :placeholder="isEditing ? 'Sửa giá trị' : 'Nhập giá trị'"
-                                        class="input-field"
-                                        style="width: 60%">
-                                    </a-input>
-                                    <a-input v-model:value="newAttribute.unit"
-                                        :placeholder="isEditing ? 'Sửa đơn vị' : 'Nhập đơn vị (tùy chọn)'"
-                                        class="input-field"
-                                        style="width: 30%">
-                                    </a-input>
-                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute"
-                                        style="width: 10%">
+                            <a-input v-model:value="newAttribute.name" placeholder="Thêm chất liệu mới"
+                                class="input-field" :status="validationStatus.material" @blur="validateNewAttribute">
+                                <template #suffix>
+                                    <a-button type="primary" @click="addNewAttribute" :disabled="!isValidNewAttr">
                                         <template #icon>
-                                            <plus-outlined v-if="!isEditing" />
-                                            <edit-outlined v-else />
+                                            <plus-outlined />
                                         </template>
-                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
+                                        Thêm mới
                                     </a-button>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <a-input v-model:value="newAttribute.name"
-                                    :placeholder="isEditing ? `Sửa ${getAttributeLabel()}` : `Thêm ${getAttributeLabel()} mới`"
-                                    class="input-field">
-                                    <template #suffix>
-                                        <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
-                                            <template #icon>
-                                                <plus-outlined v-if="!isEditing" />
-                                                <edit-outlined v-else />
-                                            </template>
-                                            {{ isEditing ? 'Sửa' : 'Thêm mới' }}
-                                        </a-button>
-                                    </template>
-                                </a-input>
-                            </template>
+                                </template>
+                            </a-input>
+                            <div v-if="validationError.material" class="validation-error">
+                                {{ validationError.material }}
+                            </div>
                         </div>
 
                         <a-table :dataSource="getCurrentPageData" :columns="materialColumns" :pagination="{
@@ -215,26 +124,15 @@
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(record)">
+                                        <a-button type="primary" @click="showEditModal(record, 'material')">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="primary" danger @click="deleteAttribute(record)">
-                                            <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'ten_chat_lieu'">
-                                    <span v-if="!record.isEditing">{{ record.ten_chat_lieu }}</span>
-                                    <a-input v-else v-model:value="record.editName" />
-                                </template>
-                                <template v-else-if="column.key === 'trang_thai'">
-                                    <a-switch
-                                        v-model:checked="record.status"
-                                        :checked="record.trang_thai === 'Hoạt động'"
-                                        checked-children="Hoạt động"
-                                        un-checked-children="Không hoạt động"
-                                        @change="(checked) => handleStatusChange(record.key, checked)"
-                                    />
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
                         </a-table>
@@ -245,43 +143,20 @@
                 <a-tab-pane key="color" tab="Màu Sắc">
                     <div class="content-area">
                         <div class="add-form">
-                            <template v-if="currentTab === 'size'">
-                                <div class="d-flex gap-2">
-                                    <a-input v-model:value="newAttribute.value" 
-                                        :placeholder="isEditing ? 'Sửa giá trị' : 'Nhập giá trị'"
-                                        class="input-field"
-                                        style="width: 60%">
-                                    </a-input>
-                                    <a-input v-model:value="newAttribute.unit"
-                                        :placeholder="isEditing ? 'Sửa đơn vị' : 'Nhập đơn vị (tùy chọn)'"
-                                        class="input-field"
-                                        style="width: 30%">
-                                    </a-input>
-                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute"
-                                        style="width: 10%">
+                            <a-input v-model:value="newAttribute.name" placeholder="Thêm màu sắc mới"
+                                class="input-field" :status="validationStatus.color" @blur="validateNewAttribute">
+                                <template #suffix>
+                                    <a-button type="primary" @click="addNewAttribute" :disabled="!isValidNewAttr">
                                         <template #icon>
-                                            <plus-outlined v-if="!isEditing" />
-                                            <edit-outlined v-else />
+                                            <plus-outlined />
                                         </template>
-                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
+                                        Thêm mới
                                     </a-button>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <a-input v-model:value="newAttribute.name"
-                                    :placeholder="isEditing ? `Sửa ${getAttributeLabel()}` : `Thêm ${getAttributeLabel()} mới`"
-                                    class="input-field">
-                                    <template #suffix>
-                                        <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
-                                            <template #icon>
-                                                <plus-outlined v-if="!isEditing" />
-                                                <edit-outlined v-else />
-                                            </template>
-                                            {{ isEditing ? 'Sửa' : 'Thêm mới' }}
-                                        </a-button>
-                                    </template>
-                                </a-input>
-                            </template>
+                                </template>
+                            </a-input>
+                            <div v-if="validationError.color" class="validation-error">
+                                {{ validationError.color }}
+                            </div>
                         </div>
 
                         <a-table :dataSource="getCurrentPageData" :columns="colorColumns" :pagination="{
@@ -294,26 +169,15 @@
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(record)">
+                                        <a-button type="primary" @click="showEditModal(record, 'color')">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="primary" danger @click="deleteAttribute(record)">
-                                            <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'ten_mau_sac'">
-                                    <span v-if="!record.isEditing">{{ record.ten_mau_sac }}</span>
-                                    <a-input v-else v-model:value="record.editName" />
-                                </template>
-                                <template v-else-if="column.key === 'trang_thai'">
-                                    <a-switch
-                                        v-model:checked="record.status"
-                                        :checked="record.trang_thai === 'Hoạt động'"
-                                        checked-children="Hoạt động"
-                                        un-checked-children="Không hoạt động"
-                                        @change="(checked) => handleStatusChange(record.key, checked)"
-                                    />
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
                         </a-table>
@@ -324,43 +188,24 @@
                 <a-tab-pane key="size" tab="Kích Thước">
                     <div class="content-area">
                         <div class="add-form">
-                            <template v-if="currentTab === 'size'">
-                                <div class="d-flex gap-2">
-                                    <a-input v-model:value="newAttribute.value" 
-                                        :placeholder="isEditing ? 'Sửa giá trị' : 'Nhập giá trị'"
-                                        class="input-field"
-                                        style="width: 60%">
-                                    </a-input>
-                                    <a-input v-model:value="newAttribute.unit"
-                                        :placeholder="isEditing ? 'Sửa đơn vị' : 'Nhập đơn vị (tùy chọn)'"
-                                        class="input-field"
-                                        style="width: 30%">
-                                    </a-input>
-                                    <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute"
-                                        style="width: 10%">
-                                        <template #icon>
-                                            <plus-outlined v-if="!isEditing" />
-                                            <edit-outlined v-else />
-                                        </template>
-                                        {{ isEditing ? 'Sửa' : 'Thêm mới' }}
-                                    </a-button>
-                                </div>
-                            </template>
-                            <template v-else>
-                                <a-input v-model:value="newAttribute.name"
-                                    :placeholder="isEditing ? `Sửa ${getAttributeLabel()}` : `Thêm ${getAttributeLabel()} mới`"
-                                    class="input-field">
-                                    <template #suffix>
-                                        <a-button type="primary" @click="isEditing ? saveEdit() : addNewAttribute">
-                                            <template #icon>
-                                                <plus-outlined v-if="!isEditing" />
-                                                <edit-outlined v-else />
-                                            </template>
-                                            {{ isEditing ? 'Sửa' : 'Thêm mới' }}
-                                        </a-button>
-                                    </template>
+                            <div class="d-flex gap-2">
+                                <a-input v-model:value="newAttribute.value" placeholder="Nhập giá trị"
+                                    class="input-field" :status="validationStatus.sizeValue"
+                                    @blur="validateNewAttribute" style="width: 60%">
                                 </a-input>
-                            </template>
+                                <a-input v-model:value="newAttribute.unit" placeholder="Nhập đơn vị (tùy chọn)"
+                                    class="input-field" style="width: 30%">
+                                </a-input>
+                                <a-button type="primary" @click="addNewAttribute" :disabled="!isValidNewAttr"
+                                    style="width: 10%">
+                                    <template #icon>
+                                        <plus-outlined />
+                                    </template>
+                                </a-button>
+                            </div>
+                            <div v-if="validationError.sizeValue" class="validation-error">
+                                {{ validationError.sizeValue }}
+                            </div>
                         </div>
 
                         <a-table :dataSource="getCurrentPageData" :columns="sizeColumns" :pagination="{
@@ -373,26 +218,15 @@
                             <template #bodyCell="{ column, record, index }">
                                 <template v-if="column.key === 'action'">
                                     <div class="attribute-actions">
-                                        <a-button type="primary" @click="startEdit(record)">
+                                        <a-button type="primary" @click="showEditModal(record, 'size')">
                                             <template #icon><edit-outlined /></template>
-                                        </a-button>
-                                        <a-button type="primary" danger @click="deleteAttribute(record)">
-                                            <template #icon><delete-outlined /></template>
                                         </a-button>
                                     </div>
                                 </template>
-                                <template v-else-if="column.key === 'kich_thuoc'">
-                                    <span v-if="!record.isEditing">{{ record.gia_tri }} {{ record.don_vi }}</span>
-                                    <a-input v-else v-model:value="record.editName" />
-                                </template>
-                                <template v-else-if="column.key === 'trang_thai'">
-                                    <a-switch
-                                        v-model:checked="record.status"
-                                        :checked="record.trang_thai === 'Hoạt động'"
-                                        checked-children="Hoạt động"
-                                        un-checked-children="Không hoạt động"
-                                        @change="(checked) => handleStatusChange(record.key, checked)"
-                                    />
+                                <template v-else-if="column.key === 'status'">
+                                    <a-switch v-model:checked="record.status"
+                                        :style="{ backgroundColor: record.status ? '#f33b47' : '#ccc' }"
+                                        @change="(checked) => handleStatusChange(index, checked)" />
                                 </template>
                             </template>
                         </a-table>
@@ -400,12 +234,35 @@
                 </a-tab-pane>
             </a-tabs>
         </a-card>
+
+        <!-- Add modal for editing -->
+        <a-modal v-model:visible="editModalVisible" :title="editModalTitle" @ok="saveEditModal">
+            <template v-if="currentTab === 'size'">
+                <a-form layout="vertical">
+                    <a-form-item label="Giá trị" :validateStatus="editValidationStatus.value"
+                        :help="editValidationError.value">
+                        <a-input v-model:value="editingData.value" @blur="validateEditingData" />
+                    </a-form-item>
+                    <a-form-item label="Đơn vị (tùy chọn)">
+                        <a-input v-model:value="editingData.unit" />
+                    </a-form-item>
+                </a-form>
+            </template>
+            <template v-else>
+                <a-form layout="vertical">
+                    <a-form-item :label="getNameLabel()" :validateStatus="editValidationStatus.name"
+                        :help="editValidationError.name">
+                        <a-input v-model:value="editingData.name" @blur="validateEditingData" />
+                    </a-form-item>
+                </a-form>
+            </template>
+        </a-modal>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons-vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { PlusOutlined, EditOutlined, CheckOutlined } from '@ant-design/icons-vue'
 import { useGbStore } from '../../../stores/gbStore'
 import { storeToRefs } from 'pinia'
 import { Modal, message } from 'ant-design-vue'
@@ -415,6 +272,47 @@ const store = useGbStore()
 const currentTab = ref('category')
 const isEditing = ref(false)
 const editingItem = ref(null)
+const currentPage = ref(1)
+
+// Thêm biến để quản lý modal sửa
+const editModalVisible = ref(false)
+const editModalTitle = ref('Sửa thuộc tính')
+const editingData = ref({
+    name: '',
+    value: '',
+    unit: '',
+    id: null,
+    type: ''
+})
+
+// Thêm biến để quản lý validate
+const validationStatus = ref({
+    category: '',
+    brand: '',
+    material: '',
+    color: '',
+    sizeValue: ''
+})
+
+const validationError = ref({
+    category: '',
+    brand: '',
+    material: '',
+    color: '',
+    sizeValue: ''
+})
+
+const editValidationStatus = ref({
+    name: '',
+    value: ''
+})
+
+const editValidationError = ref({
+    name: '',
+    value: ''
+})
+
+const isValidNewAttr = ref(true)
 
 // Cấu hình cột cho từng bảng
 const categoryColumns = [
@@ -433,16 +331,8 @@ const categoryColumns = [
     {
         title: 'Trạng thái',
         dataIndex: 'trang_thai',
-        key: 'trang_thai',
-        width: '15%',
-        customRender: ({ record }) => (
-            <a-switch 
-                checked={record.status}
-                checkedChildren="Hoạt động"
-                unCheckedChildren="Không hoạt động"
-                onChange={(checked) => handleStatusChange(record.key, checked)}
-            />
-        )
+        key: 'status',
+        width: '15%'
     },
     {
         title: 'Ngày tạo',
@@ -658,7 +548,7 @@ onMounted(async () => {
 // Load functions
 async function loadCategories() {
     try {
-        const response = await store.getAllDM()
+        const response = await store.getDanhMucList()
         categories.value = response.map(item => ({
             ...item,
             key: item.id_danh_muc,
@@ -674,7 +564,7 @@ async function loadCategories() {
 
 async function loadBrands() {
     try {
-        const response = await store.getAllTH()
+        const response = await store.getThuongHieuList()
         brands.value = response.map(item => ({
             ...item,
             key: item.id_thuong_hieu,
@@ -690,7 +580,7 @@ async function loadBrands() {
 
 async function loadMaterials() {
     try {
-        const response = await store.getAllCL()
+        const response = await store.getChatLieuList()
         materials.value = response.map(item => ({
             ...item,
             key: item.id_chat_lieu,
@@ -706,7 +596,7 @@ async function loadMaterials() {
 
 async function loadColors() {
     try {
-        const response = await store.getAllMS()
+        const response = await store.getMauSacList()
         colors.value = response.map(item => ({
             ...item,
             key: item.id_mau_sac,
@@ -722,7 +612,7 @@ async function loadColors() {
 
 async function loadSizes() {
     try {
-        const response = await store.getAllKT()
+        const response = await store.getSizeList()
         sizes.value = response.map(item => ({
             ...item,
             key: item.id_kich_thuoc,
@@ -755,597 +645,518 @@ const getCurrentItems = computed(() => {
     }
 })
 
-// Methods for managing attributes
-const addNewAttribute = async () => {
-    if (isEditing.value) {
-        await saveEdit()
-        return
-    }
-
-    let response;
-
-    switch (currentTab.value) {
-        case 'size':
-            // Validate cho kích thước
-            if (!newAttribute.value.value.trim()) {
-                message.warning('Vui lòng nhập giá trị kích thước!')
-                return
-            }
-
-            // Kiểm tra trùng giá trị
-            const isDuplicateSize = sizes.value.some(item =>
-                item.gia_tri?.toLowerCase() === newAttribute.value.value.trim().toLowerCase() &&
-                item.don_vi?.toLowerCase() === (newAttribute.value.unit?.trim() || '').toLowerCase()
-            )
-
-            if (isDuplicateSize) {
-                message.error('Kích thước này đã tồn tại!')
-                return
-            }
-
-            response = await store.addKichThuoc(
-                newAttribute.value.value.trim(),
-                newAttribute.value.unit.trim()
-            )
-            break
-
-        default:
-            // Validate cho các thuộc tính khác
-            if (!newAttribute.value.name.trim()) {
-                message.warning('Vui lòng nhập tên thuộc tính!')
-                return
-            }
-
-            // Lấy danh sách hiện tại theo tab
-            let currentList = []
-            let checkField = ''
-            switch (currentTab.value) {
-                case 'category':
-                    currentList = categories.value
-                    checkField = 'ten_danh_muc'
-                    break
-                case 'brand':
-                    currentList = brands.value
-                    checkField = 'ten_thuong_hieu'
-                    break
-                case 'material':
-                    currentList = materials.value
-                    checkField = 'ten_chat_lieu'
-                    break
-                case 'color':
-                    currentList = colors.value
-                    checkField = 'ten_mau_sac'
-                    break
-            }
-
-            // Kiểm tra trùng tên
-            const isDuplicate = currentList.some(item =>
-                item[checkField]?.toLowerCase() === newAttribute.value.name.trim().toLowerCase()
-            )
-
-            if (isDuplicate) {
-                message.error('Tên này đã tồn tại!')
-                return
-            }
-
-            // Gọi API thêm mới tương ứng
-            switch (currentTab.value) {
-                case 'category':
-                    response = await store.addDanhMuc(newAttribute.value.name.trim())
-                    break
-                case 'brand':
-                    response = await store.addThuongHieu(newAttribute.value.name.trim())
-                    break
-                case 'material':
-                    response = await store.addChatLieu(newAttribute.value.name.trim())
-                    break
-                case 'color':
-                    response = await store.addMauSac(newAttribute.value.name.trim())
-                    break
-            }
-    }
-
-    // Xử lý response
-    if (!response.success) {
-        message.error(response.message)
-        return
-    }
-
-    // Reset form
-    if (currentTab.value === 'size') {
-        newAttribute.value.value = ''
-        newAttribute.value.unit = ''
-    } else {
-        newAttribute.value.name = ''
-    }
-
-    // Load lại danh sách tương ứng
-    switch (currentTab.value) {
-        case 'category':
-            await loadCategories()
-            break
-        case 'brand':
-            await loadBrands()
-            break
-        case 'material':
-            await loadMaterials()
-            break
-        case 'color':
-            await loadColors()
-            break
-        case 'size':
-            await loadSizes()
-            break
-    }
-
-    message.success('Thêm mới thành công!')
-}
-
-const startEdit = (record) => {
-    isEditing.value = true
-    editingItem.value = record
-
-    // Focus vào input khi bắt đầu edit
-    nextTick(() => {
-        const input = document.querySelector('.add-form .ant-input')
-        if (input) input.focus()
-    })
-
-    switch (currentTab.value) {
-        case 'category':
-            newAttribute.value.name = record.ten_danh_muc
-            break
-        case 'brand':
-            newAttribute.value.name = record.ten_thuong_hieu
-            break
-        case 'material':
-            newAttribute.value.name = record.ten_chat_lieu
-            break
-        case 'color':
-            newAttribute.value.name = record.ten_mau_sac
-            break
-        case 'size':
-            newAttribute.value.value = record.gia_tri
-            newAttribute.value.unit = record.don_vi || ''
-            break
-    }
-}
-
-const saveEdit = async () => {
-    if (!editingItem.value) return
-
-    try {
-        // Validate dữ liệu trước khi cập nhật
-        if (!validateEdit()) return
-
-        let updateData
-        let response
-
-        switch (currentTab.value) {
-            case 'category':
-                updateData = {
-                    id_danh_muc: editingItem.value.id_danh_muc,
-                    ma_danh_muc: editingItem.value.ma_danh_muc,
-                    ten_danh_muc: newAttribute.value.name.trim(),
-                    trang_thai: editingItem.value.trang_thai
-                }
-                response = await store.updateDanhMuc(updateData)
-                break
-
-            case 'brand':
-                updateData = {
-                    id_thuong_hieu: editingItem.value.id_thuong_hieu,
-                    ma_thuong_hieu: editingItem.value.ma_thuong_hieu,
-                    ten_thuong_hieu: newAttribute.value.name.trim(),
-                    trang_thai: editingItem.value.trang_thai
-                }
-                response = await store.updateThuongHieu(updateData)
-                break
-
-            case 'material':
-                updateData = {
-                    id_chat_lieu: editingItem.value.id_chat_lieu,
-                    ma_chat_lieu: editingItem.value.ma_chat_lieu,
-                    ten_chat_lieu: newAttribute.value.name.trim(),
-                    trang_thai: editingItem.value.trang_thai
-                }
-                response = await store.updateChatLieu(updateData)
-                break
-
-            case 'color':
-                updateData = {
-                    id_mau_sac: editingItem.value.id_mau_sac,
-                    ma_mau_sac: editingItem.value.ma_mau_sac,
-                    ten_mau_sac: newAttribute.value.name.trim(),
-                    trang_thai: editingItem.value.trang_thai
-                }
-                response = await store.updateMauSac(updateData)
-                break
-
-            case 'size':
-                updateData = {
-                    id_kich_thuoc: editingItem.value.id_kich_thuoc,
-                    ma_kich_thuoc: editingItem.value.ma_kich_thuoc,
-                    gia_tri: newAttribute.value.value.trim(),
-                    don_vi: newAttribute.value.unit.trim(),
-                    trang_thai: editingItem.value.trang_thai
-                }
-                response = await store.updateKichThuoc(updateData)
-                break
-        }
-
-        if (!response.success) {
-            message.error(response.message || 'Có lỗi xảy ra khi cập nhật')
-            return
-        }
-
-        message.success('Cập nhật thành công!')
-        resetForm()
-        await loadCurrentTab()
-
-    } catch (error) {
-        console.error('Error updating:', error)
-        message.error('Có lỗi xảy ra khi cập nhật')
-    }
-}
-
-const resetForm = () => {
-    isEditing.value = false
-    editingItem.value = null
-    newAttribute.value = {
-        name: '',
-        value: '',
-        unit: ''
-    }
-}
-
-const deleteAttribute = (index) => {
-    const items = getCurrentItems.value
-    const itemName = items[index].name
-
-    Modal.confirm({
-        title: 'Xác nhận xóa',
-        content: `Bạn có chắc chắn muốn xóa "${itemName}"?`,
-        okText: 'Xóa',
-        okType: 'danger',
-        cancelText: 'Hủy',
-        onOk() {
-            switch (currentTab.value) {
-                case 'category': categories.value.splice(index, 1); break
-                case 'brand': brands.value.splice(index, 1); break
-                case 'material': materials.value.splice(index, 1); break
-                case 'color': colors.value.splice(index, 1); break
-                case 'size': sizes.value.splice(index, 1); break
-            }
-            message.success('Xóa thành công!')
-        }
-    })
-}
-
-const handleStatusChange = async (id, checked) => {
-    const items = getCurrentItems.value
-    const item = items.find(i => i.key === id)
-    if (!item) return
-
-    try {
-        let response
-        // Gọi API tương ứng theo tab
-        switch (currentTab.value) {
-            case 'category':
-                response = await store.changeTrangThaiDanhMuc(item.id_danh_muc)
-                break
-            case 'brand':
-                response = await store.changeTrangThaiThuongHieu(item.id_thuong_hieu)
-                break
-            case 'material':
-                response = await store.changeTrangThaiChatLieu(item.id_chat_lieu)
-                break
-            case 'color':
-                response = await store.changeTrangThaiMauSac(item.id_mau_sac)
-                break
-            case 'size':
-                response = await store.changeTrangThaiKichThuoc(item.id_kich_thuoc)
-                break
-        }
-
-        if (response && !response.error) {
-            // Cập nhật UI sau khi API thành công
-            item.status = checked
-            item.trang_thai = checked ? 'Hoạt động' : 'Không hoạt động'
-            message.success('Chuyển trạng thái thành công!')
-        } else {
-            throw new Error(response?.message || 'Có lỗi xảy ra')
-        }
-    } catch (error) {
-        // Nếu lỗi, hoàn tác UI
-        item.status = !checked
-        item.trang_thai = !checked ? 'Hoạt động' : 'Không hoạt động'
-        message.error('Có lỗi xảy ra khi chuyển trạng thái')
-    }
-}
-
-const currentPage = ref(1)
-
+// Thêm computed property để lấy dữ liệu cho trang hiện tại
 const getCurrentPageData = computed(() => {
-    const items = getCurrentItems.value
+    const allItems = getCurrentItems.value
     const startIndex = (currentPage.value - 1) * 5
     const endIndex = startIndex + 5
-    return items.slice(startIndex, endIndex)
+    return allItems.slice(startIndex, endIndex)
 })
 
+// Thêm hàm xử lý khi thay đổi trang
 const onPageChange = (page) => {
     currentPage.value = page
 }
 
-const validateThuongHieuName = (_, value) => {
-    if (!value) return Promise.resolve();
+// Thêm hàm xử lý khi thay đổi trạng thái
+const handleStatusChange = async (index, checked) => {
+    try {
+        const allItems = getCurrentItems.value
+        const item = allItems[index]
 
-    // Kiểm tra độ dài
-    if (value.trim().length < 2) {
-        return Promise.reject('Tên thương hiệu phải có ít nhất 2 ký tự!');
-    }
-
-    if (value.trim().length > 50) {
-        return Promise.reject('Tên thương hiệu không được vượt quá 50 ký tự!');
-    }
-
-    // Kiểm tra chỉ chứa chữ cái, số, dấu cách và dấu gạch ngang
-    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(value)) {
-        return Promise.reject('Tên thương hiệu chỉ được chứa chữ cái, số, dấu cách và dấu gạch ngang');
-    }
-
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
-
-    // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
-    const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
-        .find(item => {
-            const normalizedName = removeDiacritics(item.ten_thuong_hieu.trim().toLowerCase());
-            return normalizedName === normalizedInput;
-        });
-
-    if (existingItem) {
-        if (existingItem.trang_thai === 'Không hoạt động') {
-            return Promise.reject('Thương hiệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+        switch (currentTab.value) {
+            case 'category':
+                await store.changeTrangThaiDanhMuc(item.id_danh_muc)
+                break
+            case 'brand':
+                await store.changeTrangThaiThuongHieu(item.id_thuong_hieu)
+                break
+            case 'material':
+                await store.changeTrangThaiChatLieu(item.id_chat_lieu)
+                break
+            case 'color':
+                await store.changeTrangThaiMauSac(item.id_mau_sac)
+                break
+            case 'size':
+                await store.changeTrangThaiKichThuoc(item.id_kich_thuoc)
+                break
         }
-        return Promise.reject('Thương hiệu này đã tồn tại!');
-    }
 
-    return Promise.resolve();
-}
-
-const validateMauSacName = (_, value) => {
-    if (!value) return Promise.resolve();
-
-    // Kiểm tra độ dài
-    if (value.trim().length < 2) {
-        return Promise.reject('Tên màu sắc phải có ít nhất 2 ký tự!');
-    }
-
-    if (value.trim().length > 15) {
-        return Promise.reject('Tên màu sắc không được vượt quá 15 ký tự!');
-    }
-
-    // Kiểm tra chỉ chứa chữ cái, số và dấu cách
-    if (!/^[a-zA-Z0-9À-ỹ\s]+$/.test(value)) {
-        return Promise.reject('Tên màu sắc chỉ được chứa chữ cái, số và dấu cách');
-    }
-
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
-
-    // Kiểm tra trùng lặp
-    const existingItem = colors.value.find(item => {
-        const normalizedName = removeDiacritics(item.ten_mau_sac.trim().toLowerCase());
-        return normalizedName === normalizedInput;
-    });
-
-    if (existingItem) {
-        if (existingItem.trang_thai === 'Không hoạt động') {
-            return Promise.reject('Màu sắc này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
-        }
-        return Promise.reject('Màu sắc này đã tồn tại!');
-    }
-
-    return Promise.resolve();
-};
-
-const validateKichThuocValue = (_, value) => {
-    if (!value) return Promise.resolve();
-
-    // Kiểm tra độ dài
-    if (value.toString().trim().length < 1) {
-        return Promise.reject('Giá trị kích thước không được để trống!');
-    }
-
-    if (value.toString().trim().length > 5) {
-        return Promise.reject('Giá trị kích thước không được vượt quá 5 ký tự!');
-    }
-
-    // Chỉ cho phép số và dấu chấm (cho số thập phân)
-    if (!/^\d*\.?\d*$/.test(value)) {
-        return Promise.reject('Giá trị kích thước chỉ được chứa số và dấu chấm thập phân');
-    }
-
-    // Kiểm tra đơn vị nếu có
-    const donVi = newAttribute.value.unit ? newAttribute.value.unit.trim() : '';
-    if (donVi && donVi.length > 5) {
-        return Promise.reject('Đơn vị không được vượt quá 5 ký tự!');
-    }
-
-    // Chuẩn hóa đầu vào để kiểm tra trùng lặp
-    const normalizedGiaTri = value.toString().trim();
-    const normalizedDonVi = donVi.toLowerCase();
-
-    // Kiểm tra trùng lặp
-    const existingItem = sizes.value.find(item => {
-        const itemGiaTri = item.gia_tri.toString().trim();
-        const itemDonVi = (item.don_vi || '').toLowerCase();
-        return itemGiaTri === normalizedGiaTri && itemDonVi === normalizedDonVi;
-    });
-
-    if (existingItem) {
-        if (existingItem.trang_thai === 'Không hoạt động') {
-            return Promise.reject('Kích thước này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
-        }
-        return Promise.reject('Kích thước này đã tồn tại!');
-    }
-
-    return Promise.resolve();
-};
-
-const validateDanhMucName = (_, value) => {
-    if (!value) return Promise.resolve();
-
-    // Kiểm tra độ dài
-    if (value.trim().length < 2) {
-        return Promise.reject('Tên danh mục phải có ít nhất 2 ký tự!');
-    }
-
-    if (value.trim().length > 50) {
-        return Promise.reject('Tên danh mục không được vượt quá 50 ký tự!');
-    }
-
-    // Kiểm tra chỉ chứa chữ cái, số, dấu cách và dấu gạch ngang
-    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(value)) {
-        return Promise.reject('Tên danh mục chỉ được chứa chữ cái, số, dấu cách và dấu gạch ngang');
-    }
-
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
-
-    // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
-    const existingItem = categories.value.find(item => {
-        const normalizedName = removeDiacritics(item.ten_danh_muc.trim().toLowerCase());
-        return normalizedName === normalizedInput;
-    });
-
-    if (existingItem) {
-        if (existingItem.trang_thai === 'Không hoạt động') {
-            return Promise.reject('Danh mục này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
-        }
-        return Promise.reject('Danh mục này đã tồn tại!');
-    }
-
-    return Promise.resolve();
-};
-
-const validateChatLieuName = (_, value) => {
-    if (!value) return Promise.resolve();
-
-    // Kiểm tra độ dài
-    if (value.trim().length < 2) {
-        return Promise.reject('Tên chất liệu phải có ít nhất 2 ký tự!');
-    }
-
-    if (value.trim().length > 50) {
-        return Promise.reject('Tên chất liệu không được vượt quá 50 ký tự!');
-    }
-
-    // Kiểm tra chỉ chứa chữ cái, số và dấu cách
-    if (!/^[a-zA-Z0-9À-ỹ\s]+$/.test(value)) {
-        return Promise.reject('Tên chất liệu chỉ được chứa chữ cái, số và dấu cách');
-    }
-
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
-
-    // Kiểm tra trùng lặp
-    const existingItem = materials.value.find(item => {
-        const normalizedName = removeDiacritics(item.ten_chat_lieu.trim().toLowerCase());
-        return normalizedName === normalizedInput;
-    });
-
-    if (existingItem) {
-        if (existingItem.trang_thai === 'Không hoạt động') {
-            return Promise.reject('Chất liệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
-        }
-        return Promise.reject('Chất liệu này đã tồn tại!');
-    }
-
-    return Promise.resolve();
-};
-
-const getAttributeLabel = () => {
-    switch (currentTab.value) {
-        case 'category': return 'danh mục'
-        case 'brand': return 'thương hiệu'
-        case 'material': return 'chất liệu'
-        case 'color': return 'màu sắc'
-        case 'size': return 'kích thước'
-        default: return ''
+        // Tải lại dữ liệu sau khi cập nhật
+        await loadCurrentTab()
+    } catch (error) {
+        console.error('Error updating status:', error)
+        message.error('Có lỗi xảy ra khi cập nhật trạng thái')
     }
 }
 
-const handleInputBlur = (e) => {
-    // Chỉ hủy editing nếu click ra ngoài form
-    if (!e.relatedTarget || !e.relatedTarget.closest('.add-form')) {
-        cancelEdit()
+// Thêm hàm validateNewAttribute
+const validateNewAttribute = () => {
+    isValidNewAttr.value = true;
+
+    // Reset validation status
+    validationStatus.value.category = '';
+    validationStatus.value.brand = '';
+    validationStatus.value.material = '';
+    validationStatus.value.color = '';
+    validationStatus.value.sizeValue = '';
+
+    // Reset validation error messages
+    validationError.value.category = '';
+    validationError.value.brand = '';
+    validationError.value.material = '';
+    validationError.value.color = '';
+    validationError.value.sizeValue = '';
+
+    if (currentTab.value === 'size') {
+        // Validate size
+        if (!newAttribute.value.value?.trim()) {
+            validationStatus.value.sizeValue = 'error';
+            validationError.value.sizeValue = 'Vui lòng nhập giá trị kích thước!';
+            isValidNewAttr.value = false;
+            return;
+        }
+
+        if (!/^\d*\.?\d*$/.test(newAttribute.value.value)) {
+            validationStatus.value.sizeValue = 'error';
+            validationError.value.sizeValue = 'Giá trị kích thước chỉ được chứa số và dấu chấm thập phân';
+            isValidNewAttr.value = false;
+            return;
+        }
+
+        // Kiểm tra giá trị kích thước phải lớn hơn 0
+        if (parseFloat(newAttribute.value.value) <= 0) {
+            validationStatus.value.sizeValue = 'error';
+            validationError.value.sizeValue = 'Giá trị kích thước phải lớn hơn 0';
+            isValidNewAttr.value = false;
+            return;
+        }
+
+        // Kiểm tra trùng lặp size
+        const isDuplicateSize = sizes.value.some(item =>
+            item.gia_tri?.toLowerCase() === newAttribute.value.value.trim().toLowerCase() &&
+            item.don_vi?.toLowerCase() === (newAttribute.value.unit?.trim() || '').toLowerCase() &&
+            item.trang_thai === 'Hoạt động'
+        );
+
+        if (isDuplicateSize) {
+            validationStatus.value.sizeValue = 'error';
+            validationError.value.sizeValue = 'Kích thước này đã tồn tại!';
+            isValidNewAttr.value = false;
+            return;
+        }
+    } else {
+        // Validate name for other tabs
+        if (!newAttribute.value.name?.trim()) {
+            validationStatus.value[currentTab.value] = 'error';
+            validationError.value[currentTab.value] = 'Vui lòng nhập tên thuộc tính!';
+            isValidNewAttr.value = false;
+            return;
+        }
+
+        // Kiểm tra độ dài tên
+        if (newAttribute.value.name.trim().length < 2) {
+            validationStatus.value[currentTab.value] = 'error';
+            validationError.value[currentTab.value] = 'Tên phải có ít nhất 2 ký tự!';
+            isValidNewAttr.value = false;
+            return;
+        }
+
+        // Giới hạn độ dài tùy thuộc vào loại thuộc tính
+        const maxLength = currentTab.value === 'color' ? 15 : 50;
+        if (newAttribute.value.name.trim().length > maxLength) {
+            validationStatus.value[currentTab.value] = 'error';
+            validationError.value[currentTab.value] = `Tên không được vượt quá ${maxLength} ký tự!`;
+            isValidNewAttr.value = false;
+            return;
+        }
+
+        // Kiểm tra ký tự hợp lệ - không chứa số
+        const regex = /^[a-zA-ZÀ-ỹ\s\-]+$/;
+
+        if (!regex.test(newAttribute.value.name)) {
+            validationStatus.value[currentTab.value] = 'error';
+            validationError.value[currentTab.value] = 'Tên chỉ được chứa chữ cái, dấu cách và dấu gạch ngang, không chứa số';
+            isValidNewAttr.value = false;
+            return;
+        }
+
+        // Kiểm tra trùng lặp
+        let currentList = [];
+        let checkField = '';
+
+        switch (currentTab.value) {
+            case 'category':
+                currentList = categories.value;
+                checkField = 'ten_danh_muc';
+                break;
+            case 'brand':
+                currentList = brands.value;
+                checkField = 'ten_thuong_hieu';
+                break;
+            case 'material':
+                currentList = materials.value;
+                checkField = 'ten_chat_lieu';
+                break;
+            case 'color':
+                currentList = colors.value;
+                checkField = 'ten_mau_sac';
+                break;
+        }
+
+        const isDuplicate = currentList.some(item =>
+            item[checkField]?.toLowerCase() === newAttribute.value.name.trim().toLowerCase() &&
+            item.trang_thai === 'Hoạt động'
+        );
+
+        if (isDuplicate) {
+            validationStatus.value[currentTab.value] = 'error';
+            validationError.value[currentTab.value] = 'Tên này đã tồn tại!';
+            isValidNewAttr.value = false;
+            return;
+        }
     }
 }
 
-const cancelEdit = () => {
-    if (!isEditing.value) return
-    isEditing.value = false
-    editingItem.value = null
-    resetForm()
-}
+// Methods for managing attributes
+const addNewAttribute = async () => {
+    validateNewAttribute();
 
-// Thêm click outside handler
-onMounted(() => {
-    document.addEventListener('click', (e) => {
-        const addForm = document.querySelector('.add-form')
-        if (addForm && !addForm.contains(e.target)) {
-            cancelEdit()
+    if (!isValidNewAttr.value) {
+        return;
+    }
+
+    try {
+        let response;
+
+        switch (currentTab.value) {
+            case 'size':
+                response = await store.addKichThuoc(
+                    newAttribute.value.value.trim(),
+                    newAttribute.value.unit.trim()
+                );
+                break;
+            case 'category':
+                response = await store.addDanhMuc(newAttribute.value.name.trim());
+                break;
+            case 'brand':
+                response = await store.addThuongHieu(newAttribute.value.name.trim());
+                break;
+            case 'material':
+                response = await store.addChatLieu(newAttribute.value.name.trim());
+                break;
+            case 'color':
+                response = await store.addMauSac(newAttribute.value.name.trim());
+                break;
         }
-    })
-})
 
-onUnmounted(() => {
-    document.removeEventListener('click', cancelEdit)
-})
+        if (!response || response.error) {
+            throw new Error('Có lỗi xảy ra khi thêm mới');
+        }
 
-const validateEdit = () => {
-    switch (currentTab.value) {
+        // Reset form
+        if (currentTab.value === 'size') {
+            newAttribute.value.value = '';
+            newAttribute.value.unit = '';
+        } else {
+            newAttribute.value.name = '';
+        }
+
+        // Reset validation
+        validationStatus.value[currentTab.value] = '';
+        validationError.value[currentTab.value] = '';
+
+        // Reload data
+        await loadCurrentTab();
+        message.success('Thêm mới thành công!');
+    } catch (error) {
+        console.error('Error adding:', error);
+        message.error('Có lỗi xảy ra khi thêm mới: ' + error.message);
+    }
+};
+
+const showEditModal = (record, type) => {
+    // Xác định dữ liệu cần chỉnh sửa dựa trên tab hiện tại
+    let data = {};
+
+    switch (type) {
         case 'category':
-            return validateDanhMucName(null, newAttribute.value.name)
+            data = {
+                id: record.id_danh_muc,
+                name: record.ten_danh_muc,
+            };
+            break;
         case 'brand':
-            return validateThuongHieuName(null, newAttribute.value.name)
+            data = {
+                id: record.id_thuong_hieu,
+                name: record.ten_thuong_hieu,
+            };
+            break;
         case 'material':
-            return validateChatLieuName(null, newAttribute.value.name)
+            data = {
+                id: record.id_chat_lieu,
+                name: record.ten_chat_lieu,
+            };
+            break;
         case 'color':
-            return validateMauSacName(null, newAttribute.value.name)
+            data = {
+                id: record.id_mau_sac,
+                name: record.ten_mau_sac,
+            };
+            break;
         case 'size':
-            return validateKichThuocValue(null, newAttribute.value.value)
-        default:
-            return Promise.resolve()
+            data = {
+                id: record.id_kich_thuoc,
+                value: record.gia_tri,
+                unit: record.don_vi || '',
+            };
+            break;
     }
+
+    // Reset validation
+    editValidationStatus.value.name = '';
+    editValidationError.value.name = '';
+    editValidationStatus.value.value = '';
+    editValidationError.value.value = '';
+
+    // Cập nhật dữ liệu đang chỉnh sửa
+    editingData.value = data;
+    editModalVisible.value = true;
+    currentTab.value = type;
+    editModalTitle.value = `Sửa ${type === 'size' ? 'kích thước' : type.charAt(0).toUpperCase() + type.slice(1)}`;
 }
 
+const saveEditModal = async () => {
+    if (!validateEditingData()) {
+        return;
+    }
+
+    try {
+        let updateData;
+        let response;
+
+        if (currentTab.value === 'size') {
+            updateData = {
+                id_kich_thuoc: editingData.value.id,
+                gia_tri: editingData.value.value.trim(),
+                don_vi: editingData.value.unit?.trim() || '',
+                trang_thai: 'Hoạt động'
+            };
+            response = await store.updateKichThuoc(updateData);
+        } else {
+            switch (currentTab.value) {
+                case 'category':
+                    updateData = {
+                        id_danh_muc: editingData.value.id,
+                        ten_danh_muc: editingData.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    };
+                    response = await store.updateDanhMuc(updateData);
+                    break;
+                case 'brand':
+                    updateData = {
+                        id_thuong_hieu: editingData.value.id,
+                        ten_thuong_hieu: editingData.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    };
+                    response = await store.updateThuongHieu(updateData);
+                    break;
+                case 'material':
+                    updateData = {
+                        id_chat_lieu: editingData.value.id,
+                        ten_chat_lieu: editingData.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    };
+                    response = await store.updateChatLieu(updateData);
+                    break;
+                case 'color':
+                    updateData = {
+                        id_mau_sac: editingData.value.id,
+                        ten_mau_sac: editingData.value.name.trim(),
+                        trang_thai: 'Hoạt động'
+                    };
+                    response = await store.updateMauSac(updateData);
+                    break;
+            }
+        }
+
+        if (!response || response.error) {
+            throw new Error('Có lỗi xảy ra khi cập nhật');
+        }
+
+        message.success('Cập nhật thành công!');
+        editModalVisible.value = false;
+        await loadCurrentTab();
+    } catch (error) {
+        console.error('Error updating:', error);
+        message.error('Có lỗi xảy ra khi cập nhật: ' + error.message);
+    }
+};
+
+const validateEditingData = () => {
+    // Reset validation
+    editValidationStatus.value.name = '';
+    editValidationError.value.name = '';
+    editValidationStatus.value.value = '';
+    editValidationError.value.value = '';
+
+    if (currentTab.value === 'size') {
+        // Validate size value
+        if (!editingData.value.value?.trim()) {
+            editValidationStatus.value.value = 'error';
+            editValidationError.value.value = 'Vui lòng nhập giá trị kích thước!';
+            return false;
+        }
+
+        // Kiểm tra độ dài giá trị
+        if (editingData.value.value.trim().length > 10) {
+            editValidationStatus.value.value = 'error';
+            editValidationError.value.value = 'Giá trị kích thước không được vượt quá 10 ký tự';
+            return false;
+        }
+
+        // Kiểm tra không chứa ký tự đặc biệt
+        if (!/^[a-zA-Z0-9À-ỹ\s]+$/.test(editingData.value.value)) {
+            editValidationStatus.value.value = 'error';
+            editValidationError.value.value = 'Giá trị không được chứa ký tự đặc biệt';
+            return false;
+        }
+
+        // Kiểm tra giá trị kích thước phải lớn hơn 0 nếu là số
+        if (!isNaN(parseFloat(editingData.value.value)) && parseFloat(editingData.value.value) <= 0) {
+            editValidationStatus.value.value = 'error';
+            editValidationError.value.value = 'Nếu giá trị là số, phải lớn hơn 0';
+            return false;
+        }
+
+        // Kiểm tra trùng lặp size (ngoại trừ chính nó)
+        const isDuplicateSize = sizes.value.some(item =>
+            item.id_kich_thuoc !== editingData.value.id &&
+            item.gia_tri?.toLowerCase() === editingData.value.value.trim().toLowerCase() &&
+            item.don_vi?.toLowerCase() === (editingData.value.unit?.trim() || '').toLowerCase() &&
+            item.trang_thai === 'Hoạt động'
+        );
+
+        if (isDuplicateSize) {
+            editValidationStatus.value.value = 'error';
+            editValidationError.value.value = 'Kích thước này đã tồn tại!';
+            return false;
+        }
+    } else {
+        // Validate name for other attributes
+        if (!editingData.value.name?.trim()) {
+            editValidationStatus.value.name = 'error';
+            editValidationError.value.name = 'Vui lòng nhập tên thuộc tính!';
+            return false;
+        }
+
+        // Kiểm tra độ dài tên
+        if (editingData.value.name.trim().length < 2) {
+            editValidationStatus.value.name = 'error';
+            editValidationError.value.name = 'Tên phải có ít nhất 2 ký tự!';
+            return false;
+        }
+
+        // Giới hạn độ dài tùy thuộc vào loại thuộc tính
+        const maxLength = currentTab.value === 'color' ? 15 : 50;
+        if (editingData.value.name.trim().length > maxLength) {
+            editValidationStatus.value.name = 'error';
+            editValidationError.value.name = `Tên không được vượt quá ${maxLength} ký tự!`;
+            return false;
+        }
+
+        // Kiểm tra ký tự hợp lệ - không chứa số
+        const regex = /^[a-zA-ZÀ-ỹ\s\-]+$/;
+
+        if (!regex.test(editingData.value.name)) {
+            editValidationStatus.value.name = 'error';
+            editValidationError.value.name = 'Tên chỉ được chứa chữ cái, dấu cách và dấu gạch ngang, không chứa số';
+            return false;
+        }
+
+        // Kiểm tra trùng lặp tên (ngoại trừ chính nó)
+        let currentList = [];
+        let checkField = '';
+        let idField = '';
+
+        switch (currentTab.value) {
+            case 'category':
+                currentList = categories.value;
+                checkField = 'ten_danh_muc';
+                idField = 'id_danh_muc';
+                break;
+            case 'brand':
+                currentList = brands.value;
+                checkField = 'ten_thuong_hieu';
+                idField = 'id_thuong_hieu';
+                break;
+            case 'material':
+                currentList = materials.value;
+                checkField = 'ten_chat_lieu';
+                idField = 'id_chat_lieu';
+                break;
+            case 'color':
+                currentList = colors.value;
+                checkField = 'ten_mau_sac';
+                idField = 'id_mau_sac';
+                break;
+        }
+
+        const isDuplicate = currentList.some(item =>
+            item[idField] !== editingData.value.id &&
+            item[checkField]?.toLowerCase() === editingData.value.name.trim().toLowerCase() &&
+            item.trang_thai === 'Hoạt động'
+        );
+
+        if (isDuplicate) {
+            editValidationStatus.value.name = 'error';
+            editValidationError.value.name = 'Tên này đã tồn tại!';
+            return false;
+        }
+    }
+
+    return true;
+};
+
+// Get the label for the name field based on current tab
+const getNameLabel = () => {
+    switch (currentTab.value) {
+        case 'category': return 'Tên danh mục';
+        case 'brand': return 'Tên thương hiệu';
+        case 'material': return 'Tên chất liệu';
+        case 'color': return 'Tên màu sắc';
+        default: return 'Tên';
+    }
+};
+
+// Function to load data for current tab
 const loadCurrentTab = async () => {
     switch (currentTab.value) {
-        case 'category':
-            await loadCategories()
-            break
-        case 'brand':
-            await loadBrands()
-            break
-        case 'material':
-            await loadMaterials()
-            break
-        case 'color':
-            await loadColors()
-            break
-        case 'size':
-            await loadSizes()
-            break
+        case 'category': await loadCategories(); break;
+        case 'brand': await loadBrands(); break;
+        case 'material': await loadMaterials(); break;
+        case 'color': await loadColors(); break;
+        case 'size': await loadSizes(); break;
     }
-}
+};
 
-// Utility function to remove diacritics
-const removeDiacritics = (str) => {
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
+// Watch for tab changes to reset forms and validation
+watch(currentTab, () => {
+    // Reset form data
+    newAttribute.value = {
+        name: '',
+        value: '',
+        unit: ''
+    };
+
+    // Reset validation
+    Object.keys(validationStatus.value).forEach(key => {
+        validationStatus.value[key] = '';
+        validationError.value[key] = '';
+    });
+
+    isValidNewAttr.value = true;
+});
 </script>
 
 <style scoped>
@@ -1389,6 +1200,66 @@ const removeDiacritics = (str) => {
     background: #f0f2f5;
 }
 
+/* Căn chỉnh icon + ở giữa theo chiều dọc */
+:deep(.anticon-plus) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    height: 100%;
+}
+
+:deep(.ant-btn > .anticon) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+/* Cập nhật màu hover và focus cho input */
+:deep(.ant-input:hover) {
+    border-color: #f33b47 !important;
+}
+
+:deep(.ant-input:focus),
+:deep(.ant-input-focused),
+:deep(.ant-input-affix-wrapper:focus),
+:deep(.ant-input-affix-wrapper-focused) {
+    border-color: #f33b47 !important;
+    box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2) !important;
+}
+
+:deep(.ant-input-affix-wrapper:hover) {
+    border-color: #f33b47 !important;
+}
+
+/* Cập nhật màu tab khi được nhấn giữ */
+:deep(.ant-tabs-tab:active) {
+    color: #f33b47 !important;
+}
+
+:deep(.ant-tabs-tab.ant-tabs-tab-active:active) {
+    color: #d32d3b !important;
+}
+
+:deep(.ant-tabs-tab-btn:active) {
+    color: #f33b47 !important;
+}
+
+:deep(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn:active) {
+    color: #d32d3b !important;
+}
+
+/* Cập nhật màu pagination khi active */
+:deep(.ant-pagination-item:active) {
+    border-color: #d32d3b !important;
+}
+
+:deep(.ant-pagination-item:active a) {
+    color: #d32d3b !important;
+}
+
+/* Màu nút switch */
 :deep(.ant-switch) {
     min-width: 70px;
     height: 24px;
@@ -1415,5 +1286,85 @@ const removeDiacritics = (str) => {
 
 :deep(.ant-switch-inner) {
     margin: 0 25px 0 7px;
+}
+
+/* Đồng bộ màu các nút */
+:deep(.ant-btn-primary) {
+    background-color: #f33b47 !important;
+    border-color: #f33b47 !important;
+}
+
+:deep(.ant-btn-primary:hover) {
+    background-color: #ff6b76 !important;
+    border-color: #ff6b76 !important;
+}
+
+:deep(.ant-btn-primary:active) {
+    background-color: #d32d3b !important;
+    border-color: #d32d3b !important;
+}
+
+/* Đồng bộ màu tabs */
+:deep(.ant-tabs) {
+    color: rgba(0, 0, 0, 0.65);
+}
+
+:deep(.ant-tabs-tab) {
+    color: rgba(0, 0, 0, 0.65);
+}
+
+:deep(.ant-tabs-tab:hover) {
+    color: #ff6b76 !important;
+}
+
+:deep(.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: #f33b47 !important;
+    font-weight: 500;
+}
+
+:deep(.ant-tabs-ink-bar) {
+    background-color: #f33b47 !important;
+}
+
+:deep(.ant-tabs-nav::before) {
+    border-bottom-color: #f33b47 !important;
+}
+
+:deep(.ant-tabs-nav-list .ant-tabs-tab-active) {
+    border-bottom-color: #f33b47 !important;
+}
+
+/* Đồng bộ màu thanh phân trang (pagination) */
+:deep(.ant-pagination-item:hover) {
+    border-color: #f33b47 !important;
+}
+
+:deep(.ant-pagination-item:hover a) {
+    color: #f33b47 !important;
+}
+
+:deep(.ant-pagination-item-active) {
+    border-color: #f33b47 !important;
+}
+
+:deep(.ant-pagination-item-active a) {
+    color: #f33b47 !important;
+}
+
+:deep(.ant-pagination-prev:hover .ant-pagination-item-link),
+:deep(.ant-pagination-next:hover .ant-pagination-item-link) {
+    color: #f33b47 !important;
+    border-color: #f33b47 !important;
+}
+
+:deep(.ant-pagination-jump-prev .ant-pagination-item-container .ant-pagination-item-link-icon),
+:deep(.ant-pagination-jump-next .ant-pagination-item-container .ant-pagination-item-link-icon) {
+    color: #f33b47 !important;
+}
+
+.validation-error {
+    color: #ff4d4f;
+    font-size: 14px;
+    margin-top: 4px;
 }
 </style>

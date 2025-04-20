@@ -59,43 +59,19 @@
                     </a-upload>
                 </a-form-item>
 
-                <a-form-item label="Giá chung" name="gia_chung">
+                <!-- <a-form-item label="Giá chung" name="gia_chung">
                     <div class="d-flex align-items-center gap-2">
                         <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
                             :un-checked-children="'Giá riêng'" @change="handlePriceChange" />
                         <div v-if="useCommonPrice" class="d-flex gap-2 w-100">
-                            <a-input-number v-model:value="formState.gia_ban_chung" :min="1000" :max="1000000000"
-                                :formatter="formatNumber" :parser="parseNumber" style="width: 100%"
-                                placeholder="Giá bán chung" @change="(value) => {
-                                    console.log('Giá chung thay đổi thành:', value);
-                                    handlePriceChange();
-                                }" @blur="(e) => {
-                                    // Lấy giá trị từ trường nhập
-                                    const inputValue = e.target.value;
-                                    console.log('Giá khi blur:', inputValue);
-
-                                    if (!inputValue) {
-                                        message.warning('Giá bán chung không được để trống');
-                                        formState.gia_ban_chung = 1000;
-                                        return;
-                                    }
-
-                                    // Sử dụng parseNumber để xử lý chuỗi
-                                    const numValue = parseNumber(inputValue);
-
-                                    // Kiểm tra giá trị hợp lệ
-                                    if (numValue < 1000) {
-                                        message.warning('Giá bán chung phải lớn hơn 1000!');
-                                        formState.gia_ban_chung = 1000;
-                                    } else {
-                                        // Cập nhật giá trị đã xử lý vào form state
-                                        formState.gia_ban_chung = numValue;
-                                        console.log('Giá sau khi xử lý:', numValue);
-                                    }
-                                }" />
+                            <a-input-number v-model:value="formState.gia_ban_chung" class="w-full" :controls="false"
+                                :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
+                                :parser="(value) => value.replace(/,/g, '')"
+                                placeholder="Nhập giá bán chung cho các biến thể" :disabled="!useCommonPrice"
+                                @blur="formatCommonPriceOnBlur" />
                         </div>
                     </div>
-                </a-form-item>
+                </a-form-item> -->
 
                 <!-- <a-form-item label="Trạng thái" name="trang_thai">
                     <a-switch v-model:checked="formState.trang_thai" />
@@ -160,16 +136,21 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <a-form-item label="Số lượng" :rules="[{ required: true, message: 'Vui lòng nhập số lượng!' },
-                                {
-                                    validator: (_, value) => {
-                                        if (value < 1) {
-                                            return Promise.reject('Số lượng phải lớn hơn 0!');
+                                <a-form-item label="Số lượng" :rules="[
+                                    { required: true, message: 'Vui lòng nhập số lượng!' },
+                                    {
+                                        validator: (_, value) => {
+                                            if (value < 1) {
+                                                return Promise.reject('Số lượng phải lớn hơn 0!');
+                                            }
+                                            return Promise.resolve();
                                         }
-                                        return Promise.resolve();
                                     }
-                                }]">
-                                    <a-input-number v-model:value="variant.so_luong" :min="1" style="width: 100%" />
+                                ]">
+                                    <a-input-number v-model:value="variant.so_luong" class="w-full" :controls="false"
+                                        :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
+                                        :parser="(value) => value.replace(/,/g, '')"
+                                        placeholder="Nhập số lượng sản phẩm" />
                                 </a-form-item>
                             </div>
 
@@ -184,41 +165,14 @@
                                             if (value < 1000) {
                                                 return Promise.reject('Giá bán phải lớn hơn 1000!');
                                             }
-                                            const minGiaBan = variant.gia_nhap * 1.1;
-                                            if (value < minGiaBan) {
-                                                return Promise.reject(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                                            }
                                             return Promise.resolve();
                                         }
                                     }
                                 ]">
-                                    <a-input-number v-model:value="variant.gia_ban" :min="1000"
-                                        :disabled="useCommonPrice" :formatter="formatNumber" :parser="parseNumber"
-                                        style="width: 100%"
-                                        @change="(value) => handleVariantPriceChange(value, variant, 'gia_ban')" @blur="(e) => {
-                                            // Lấy giá trị từ trường nhập
-                                            const inputValue = e.target.value;
-                                            console.log('Giá biến thể khi blur:', inputValue);
-
-                                            if (!inputValue) {
-                                                message.error('Vui lòng nhập giá bán!');
-                                                variant.gia_ban = 1000;
-                                                return;
-                                            }
-
-                                            // Sử dụng parseNumber để xử lý chuỗi
-                                            const numValue = parseNumber(inputValue);
-
-                                            // Kiểm tra giá trị hợp lệ
-                                            if (numValue < 1000) {
-                                                message.error('Giá bán phải lớn hơn 1000!');
-                                                variant.gia_ban = 1000;
-                                            } else {
-                                                // Cập nhật giá trị đã xử lý vào biến thể
-                                                variant.gia_ban = numValue;
-                                                console.log('Giá biến thể sau khi xử lý:', numValue);
-                                            }
-                                        }" />
+                                    <a-input-number v-model:value="variant.gia_ban" class="w-full" :controls="false"
+                                        :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
+                                        :parser="(value) => value.replace(/,/g, '')" placeholder="Nhập giá bán sản phẩm"
+                                        :disabled="useCommonPrice" @blur="formatPriceOnBlur($event, index)" />
                                 </a-form-item>
                             </div>
                         </div>
@@ -561,6 +515,15 @@ const getBase64 = (file) => {
     });
 };
 
+// Thêm hàm chuyển đổi giá từ chuỗi có dấu phẩy sang số
+const convertPriceToNumber = (price) => {
+    if (typeof price === 'string') {
+        // Loại bỏ tất cả dấu phẩy và khoảng trắng
+        return Number(price.replace(/,|\s/g, ''));
+    }
+    return Number(price);
+};
+
 // Thêm hàm kiểm tra dữ liệu
 const onFinish = async () => {
     if (!isProductValidated.value) {
@@ -582,18 +545,33 @@ const onFinish = async () => {
             }
             // Validate giá của biến thể
             if (!useCommonPrice.value) {
-                if (!variant.gia_ban || variant.gia_ban < 1000) {
+                if (!variant.gia_ban || convertPriceToNumber(variant.gia_ban) < 1000) {
                     throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
                 }
             }
+
+            // Chuyển đổi giá bán từ chuỗi có dấu phẩy sang số
+            variant.gia_ban = convertPriceToNumber(variant.gia_ban);
+
+            // Chuyển đổi số lượng thành số
+            variant.so_luong = convertPriceToNumber(variant.so_luong);
         }
 
         // Validate giá chung
         if (useCommonPrice.value) {
-            if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
+            if (!formState.gia_ban_chung || convertPriceToNumber(formState.gia_ban_chung) < 1000) {
                 throw new Error('Giá bán phải lớn hơn 1000!');
             }
+
+            // Chuyển đổi giá bán chung từ chuỗi có dấu phẩy sang số
+            formState.gia_ban_chung = convertPriceToNumber(formState.gia_ban_chung);
         }
+
+        // Đảm bảo các giá khác cũng là số
+        if (formState.gia_nhap_chung) {
+            formState.gia_nhap_chung = convertPriceToNumber(formState.gia_nhap_chung);
+        }
+
         let imageUrl = null;
         if (fileList.value.length > 0) {
             const file = fileList.value[0].originFileObj;
@@ -655,6 +633,9 @@ const onFinish = async () => {
             for (const variant of variants.value) {
                 // Đảm bảo variant có id_san_pham và id_chi_tiet_san_pham
                 variant.id_san_pham = formState.id_san_pham;
+
+                // Log để debug
+                console.log('Gửi biến thể với giá:', variant.gia_ban, 'và số lượng:', variant.so_luong);
 
                 // Gọi API lưu chi tiết sản phẩm
                 await store.createCTSP({
@@ -1081,6 +1062,101 @@ watch(() => formState, (newVal) => {
     console.log('FormState changed:', newVal);
 }, { deep: true });
 
+// Thêm các hàm validate giống như trong themSanPham
+// 1. Validate và xử lý cho giá chung
+const handleGiaChungInput = (value) => {
+    console.log('Giá chung thay đổi thành:', value);
+    // Không gọi validateGiaChung ở đây nữa để tránh nhân đôi cập nhật
+
+    // Cập nhật giá cho tất cả các biến thể nếu dùng giá chung
+    if (useCommonPrice.value && validateGiaChung(value)) {
+        variants.value.forEach((variant) => {
+            variant.gia_ban = value;
+        });
+    }
+}
+
+const validateGiaChung = (value, showMessage = false) => {
+    if (value === undefined || value === null || value === '') {
+        if (showMessage) message.warning('Giá bán chung không được để trống');
+        return false;
+    }
+
+    if (value < 1000) {
+        if (showMessage) message.warning('Giá bán chung phải lớn hơn 1000!');
+        return false;
+    }
+
+    if (value > 100000000) {
+        if (showMessage) message.warning('Giá bán chung không được vượt quá 100,000,000!');
+        return false;
+    }
+
+    return true;
+}
+
+// 2. Validate và xử lý cho giá bán của biến thể
+const handleGiaBanInput = (value, index) => {
+    console.log('Giá biến thể thay đổi thành:', value, 'tại index:', index);
+    // Không validate lặp
+}
+
+const validateGiaBanSafe = (value, index, showMessage = false) => {
+    const variant = variants.value[index];
+    if (!variant) return false;
+
+    if (value === undefined || value === null || value === '') {
+        if (showMessage) message.error('Vui lòng nhập giá bán!');
+        return false;
+    }
+
+    if (value < 1000) {
+        if (showMessage) message.error('Giá bán phải lớn hơn 1000!');
+        return false;
+    }
+
+    if (value > 100000000) {
+        if (showMessage) message.error('Giá bán không được vượt quá 100,000,000!');
+        return false;
+    }
+
+    return true;
+}
+
+const validateGiaBan = (value, index, showMessage = false) => {
+    // Nếu đang sử dụng giá chung, không validate riêng
+    if (useCommonPrice.value) return true;
+    return validateGiaBanSafe(value, index, showMessage);
+}
+
+// 3. Validate và xử lý cho số lượng biến thể
+const handleSoLuongInput = (value, index) => {
+    console.log('Số lượng biến thể thay đổi thành:', value, 'tại index:', index);
+    // Không validate lặp
+}
+
+const validateSoLuong = (value, index, showMessage = false) => {
+    const variant = variants.value[index];
+    if (!variant) return false;
+
+    if (value === undefined || value === null || value === '') {
+        if (showMessage) message.error('Vui lòng nhập số lượng!');
+        return false;
+    }
+
+    if (value < 1) {
+        if (showMessage) message.error('Số lượng phải lớn hơn 0!');
+        return false;
+    }
+
+    if (value > 100000) {
+        if (showMessage) message.error('Số lượng không được vượt quá 100,000!');
+        return false;
+    }
+
+    return true;
+}
+
 const resetForm = () => {
     Modal.confirm({
         title: 'Xác nhận làm mới',
@@ -1106,38 +1182,66 @@ const resetForm = () => {
     });
 };
 
-// Hàm tiện ích để xử lý giá trị số
+// Thêm các hàm format và parse mới
 const formatNumber = (value) => {
     if (value === undefined || value === null || value === '') return '';
-    // Đảm bảo giá trị là số trước khi định dạng
     return `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
-const parseNumber = (value) => {
-    console.log('Parsing number:', value, typeof value);
+const formatNumberNoComma = (value) => {
+    if (value === undefined || value === null || value === '') return '';
+    return `${value}`;
+};
 
-    // Nếu value là undefined, null hoặc chuỗi rỗng, trả về giá trị rỗng
+const parseNumberInput = (value) => {
+    if (value === undefined || value === null || value === '') return '';
+    return value.replace(/,/g, '');
+};
+
+const parseNumber = (value) => {
     if (value === undefined || value === null || value === '') {
         return '';
     }
 
-    // Chuyển thành chuỗi để xử lý
+    // Nếu là số, chuyển thành chuỗi
     const strValue = String(value);
 
     // Loại bỏ tất cả dấu phẩy
     const cleanValue = strValue.replace(/,/g, '');
 
     // Kiểm tra xem có phải số hợp lệ không
-    if (!/^\d+$/.test(cleanValue)) {
+    if (!/^\d*$/.test(cleanValue)) {
         console.log('Invalid number format:', cleanValue);
-        return 0; // Trả về 0 nếu không phải định dạng số
+        return 0;
     }
 
     // Chuyển đổi thành số
     const numValue = Number(cleanValue);
-    console.log('Parsed number:', numValue);
-
     return numValue;
+};
+
+// Thêm các hàm format giá khi blur
+const formatPriceOnBlur = (event, index) => {
+    const variant = variants.value[index];
+    if (!variant || !variant.gia_ban) return;
+
+    // Chuyển đổi giá trị hiện tại thành số trước
+    const numericValue = convertPriceToNumber(variant.gia_ban);
+
+    // Format và cập nhật giá trị hiển thị
+    let formattedValue = numericValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    variant.gia_ban = formattedValue;
+};
+
+const formatCommonPriceOnBlur = () => {
+    if (!formState.gia_ban_chung) return;
+
+    // Chuyển đổi giá trị hiện tại thành số trước
+    const numericValue = convertPriceToNumber(formState.gia_ban_chung);
+
+    // Format và cập nhật giá trị hiển thị
+    let formattedValue = numericValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    formState.gia_ban_chung = formattedValue;
 };
 </script>
 

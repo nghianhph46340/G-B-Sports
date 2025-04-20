@@ -156,7 +156,7 @@
 
             <template v-if="isProductValidated">
                 <div class="mb-4 p-3 border rounded bg-light">
-                    <a-form-item label="Giá chung" name="gia_chung" :validate-status="formState.giaChungValidateStatus"
+                    <a-form-item label="Giá" name="gia_chung" :validate-status="formState.giaChungValidateStatus"
                         :help="formState.giaChungValidateMessage" style="margin-bottom: 0;">
                         <div class="d-flex align-items-center gap-2">
                             <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
