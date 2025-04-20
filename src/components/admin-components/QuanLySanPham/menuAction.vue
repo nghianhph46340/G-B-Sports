@@ -115,13 +115,13 @@
                 <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
                     style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select> -->
 
-                <a-button type="" class="d-flex align-items-center btn-filter" @click="showExportModal" :disabled="disabledByRoles">
+                <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter" @click="showExportModal" :disabled="disabledByRoles">
                     <ExportOutlined class="icon-filler" />
                     <span class="button-text">Xuất excel</span>
                 </a-button>
             </template>
             <!-- Nhập excel button always visible -->
-            <a-button type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
+            <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
                 <ImportOutlined class="icon-filler" />
                 <span class="button-text">Nhập excel</span>
             </a-button>
@@ -308,7 +308,7 @@
         </div>
         <template
             v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
-            <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
+            <a-button v-if="store.id_roles !== 3" type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
                 class="d-flex align-items-center">
                 <PlusOutlined />
                 <span class="button-text">Thêm sản phẩm</span>

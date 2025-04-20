@@ -148,6 +148,10 @@
     }
   };
   const confirmChuyenTrangThai = (idKhachHang) => {
+    if (store.id_roles === 3) {
+        toast.warning('Bạn không có quyền thay đổi trạng thái của khách hàng!');
+        return;
+    }
     const khachHang = danhSachKhachHang.value.find(kh => kh.idKhachHang === idKhachHang);
     const newStatus = khachHang.trangThai === 'Đang hoạt động' ? 'Không hoạt động' : 'Đang hoạt động';
     if (confirm(`Bạn có chắc chắn muốn chuyển trạng thái của khách hàng này sang "${newStatus}" không?`)) {
