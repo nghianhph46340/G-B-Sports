@@ -1387,6 +1387,7 @@ watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
     selectAllFields.value = newVal.every(v => v === true);
 }, { deep: true });
 
+const disabledByRoles = computed(() => store.id_roles === 3);
 // Watch for sorting option changes
 watch(() => luuBien.value, (newValue) => {
     if (newValue !== '1') {
