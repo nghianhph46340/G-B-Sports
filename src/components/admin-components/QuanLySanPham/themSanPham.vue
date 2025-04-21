@@ -476,17 +476,26 @@ const removeDiacritics = (str) => {
         .replace(/đ/g, 'd').replace(/Đ/g, 'D'); // Replace Vietnamese 'd/D'
 };
 
+// Hàm chuẩn hóa chuỗi: xóa khoảng trắng đầu/cuối và thay khoảng trắng thừa giữa các từ bằng 1 khoảng trắng
+const normalizeString = (str) => {
+    if (!str) return '';
+
+    // Xóa khoảng trắng ở đầu/cuối và thay nhiều khoảng trắng bằng một khoảng trắng
+    return str.trim().replace(/\s+/g, ' ');
+};
+
 // Validator cho danh mục
 const validateDanhMucName = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_danh_muc.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_danh_muc).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -504,13 +513,14 @@ const validateDanhMucName = (_, value) => {
 const validateThuongHieuName = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_thuong_hieu.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_thuong_hieu).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -528,27 +538,30 @@ const validateThuongHieuName = (_, value) => {
 const validateChatLieuName = (_, value) => {
     if (!value) return Promise.resolve();
 
+    // Chuẩn hóa đầu vào trước khi kiểm tra độ dài
+    const normalizedValue = normalizeString(value);
+
     // Kiểm tra độ dài
-    if (value.trim().length < 2) {
+    if (normalizedValue.length < 2) {
         return Promise.reject('Tên chất liệu phải có ít nhất 2 ký tự!');
     }
 
-    if (value.trim().length > 50) {
+    if (normalizedValue.length > 50) {
         return Promise.reject('Tên chất liệu không được vượt quá 50 ký tự!');
     }
 
     // Kiểm tra chỉ chứa chữ cái, số, dấu cách và dấu gạch ngang
-    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(value)) {
+    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(normalizedValue)) {
         return Promise.reject('Tên chất liệu chỉ được chứa chữ cái, số, dấu cách và dấu gạch ngang');
     }
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_chat_lieu.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_chat_lieu).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -566,13 +579,14 @@ const validateChatLieuName = (_, value) => {
 const validateMauSacName = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_mau_sac.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_mau_sac).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -590,18 +604,19 @@ const validateMauSacName = (_, value) => {
 const validateKichThuocValue = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Lấy giá trị đơn vị hiện tại
-    const donVi = newKichThuoc.don_vi ? newKichThuoc.don_vi.trim() : '';
+    // Lấy giá trị đơn vị hiện tại và chuẩn hóa
+    const donVi = newKichThuoc.don_vi ? normalizeString(newKichThuoc.don_vi) : '';
 
-    // Chuẩn hóa đầu vào
-    const normalizedGiaTri = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedGiaTri = removeDiacritics(normalizedValue.toLowerCase());
     const normalizedDonVi = removeDiacritics(donVi.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
         .find(item => {
-            const itemGiaTri = removeDiacritics(item.gia_tri.toString().trim().toLowerCase());
-            const itemDonVi = item.don_vi ? removeDiacritics(item.don_vi.trim().toLowerCase()) : '';
+            const itemGiaTri = removeDiacritics(normalizeString(item.gia_tri.toString()).toLowerCase());
+            const itemDonVi = item.don_vi ? removeDiacritics(normalizeString(item.don_vi).toLowerCase()) : '';
 
             return itemGiaTri === normalizedGiaTri &&
                 (normalizedDonVi ? itemDonVi === normalizedDonVi : !itemDonVi);
@@ -676,32 +691,35 @@ const rules = {
 const validateProductName = async (rule, value) => {
     if (!value) return Promise.reject('Tên sản phẩm không được để trống');
 
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+
     // Kiểm tra độ dài
-    if (value.trim().length < 3) {
+    if (normalizedValue.length < 3) {
         return Promise.reject('Tên sản phẩm phải có ít nhất 3 ký tự!');
     }
 
-    if (value.trim().length > 100) {
+    if (normalizedValue.length > 100) {
         return Promise.reject('Tên sản phẩm không được vượt quá 100 ký tự!');
     }
 
     // Kiểm tra nếu tên sản phẩm chỉ chứa số
-    if (/^\d+$/.test(value)) {
+    if (/^\d+$/.test(normalizedValue)) {
         return Promise.reject('Tên sản phẩm không được chỉ chứa số');
     }
 
     // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt
     // Cho phép chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc
-    if (!/^[a-zA-Z0-9À-ỹ\s\-\.,()]+$/.test(value)) {
+    if (!/^[a-zA-Z0-9À-ỹ\s\-\.,()]+$/.test(normalizedValue)) {
         return Promise.reject('Tên sản phẩm chỉ được chứa chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc');
     }
 
-    // Chuẩn hóa tên sản phẩm
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa tên sản phẩm - loại bỏ khoảng trắng thừa và dấu
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra tên sản phẩm đã tồn tại trong danh sách sản phẩm
     const existingProduct = store.getAllSanPham.find(p => {
-        const normalizedName = removeDiacritics(p.ten_san_pham.trim().toLowerCase());
+        const normalizedName = removeDiacritics(normalizeString(p.ten_san_pham).toLowerCase());
         return normalizedName === normalizedInput;
     });
 
