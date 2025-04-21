@@ -56,3 +56,10 @@ npm install xlsx
 
 #chat
 npm install sockjs-client @stomp/stompjs @ant-design/icons-vue
+
+#qrcode
+npm install vue-qrcode-reader
+
+npm install jsqr
+
+npm install jsqr --save
