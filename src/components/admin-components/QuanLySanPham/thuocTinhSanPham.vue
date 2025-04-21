@@ -24,8 +24,17 @@
                             </div>
                         </div>
 
-                        <a-table :dataSource="getCurrentPageData" :columns="categoryColumns" :pagination="{
-                            total: getCurrentItems.length,
+                        <div class="filter-section">
+                            <a-select v-model:value="statusFilters.category" style="width: 200px; margin-bottom: 16px"
+                                @change="onFilterChange('category')">
+                                <a-select-option value="all">Tất cả trạng thái</a-select-option>
+                                <a-select-option value="active">Hoạt động</a-select-option>
+                                <a-select-option value="inactive">Không hoạt động</a-select-option>
+                            </a-select>
+                        </div>
+
+                        <a-table :dataSource="getFilteredData" :columns="categoryColumns" :pagination="{
+                            total: getTotalFilteredItems,
                             pageSize: 5,
                             current: currentPage,
                             onChange: onPageChange,
@@ -69,8 +78,17 @@
                             </div>
                         </div>
 
-                        <a-table :dataSource="getCurrentPageData" :columns="brandColumns" :pagination="{
-                            total: getCurrentItems.length,
+                        <div class="filter-section">
+                            <a-select v-model:value="statusFilters.brand" style="width: 200px; margin-bottom: 16px"
+                                @change="onFilterChange('brand')">
+                                <a-select-option value="all">Tất cả trạng thái</a-select-option>
+                                <a-select-option value="active">Hoạt động</a-select-option>
+                                <a-select-option value="inactive">Không hoạt động</a-select-option>
+                            </a-select>
+                        </div>
+
+                        <a-table :dataSource="getFilteredData" :columns="brandColumns" :pagination="{
+                            total: getTotalFilteredItems,
                             pageSize: 5,
                             current: currentPage,
                             onChange: onPageChange,
@@ -114,8 +132,17 @@
                             </div>
                         </div>
 
-                        <a-table :dataSource="getCurrentPageData" :columns="materialColumns" :pagination="{
-                            total: getCurrentItems.length,
+                        <div class="filter-section">
+                            <a-select v-model:value="statusFilters.material" style="width: 200px; margin-bottom: 16px"
+                                @change="onFilterChange('material')">
+                                <a-select-option value="all">Tất cả trạng thái</a-select-option>
+                                <a-select-option value="active">Hoạt động</a-select-option>
+                                <a-select-option value="inactive">Không hoạt động</a-select-option>
+                            </a-select>
+                        </div>
+
+                        <a-table :dataSource="getFilteredData" :columns="materialColumns" :pagination="{
+                            total: getTotalFilteredItems,
                             pageSize: 5,
                             current: currentPage,
                             onChange: onPageChange,
@@ -159,8 +186,17 @@
                             </div>
                         </div>
 
-                        <a-table :dataSource="getCurrentPageData" :columns="colorColumns" :pagination="{
-                            total: getCurrentItems.length,
+                        <div class="filter-section">
+                            <a-select v-model:value="statusFilters.color" style="width: 200px; margin-bottom: 16px"
+                                @change="onFilterChange('color')">
+                                <a-select-option value="all">Tất cả trạng thái</a-select-option>
+                                <a-select-option value="active">Hoạt động</a-select-option>
+                                <a-select-option value="inactive">Không hoạt động</a-select-option>
+                            </a-select>
+                        </div>
+
+                        <a-table :dataSource="getFilteredData" :columns="colorColumns" :pagination="{
+                            total: getTotalFilteredItems,
                             pageSize: 5,
                             current: currentPage,
                             onChange: onPageChange,
@@ -208,8 +244,17 @@
                             </div>
                         </div>
 
-                        <a-table :dataSource="getCurrentPageData" :columns="sizeColumns" :pagination="{
-                            total: getCurrentItems.length,
+                        <div class="filter-section">
+                            <a-select v-model:value="statusFilters.size" style="width: 200px; margin-bottom: 16px"
+                                @change="onFilterChange('size')">
+                                <a-select-option value="all">Tất cả trạng thái</a-select-option>
+                                <a-select-option value="active">Hoạt động</a-select-option>
+                                <a-select-option value="inactive">Không hoạt động</a-select-option>
+                            </a-select>
+                        </div>
+
+                        <a-table :dataSource="getFilteredData" :columns="sizeColumns" :pagination="{
+                            total: getTotalFilteredItems,
                             pageSize: 5,
                             current: currentPage,
                             onChange: onPageChange,
@@ -313,6 +358,15 @@ const editValidationError = ref({
 })
 
 const isValidNewAttr = ref(true)
+
+// Thêm biến statusFilters và phương thức liên quan
+const statusFilters = ref({
+    category: 'all',
+    brand: 'all',
+    material: 'all',
+    color: 'all',
+    size: 'all'
+})
 
 // Cấu hình cột cho từng bảng
 const categoryColumns = [
@@ -645,12 +699,39 @@ const getCurrentItems = computed(() => {
     }
 })
 
-// Thêm computed property để lấy dữ liệu cho trang hiện tại
-const getCurrentPageData = computed(() => {
+// Thêm computed property để lọc dữ liệu
+const getFilteredData = computed(() => {
     const allItems = getCurrentItems.value
+    const currentFilter = statusFilters.value[currentTab.value]
+
+    // Lọc theo trạng thái nếu cần
+    let filteredItems = allItems
+    if (currentFilter !== 'all') {
+        filteredItems = allItems.filter(item => {
+            return currentFilter === 'active' ? item.status : !item.status
+        })
+    }
+
+    // Phân trang dữ liệu đã lọc
     const startIndex = (currentPage.value - 1) * 5
     const endIndex = startIndex + 5
-    return allItems.slice(startIndex, endIndex)
+    return filteredItems.slice(startIndex, endIndex)
+})
+
+// Thêm computed property để lấy tổng số item đã lọc
+const getTotalFilteredItems = computed(() => {
+    const allItems = getCurrentItems.value
+    const currentFilter = statusFilters.value[currentTab.value]
+
+    // Nếu hiển thị tất cả, trả về tổng số item
+    if (currentFilter === 'all') {
+        return allItems.length
+    }
+
+    // Nếu lọc, trả về số lượng item đã lọc
+    return allItems.filter(item => {
+        return currentFilter === 'active' ? item.status : !item.status
+    }).length
 })
 
 // Thêm hàm xử lý khi thay đổi trang
@@ -1140,6 +1221,11 @@ const loadCurrentTab = async () => {
     }
 };
 
+// Thêm phương thức xử lý thay đổi bộ lọc
+const onFilterChange = (tabKey) => {
+    currentPage.value = 1 // Reset về trang đầu tiên khi thay đổi bộ lọc
+}
+
 // Watch for tab changes to reset forms and validation
 watch(currentTab, () => {
     // Reset form data
@@ -1156,6 +1242,9 @@ watch(currentTab, () => {
     });
 
     isValidNewAttr.value = true;
+
+    // Reset về trang đầu tiên
+    currentPage.value = 1;
 });
 </script>
 
@@ -1366,5 +1455,36 @@ watch(currentTab, () => {
     color: #ff4d4f;
     font-size: 14px;
     margin-top: 4px;
+}
+
+/* Đồng bộ màu select (bộ lọc) */
+:deep(.ant-select:not(.ant-select-disabled):hover .ant-select-selector) {
+    border-color: #f33b47 !important;
+}
+
+:deep(.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector) {
+    border-color: #f33b47 !important;
+    box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2) !important;
+}
+
+:deep(.ant-select-item-option-selected:not(.ant-select-item-option-disabled)) {
+    background-color: rgba(243, 59, 71, 0.1) !important;
+    color: #f33b47 !important;
+}
+
+:deep(.ant-select-item-option-active:not(.ant-select-item-option-disabled)) {
+    background-color: rgba(243, 59, 71, 0.1) !important;
+}
+
+:deep(.ant-select-arrow) {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+:deep(.ant-select:hover .ant-select-arrow) {
+    color: #f33b47 !important;
+}
+
+:deep(.ant-select-focused .ant-select-arrow) {
+    color: #f33b47 !important;
 }
 </style>
