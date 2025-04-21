@@ -372,7 +372,87 @@ const addKichThuoc = async (giaTri, donVi) => {
     return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm kích thước' };
   }
 };
-
+//Thuộc tính
+const changeTrangThaiChatLieu = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiChatLieu?idChatLieu=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiMauSac = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiMauSac?idMauSac=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiThuongHieu = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiThuongHieu?idThuongHieu=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiDanhMuc = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiDanhMuc?idDanhMuc=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiKichThuoc = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiKichThuoc?idKichThuoc=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateChatLieu = async (chatLieuData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateChatLieu', chatLieuData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateMauSac = async (mauSacData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateMauSac', mauSacData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateThuongHieu = async (thuongHieuData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateThuongHieu', thuongHieuData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateDanhMuc = async (danhMucData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateDanhMuc', danhMucData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateKichThuoc = async (kichThuocData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateKichThuoc', kichThuocData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -407,4 +487,14 @@ export const sanPhamService = {
   addChatLieu,
   addMauSac,
   addKichThuoc,
+  changeTrangThaiChatLieu,
+  changeTrangThaiMauSac,
+  changeTrangThaiThuongHieu,
+  changeTrangThaiDanhMuc,
+  changeTrangThaiKichThuoc,
+  updateChatLieu,
+  updateMauSac,
+  updateThuongHieu,
+  updateDanhMuc,
+  updateKichThuoc
 }

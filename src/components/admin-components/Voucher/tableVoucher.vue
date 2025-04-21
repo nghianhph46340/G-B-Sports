@@ -32,27 +32,35 @@
 
     <!-- Tìm kiếm và lọc theo giá, ngày -->
     <div class="row mt-3 g-2 align-items-center">
-      <div class="col-md-6 d-flex align-items-center">
+      <div class="col-md-8 d-flex align-items-center">
         <label class="me-2" style="white-space: nowrap;">Tìm kiếm:</label>
         <input type="text" class="form-control" v-model="store.voucherSearchs" placeholder="Nhập mã hoặc tên voucher">
       </div>
-      <div class="col-md-6 d-flex align-items-center flex-nowrap">
+      <div class="col-md-3 d-flex align-items-center mt-2">
+        <label class="me-2" style="white-space: nowrap;">Kiểu giảm giá:</label>
+        <select class="form-select" v-model="selectedKieuGiamGia" @change="fetchData(0)">
+          <option value="">Tất cả</option>
+          <option value="Phần trăm">Phần trăm</option>
+          <option value="Tiền mặt">Tiền mặt</option>
+        </select>
+      </div>
+      <div class="col-md-5 d-flex align-items-center flex-nowrap">
         <label class="me-2" style="white-space: nowrap;">Giá trị giảm tối đa:</label>
         <div class="d-flex flex-nowrap w-100">
-          <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="0.01">
+          <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="1">
           <span class="align-self-center">-</span>
-          <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="0.01">
+          <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="1">
         </div>
       </div>
-      <div class="col-md-8 d-flex align-items-center mt-2">
+      <div class="col-md-6 d-flex align-items-center mt-2">
         <label class="me-2" style="white-space: nowrap;">Ngày:</label>
         <input type="datetime-local" class="form-control w-50" v-model="startDate">
         <span class="mx-2">-</span>
         <input type="datetime-local" class="form-control w-50" v-model="endDate">
       </div>
-      <div class="col-md-4 text-end mt-2">
-        <button class="btn btn-outline-primary" @click="refreshData">
-          <i class="fas fa-sync-alt me-1"></i>Làm mới
+      <div class="col-md-1 text-end mt-2">
+        <button class="btn btn-outline-danger" @click="refreshData">
+          <i class="bi bi-arrow-clockwise"></i>
         </button>
       </div>
     </div>
@@ -87,14 +95,15 @@
             <th scope="col">Giá trị tối đa</th>
             <th scope="col">Ngày bắt đầu</th>
             <th scope="col">Ngày kết thúc</th>
-            <th scope="col">Mô tả</th>
             <th scope="col">Trạng thái</th>
             <th scope="col">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="dataVoucher.length === 0">
-            <td colspan="13" class="text-center">Không có voucher nào</td>
+            <td colspan="13" class="text-center">
+              <a-empty :image="simpleImage" />
+            </td>
           </tr>
           <tr v-for="(voucher, index) in dataVoucher" :key="voucher.id">
             <td>{{ index + 1 + (store.voucherCurrentPage * pageSize) }}</td>
@@ -107,7 +116,6 @@
             <td>{{ formatGiaTriToiDa(voucher) }}</td>
             <td>{{ formatDate(voucher.ngayBatDau) }}</td>
             <td>{{ formatDate(voucher.ngayHetHan) }}</td>
-            <td>{{ voucher.moTa || '' }}</td>
             <td>{{ voucher.trangThai }}</td>
             <td>
               <button class="btn btn-outline-danger btn-sm" 
@@ -137,44 +145,53 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, onUnmounted } from 'vue'; // Thêm onUnmounted
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
+import { Empty } from 'ant-design-vue'; // Import Empty từ Ant Design Vue
+import { toast } from 'vue3-toastify';
 
 const router = useRouter();
 const store = useGbStore();
 const pageSize = ref(5);
 const selectedTrangThai = ref('');
+const selectedKieuGiamGia = ref('');
 const minPrice = ref(null);
 const maxPrice = ref(null);
 const startDate = ref(null);
 const endDate = ref(null);
+const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE; // Định nghĩa simpleImage
 
-// Thêm biến để quản lý interval
 let refreshInterval = null;
 
-// Hàm lấy dữ liệu voucher
 const fetchData = async (page = 0) => {
   if (page < 0 || page >= store.voucherTotalPages) return;
   store.voucherCurrentPage = page;
 
-  if (store.voucherSearchs && store.voucherSearchs.trim() !== '') {
-    await store.searchVoucher(store.voucherSearchs, page, pageSize.value);
-  } else if (minPrice.value || maxPrice.value) {
-    await store.timKiemVoucherByPrice(minPrice.value, maxPrice.value, page, pageSize.value);
-  } else if (startDate.value || endDate.value) {
-    await store.timKiemVoucherByDate(startDate.value, endDate.value, page, pageSize.value);
-  } else if (selectedTrangThai.value) {
-    await store.getVoucherLocTrangThai(page, pageSize.value, selectedTrangThai.value);
-  } else {
-    await store.getAllVouchers(page, pageSize.value);
+  try {
+    if (store.voucherSearchs && store.voucherSearchs.trim() !== '') {
+      await store.searchVoucher(store.voucherSearchs, page, pageSize.value);
+    } else if (minPrice.value || maxPrice.value) {
+      await store.timKiemVoucherByPrice(minPrice.value, maxPrice.value, page, pageSize.value);
+    } else if (startDate.value || endDate.value) {
+      await store.timKiemVoucherByDate(startDate.value, endDate.value, page, pageSize.value);
+    } else if (selectedTrangThai.value) {
+      await store.getVoucherLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+    } else if (selectedKieuGiamGia.value) {
+      await store.getVoucherLocKieuGiamGia(page, pageSize.value, selectedKieuGiamGia.value);
+    } else {
+      await store.getAllVouchers(page, pageSize.value);
+    }
+  } catch (error) {
+    console.error('Lỗi trong fetchData:', error);
+    toast.error('Có lỗi xảy ra khi tải dữ liệu!');
   }
 };
 
-// Hàm làm mới
 const refreshData = async () => {
   store.voucherSearchs = '';
   selectedTrangThai.value = '';
+  selectedKieuGiamGia.value = '';
   minPrice.value = null;
   maxPrice.value = null;
   startDate.value = null;
@@ -182,46 +199,39 @@ const refreshData = async () => {
   await store.getAllVouchers(0, pageSize.value);
 };
 
-// Hàm tắt voucher
 const offVoucher = async (id) => {
   await store.offVoucher(id);
   await fetchData(store.voucherCurrentPage);
 };
 
-// Sắp xếp dữ liệu theo id giảm dần
 const dataVoucher = computed(() => {
   let data = [];
-  if (store.voucherSearchs && store.voucherSearchs.trim() !== '' && store.voucherSearch.length > 0) {
-    data = [...store.voucherSearch];
+  if (store.voucherSearchs && store.voucherSearchs.trim() !== '') {
+    data = store.voucherSearch.length > 0 ? [...store.voucherSearch] : [];
   } else {
     data = [...store.getAllVoucherArr];
   }
   return data.sort((a, b) => b.id - a.id);
 });
 
-// Định dạng số
 const formatNumber = (number) => {
   if (!number) return '0';
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number);
 };
 
-// Định dạng giá trị giảm
 const formatGiaTriGiam = (voucher) => {
   const value = formatNumber(voucher.giaTriGiam);
   return voucher.kieuGiamGia === 'Phần trăm' ? `${value}%` : `${value} VNĐ`;
 };
 
-// Định dạng giá trị tối thiểu
 const formatGiaTriToiThieu = (voucher) => {
   return `${formatNumber(voucher.giaTriToiThieu)} VNĐ`;
 };
 
-// Định dạng giá trị tối đa
 const formatGiaTriToiDa = (voucher) => {
   return `${formatNumber(voucher.giaTriToiDa)} VNĐ`;
 };
 
-// Định dạng ngày giờ
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -234,7 +244,6 @@ const formatDate = (dateStr) => {
   });
 };
 
-// Theo dõi thay đổi các bộ lọc
 watch(() => store.voucherSearchs, async (newValue) => {
   if (!newValue || newValue.trim() === '') {
     await fetchData(0);
@@ -251,20 +260,17 @@ watch([startDate, endDate], async () => {
   await fetchData(0);
 });
 
-watch([pageSize, selectedTrangThai], async () => {
+watch([pageSize, selectedTrangThai, selectedKieuGiamGia], async () => {
   await fetchData(0);
 });
 
-// Mounted hook - Thêm polling
 onMounted(async () => {
   await store.getAllVouchers(0, pageSize.value);
- 
   refreshInterval = setInterval(() => {
     fetchData(store.voucherCurrentPage);
-  }, 5000); 
+  }, 5000);
 });
 
-// Cleanup interval khi component bị hủy
 onUnmounted(() => {
   if (refreshInterval) {
     clearInterval(refreshInterval);

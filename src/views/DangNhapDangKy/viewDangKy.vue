@@ -181,17 +181,26 @@ const hasErrors = computed(() => {
 });
 
 const validateFullName = () => {
-    if (form.value.fullName.length < 2) {
-        errors.value.fullName = 'Họ tên phải có ít nhất 2 ký tự';
+    const fullName = form.value.fullName.trim();
+    const nameParts = fullName.split(/\s+/);
+
+    if (fullName.length < 4) {
+        errors.value.fullName = 'Họ tên phải có ít nhất 4 ký tự';
+    } else if (fullName.length > 50) {
+        errors.value.fullName = 'Họ tên không được vượt quá 50 ký tự';
+    } else if (nameParts.length < 2) {
+        errors.value.fullName = 'Vui lòng nhập đầy đủ họ và tên (VD: Nguyễn Văn A)';
+    } else if (!/^[\p{L}]+([\s][\p{L}]+)*$/u.test(fullName)) {
+        errors.value.fullName = 'Họ tên không hợp lệ (chỉ bao gồm chữ cái và khoảng trắng)';
     } else {
         errors.value.fullName = '';
     }
 };
 
 const validatePhone = () => {
-    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+    const phoneRegex = /^(84|0[3|5|7|8|9])[0-9]{8}$/;
     if (!phoneRegex.test(form.value.phone)) {
-        errors.value.phone = 'Số điện thoại không hợp lệ';
+        errors.value.phone = 'Số điện thoại không hợp lệ (VD: 0912345678)';
     } else {
         errors.value.phone = '';
     }
@@ -217,20 +226,14 @@ const validateBirthDate = () => {
     const monthDiff = today.getMonth() - birthDate.getMonth();
     const dayDiff = today.getDate() - birthDate.getDate();
 
-    // Nếu chưa đến tháng sinh nhật, hoặc đến tháng sinh nhật nhưng chưa đến ngày, thì giảm tuổi đi 1
     if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
         age--;
     }
     if (age < 0) {
-        errors.value.birthDate = 'Bạn đến từ tương lai à???';
-        return;
-    }
-    if (age < 14) {
-        errors.value.birthDate = 'Bạn phải đủ 14 tuổi để đăng ký';
-    } else if (age > 100) {
-        errors.value.birthDate = 'Hội người cao tuổi';
-    }
-    else {
+        errors.value.birthDate = 'Ngày sinh không hợp lệ';
+    } else if (age < 15) {
+        errors.value.birthDate = 'Bạn phải đủ 15 tuổi để đăng ký tài khoản';
+    } else {
         errors.value.birthDate = '';
     }
 };
@@ -253,8 +256,11 @@ const validateEmail = () => {
 };
 
 const validatePassword = () => {
-    if (form.value.password.length < 6) {
+    const password = form.value.password;
+    if (password.length < 6) {
         errors.value.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else if (/\s/.test(password)) {
+        errors.value.password = 'Mật khẩu không được chứa khoảng trắng';
     } else {
         errors.value.password = '';
     }

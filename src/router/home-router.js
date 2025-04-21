@@ -36,6 +36,21 @@ const home = [
                 name: "payment-callback",
                 component: () => import('@/views/web/PaymentCallback.vue'),
                 meta: { scrollToTop: true }
+            },
+            {
+                path: "khachhang",
+                name: "khachhang",
+                component: () => import('@/views/web/KhachHang/KhachHang.vue')
+            },
+            {
+                path: "cuaHang",
+                name: "cuaHang",
+                component: () => import('@/views/web/CuaHang/CuaHang.vue')
+            },
+            {
+                path: "hoTro",
+                name: "hoTro",
+                component: () => import('@/views/web/CuaHang/HoTro.vue')
             }
         ]
     }

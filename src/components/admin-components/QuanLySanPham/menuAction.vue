@@ -238,7 +238,6 @@
                                 <th>Chất liệu</th>
                                 <th>Màu sắc</th>
                                 <th>Kích thước</th>
-                                <th>Trạng thái</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -271,11 +270,7 @@
                                     {{ (item.kichThuoc.gia_tri) ?
                                         (item.kichThuoc.gia_tri + ' ' + item.kichThuoc.don_vi) : '(Thiếu dữ liệu)' }}
                                 </td>
-                                <td>
-                                    <a-tag :color="item.trang_thai ? 'green' : 'red'">
-                                        {{ item.trang_thai ? 'Hoạt động' : 'Không hoạt động' }}
-                                    </a-tag>
-                                </td>
+
                             </tr>
                         </tbody>
                     </table>
@@ -550,12 +545,12 @@ watch(() => store.getFilteredProducts, (newValue) => {
 
 const listSort = ref([
     { value: '1', label: 'Sắp xếp theo' },
-    { value: '2', label: 'Tên tăng dần' },
-    { value: '3', label: 'Tên giảm dần' },
-    { value: '4', label: 'Giá tăng dần' },
-    { value: '5', label: 'Giá giảm dần' },
-    { value: '6', label: 'Mới nhất' },
-    { value: '7', label: 'Cũ nhất' },
+    { value: '2', label: 'Mã sản phẩm tăng dần' },
+    { value: '3', label: 'Mã sản phẩm giảm dần' },
+    { value: '4', label: 'Tên tăng dần' },
+    { value: '5', label: 'Tên giảm dần' },
+    { value: '6', label: 'Số lượng tăng dần' },
+    { value: '7', label: 'Số lượng giảm dần' },
 ]);
 
 // const listXemTheo = ref([
@@ -826,6 +821,129 @@ const handleImportExcel = async (event) => {
     validateAndPreview();
 };
 
+// Thêm hàm validateExcelData để kiểm tra dữ liệu ở frontend
+const validateExcelData = (data) => {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        return {
+            isValid: false,
+            message: 'Không có dữ liệu trong file Excel',
+            data: []
+        };
+    }
+
+    // Chuẩn hóa dữ liệu
+    const normalizedData = data.map(row => {
+        // Tạo cấu trúc dữ liệu giống như backend trả về để dễ xử lý
+        return {
+            sanPham: {
+                ten_san_pham: (row['Tên sản phẩm'] || '').trim(),
+                danhMuc: {
+                    ten_danh_muc: (row['Danh mục'] || '').trim()
+                },
+                thuongHieu: {
+                    ten_thuong_hieu: (row['Thương hiệu'] || '').trim()
+                },
+                chatLieu: {
+                    ten_chat_lieu: (row['Chất liệu'] || '').trim()
+                }
+            },
+            gia_ban: parseFloat(row['Giá bán']) || 0,
+            so_luong: parseInt(row['Số lượng']) || 0,
+            mauSac: {
+                ma_mau_sac: (row['Màu sắc'] || '').trim(),
+                ten_mau_sac: (row['Màu sắc'] || '').trim()
+            },
+            kichThuoc: {
+                gia_tri: (row['Giá trị kích thước'] || '').trim().split(' ')[0] || '',
+                don_vi: (row['Đơn vị'] || '').trim()
+            },
+            // trang_thai: row['Trạng thái'] === 'Hoạt động' || row['Trạng thái'] === true
+        };
+    });
+
+    // Kiểm tra dữ liệu có hợp lệ không
+    let hasErrors = false;
+    normalizedData.forEach(item => {
+        if (!item.sanPham.ten_san_pham ||
+            !item.sanPham.danhMuc.ten_danh_muc ||
+            !item.sanPham.thuongHieu.ten_thuong_hieu ||
+            !item.sanPham.chatLieu.ten_chat_lieu ||
+            item.gia_ban <= 0 ||
+            item.so_luong <= 0 ||
+            !item.mauSac.ma_mau_sac ||
+            !item.kichThuoc.gia_tri) {
+            hasErrors = true;
+        }
+    });
+
+    return {
+        isValid: !hasErrors,
+        message: hasErrors ? 'File Excel có dữ liệu không hợp lệ' : 'Dữ liệu hợp lệ',
+        data: normalizedData
+    };
+};
+
+// Cập nhật hàm validateAndPreview để sử dụng validate ở frontend
+const validateAndPreview = async () => {
+    if (!selectedFile.value) {
+        message.error('Vui lòng chọn file Excel!');
+        return;
+    }
+
+    importValidating.value = true;
+    importError.value = '';
+
+    try {
+        // Đọc file Excel bằng XLSX
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const data = e.target.result;
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const excelData = XLSX.utils.sheet_to_json(firstSheet, { header: 2 });
+
+                console.log('Dữ liệu Excel đọc được:', excelData);
+
+                // Validate dữ liệu ở frontend
+                const validation = validateExcelData(excelData);
+
+                if (validation.data.length > 0) {
+                    importExcelData.value = validation.data;
+                    importExcelModal.value = true;
+                    openModalImportExcel.value = false;
+
+                    // Hiển thị cảnh báo nếu có lỗi
+                    if (!validation.isValid) {
+                        message.warning('File Excel có một số dòng dữ liệu không hợp lệ');
+                    }
+                } else {
+                    importError.value = 'Không tìm thấy dữ liệu trong file Excel hoặc định dạng không hợp lệ';
+                }
+            } catch (error) {
+                console.error('Lỗi khi xử lý file Excel:', error);
+                importError.value = 'Không thể đọc file Excel: ' + error.message;
+            } finally {
+                importValidating.value = false;
+            }
+        };
+
+        reader.onerror = (error) => {
+            console.error('Lỗi khi đọc file:', error);
+            importError.value = 'Không thể đọc file Excel';
+            importValidating.value = false;
+        };
+
+        reader.readAsArrayBuffer(selectedFile.value);
+    } catch (error) {
+        console.error('Lỗi khi validate Excel:', error);
+        importError.value = 'Không thể đọc file Excel: ' + error.message;
+        importValidating.value = false;
+    }
+};
+
+// Cập nhật hàm saveExcelImport để chỉ gửi dữ liệu hợp lệ lên server
 const saveExcelImport = async () => {
     uploadLoading.value = true;
     try {
@@ -851,6 +969,12 @@ const saveExcelImport = async () => {
             categoryCounts[category] = (categoryCounts[category] || 0) + 1;
         });
         console.log('Phân loại sản phẩm theo danh mục:', categoryCounts);
+
+        if (dataToSave.length === 0) {
+            message.error('Không có dữ liệu hợp lệ để lưu!');
+            uploadLoading.value = false;
+            return;
+        }
 
         const result = await store.saveExcelImport(dataToSave);
         console.log('Kết quả lưu dữ liệu:', result);
@@ -1279,43 +1403,6 @@ const closeImportModal = () => {
     }
 };
 
-// Kiểm tra và xem trước dữ liệu
-const validateAndPreview = async () => {
-    if (!selectedFile.value) {
-        message.error('Vui lòng chọn file Excel!');
-        return;
-    }
-
-    importValidating.value = true;
-    importError.value = '';
-
-    try {
-        const result = await store.importExcel(selectedFile.value);
-
-        if (result && result.length > 0) {
-            // Log dữ liệu từ file Excel
-            console.log('Dữ liệu từ file Excel:', result);
-            console.log('Tổng số dòng dữ liệu:', result.length);
-
-            // Log chi tiết hơn về một dòng dữ liệu mẫu
-            if (result.length > 0) {
-                console.log('Cấu trúc dữ liệu mẫu (dòng đầu tiên):', result[0]);
-            }
-
-            importExcelData.value = result;
-            importExcelModal.value = true;
-            openModalImportExcel.value = false;
-        } else {
-            importError.value = 'Không tìm thấy dữ liệu trong file Excel hoặc định dạng không hợp lệ';
-        }
-    } catch (error) {
-        console.error('Lỗi khi validate Excel:', error);
-        importError.value = 'Không thể đọc file Excel: ' + (error.response?.data?.message || error.message || 'Lỗi không xác định');
-    } finally {
-        importValidating.value = false;
-    }
-};
-
 // Đếm số dòng hợp lệ
 const countValidRows = () => {
     if (!importExcelData.value || importExcelData.value.length === 0) return 0;
@@ -1386,6 +1473,20 @@ const handleSelectAllFields = (e) => {
 watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
     selectAllFields.value = newVal.every(v => v === true);
 }, { deep: true });
+
+// Watch for sorting option changes
+watch(() => luuBien.value, (newValue) => {
+    if (newValue !== '1') {
+        console.log('Sorting option changed to:', newValue);
+        // Dispatch a custom event that can be caught by the table component
+        const sortEvent = new CustomEvent('sort-option-changed', {
+            detail: {
+                option: newValue
+            }
+        });
+        window.dispatchEvent(sortEvent);
+    }
+});
 </script>
 
 <style scoped>

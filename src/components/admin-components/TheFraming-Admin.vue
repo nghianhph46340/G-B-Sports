@@ -9,11 +9,11 @@
             <a-menu class="" v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" theme="light"
                 mode="inline">
 
-                <a-menu-item key="2" @click="changeRoute('/admin/baocaothongke')">
+                <a-menu-item v-if="store.id_roles !== 3" key="1" @click="changeRoute('/admin')">
                     <AreaChartOutlined />
                     <span>Thống kê</span>
                 </a-menu-item>
-                <a-menu-item key="1" @click="changeRoute('/admin');">
+                <a-menu-item key="2" @click="changeRoute('/admin/banhang');">
                     <HomeOutlined />
                     <span>Bán hàng</span>
                 </a-menu-item>
@@ -27,14 +27,17 @@
                     <a-menu-item key="3" @click="changeRoute('/admin/quanlysanpham');">Tất cả
                         sản
                         phẩm</a-menu-item>
-                    <a-menu-item key="7" @click="changeRoute('/admin/quanlysanpham/thuoctinh');">Thuộc
+
+                    <!-- <a-menu-item key="6">Thuộc tính</a-menu-item> -->
+                    <a-menu-item key="7" v-if="store.id_roles !== 3"
+                        @click="changeRoute('/admin/quanlysanpham/thuoctinh');">Thuộc
                         tính</a-menu-item>
                 </a-sub-menu>
                 <a-menu-item key="8" @click="changeRoute('/admin/quanlyhoadon');">
                     <AccountBookOutlined />
                     <span>Hóa đơn</span>
                 </a-menu-item>
-                <a-sub-menu key="sub2">
+                <a-sub-menu v-if="store.id_roles !== 3" key="sub2">
                     <template #title>
                         <span>
                             <user-outlined />
@@ -44,7 +47,7 @@
                     <a-menu-item key="10" @click="changeRoute('/admin/quanlynhanvien');">Nhân viên</a-menu-item>
                     <a-menu-item key="11" @click="changeRoute('/admin/quanlykhachhang');">Khách hàng</a-menu-item>
                 </a-sub-menu>
-                <a-sub-menu key="sub3">
+                <a-sub-menu v-if="store.id_roles !== 3" key="sub3">
                     <template #title>
                         <span>
                             <ReconciliationOutlined />

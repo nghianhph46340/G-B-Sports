@@ -82,7 +82,7 @@
                 </div>
 
                 <div class="product-price">
-                    <span class="current-price">{{ formatCurrency(product.gia_khuyen_mai) }}</span>
+                    <span class="current-price" @input="handleGiaBanInput" @blur="handleGiaBanBlur">{{ formatCurrency(product.gia_khuyen_mai) }}</span>
                     <span class="original-price" v-if="product.giam_gia">{{ formatCurrency(product.gia_goc) }}</span>
                     <span class="discount-percent" v-if="product.giam_gia">(-{{ discountPercent }}%)</span>
                 </div>
@@ -1702,7 +1702,56 @@ onBeforeUnmount(() => {
     stopSlideshow();
 });
 
-// ... existing code ...
+// Thêm hàm validate giá bán
+const validateGiaBan = (value) => {
+    const numValue = parseFloat(String(value).replace(/,/g, ''));
+
+    if (isNaN(numValue) || numValue === null) {
+        return false;
+    }
+
+    if (numValue < 1000) {
+        return false;
+    }
+
+    if (numValue > 100000000) {
+        return false;
+    }
+
+    return true;
+};
+
+const handleGiaBanInput = (value) => {
+    // Convert value to number for validation
+    const numValue = parseFloat(String(value).replace(/,/g, ''));
+    
+    if (!isNaN(numValue)) {
+        if (validateGiaBan(numValue)) {
+            product.value.gia_goc = numValue;
+            product.value.gia_khuyen_mai = numValue;
+        } else {
+            // If invalid, reset to minimum valid price
+            product.value.gia_goc = 1000;
+            product.value.gia_khuyen_mai = 1000;
+        }
+    }
+};
+
+// Add event handler for blur event
+const handleGiaBanBlur = (e) => {
+    const inputValue = e.target.value;
+    if (!inputValue) {
+        product.value.gia_goc = 1000;
+        product.value.gia_khuyen_mai = 1000;
+        return;
+    }
+
+    const numValue = parseFloat(String(inputValue).replace(/,/g, ''));
+    if (!validateGiaBan(numValue)) {
+        product.value.gia_goc = 1000;
+        product.value.gia_khuyen_mai = 1000;
+    }
+};
 </script>
 
 <style scoped>

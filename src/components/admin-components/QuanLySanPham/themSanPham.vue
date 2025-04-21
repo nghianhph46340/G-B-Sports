@@ -14,29 +14,6 @@
                 ]">
                     <a-input v-model:value="formState.ten_san_pham" :maxLength="100" show-count />
                 </a-form-item>
-                <!-- <a-form-item label="Giới tính" name="gioi_tinh"
-                    :rules="[{ required: true, message: 'Vui lòng chọn giới tính!' }]">
-                    <a-radio-group v-model:value="formState.gioi_tinh">
-                        <a-radio :value="true">Nam</a-radio>
-                        <a-radio :value="false">Nữ</a-radio>
-                    </a-radio-group>
-                </a-form-item> -->
-                <a-form-item label="Giá" name="gia_chung">
-                    <div class="d-flex align-items-center gap-2">
-                        <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
-                            :un-checked-children="'Giá riêng'" @change="handlePriceChange" />
-                        <div v-if="useCommonPrice" class="d-flex gap-2 w-100">
-                            <!-- <a-input-number v-model:value="formState.gia_nhap_chung" :min="0"
-                                :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
-                                placeholder="Giá nhập chung" @change="handlePriceChange" /> -->
-                            <a-input-number v-model:value="formState.gia_ban_chung" :min="1000" :max="1000000000"
-                                :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
-                                placeholder="Giá bán chung" @change="handlePriceChange" />
-                        </div>
-                    </div>
-                </a-form-item>
 
                 <a-form-item label="Danh mục" name="id_danh_muc"
                     :rules="[{ required: true, message: 'Vui lòng chọn danh mục!' }]">
@@ -85,11 +62,6 @@
                     </div>
                 </a-form-item>
 
-                <a-form-item label="Mô tả" name="mo_ta">
-                    <a-textarea v-model:value="formState.mo_ta" :rows="4" placeholder="Nhập mô tả sản phẩm"
-                        :maxLength="500" show-count />
-                </a-form-item>
-
                 <a-form-item label="Hình ảnh" name="hinh_anh">
                     <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1"
                         :before-upload="beforeUpload" :customRequest="handleCustomRequest">
@@ -98,6 +70,66 @@
                             <div style="margin-top: 8px">Upload</div>
                         </div>
                     </a-upload>
+                </a-form-item>
+
+                <a-form-item label="Mô tả" name="mo_ta">
+                    <a-typography-paragraph editable :content="formState.mo_ta"
+                        @change="content => formState.mo_ta = content" />
+                    <div class="rich-editor border rounded p-2">
+                        <div class="toolbar d-flex flex-wrap gap-1 mb-2 border-bottom pb-2">
+                            <a-button size="small" @click="applyFormat('bold')">
+                                <template #icon>
+                                    <BoldOutlined />
+                                </template>
+                            </a-button>
+                            <a-button size="small" @click="applyFormat('italic')">
+                                <template #icon>
+                                    <ItalicOutlined />
+                                </template>
+                            </a-button>
+                            <a-button size="small" @click="applyFormat('underline')">
+                                <template #icon>
+                                    <UnderlineOutlined />
+                                </template>
+                            </a-button>
+                            <a-button size="small" @click="applyFormat('strikethrough')">
+                                <template #icon>
+                                    <StrikethroughOutlined />
+                                </template>
+                            </a-button>
+                            <a-divider type="vertical" />
+                            <a-dropdown :trigger="['click']">
+                                <a-button size="small">
+                                    <span>Font Size</span>
+                                    <DownOutlined />
+                                </a-button>
+                                <template #overlay>
+                                    <a-menu>
+                                        <a-menu-item v-for="size in [12, 14, 16, 18, 20, 24, 28, 32]" :key="size"
+                                            @click="applyFormat('fontSize', size + 'px')">{{ size }}px</a-menu-item>
+                                    </a-menu>
+                                </template>
+                            </a-dropdown>
+                            <a-divider type="vertical" />
+                            <a-button size="small" @click="applyFormat('justifyLeft')">
+                                <template #icon>
+                                    <AlignLeftOutlined />
+                                </template>
+                            </a-button>
+                            <a-button size="small" @click="applyFormat('justifyCenter')">
+                                <template #icon>
+                                    <AlignCenterOutlined />
+                                </template>
+                            </a-button>
+                            <a-button size="small" @click="applyFormat('justifyRight')">
+                                <template #icon>
+                                    <AlignRightOutlined />
+                                </template>
+                            </a-button>
+                        </div>
+                        <div class="editor-content" contenteditable="true" ref="editorRef" @input="handleEditorInput"
+                            style="min-height: 120px; max-height: 300px; overflow-y: auto"></div>
+                    </div>
                 </a-form-item>
 
                 <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
@@ -123,6 +155,24 @@
             </div>
 
             <template v-if="isProductValidated">
+                <div class="mb-4 p-3 border rounded bg-light">
+                    <a-form-item label="Giá" name="gia_chung" :validate-status="formState.giaChungValidateStatus"
+                        :help="formState.giaChungValidateMessage" style="margin-bottom: 0;">
+                        <div class="d-flex align-items-center gap-2">
+                            <a-switch v-model:checked="useCommonPrice" :checked-children="'Dùng giá chung'"
+                                :un-checked-children="'Giá riêng'" @change="handlePriceChange" />
+                            <div v-if="useCommonPrice" class="d-flex gap-2 w-100">
+                                <a-input-number v-model:value="formState.gia_ban_chung" :min="1000" :max="100000000"
+                                    :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                                    :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
+                                    placeholder="Giá bán chung" @change="value => validateGiaChung(value)"
+                                    @blur="() => validateGiaChung(formState.gia_ban_chung, true)"
+                                    @input="handleGiaChungInput" />
+                            </div>
+                        </div>
+                    </a-form-item>
+                </div>
+
                 <div v-for="(variantType, typeIndex) in variantTypes" :key="typeIndex"
                     class="variant-type-item mb-4 p-3 border rounded">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -140,8 +190,8 @@
                                     <div class="d-flex gap-2">
                                         <a-select v-model:value="variantType.id_mau_sac" placeholder="Chọn màu sắc"
                                             @change="() => updateAvailableSizes(typeIndex)" class="flex-grow-1">
-                                            <a-select-option v-for="color in combinedMauSacList" :key="color.id_mau_sac"
-                                                :value="color.id_mau_sac">
+                                            <a-select-option v-for="color in getAvailableColorsForVariant(typeIndex)"
+                                                :key="color.id_mau_sac" :value="color.id_mau_sac">
                                                 {{ color.ma_mau_sac + ' ' + color.ten_mau_sac }}
                                             </a-select-option>
                                         </a-select>
@@ -173,38 +223,24 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <a-form-item label="Số lượng" :rules="[
-                                    { required: true, message: 'Vui lòng nhập số lượng!' },
-                                    {
-                                        validator: (_, value) => {
-                                            if (value < 1) {
-                                                return Promise.reject('Số lượng phải lớn hơn 0!');
-                                            }
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                ]">
-                                    <a-input-number v-model:value="variantType.so_luong" :min="1" style="width: 100%"
-                                        @change="() => updateVariantsFromType(typeIndex)" />
+                                <a-form-item label="Số lượng" :validateStatus="variantType.soLuongValidateStatus"
+                                    :help="variantType.soLuongValidateMessage">
+                                    <a-input-number v-model:value="variantType.so_luong" :min="1" :max="100000"
+                                        style="width: 100%" @change="(value) => validateSoLuong(value, typeIndex)"
+                                        @blur="() => validateSoLuong(variantType.so_luong, typeIndex, true)"
+                                        @input="(value) => handleSoLuongInput(value, typeIndex)" />
                                 </a-form-item>
                             </div>
                             <div class="col-md-6">
-                                <a-form-item label="Giá sản phẩm" :rules="[
-                                    { required: true, message: 'Vui lòng nhập giá bán!' },
-                                    {
-                                        validator: (_, value) => {
-                                            if (!value || value < 1000) {
-                                                return Promise.reject('Giá bán phải lớn hơn 1000!');
-                                            }
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                ]">
-                                    <a-input-number v-model:value="variantType.gia_ban" :min="1000"
-                                        :disabled="useCommonPrice" style="width: 100%"
+                                <a-form-item label="Giá sản phẩm" :validateStatus="variantType.giaBanValidateStatus"
+                                    :help="variantType.giaBanValidateMessage">
+                                    <a-input-number v-model:value="variantType.gia_ban" :min="1000" :max="999999999"
+                                        :disabled="useCommonPrice"
                                         :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')"
-                                        @change="() => updateVariantsFromType(typeIndex)" />
+                                        :parser="value => value.replace(/\$\s?|(,*)/g, '')" style="width: 100%"
+                                        @change="(value) => validateGiaBan(value, typeIndex)"
+                                        @blur="() => validateGiaBan(variantType.gia_ban, typeIndex, true)"
+                                        @input="(value) => handleGiaBanInput(value, typeIndex)" />
                                 </a-form-item>
                             </div>
                         </div>
@@ -271,8 +307,10 @@
     <!-- Add modals for quick-add functionality -->
     <a-modal v-model:visible="danhMucModalVisible" title="Thêm danh mục mới" @ok="submitDanhMuc">
         <a-form layout="vertical" ref="danhMucFormRef" :model="newDanhMuc">
-            <a-form-item label="Tên danh mục" name="ten_danh_muc"
-                :rules="[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]">
+            <a-form-item label="Tên danh mục" name="ten_danh_muc" :rules="[
+                { required: true, message: 'Vui lòng nhập tên danh mục!' },
+                { validator: validateDanhMucName }
+            ]">
                 <a-input v-model:value="newDanhMuc.ten_danh_muc" :maxLength="50" show-count />
             </a-form-item>
         </a-form>
@@ -280,8 +318,10 @@
 
     <a-modal v-model:visible="thuongHieuModalVisible" title="Thêm thương hiệu mới" @ok="submitThuongHieu">
         <a-form layout="vertical" ref="thuongHieuFormRef" :model="newThuongHieu">
-            <a-form-item label="Tên thương hiệu" name="ten_thuong_hieu"
-                :rules="[{ required: true, message: 'Vui lòng nhập tên thương hiệu!' }]">
+            <a-form-item label="Tên thương hiệu" name="ten_thuong_hieu" :rules="[
+                { required: true, message: 'Vui lòng nhập tên thương hiệu!' },
+                { validator: validateThuongHieuName }
+            ]">
                 <a-input v-model:value="newThuongHieu.ten_thuong_hieu" :maxLength="50" show-count />
             </a-form-item>
         </a-form>
@@ -289,8 +329,10 @@
 
     <a-modal v-model:visible="chatLieuModalVisible" title="Thêm chất liệu mới" @ok="submitChatLieu">
         <a-form layout="vertical" ref="chatLieuFormRef" :model="newChatLieu">
-            <a-form-item label="Tên chất liệu" name="ten_chat_lieu"
-                :rules="[{ required: true, message: 'Vui lòng nhập tên chất liệu!' }]">
+            <a-form-item label="Tên chất liệu" name="ten_chat_lieu" :rules="[
+                { required: true, message: 'Vui lòng nhập tên chất liệu!' },
+                { validator: validateChatLieuName }
+            ]">
                 <a-input v-model:value="newChatLieu.ten_chat_lieu" :maxLength="50" show-count />
             </a-form-item>
         </a-form>
@@ -298,8 +340,10 @@
 
     <a-modal v-model:visible="mauSacModalVisible" title="Thêm màu sắc mới" @ok="submitMauSac">
         <a-form layout="vertical" ref="mauSacFormRef" :model="newMauSac">
-            <a-form-item label="Tên màu sắc" name="ten_mau_sac"
-                :rules="[{ required: true, message: 'Vui lòng nhập tên màu sắc!' }]">
+            <a-form-item label="Tên màu sắc" name="ten_mau_sac" :rules="[
+                { required: true, message: 'Vui lòng nhập tên màu sắc!' },
+                { validator: validateMauSacName }
+            ]">
                 <a-input v-model:value="newMauSac.ten_mau_sac" :maxLength="15" show-count />
             </a-form-item>
         </a-form>
@@ -307,8 +351,10 @@
 
     <a-modal v-model:visible="kichThuocModalVisible" title="Thêm kích thước mới" @ok="submitKichThuoc">
         <a-form layout="vertical" ref="kichThuocFormRef" :model="newKichThuoc">
-            <a-form-item label="Giá trị" name="gia_tri"
-                :rules="[{ required: true, message: 'Vui lòng nhập giá trị kích thước!' }]">
+            <a-form-item label="Giá trị" name="gia_tri" :rules="[
+                { required: true, message: 'Vui lòng nhập giá trị kích thước!' },
+                { validator: validateKichThuocValue }
+            ]">
                 <a-input v-model:value="newKichThuoc.gia_tri" :maxLength="5" show-count />
             </a-form-item>
             <a-form-item label="Đơn vị" name="don_vi">
@@ -320,7 +366,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, watch, onBeforeUnmount, nextTick, computed } from 'vue';
-import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
+import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined, BoldOutlined, ItalicOutlined, UnderlineOutlined, StrikethroughOutlined, DownOutlined, AlignLeftOutlined, AlignCenterOutlined, AlignRightOutlined } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
@@ -356,7 +402,9 @@ const formState = reactive({
     gia_nhap_chung: 0,
     gia_ban_chung: 0,
     ngay_tao: new Date().toISOString(),
-    ngay_cap_nhat: new Date().toISOString()
+    ngay_cap_nhat: new Date().toISOString(),
+    giaChungValidateStatus: '',
+    giaChungValidateMessage: ''
 });
 
 // Lists for selects
@@ -382,10 +430,207 @@ const isProductValidated = ref(false);
 
 // Thêm biến đánh dấu component còn mounted không
 const mounted = ref(true);
+const editorRef = ref(null);
 
 onBeforeUnmount(() => {
     mounted.value = false;
 });
+
+// Function to handle rich text editor
+const applyFormat = (command, value) => {
+    document.execCommand(command, false, value);
+    editorRef.value.focus();
+    updateFormStateFromEditor();
+};
+
+const handleEditorInput = () => {
+    updateFormStateFromEditor();
+};
+
+const updateFormStateFromEditor = () => {
+    if (editorRef.value) {
+        formState.mo_ta = editorRef.value.innerHTML;
+    }
+};
+
+// Cập nhật nội dung editor khi formState.mo_ta thay đổi từ bên ngoài (ví dụ từ a-typography-paragraph)
+watch(() => formState.mo_ta, (newVal) => {
+    if (editorRef.value && newVal !== editorRef.value.innerHTML) {
+        editorRef.value.innerHTML = newVal;
+    }
+});
+
+// Khởi tạo nội dung editor khi component được mount
+onMounted(() => {
+    if (editorRef.value) {
+        editorRef.value.innerHTML = formState.mo_ta || '';
+    }
+});
+
+// Function to remove Vietnamese diacritics
+const removeDiacritics = (str) => {
+    if (!str) return '';
+
+    return str.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D'); // Replace Vietnamese 'd/D'
+};
+
+// Hàm chuẩn hóa chuỗi: xóa khoảng trắng đầu/cuối và thay khoảng trắng thừa giữa các từ bằng 1 khoảng trắng
+const normalizeString = (str) => {
+    if (!str) return '';
+
+    // Xóa khoảng trắng ở đầu/cuối và thay nhiều khoảng trắng bằng một khoảng trắng
+    return str.trim().replace(/\s+/g, ' ');
+};
+
+// Validator cho danh mục
+const validateDanhMucName = (_, value) => {
+    if (!value) return Promise.resolve();
+
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
+
+    // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
+    const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
+        .find(item => {
+            const normalizedName = removeDiacritics(normalizeString(item.ten_danh_muc).toLowerCase());
+            return normalizedName === normalizedInput;
+        });
+
+    if (existingItem) {
+        if (existingItem.trang_thai === 'Không hoạt động') {
+            return Promise.reject('Danh mục này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+        }
+        return Promise.reject('Danh mục này đã tồn tại!');
+    }
+
+    return Promise.resolve();
+};
+
+// Validator cho thương hiệu
+const validateThuongHieuName = (_, value) => {
+    if (!value) return Promise.resolve();
+
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
+
+    // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
+    const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
+        .find(item => {
+            const normalizedName = removeDiacritics(normalizeString(item.ten_thuong_hieu).toLowerCase());
+            return normalizedName === normalizedInput;
+        });
+
+    if (existingItem) {
+        if (existingItem.trang_thai === 'Không hoạt động') {
+            return Promise.reject('Thương hiệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+        }
+        return Promise.reject('Thương hiệu này đã tồn tại!');
+    }
+
+    return Promise.resolve();
+};
+
+// Validator cho chất liệu
+const validateChatLieuName = (_, value) => {
+    if (!value) return Promise.resolve();
+
+    // Chuẩn hóa đầu vào trước khi kiểm tra độ dài
+    const normalizedValue = normalizeString(value);
+
+    // Kiểm tra độ dài
+    if (normalizedValue.length < 2) {
+        return Promise.reject('Tên chất liệu phải có ít nhất 2 ký tự!');
+    }
+
+    if (normalizedValue.length > 50) {
+        return Promise.reject('Tên chất liệu không được vượt quá 50 ký tự!');
+    }
+
+    // Kiểm tra chỉ chứa chữ cái, số, dấu cách và dấu gạch ngang
+    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(normalizedValue)) {
+        return Promise.reject('Tên chất liệu chỉ được chứa chữ cái, số, dấu cách và dấu gạch ngang');
+    }
+
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
+
+    // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
+    const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
+        .find(item => {
+            const normalizedName = removeDiacritics(normalizeString(item.ten_chat_lieu).toLowerCase());
+            return normalizedName === normalizedInput;
+        });
+
+    if (existingItem) {
+        if (existingItem.trang_thai === 'Không hoạt động') {
+            return Promise.reject('Chất liệu này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+        }
+        return Promise.reject('Chất liệu này đã tồn tại!');
+    }
+
+    return Promise.resolve();
+};
+
+// Validator cho màu sắc
+const validateMauSacName = (_, value) => {
+    if (!value) return Promise.resolve();
+
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
+
+    // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
+    const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
+        .find(item => {
+            const normalizedName = removeDiacritics(normalizeString(item.ten_mau_sac).toLowerCase());
+            return normalizedName === normalizedInput;
+        });
+
+    if (existingItem) {
+        if (existingItem.trang_thai === 'Không hoạt động') {
+            return Promise.reject('Màu sắc này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+        }
+        return Promise.reject('Màu sắc này đã tồn tại!');
+    }
+
+    return Promise.resolve();
+};
+
+// Validator cho kích thước
+const validateKichThuocValue = (_, value) => {
+    if (!value) return Promise.resolve();
+
+    // Lấy giá trị đơn vị hiện tại và chuẩn hóa
+    const donVi = newKichThuoc.don_vi ? normalizeString(newKichThuoc.don_vi) : '';
+
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedGiaTri = removeDiacritics(normalizedValue.toLowerCase());
+    const normalizedDonVi = removeDiacritics(donVi.toLowerCase());
+
+    // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
+    const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
+        .find(item => {
+            const itemGiaTri = removeDiacritics(normalizeString(item.gia_tri.toString()).toLowerCase());
+            const itemDonVi = item.don_vi ? removeDiacritics(normalizeString(item.don_vi).toLowerCase()) : '';
+
+            return itemGiaTri === normalizedGiaTri &&
+                (normalizedDonVi ? itemDonVi === normalizedDonVi : !itemDonVi);
+        });
+
+    if (existingItem) {
+        if (existingItem.trang_thai === 'Không hoạt động') {
+            return Promise.reject('Kích thước này đã tồn tại nhưng đang ở trạng thái không hoạt động!');
+        }
+        return Promise.reject('Kích thước này đã tồn tại!');
+    }
+
+    return Promise.resolve();
+};
 
 // Định nghĩa rules cho form
 const rules = {
@@ -442,12 +687,42 @@ const rules = {
     ]
 };
 
-// Hàm validate tên sản phẩm không được trùng
-const validateProductName = async (_, value) => {
+// Validate tên sản phẩm
+const validateProductName = async (rule, value) => {
     if (!value) return Promise.reject('Tên sản phẩm không được để trống');
 
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+
+    // Kiểm tra độ dài
+    if (normalizedValue.length < 3) {
+        return Promise.reject('Tên sản phẩm phải có ít nhất 3 ký tự!');
+    }
+
+    if (normalizedValue.length > 100) {
+        return Promise.reject('Tên sản phẩm không được vượt quá 100 ký tự!');
+    }
+
+    // Kiểm tra nếu tên sản phẩm chỉ chứa số
+    if (/^\d+$/.test(normalizedValue)) {
+        return Promise.reject('Tên sản phẩm không được chỉ chứa số');
+    }
+
+    // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt
+    // Cho phép chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc
+    if (!/^[a-zA-Z0-9À-ỹ\s\-\.,()]+$/.test(normalizedValue)) {
+        return Promise.reject('Tên sản phẩm chỉ được chứa chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc');
+    }
+
+    // Chuẩn hóa tên sản phẩm - loại bỏ khoảng trắng thừa và dấu
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
+
     // Kiểm tra tên sản phẩm đã tồn tại trong danh sách sản phẩm
-    const existingProduct = store.getAllSanPham.find(p => p.ten_san_pham === value);
+    const existingProduct = store.getAllSanPham.find(p => {
+        const normalizedName = removeDiacritics(normalizeString(p.ten_san_pham).toLowerCase());
+        return normalizedName === normalizedInput;
+    });
+
     if (existingProduct) {
         return Promise.reject('Tên sản phẩm đã tồn tại trong danh sách sản phẩm');
     }
@@ -455,9 +730,90 @@ const validateProductName = async (_, value) => {
     return Promise.resolve();
 };
 
+const handleGiaChungInput = (value) => {
+    // Chuyển sang dạng chuỗi để kiểm tra
+    const stringValue = String(value).replace(/,/g, '');
+
+    // Kiểm tra chỉ chứa số
+    if (!/^\d*$/.test(stringValue)) {
+        validateGiaChung(value);
+    } else {
+        // Nếu là số thì chuyển sang số và validate
+        validateGiaChung(Number(stringValue));
+    }
+};
+
+const validateGiaChung = (value, isBlur = false) => {
+    if (!useCommonPrice.value) {
+        formState.giaChungValidateStatus = '';
+        formState.giaChungValidateMessage = '';
+        return true;
+    }
+
+    // Nếu giá trị không được cung cấp
+    if (value === undefined || value === null || value === '') {
+        formState.giaChungValidateStatus = 'error';
+        formState.giaChungValidateMessage = 'Vui lòng nhập giá chung';
+        return false;
+    }
+
+    // Nếu giá trị không phải là số
+    if (isNaN(value)) {
+        formState.giaChungValidateStatus = 'error';
+        formState.giaChungValidateMessage = 'Vui lòng chỉ nhập số';
+        return false;
+    }
+
+    // Chuyển đổi sang số để so sánh
+    const numValue = Number(value);
+
+    // Nếu giá trị < 1000
+    if (numValue < 1000) {
+        formState.giaChungValidateStatus = 'error';
+        formState.giaChungValidateMessage = 'Giá tối thiểu là 1,000đ';
+        return false;
+    }
+
+    // Nếu giá trị quá lớn
+    if (numValue > 100000000) {
+        formState.giaChungValidateStatus = 'error';
+        formState.giaChungValidateMessage = 'Giá không được vượt quá 100,000,000đ';
+        return false;
+    }
+
+    // Nếu hợp lệ
+    formState.giaChungValidateStatus = 'success';
+    formState.giaChungValidateMessage = '';
+
+    // Nếu giá hợp lệ, cập nhật giá cho tất cả các biến thể nếu đang sử dụng giá chung
+    if (isBlur || (!isNaN(numValue) && numValue >= 1000 && numValue <= 100000000)) {
+        if (useCommonPrice.value) {
+            formState.gia_ban_chung = numValue;
+            // Cập nhật giá cho tất cả biến thể
+            variantTypes.value.forEach((type, index) => {
+                if (type) {
+                    type.gia_ban = numValue;
+                    updateVariantsFromType(index);
+                }
+            });
+        }
+    }
+
+    return true;
+};
+
 // Hàm validate form
 const validateForm = async () => {
     try {
+        // Kiểm tra nếu đang dùng giá chung thì validate giá chung
+        if (useCommonPrice.value) {
+            const isGiaChungValid = validateGiaChung(formState.gia_ban_chung);
+            if (!isGiaChungValid) {
+                message.error('Vui lòng kiểm tra lại giá chung');
+                return;
+            }
+        }
+
         // Validate form using formRef
         await formRef.value.validate();
         console.log('Form validated successfully');
@@ -473,14 +829,26 @@ const validateForm = async () => {
 
 // Thêm dạng biến thể mới (theo màu sắc)
 const addVariantType = () => {
-    variantTypes.value.push({
+    const newVariantType = {
         id_mau_sac: null,
         selectedSizes: [],
         so_luong: 1, // Giá trị mặc định là 1
         gia_ban: useCommonPrice.value ? (formState.gia_ban_chung || 1000) : 1000, // Giá trị mặc định là 1000
         fileList: [],
-    });
+        // Thêm các trường validate status và message
+        soLuongValidateStatus: '',
+        soLuongValidateMessage: '',
+        giaBanValidateStatus: '',
+        giaBanValidateMessage: ''
+    };
+
+    variantTypes.value.push(newVariantType);
     updateAvailableColors();
+
+    // Validate số lượng và giá mặc định
+    const typeIndex = variantTypes.value.length - 1;
+    validateSoLuong(newVariantType.so_luong, typeIndex);
+    validateGiaBan(newVariantType.gia_ban, typeIndex);
 };
 
 // Xóa dạng biến thể
@@ -567,6 +935,10 @@ const updateAvailableSizes = (typeIndex) => {
 
     // Cập nhật lại biến thể từ dạng biến thể
     updateVariantsFromType(typeIndex);
+
+    // Cập nhật danh sách màu sắc khả dụng cho các dạng biến thể khác
+    // Không cần gọi updateAvailableColors() vì nó chỉ cập nhật availableColors.value
+    // mà chúng ta đã thay đổi để sử dụng getAvailableColorsForVariant(typeIndex)
 };
 
 // Xử lý khi thay đổi kích thước
@@ -630,12 +1002,22 @@ watch(variantTypes, (newValue, oldValue) => {
     });
 }, { deep: true });
 
+// Thêm một biến để theo dõi quá trình validate
+const isValidating = ref(false);
+
 // Sửa hàm updateVariantsFromType để đảm bảo không bao giờ có giá trị null
 const updateVariantsFromType = (typeIndex) => {
     if (!mounted.value) return;
 
     const type = variantTypes.value[typeIndex];
     if (!type) return;
+
+    // Validate số lượng và giá bán trước khi cập nhật nhưng sử dụng phiên bản an toàn
+    const isSoLuongValid = validateSoLuongSafe(type.so_luong, typeIndex);
+    const isGiaBanValid = validateGiaBanSafe(type.gia_ban, typeIndex);
+
+    // Nếu không hợp lệ thì không cập nhật
+    if (!isSoLuongValid || !isGiaBanValid) return;
 
     // Xóa các biến thể cũ của dạng biến thể này
     variants.value = variants.value.filter(v => v.id_mau_sac !== type.id_mau_sac);
@@ -810,6 +1192,9 @@ onMounted(() => {
 // Fetch initial data
 onMounted(async () => {
     try {
+        // Load tất cả thuộc tính từ localStorage trước
+        loadAttributesFromLocalStorage();
+
         // Lấy danh sách sản phẩm để tạo mã tự động
         await store.getAllSanPhamNgaySua();
 
@@ -912,23 +1297,23 @@ const generateTempId = (prefix) => {
 
 // Create computed properties that combine API data with local data
 const combinedDanhMucList = computed(() => {
-    return [...danhMucList.value, ...newLocalAttributes.danhMuc];
+    return [...danhMucList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.danhMuc];
 });
 
 const combinedThuongHieuList = computed(() => {
-    return [...thuongHieuList.value, ...newLocalAttributes.thuongHieu];
+    return [...thuongHieuList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.thuongHieu];
 });
 
 const combinedChatLieuList = computed(() => {
-    return [...chatLieuList.value, ...newLocalAttributes.chatLieu];
+    return [...chatLieuList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.chatLieu];
 });
 
 const combinedMauSacList = computed(() => {
-    return [...mauSacList.value, ...newLocalAttributes.mauSac];
+    return [...mauSacList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.mauSac];
 });
 
 const combinedSizeList = computed(() => {
-    return [...sizeList.value, ...newLocalAttributes.kichThuoc];
+    return [...sizeList.value.filter(item => item.trang_thai === 'Hoạt động'), ...newLocalAttributes.kichThuoc];
 });
 
 // Modify to use combined lists
@@ -974,17 +1359,29 @@ const updateAvailableColors = () => {
     availableColors.value = combinedMauSacList.value.filter(color => !usedColorIds.includes(color.id_mau_sac));
 };
 
+// Thêm hàm mới để lấy danh sách màu sắc có sẵn cho từng dạng biến thể
+const getAvailableColorsForVariant = (currentTypeIndex) => {
+    if (!mauSacList.value && newLocalAttributes.mauSac.length === 0) return [];
+
+    // Lấy danh sách ID màu sắc đã được sử dụng trong các dạng biến thể khác
+    const usedColorIds = variantTypes.value
+        .filter((vt, index) => vt.id_mau_sac && index !== currentTypeIndex)
+        .map(vt => vt.id_mau_sac);
+
+    // Lọc và trả về danh sách màu sắc chưa được sử dụng
+    return combinedMauSacList.value.filter(color => !usedColorIds.includes(color.id_mau_sac));
+};
+
 // Replace the Add functions to add locally instead of calling APIs immediately
 const handleAddDanhMuc = async () => {
     try {
-        // Check if a category with this name already exists
-        const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
-            .find(item => item.ten_danh_muc.toLowerCase() === newDanhMuc.ten_danh_muc.toLowerCase());
-
-        if (existingItem) {
-            message.error('Danh mục này đã tồn tại!');
+        if (!newDanhMuc.ten_danh_muc) {
+            message.error('Vui lòng nhập tên danh mục!');
             return;
         }
+
+        // Xóa danh mục hiện tại trong newLocalAttributes và thay thế bằng danh mục mới
+        newLocalAttributes.danhMuc = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('dm');
@@ -992,7 +1389,7 @@ const handleAddDanhMuc = async () => {
         // Create a new local category
         const newCategory = {
             id_danh_muc: tempId,
-            ten_danh_muc: newDanhMuc.ten_danh_muc,
+            ten_danh_muc: newDanhMuc.ten_danh_muc.trim(),
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1000,13 +1397,11 @@ const handleAddDanhMuc = async () => {
         // Add to local list
         newLocalAttributes.danhMuc.push(newCategory);
 
-        // If the form doesn't have a category selected, select this one
-        if (!formState.id_danh_muc) {
-            formState.id_danh_muc = tempId;
-        }
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_danh_muc = tempId;
 
         // Lưu ID danh mục mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('danhMuc', tempId);
+        saveLastAddedAttribute('danhMuc', tempId, newCategory.ten_danh_muc);
 
         message.success('Đã thêm danh mục mới (sẽ lưu khi bạn lưu sản phẩm)');
         newDanhMuc.ten_danh_muc = '';
@@ -1019,14 +1414,13 @@ const handleAddDanhMuc = async () => {
 
 const handleAddThuongHieu = async () => {
     try {
-        // Check if a brand with this name already exists
-        const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
-            .find(item => item.ten_thuong_hieu.toLowerCase() === newThuongHieu.ten_thuong_hieu.toLowerCase());
-
-        if (existingItem) {
-            message.error('Thương hiệu này đã tồn tại!');
+        if (!newThuongHieu.ten_thuong_hieu) {
+            message.error('Vui lòng nhập tên thương hiệu!');
             return;
         }
+
+        // Xóa thương hiệu hiện tại trong newLocalAttributes và thay thế bằng thương hiệu mới
+        newLocalAttributes.thuongHieu = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('th');
@@ -1034,7 +1428,7 @@ const handleAddThuongHieu = async () => {
         // Create a new local brand
         const newBrand = {
             id_thuong_hieu: tempId,
-            ten_thuong_hieu: newThuongHieu.ten_thuong_hieu,
+            ten_thuong_hieu: newThuongHieu.ten_thuong_hieu.trim(),
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1042,13 +1436,11 @@ const handleAddThuongHieu = async () => {
         // Add to local list
         newLocalAttributes.thuongHieu.push(newBrand);
 
-        // If the form doesn't have a brand selected, select this one
-        if (!formState.id_thuong_hieu) {
-            formState.id_thuong_hieu = tempId;
-        }
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_thuong_hieu = tempId;
 
         // Lưu ID thương hiệu mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('thuongHieu', tempId);
+        saveLastAddedAttribute('thuongHieu', tempId, newBrand.ten_thuong_hieu);
 
         message.success('Đã thêm thương hiệu mới (sẽ lưu khi bạn lưu sản phẩm)');
         newThuongHieu.ten_thuong_hieu = '';
@@ -1061,14 +1453,13 @@ const handleAddThuongHieu = async () => {
 
 const handleAddChatLieu = async () => {
     try {
-        // Check if a material with this name already exists
-        const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
-            .find(item => item.ten_chat_lieu.toLowerCase() === newChatLieu.ten_chat_lieu.toLowerCase());
-
-        if (existingItem) {
-            message.error('Chất liệu này đã tồn tại!');
+        if (!newChatLieu.ten_chat_lieu) {
+            message.error('Vui lòng nhập tên chất liệu!');
             return;
         }
+
+        // Xóa chất liệu hiện tại trong newLocalAttributes và thay thế bằng chất liệu mới
+        newLocalAttributes.chatLieu = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('cl');
@@ -1076,7 +1467,7 @@ const handleAddChatLieu = async () => {
         // Create a new local material
         const newMaterial = {
             id_chat_lieu: tempId,
-            ten_chat_lieu: newChatLieu.ten_chat_lieu,
+            ten_chat_lieu: newChatLieu.ten_chat_lieu.trim(),
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
         };
@@ -1084,13 +1475,11 @@ const handleAddChatLieu = async () => {
         // Add to local list
         newLocalAttributes.chatLieu.push(newMaterial);
 
-        // If the form doesn't have a material selected, select this one
-        if (!formState.id_chat_lieu) {
-            formState.id_chat_lieu = tempId;
-        }
+        // Luôn gán giá trị cho form field - không cần điều kiện
+        formState.id_chat_lieu = tempId;
 
         // Lưu ID chất liệu mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('chatLieu', tempId);
+        saveLastAddedAttribute('chatLieu', tempId, newMaterial.ten_chat_lieu);
 
         message.success('Đã thêm chất liệu mới (sẽ lưu khi bạn lưu sản phẩm)');
         newChatLieu.ten_chat_lieu = '';
@@ -1103,14 +1492,13 @@ const handleAddChatLieu = async () => {
 
 const handleAddMauSac = async () => {
     try {
-        // Check if a color with this name already exists
-        const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
-            .find(item => item.ten_mau_sac.toLowerCase() === newMauSac.ten_mau_sac.toLowerCase());
-
-        if (existingItem) {
-            message.error('Màu sắc này đã tồn tại!');
+        if (!newMauSac.ten_mau_sac) {
+            message.error('Vui lòng nhập tên màu sắc!');
             return;
         }
+
+        // Xóa màu sắc hiện tại trong newLocalAttributes và thay thế bằng màu sắc mới
+        newLocalAttributes.mauSac = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('ms');
@@ -1118,7 +1506,7 @@ const handleAddMauSac = async () => {
         // Create a new local color
         const newColor = {
             id_mau_sac: tempId,
-            ten_mau_sac: newMauSac.ten_mau_sac,
+            ten_mau_sac: newMauSac.ten_mau_sac.trim(),
             ma_mau_sac: `MS${newLocalAttributes.mauSac.length + 1}`, // Generate a temporary code
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
@@ -1128,7 +1516,7 @@ const handleAddMauSac = async () => {
         newLocalAttributes.mauSac.push(newColor);
 
         // Lưu ID màu sắc mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('mauSac', tempId);
+        saveLastAddedAttribute('mauSac', tempId, newColor.ten_mau_sac);
 
         // Tự động chọn màu sắc mới cho biến thể hiện tại đang mở
         if (variantTypes.value.length > 0) {
@@ -1160,28 +1548,24 @@ const handleAddMauSac = async () => {
 
 const handleAddKichThuoc = async () => {
     try {
-        // Check if a size with this value already exists
-        const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
-            .find(item =>
-                item.gia_tri.toLowerCase() === newKichThuoc.gia_tri.toLowerCase() &&
-                (newKichThuoc.don_vi ? item.don_vi.toLowerCase() === newKichThuoc.don_vi.toLowerCase() : !item.don_vi)
-            );
-
-        if (existingItem) {
-            message.error('Kích thước này đã tồn tại!');
+        if (!newKichThuoc.gia_tri) {
+            message.error('Vui lòng nhập giá trị kích thước!');
             return;
         }
+
+        // Xóa kích thước hiện tại trong newLocalAttributes và thay thế bằng kích thước mới
+        newLocalAttributes.kichThuoc = [];
 
         // Generate a temporary ID
         const tempId = generateTempId('kt');
 
         // Đảm bảo đơn vị là chuỗi rỗng nếu không được nhập
-        const donVi = newKichThuoc.don_vi || '';
+        const donVi = newKichThuoc.don_vi ? newKichThuoc.don_vi.trim() : '';
 
         // Create a new local size
         const newSize = {
             id_kich_thuoc: tempId,
-            gia_tri: newKichThuoc.gia_tri,
+            gia_tri: newKichThuoc.gia_tri.trim(),
             don_vi: donVi,
             trang_thai: 'Hoạt động',
             _isNew: true // Mark as new to identify later
@@ -1191,7 +1575,7 @@ const handleAddKichThuoc = async () => {
         newLocalAttributes.kichThuoc.push(newSize);
 
         // Lưu ID kích thước mới vào localStorage để component menuAction có thể chọn nó
-        saveLastAddedAttribute('kichThuoc', tempId);
+        saveLastAddedAttribute('kichThuoc', tempId, newSize.gia_tri + (donVi ? ' ' + donVi : ''));
 
         // Tự động thêm kích thước mới vào danh sách đã chọn của biến thể hiện tại
         if (variantTypes.value.length > 0) {
@@ -1219,22 +1603,149 @@ const handleAddKichThuoc = async () => {
     }
 };
 
-// Thêm hàm để lưu thuộc tính mới đã thêm vào localStorage
-const saveLastAddedAttribute = (type, id) => {
+// Sửa hàm lưu thuộc tính vào localStorage để chỉ lưu thuộc tính mới nhất
+const saveLastAddedAttribute = (type, id, name) => {
     try {
-        // Lấy dữ liệu hiện tại từ localStorage (nếu có)
-        const existingData = localStorage.getItem('lastAddedAttributes');
-        let attributes = existingData ? JSON.parse(existingData) : {};
+        // Không ghép nối từ localStorage nữa, mà tạo đối tượng mới mỗi lần lưu
+        let attributes = {};
 
-        // Thêm thuộc tính mới vào
-        attributes[type] = id;
+        // Lấy dữ liệu hiện tại từ localStorage để giữ các loại thuộc tính khác
+        const existingData = localStorage.getItem('lastAddedAttributes');
+        if (existingData) {
+            attributes = JSON.parse(existingData);
+        }
+
+        // Thêm/thay thế thuộc tính mới
+        attributes[type] = {
+            id: id,
+            name: name
+        };
 
         // Lưu lại vào localStorage
         localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
 
-        console.log(`Đã lưu ${type} ID mới (${id}) vào localStorage`);
+        console.log(`Đã cập nhật ${type} mới nhất (${name}, ID: ${id}) vào localStorage`);
     } catch (error) {
         console.error('Lỗi khi lưu thuộc tính mới vào localStorage:', error);
+    }
+};
+
+// Thêm hàm để tải thuộc tính từ localStorage trong onMounted
+const loadAttributesFromLocalStorage = () => {
+    try {
+        const storedData = localStorage.getItem('lastAddedAttributes');
+        if (!storedData) return;
+
+        const attributes = JSON.parse(storedData);
+
+        // Xóa mảng newLocalAttributes hiện tại để cập nhật lại từ đầu
+        newLocalAttributes.danhMuc = [];
+        newLocalAttributes.thuongHieu = [];
+        newLocalAttributes.chatLieu = [];
+        newLocalAttributes.mauSac = [];
+        newLocalAttributes.kichThuoc = [];
+
+        // Thêm vào thuộc tính từ localStorage
+        if (attributes.danhMuc) {
+            // Tạo đối tượng mới với ID tạm thời
+            const tempId = generateTempId('dm');
+            const newCategory = {
+                id_danh_muc: tempId,
+                ten_danh_muc: attributes.danhMuc.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.danhMuc.push(newCategory);
+
+            // Tự động chọn danh mục trong form
+            formState.id_danh_muc = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.danhMuc.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.thuongHieu) {
+            const tempId = generateTempId('th');
+            const newBrand = {
+                id_thuong_hieu: tempId,
+                ten_thuong_hieu: attributes.thuongHieu.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.thuongHieu.push(newBrand);
+
+            // Tự động chọn thương hiệu trong form
+            formState.id_thuong_hieu = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.thuongHieu.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.chatLieu) {
+            const tempId = generateTempId('cl');
+            const newMaterial = {
+                id_chat_lieu: tempId,
+                ten_chat_lieu: attributes.chatLieu.name,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.chatLieu.push(newMaterial);
+
+            // Tự động chọn chất liệu trong form
+            formState.id_chat_lieu = tempId;
+
+            // Cập nhật lại ID trong localStorage
+            attributes.chatLieu.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.mauSac) {
+            const tempId = generateTempId('ms');
+            const newColor = {
+                id_mau_sac: tempId,
+                ten_mau_sac: attributes.mauSac.name,
+                ma_mau_sac: `MS${newLocalAttributes.mauSac.length + 1}`,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.mauSac.push(newColor);
+
+            // Cập nhật lại ID trong localStorage
+            attributes.mauSac.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        if (attributes.kichThuoc) {
+            const tempId = generateTempId('kt');
+            // Kiểm tra và tách giá trị và đơn vị từ name (nếu có)
+            let giaTri = attributes.kichThuoc.name;
+            let donVi = '';
+
+            const parts = attributes.kichThuoc.name.split(' ');
+            if (parts.length > 1) {
+                giaTri = parts[0];
+                donVi = parts.slice(1).join(' ');
+            }
+
+            const newSize = {
+                id_kich_thuoc: tempId,
+                gia_tri: giaTri,
+                don_vi: donVi,
+                trang_thai: 'Hoạt động',
+                _isNew: true
+            };
+            newLocalAttributes.kichThuoc.push(newSize);
+
+            // Cập nhật lại ID trong localStorage
+            attributes.kichThuoc.id = tempId;
+            localStorage.setItem('lastAddedAttributes', JSON.stringify(attributes));
+        }
+
+        console.log('Đã tải thuộc tính từ localStorage:', newLocalAttributes);
+    } catch (error) {
+        console.error('Lỗi khi tải thuộc tính từ localStorage:', error);
     }
 };
 
@@ -1525,27 +2036,25 @@ const onFinish = async () => {
     }
 };
 
-// Thêm hàm xử lý khi giá thay đổi
-const handlePriceChange = async () => {
-    if (!mounted.value) return;
+// Xử lý thay đổi giá chung
+const handlePriceChange = () => {
+    if (useCommonPrice.value) {
+        // Validate giá chung với giá hiện tại
+        const isValid = validateGiaChung(formState.gia_ban_chung);
 
-    if (formRef.value) {
-        try {
-            await nextTick();
-            await formRef.value.validateFields(['gia_chung']);
-
-            // Cập nhật giá cho tất cả biến thể khi dùng giá chung
-            if (useCommonPrice.value) {
-                variantTypes.value.forEach((type, index) => {
-                    if (type) {
-                        type.gia_ban = formState.gia_ban_chung;
-                        updateVariantsFromType(index);
-                    }
-                });
-            }
-        } catch (error) {
-            console.log('Validation failed:', error);
+        if (isValid) {
+            // Cập nhật tất cả giá biến thể theo giá chung
+            variantTypes.value.forEach((type, index) => {
+                type.gia_ban = formState.gia_ban_chung;
+                // Sử dụng validateGiaBanSafe để tránh vòng lặp đệ quy
+                validateGiaBanSafe(type.gia_ban, index);
+                updateVariantsFromType(index);
+            });
         }
+    } else {
+        // Reset validate status khi không dùng giá chung
+        formState.giaChungValidateStatus = '';
+        formState.giaChungValidateMessage = '';
     }
 };
 
@@ -1583,28 +2092,18 @@ const handleVariantImageChange = (info, variant) => {
 
 // Thêm hàm xử lý khi giá biến thể thay đổi
 const handleVariantPriceChange = (value, variant, field) => {
-    if (field === 'gia_nhap') {
-        // Khi giá nhập thay đổi, kiểm tra lại giá bán
-        // if (value < 1000) {
-        //     message.error('Giá nhập phải lớn hơn 1000!');
-        //     variant.gia_nhap = 1000; // Reset về giá trị tối thiểu
-        //     return;
-        // }
-        // const minGiaBan = value * 1.1;
-        // if (variant.gia_ban < minGiaBan) {
-        //     message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        // }
-    } else if (field === 'gia_ban') {
-        // Khi giá bán thay đổi, kiểm tra xem có đủ 10% không
-        if (value < 1000) {
+    if (field === 'gia_ban') {
+        // Convert value to number and validate
+        const numValue = parseFloat(String(value).replace(/,/g, ''));
+
+        if (isNaN(numValue) || numValue < 1000) {
             message.error('Giá bán phải lớn hơn 1000!');
             variant.gia_ban = 1000; // Reset về giá trị tối thiểu
             return;
         }
-        // const minGiaBan = variant.gia_nhap * 1.1;
-        // if (value < minGiaBan) {
-        //     message.warning(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-        // }
+
+        // Update the variant price directly
+        variant.gia_ban = numValue;
     }
 };
 
@@ -1698,52 +2197,264 @@ const showValidationError = (title, message) => {
 // Thêm các hàm xử lý validate và submit
 const submitDanhMuc = () => {
     if (danhMucFormRef.value) {
-        danhMucFormRef.value.validate().then(() => {
-            handleAddDanhMuc();
-        }).catch(error => {
-            console.log('Validate Failed:', error);
-        });
+        danhMucFormRef.value.validateFields()
+            .then(() => {
+                handleAddDanhMuc();
+            })
+            .catch(errors => {
+                console.log('Validate Failed:', errors);
+            });
     }
 };
 
 const submitThuongHieu = () => {
     if (thuongHieuFormRef.value) {
-        thuongHieuFormRef.value.validate().then(() => {
-            handleAddThuongHieu();
-        }).catch(error => {
-            console.log('Validate Failed:', error);
-        });
+        thuongHieuFormRef.value.validateFields()
+            .then(() => {
+                handleAddThuongHieu();
+            })
+            .catch(errors => {
+                console.log('Validate Failed:', errors);
+            });
     }
 };
 
 const submitChatLieu = () => {
     if (chatLieuFormRef.value) {
-        chatLieuFormRef.value.validate().then(() => {
-            handleAddChatLieu();
-        }).catch(error => {
-            console.log('Validate Failed:', error);
-        });
+        chatLieuFormRef.value.validateFields()
+            .then(() => {
+                handleAddChatLieu();
+            })
+            .catch(errors => {
+                console.log('Validate Failed:', errors);
+            });
     }
 };
 
 const submitMauSac = () => {
     if (mauSacFormRef.value) {
-        mauSacFormRef.value.validate().then(() => {
-            handleAddMauSac();
-        }).catch(error => {
-            console.log('Validate Failed:', error);
-        });
+        mauSacFormRef.value.validateFields()
+            .then(() => {
+                handleAddMauSac();
+            })
+            .catch(errors => {
+                console.log('Validate Failed:', errors);
+            });
     }
 };
 
 const submitKichThuoc = () => {
     if (kichThuocFormRef.value) {
-        kichThuocFormRef.value.validate().then(() => {
-            handleAddKichThuoc();
-        }).catch(error => {
-            console.log('Validate Failed:', error);
-        });
+        kichThuocFormRef.value.validateFields()
+            .then(() => {
+                handleAddKichThuoc();
+            })
+            .catch(errors => {
+                console.log('Validate Failed:', errors);
+            });
     }
+};
+
+// Validate số lượng trong biến thể
+const validateSoLuong = (value, typeIndex, isBlur = false) => {
+    const type = variantTypes.value[typeIndex];
+
+    // Nếu giá trị không được cung cấp
+    if (value === undefined || value === null || value === '') {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Vui lòng nhập số lượng';
+        return false;
+    }
+
+    // Nếu giá trị không phải là số
+    if (isNaN(value)) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Vui lòng chỉ nhập số';
+        return false;
+    }
+
+    // Chuyển đổi sang số để so sánh
+    const numValue = Number(value);
+
+    // Nếu giá trị <= 0
+    if (numValue <= 0) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Số lượng tối thiểu là 1';
+        return false;
+    }
+
+    // Nếu giá trị không phải số nguyên
+    if (!Number.isInteger(numValue)) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Số lượng phải là số nguyên';
+        return false;
+    }
+
+    // Nếu giá trị quá lớn
+    if (numValue > 100000) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Số lượng không được vượt quá 100,000';
+        return false;
+    }
+
+    // Nếu hợp lệ
+    type.soLuongValidateStatus = 'success';
+    type.soLuongValidateMessage = '';
+
+    // Cập nhật biến thể
+    if (isBlur || (!isNaN(numValue) && numValue > 0 && numValue <= 100000 && Number.isInteger(numValue))) {
+        updateVariantsFromType(typeIndex);
+    }
+
+    return true;
+};
+
+// Phiên bản an toàn của validateSoLuong để tránh vòng lặp đệ quy
+const validateSoLuongSafe = (value, typeIndex, isBlur = false) => {
+    const type = variantTypes.value[typeIndex];
+
+    // Nếu giá trị không được cung cấp
+    if (value === undefined || value === null || value === '') {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Vui lòng nhập số lượng';
+        return false;
+    }
+
+    // Nếu giá trị không phải là số
+    if (isNaN(value)) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Vui lòng chỉ nhập số';
+        return false;
+    }
+
+    // Chuyển đổi sang số để so sánh
+    const numValue = Number(value);
+
+    // Nếu giá trị <= 0
+    if (numValue <= 0) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Số lượng tối thiểu là 1';
+        return false;
+    }
+
+    // Nếu giá trị không phải số nguyên
+    if (!Number.isInteger(numValue)) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Số lượng phải là số nguyên';
+        return false;
+    }
+
+    // Nếu giá trị quá lớn
+    if (numValue > 100000) {
+        type.soLuongValidateStatus = 'error';
+        type.soLuongValidateMessage = 'Số lượng không được vượt quá 100,000';
+        return false;
+    }
+
+    // Nếu hợp lệ
+    type.soLuongValidateStatus = 'success';
+    type.soLuongValidateMessage = '';
+
+    // QUAN TRỌNG: Không gọi updateVariantsFromType ở đây để tránh vòng lặp đệ quy
+    return true;
+};
+
+// Xử lý input số lượng
+const handleSoLuongInput = (value, typeIndex) => {
+    // Chuyển sang dạng chuỗi để kiểm tra
+    const stringValue = String(value);
+
+    // Kiểm tra chỉ chứa số
+    if (!/^\d*$/.test(stringValue)) {
+        validateSoLuong(value, typeIndex);
+    } else {
+        // Nếu là số thì chuyển sang số và validate
+        validateSoLuong(Number(value), typeIndex);
+    }
+};
+
+// Validate giá bán trong biến thể
+const validateGiaBan = (value, typeIndex, isBlur = false) => {
+    const type = variantTypes.value[typeIndex];
+
+    // Nếu giá trị không phải là số
+    if (isNaN(value)) {
+        type.giaBanValidateStatus = 'error';
+        type.giaBanValidateMessage = 'Vui lòng chỉ nhập số';
+        return false;
+    }
+
+    // Nếu giá trị < 1000
+    if (value < 1000) {
+        type.giaBanValidateStatus = 'error';
+        type.giaBanValidateMessage = 'Giá tối thiểu là 1,000đ';
+        return false;
+    }
+
+    // Nếu giá trị quá lớn
+    if (value > 100000000) {
+        type.giaBanValidateStatus = 'error';
+        type.giaBanValidateMessage = 'Giá không được vượt quá 100,000,000đ';
+        return false;
+    }
+
+    // Nếu hợp lệ
+    type.giaBanValidateStatus = 'success';
+    type.giaBanValidateMessage = '';
+
+    // Cập nhật biến thể
+    if (isBlur || (!isNaN(value) && value >= 1000 && value <= 100000000)) {
+        updateVariantsFromType(typeIndex);
+    }
+
+    return true;
+};
+
+// Xử lý input giá bán
+const handleGiaBanInput = (value, typeIndex) => {
+    // Chuyển sang dạng chuỗi để kiểm tra
+    const stringValue = String(value).replace(/,/g, '');
+
+    // Kiểm tra chỉ chứa số
+    if (!/^\d*$/.test(stringValue)) {
+        validateGiaBan(value, typeIndex);
+    } else {
+        // Nếu là số thì chuyển sang số và validate
+        validateGiaBan(Number(stringValue), typeIndex);
+    }
+};
+
+// Phiên bản an toàn của validateGiaBan để tránh vòng lặp đệ quy
+const validateGiaBanSafe = (value, typeIndex, isBlur = false) => {
+    const type = variantTypes.value[typeIndex];
+
+    // Nếu giá trị không phải là số
+    if (isNaN(value)) {
+        type.giaBanValidateStatus = 'error';
+        type.giaBanValidateMessage = 'Vui lòng chỉ nhập số';
+        return false;
+    }
+
+    // Nếu giá trị < 1000
+    if (value < 1000) {
+        type.giaBanValidateStatus = 'error';
+        type.giaBanValidateMessage = 'Giá tối thiểu là 1,000đ';
+        return false;
+    }
+
+    // Nếu giá trị quá lớn
+    if (value > 100000000) {
+        type.giaBanValidateStatus = 'error';
+        type.giaBanValidateMessage = 'Giá không được vượt quá 100,000,000đ';
+        return false;
+    }
+
+    // Nếu hợp lệ
+    type.giaBanValidateStatus = 'success';
+    type.giaBanValidateMessage = '';
+
+    // QUAN TRỌNG: Không gọi updateVariantsFromType ở đây để tránh vòng lặp đệ quy
+    return true;
 };
 </script>
 
@@ -1895,5 +2606,164 @@ const submitKichThuoc = () => {
 
 :deep(.ant-input-number-input) {
     height: 32px;
+}
+
+/* Rich text editor styles */
+.rich-editor {
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    margin-top: 8px;
+}
+
+.rich-editor .toolbar {
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #fafafa;
+}
+
+.rich-editor .editor-content {
+    padding: 12px;
+    min-height: 150px;
+    outline: none;
+    background-color: #fff;
+}
+
+.rich-editor .editor-content:focus {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Rich text editor styles - enhanced */
+.rich-editor {
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    margin-top: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.rich-editor .toolbar {
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #fafafa;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.rich-editor .editor-content {
+    padding: 16px;
+    min-height: 180px;
+    outline: none;
+    background-color: #fff;
+    transition: all 0.3s;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.rich-editor .editor-content:focus {
+    border-color: #40a9ff;
+    box-shadow: inset 0 0 3px rgba(24, 144, 255, 0.2);
+}
+
+/* Styles for a-select and select multiple */
+:deep(.ant-select-selector) {
+    border-radius: 6px !important;
+    padding: 0 8px !important;
+    transition: all 0.3s !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+:deep(.ant-select:hover .ant-select-selector) {
+    border-color: #40a9ff !important;
+}
+
+:deep(.ant-select-focused .ant-select-selector) {
+    border-color: #40a9ff !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+/* Style for multiple select tags */
+:deep(.ant-select-multiple .ant-select-selection-item) {
+    background-color: #f0f7ff !important;
+    border: 1px solid #d6e4ff !important;
+    border-radius: 4px !important;
+    color: #1890ff !important;
+    margin: 2px 4px 2px 0 !important;
+    height: 24px !important;
+    line-height: 22px !important;
+    padding: 0 8px !important;
+}
+
+:deep(.ant-select-multiple .ant-select-selection-item-remove) {
+    color: #1890ff !important;
+    margin-left: 4px !important;
+}
+
+:deep(.ant-select-multiple .ant-select-selection-overflow) {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    margin-top: 2px !important;
+}
+
+/* Improvements for input numbers */
+:deep(.ant-input-number) {
+    border-radius: 6px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+:deep(.ant-input-number:hover) {
+    border-color: #40a9ff !important;
+}
+
+:deep(.ant-input-number-focused) {
+    border-color: #40a9ff !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+/* Improvements for layout and spacing */
+.variant-type-item {
+    background-color: #fafafa;
+    transition: all 0.3s ease;
+    border-radius: 8px !important;
+    border: 1px solid #f0f0f0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    padding: 16px !important;
+}
+
+.variant-type-item:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Base form styles */
+:deep(.ant-form-item-label) {
+    font-weight: 500 !important;
+    padding-bottom: 4px !important;
+}
+
+:deep(.ant-form-item-label > label) {
+    color: #333 !important;
+}
+
+/* Button styling improvements */
+:deep(.ant-btn) {
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+:deep(.ant-btn-primary) {
+    background: linear-gradient(to bottom, #40a9ff, #1890ff) !important;
+    border-color: #1890ff !important;
+    box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2) !important;
+}
+
+:deep(.ant-btn-primary:hover) {
+    background: linear-gradient(to bottom, #65bfff, #40a9ff) !important;
+    border-color: #40a9ff !important;
+    box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3) !important;
 }
 </style>
