@@ -150,8 +150,11 @@
                         <heart-filled v-if="isInWishlist" class="heart-icon filled" />
                         <heart-outlined v-else class="heart-icon outlined" />
                     </button>
+                    <div class="wishlist-info">
+                        <span class="wishlist-count">{{ product.so_luot_yeu_thich || 0 }}</span>
+                        <span class="wishlist-text">lượt thích</span>
+                    </div>
                 </div>
-
                 <div class="product-delivery-info">
                     <div class="delivery-item">
                         <i class="fas fa-truck"></i>
@@ -226,6 +229,18 @@
                                     product.danh_gia_chi_tiet.chi_tiet[6 - i].phan_tram : 0 }}%</div>
                             </div>
                         </div>
+
+                        <div class="add-review-button-container">
+                            <a-button type="primary" @click="openAddReviewModal" v-if="canAddReview">
+                                <plus-outlined />
+                                Thêm bình luận
+                            </a-button>
+                            <p class="login-to-review" v-else>
+                                <a-alert type="info" show-icon>
+                                    <template #message>Vui lòng <a @click="navigateToLogin">đăng nhập</a> để viết đánh giá</template>
+                                </a-alert>
+                            </p>
+                        </div>
                     </div>
 
                     <div class="reviews-list">
@@ -238,9 +253,17 @@
                                     </div>
                                     <div class="reviewer-name">{{ review.ten_nguoi_dung }}</div>
                                 </div>
-                                <div class="review-rating">
-                                    <star-filled v-for="i in review.danh_gia" :key="'review-star-' + i" />
-                                    <star-outlined v-for="i in (5 - review.danh_gia)" :key="'review-empty-star-' + i" />
+                                <div class="review-actions">
+                                    <div class="review-rating">
+                                        <star-filled v-for="i in review.danh_gia" :key="'review-star-' + i" />
+                                        <star-outlined v-for="i in (5 - review.danh_gia)" :key="'review-empty-star-' + i" />
+                                    </div>
+                                    <div class="review-buttons" v-if="isOwnReview(review)">
+                                        <a-button type="text" size="small" @click="editReview(review)">
+                                            <edit-outlined />
+                                            Sửa
+                                        </a-button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="review-date">{{ review.ngay }}</div>
@@ -277,7 +300,7 @@
                             <div class="product-card-image">
                                 <img :src="product.hinh_anh" alt="Sản phẩm">
                                 <div class="product-card-overlay">
-                                    <button class="overlay-btn view">
+                                    <button class="overlay-btn view" @click="viewProduct(product)">
                                         <i class="fas fa-eye"></i>
                                         Xem
                                     </button>
@@ -287,7 +310,7 @@
                                     </button>
                                 </div>
                                 <div class="product-card-badge" v-if="product.giam_gia">-{{ product.phan_tram_giam_gia
-                                    }}%
+                                    }}
                                 </div>
                             </div>
                             <div class="product-card-info">
@@ -392,6 +415,58 @@
                 </div>
             </div>
         </a-modal>
+
+        <!-- Modal chỉnh sửa đánh giá -->
+        <a-modal
+          v-model:open="editReviewVisible"
+          :footer="null"
+          :mask-closable="true"
+          :width="600"
+          centered
+          class="edit-review-modal"
+        >
+          <div class="edit-review">
+            <h3>Chỉnh sửa đánh giá</h3>
+            <a-form layout="vertical">
+              <a-form-item label="Đánh giá">
+                <a-rate v-model:value="editReviewForm.rating" />
+              </a-form-item>
+              <a-form-item label="Nội dung">
+                <a-textarea v-model:value="editReviewForm.content" rows="4" />
+              </a-form-item>
+              <div class="edit-review-actions">
+                <a-button @click="cancelEditReview">Hủy</a-button>
+                <a-button type="primary" @click="saveEditedReview">Lưu</a-button>
+              </div>
+            </a-form>
+          </div>
+        </a-modal>
+
+        <!-- Modal thêm bình luận mới -->
+        <a-modal
+          v-model:open="addReviewVisible"
+          :footer="null"
+          :mask-closable="true"
+          :width="600"
+          centered
+          class="add-review-modal"
+        >
+          <div class="add-review">
+            <h3>Thêm bình luận mới</h3>
+            <a-form layout="vertical">
+              <a-form-item label="Đánh giá sao">
+                <a-rate v-model:value="newReviewForm.rating" />
+              </a-form-item>
+              <a-form-item label="Nội dung bình luận">
+                <a-textarea v-model:value="newReviewForm.content" rows="4" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..." />
+              </a-form-item>
+              <div class="add-review-actions">
+                <a-button @click="cancelAddReview">Hủy</a-button>
+                <a-button type="primary" @click="submitNewReview">Gửi bình luận</a-button>
+              </div>
+            </a-form>
+          </div>
+        </a-modal>
     </div>
 </template>
 
@@ -414,11 +489,16 @@ import {
     MinusOutlined,
     StarTwoTone,
     EyeOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined,
+    EditOutlined,
+    DeleteOutlined
 } from '@ant-design/icons-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { message } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { favoriteService } from '@/services/favoriteService';
+import { reviewService } from '@/services/reviewService';
 
 // Lấy ID sản phẩm từ tham số URL
 const route = useRoute();
@@ -486,6 +566,11 @@ const fetchProductDetail = async (id) => {
 
             // Khởi tạo danh sách màu sắc và kích thước
             initializeColorAndSizeOptions();
+
+            // Fetch reviews for this product
+            if (selectedVariant.value && selectedVariant.value.id_chi_tiet_san_pham) {
+                fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
+            }
 
             console.log('Đã load chi tiết sản phẩm:', productDetails.value);
         } else {
@@ -640,7 +725,7 @@ const organizeImagesByColor = () => {
     console.log('Tất cả hình ảnh:', allImages.value);
 };
 
-// Sửa lại hàm cập nhật thông tin sản phẩm từ variant để KHÔNG thay đổi danh sách hình ảnh
+// Cập nhật hàm cập nhật thông tin sản phẩm từ variant để KHÔNG thay đổi danh sách hình ảnh
 const updateProductFromVariant = (variant) => {
     if (!variant) return;
 
@@ -753,6 +838,12 @@ const updateSelectedVariant = () => {
     if (matchedVariant) {
         selectedVariant.value = matchedVariant;
         updateProductFromVariant(matchedVariant);
+
+        // Fetch reviews for the new selected variant
+        if (matchedVariant.id_chi_tiet_san_pham) {
+            fetchProductReviews(matchedVariant.id_chi_tiet_san_pham);
+        }
+
         console.log('Đã tìm thấy variant phù hợp:', matchedVariant);
     } else {
         console.log('Không tìm thấy variant phù hợp với màu:', selectedColor.value, 'và kích thước:', selectedSize.value);
@@ -761,6 +852,12 @@ const updateSelectedVariant = () => {
         if (variantWithColor) {
             selectedVariant.value = variantWithColor;
             updateProductFromVariant(variantWithColor);
+
+            // Fetch reviews for the variant with matching color
+            if (variantWithColor.id_chi_tiet_san_pham) {
+                fetchProductReviews(variantWithColor.id_chi_tiet_san_pham);
+            }
+
             console.log('Đã tìm variant với màu:', variantWithColor);
         }
     }
@@ -1073,7 +1170,42 @@ const saveCartToLocalStorage = () => {
 
 // Tải giỏ hàng khi component được tạo
 onMounted(() => {
+    // Lấy thông tin sản phẩm khi component được mount
+    if (productId.value) {
+        fetchProductDetail(productId.value).then(() => {
+            // Sau khi lấy thông tin sản phẩm thành công, kiểm tra trạng thái yêu thích
+            if (selectedVariant.value) {
+                checkWishlistStatus();
+            }
+        });
+    }
+
+    // Tải giỏ hàng từ localStorage
     loadCartFromLocalStorage();
+
+    // Thiết lập hiệu ứng scroll animation
+    setupScrollAnimation(productGalleryRef);
+    setupScrollAnimation(productInfoRef, 100);
+    setupScrollAnimation(productTabsRef, 200);
+    setupScrollAnimation(recommendedProductsRef, 300);
+
+    // Cập nhật itemsPerSlide dựa trên kích thước màn hình
+    const updateItemsPerSlide = () => {
+        if (window.innerWidth <= 576) {
+            itemsPerSlide.value = 1;
+        } else if (window.innerWidth <= 768) {
+            itemsPerSlide.value = 2;
+        } else if (window.innerWidth <= 992) {
+            itemsPerSlide.value = 3;
+        } else if (window.innerWidth <= 1200) {
+            itemsPerSlide.value = 4;
+        } else {
+            itemsPerSlide.value = 5;
+        }
+    };
+
+    updateItemsPerSlide();
+    window.addEventListener('resize', updateItemsPerSlide);
 });
 
 // Xử lý mua ngay
@@ -1122,13 +1254,78 @@ const buyNow = () => {
 };
 
 // Xử lý thêm vào danh sách yêu thích
-const toggleWishlist = () => {
-    isInWishlist.value = !isInWishlist.value;
+const toggleWishlist = async () => {
+    try {
+        if (!store.userDetails || !store.userDetails.idKhachHang) {
+            message.warning('Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích');
+            return;
+        }
 
-    if (isInWishlist.value) {
-        message.success('Đã thêm vào danh sách yêu thích');
-    } else {
-        message.info('Đã xóa khỏi danh sách yêu thích');
+        if (!selectedVariant.value) {
+            message.warning('Vui lòng chọn biến thể sản phẩm trước khi thêm vào yêu thích');
+            return;
+        }
+
+        const idKhachHang = store.userDetails.idKhachHang;
+        const idChiTietSanPham = selectedVariant.value.id_chi_tiet_san_pham;
+        const oldWishlistState = isInWishlist.value;
+
+        // Optimistic update
+        isInWishlist.value = !isInWishlist.value;
+
+        try {
+            let response;
+            if (isInWishlist.value) {
+                response = await favoriteService.addToFavorite(idKhachHang, idChiTietSanPham);
+                if (response.status === 'success') {
+                    message.success('Đã thêm vào danh sách yêu thích');
+                    product.value.so_luot_yeu_thich = response.totalFavorites;
+                    saveWishlistToLocalStorage(idChiTietSanPham, true);
+                }
+            } else {
+                response = await favoriteService.removeFromFavorite(idKhachHang, idChiTietSanPham);
+                if (response.status === 'success') {
+                    message.success('Đã xóa khỏi danh sách yêu thích');
+                    product.value.so_luot_yeu_thich = response.totalFavorites;
+                    saveWishlistToLocalStorage(idChiTietSanPham, false);
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi khi thao tác với danh sách yêu thích:', error);
+            message.error(error.response?.data?.message || 'Có lỗi xảy ra khi thực hiện thao tác');
+            isInWishlist.value = oldWishlistState; // Restore previous state
+        }
+    } catch (error) {
+        console.error('Lỗi:', error);
+        message.error('Đã xảy ra lỗi không mong muốn');
+        isInWishlist.value = !isInWishlist.value; // Revert UI state
+    }
+};
+
+// Kiểm tra trạng thái yêu thích từ server và localStorage
+const checkWishlistStatus = async () => {
+    try {
+        if (!store.userDetails || !store.userDetails.idKhachHang || !selectedVariant.value) {
+            isInWishlist.value = false;
+            return;
+        }
+
+        const idKhachHang = store.userDetails.idKhachHang;
+        const idChiTietSanPham = selectedVariant.value.id_chi_tiet_san_pham;
+
+        const response = await favoriteService.checkFavoriteStatus(idKhachHang, idChiTietSanPham);
+        if (response.status === 'success') {
+            isInWishlist.value = response.isFavorite;
+            product.value.so_luot_yeu_thich = response.totalFavorites;
+            saveWishlistToLocalStorage(idChiTietSanPham, response.isFavorite);
+        }
+    } catch (error) {
+        console.error('Lỗi khi kiểm tra trạng thái yêu thích:', error);
+        // Fallback to localStorage
+        if (selectedVariant.value) {
+            const wishlist = JSON.parse(localStorage.getItem('gb-sport-wishlist') || '[]');
+            isInWishlist.value = wishlist.includes(selectedVariant.value.id_chi_tiet_san_pham);
+        }
     }
 };
 
@@ -1201,37 +1398,6 @@ const setupScrollAnimation = (target, delay = 0) => {
     );
 };
 
-onMounted(() => {
-    // Lấy thông tin sản phẩm khi component được mount
-    if (productId.value) {
-        fetchProductDetail(productId.value);
-    }
-
-    // Thiết lập hiệu ứng scroll animation
-    setupScrollAnimation(productGalleryRef);
-    setupScrollAnimation(productInfoRef, 100);
-    setupScrollAnimation(productTabsRef, 200);
-    setupScrollAnimation(recommendedProductsRef, 300);
-
-    // Cập nhật itemsPerSlide dựa trên kích thước màn hình
-    const updateItemsPerSlide = () => {
-        if (window.innerWidth <= 576) {
-            itemsPerSlide.value = 1;
-        } else if (window.innerWidth <= 768) {
-            itemsPerSlide.value = 2;
-        } else if (window.innerWidth <= 992) {
-            itemsPerSlide.value = 3;
-        } else if (window.innerWidth <= 1200) {
-            itemsPerSlide.value = 4;
-        } else {
-            itemsPerSlide.value = 5;
-        }
-    };
-
-    updateItemsPerSlide();
-    window.addEventListener('resize', updateItemsPerSlide);
-});
-
 // Add new ref for tracking slide direction in the script section
 const slideDirection = ref('slide-right');
 
@@ -1291,7 +1457,388 @@ const viewCart = () => {
     router.push('/giohang-banhang');
 };
 
-// ... existing code ...
+// Thêm phương thức tăng số lượt yêu thích
+const increaseFavoriteCount = (isAdded, newCount) => {
+  // Update the product's favorite count to the new value from the API
+  if (newCount !== undefined) {
+    if (!product.value.so_luot_yeu_thich) {
+      product.value.so_luot_yeu_thich = 0;
+    }
+    product.value.so_luot_yeu_thich = newCount;
+    console.log('Updated product favorite count to:', newCount);
+  }
+};
+
+// Thêm phương thức để chuyển đến trang chi tiết sản phẩm
+const viewProduct = (product) => {
+    if (product && product.id) {
+        router.push(`/sanpham/${product.id}`);
+    }
+};
+
+// Lưu danh sách yêu thích vào localStorage
+const saveWishlistToLocalStorage = (productId, isFavorite) => {
+    // Lưu danh sách ID sản phẩm yêu thích
+    const wishlist = JSON.parse(localStorage.getItem('gb-sport-wishlist') || '[]');
+    if (isFavorite) {
+        if (!wishlist.includes(productId)) {
+            wishlist.push(productId);
+        }
+    } else {
+        const index = wishlist.indexOf(productId);
+        if (index !== -1) {
+            wishlist.splice(index, 1);
+        }
+    }
+    localStorage.setItem('gb-sport-wishlist', JSON.stringify(wishlist));
+
+    // Lưu số lượt yêu thích của sản phẩm hiện tại
+    const productFavorites = JSON.parse(localStorage.getItem('gb-sport-product-favorites') || '{}');
+    productFavorites[productId] = product.value.so_luot_yeu_thich;
+    localStorage.setItem('gb-sport-product-favorites', JSON.stringify(productFavorites));
+
+    console.log('Đã lưu số lượt yêu thích:', productFavorites[productId], 'cho sản phẩm ID:', productId);
+};
+
+// Thêm hàm fetchProductReviews để lấy đánh giá sản phẩm
+const fetchProductReviews = async (idChiTietSanPham) => {
+    try {
+        const reviewData = await reviewService.getProductReviews(idChiTietSanPham);
+
+        if (!reviewData.error) {
+            // Update product with review data
+            product.value.danh_gia = reviewData.averageRating;
+            product.value.so_luot_danh_gia = reviewData.totalReviews;
+
+            // Update the detailed rating information
+            product.value.danh_gia_chi_tiet = {
+                trung_binh: reviewData.averageRating,
+                tong_so: reviewData.totalReviews,
+                chi_tiet: {
+                    5: { phan_tram: reviewData.ratingDistribution[5] || 0 },
+                    4: { phan_tram: reviewData.ratingDistribution[4] || 0 },
+                    3: { phan_tram: reviewData.ratingDistribution[3] || 0 },
+                    2: { phan_tram: reviewData.ratingDistribution[2] || 0 },
+                    1: { phan_tram: reviewData.ratingDistribution[1] || 0 }
+                },
+                binh_luan: reviewData.reviews || []
+            };
+
+            console.log('Đã tải đánh giá sản phẩm:', product.value.danh_gia_chi_tiet);
+        } else {
+            console.error('Lỗi khi tải đánh giá sản phẩm');
+            product.value.danh_gia_chi_tiet = {
+                trung_binh: 0,
+                tong_so: 0,
+                chi_tiet: {
+                    5: { phan_tram: 0 },
+                    4: { phan_tram: 0 },
+                    3: { phan_tram: 0 },
+                    2: { phan_tram: 0 },
+                    1: { phan_tram: 0 }
+                },
+                binh_luan: []
+            };
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải đánh giá sản phẩm:', error);
+    }
+};
+
+// Thêm hàm kiểm tra xem đánh giá có phải của người dùng hiện tại không
+const isOwnReview = (review) => {
+    if (!store.userDetails || !store.userDetails.idKhachHang) return false;
+
+    // Kiểm tra nếu review có id_khach_hang trực tiếp
+    if (review.id_khach_hang) {
+        return review.id_khach_hang === store.userDetails.idKhachHang;
+    }
+
+    // Hoặc kiểm tra từ id kết hợp (nếu id có dạng "{idKhachHang}-{idChiTietSanPham}")
+    if (review.id && typeof review.id === 'string') {
+        const parts = review.id.split('-');
+        if (parts.length > 0) {
+            const reviewUserId = parseInt(parts[0]);
+            return reviewUserId === store.userDetails.idKhachHang;
+        }
+    }
+
+    return false;
+};
+
+// Modal cho chỉnh sửa đánh giá
+const editReviewVisible = ref(false);
+const editingReview = ref(null);
+const editReviewForm = ref({
+    rating: 5,
+    content: ''
+});
+
+// Mở modal chỉnh sửa đánh giá
+const editReview = (review) => {
+    editingReview.value = review;
+    editReviewForm.value = {
+        rating: review.danh_gia,
+        content: review.noi_dung
+    };
+    editReviewVisible.value = true;
+};
+
+// Lưu đánh giá đã chỉnh sửa
+const saveEditedReview = async () => {
+    try {
+        if (!editingReview.value || !selectedVariant.value) return;
+
+        const reviewId = editingReview.value.id;
+
+        // Kiểm tra dữ liệu trước khi gửi
+        if (!editReviewForm.value.content.trim() || !editReviewForm.value.rating) {
+            message.warning('Vui lòng điền đầy đủ nội dung đánh giá và xếp hạng');
+            return;
+        }
+
+        // Kiểm tra trạng thái da_chinh_sua
+        if (editingReview.value.da_chinh_sua === 1) {
+            message.warning('Bình luận này đã được chỉnh sửa trước đó. Hệ thống chỉ cho phép chỉnh sửa một lần.');
+            return;
+        }
+
+        // Chuẩn bị dữ liệu đánh giá
+        const reviewData = {
+            id: reviewId,
+            id_chi_tiet_san_pham: selectedVariant.value.id_chi_tiet_san_pham,
+            id_khach_hang: store.userDetails.idKhachHang,
+            danh_gia: editReviewForm.value.rating,
+            binh_luan: editReviewForm.value.content,
+            ngay_cap_nhat: new Date().toISOString(),
+            da_chinh_sua: 1
+        };
+
+        // Hiển thị modal xác nhận trước khi lưu
+        const antd = await import('ant-design-vue');
+        antd.Modal.confirm({
+            title: 'Xác nhận chỉnh sửa',
+            content: 'Bạn có chắc chắn muốn lưu các chỉnh sửa này?',
+            okText: 'Xác nhận',
+            cancelText: 'Hủy',
+            centered: true,
+            async onOk() {
+                // Hiển thị loading khi đang cập nhật
+                const loadingKey = 'editReviewLoading';
+                message.loading({ content: 'Đang cập nhật đánh giá...', key: loadingKey, duration: 0 });
+
+                try {
+                    const response = await reviewService.updateProductReview(reviewId, reviewData);
+                    if (response && !response.error) {
+                        message.success({ content: 'Đã cập nhật đánh giá thành công', key: loadingKey });
+                        editReviewVisible.value = false;
+                        editingReview.value = null;
+                        editReviewForm.value = { rating: 5, content: '' };
+                        await fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
+                    } else {
+                        message.error({ content: response?.message || 'Không thể cập nhật đánh giá', key: loadingKey });
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi cập nhật đánh giá:', error);
+                    message.error('Đã xảy ra lỗi khi cập nhật đánh giá');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Lỗi:', error);
+        message.error('Đã xảy ra lỗi không mong muốn');
+    }
+};
+
+// Hủy chỉnh sửa đánh giá
+const cancelEditReview = () => {
+    editReviewVisible.value = false;
+    editingReview.value = null; // Đảm bảo reset giá trị
+    editReviewForm.value = { rating: 5, content: '' }; // Reset form
+};
+
+// Xác nhận trước khi xóa đánh giá
+const confirmDeleteReview = (review) => {
+    if (window.antd && window.antd.Modal) {
+        window.antd.Modal.confirm({
+            title: 'Xác nhận xóa',
+            content: 'Bạn có chắc chắn muốn xóa đánh giá này?',
+            okText: 'Xóa',
+            okType: 'danger',
+            cancelText: 'Hủy',
+            onOk() {
+                deleteReview(review);
+            }
+        });
+    } else {
+        if (confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) {
+            deleteReview(review);
+        }
+    }
+};
+
+// Xóa đánh giá
+const deleteReview = async (review) => {
+    try {
+        if (!review || !review.id || !selectedVariant.value) return;
+
+        const response = await reviewService.deleteProductReview(review.id);
+
+        if (response && !response.error) {
+            message.success('Đã xóa đánh giá thành công');
+
+            // Cập nhật lại danh sách đánh giá
+            await fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
+        } else {
+            message.error('Không thể xóa đánh giá');
+        }
+    } catch (error) {
+        console.error('Lỗi khi xóa đánh giá:', error);
+        message.error('Đã xảy ra lỗi khi xóa đánh giá');
+    }
+};
+
+// Thêm phương thức mở modal thêm bình luận
+const openAddReviewModal = () => {
+    if (!store.userDetails || !store.userDetails.idKhachHang) {
+        message.warning('Vui lòng đăng nhập để thêm bình luận');
+        return;
+    }
+
+    // Mở modal thêm bình luận
+    addReviewVisible.value = true;
+    newReviewForm.value = { rating: 5, content: '' }; // Reset form
+};
+
+// Thêm phương thức điều hướng đến trang đăng nhập
+const navigateToLogin = () => {
+    router.push('/dangnhap');
+};
+
+// Tính toán trạng thái có thể thêm bình luận
+const canAddReview = computed(() => {
+    return store.userDetails && store.userDetails.idKhachHang;
+});
+
+// Modal cho thêm bình luận mới
+const addReviewVisible = ref(false);
+const newReviewForm = ref({
+    rating: 5,
+    content: ''
+});
+
+// Hủy thêm bình luận mới
+const cancelAddReview = () => {
+    addReviewVisible.value = false;
+    newReviewForm.value = { rating: 5, content: '' }; // Reset form
+};
+
+// Gửi bình luận mới
+const submitNewReview = async () => {
+    try {
+        if (!selectedVariant.value) return;
+
+        // Kiểm tra dữ liệu trước khi gửi
+        if (!newReviewForm.value.content.trim() || !newReviewForm.value.rating) {
+            message.warning('Vui lòng điền đầy đủ nội dung bình luận và xếp hạng');
+            return;
+        }
+
+        // Debug
+        console.log("Đánh giá chi tiết:", product.value.danh_gia_chi_tiet);
+        console.log("User:", store.userDetails);
+
+        // Kiểm tra xem người dùng đã bình luận sản phẩm này chưa
+        const hasReviewed = checkIfUserAlreadyReviewed();
+        console.log("Đã bình luận:", hasReviewed);
+
+        if (hasReviewed) {
+            const antd = await import('ant-design-vue');
+            antd.Modal.error({
+                title: 'Không thể bình luận',
+                content: 'Bạn đã bình luận sản phẩm này rồi. Mỗi người dùng chỉ có thể bình luận một lần.',
+                okText: 'Đã hiểu',
+                centered: true
+            });
+            addReviewVisible.value = false;
+            return;
+        }
+
+        // Chuẩn bị dữ liệu bình luận
+        const reviewData = {
+            id_chi_tiet_san_pham: selectedVariant.value.id_chi_tiet_san_pham,
+            id_khach_hang: store.userDetails.idKhachHang,
+            danh_gia: newReviewForm.value.rating,
+            binh_luan: newReviewForm.value.content,
+            ngay_tao: new Date().toISOString()
+        };
+
+        // Xác nhận
+        const antd = await import('ant-design-vue');
+        antd.Modal.confirm({
+            title: 'Xác nhận đánh giá',
+            content: 'Bạn có chắc chắn muốn gửi đánh giá này?',
+            okText: 'Xác nhận',
+            cancelText: 'Hủy',
+            centered: true,
+            async onOk() {
+                const loadingKey = 'addReviewLoading';
+                message.loading({ content: 'Đang gửi bình luận...', key: loadingKey, duration: 0 });
+
+                try {
+                    const response = await reviewService.addProductReview(reviewData);
+                    if (response && !response.error) {
+                        message.success({ content: 'Đã gửi bình luận thành công', key: loadingKey });
+                        addReviewVisible.value = false;
+                        newReviewForm.value = { rating: 5, content: '' };
+                        await fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
+                    } else {
+                        message.destroy(loadingKey);
+                        antd.Modal.error({
+                            title: 'Lỗi',
+                            content: response?.message || 'Không thể gửi bình luận',
+                            okText: 'Đã hiểu',
+                            centered: true
+                        });
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi gửi bình luận:', error);
+                    antd.Modal.error({
+                        title: 'Lỗi',
+                        content: 'Đã xảy ra lỗi khi gửi bình luận',
+                        okText: 'Đã hiểu',
+                        centered: true
+                    });
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Lỗi:', error);
+        message.error('Đã xảy ra lỗi không mong muốn');
+    }
+};
+
+// Kiểm tra xem người dùng đã bình luận sản phẩm này chưa
+const checkIfUserAlreadyReviewed = () => {
+    // Kiểm tra nếu danh sách bình luận không tồn tại hoặc rỗng
+    if (!product.value.danh_gia_chi_tiet ||
+        !product.value.danh_gia_chi_tiet.binh_luan ||
+        product.value.danh_gia_chi_tiet.binh_luan.length === 0) {
+        return false;
+    }
+
+    // Kiểm tra nếu không có thông tin người dùng
+    if (!store.userDetails || !store.userDetails.idKhachHang) {
+        return false;
+    }
+
+    // Tìm bình luận của người dùng hiện tại
+    const userReview = product.value.danh_gia_chi_tiet.binh_luan.find(review =>
+        review.id_khach_hang === store.userDetails.idKhachHang
+    );
+
+    return !!userReview; // Trả về true nếu tìm thấy bình luận của người dùng
+};
 </script>
 
 <style scoped>
@@ -2297,6 +2844,48 @@ const viewCart = () => {
     text-align: right;
 }
 
+.add-review-button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px 0;
+    border-top: 1px dashed #eee;
+}
+
+.add-review-button-container .ant-btn-primary {
+    padding: 0 25px;
+    height: 42px;
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.add-review-button-container .ant-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+}
+
+.login-to-review {
+    width: 100%;
+}
+
+.login-to-review a {
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.login-to-review a:hover {
+    color: #0056b3;
+}
+
 .reviews-list {
     margin-bottom: 20px;
 }
@@ -2344,10 +2933,21 @@ const viewCart = () => {
     color: #333;
 }
 
+.review-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .review-rating {
     display: flex;
     gap: 3px;
     color: #ffc107;
+}
+
+.review-buttons {
+    display: flex;
+    gap: 5px;
 }
 
 .review-date {
@@ -2966,5 +3566,154 @@ const viewCart = () => {
 
 .notification-actions button {
     flex: 1;
+}
+
+/* Thêm CSS cho hiển thị số lượt thích bên ngoài trái tim */
+.wishlist-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 5px;
+}
+
+.wishlist-count {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+}
+
+.wishlist-text {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Modal chỉnh sửa đánh giá */
+:deep(.edit-review-modal .ant-modal-content) {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+:deep(.edit-review-modal .ant-modal-body) {
+    padding: 20px;
+}
+
+/* Fix vị trí modal ở giữa màn hình */
+:deep(.edit-review-modal) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:deep(.ant-modal) {
+    top: 0;
+    padding-bottom: 0;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:deep(.ant-rate) {
+    font-size: 26px;
+    z-index: 1001; /* Tăng z-index để đảm bảo có thể chọn được */
+    position: relative;
+}
+
+:deep(.ant-rate-star) {
+    cursor: pointer !important;
+    margin-right: 8px;
+}
+
+.edit-review {
+    padding: 0;
+}
+
+.edit-review h3 {
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.edit-review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Modal thêm bình luận mới */
+:deep(.add-review-modal .ant-modal-content) {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+:deep(.add-review-modal .ant-modal-body) {
+    padding: 20px;
+}
+
+/* Fix vị trí modal ở giữa màn hình */
+:deep(.add-review-modal) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-review {
+    padding: 0;
+}
+
+.add-review h3 {
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.add-review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Thêm vào phần <style> của component */
+:deep(.custom-warning-modal) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:deep(.custom-warning-modal .ant-modal-content) {
+    padding: 30px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+:deep(.custom-warning-modal .ant-modal-confirm-body-wrapper) {
+    text-align: center;
+}
+
+:deep(.custom-warning-modal .ant-modal-confirm-title) {
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+:deep(.custom-warning-modal .ant-modal-confirm-content) {
+    font-size: 16px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+:deep(.custom-warning-modal .ant-modal-confirm-btns) {
+    justify-content: center;
+    margin-top: 20px;
+}
+
+:deep(.custom-warning-modal .ant-btn) {
+    min-width: 120px;
+    height: 40px;
+    font-size: 16px;
+    border-radius: 8px;
 }
 </style>

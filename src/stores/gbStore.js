@@ -1125,6 +1125,18 @@ export const useGbStore = defineStore('gbStore', {
     //Kết thúc Xuất Excel
     //Khách hàng
     // Lấy danh sách khách hàng
+    
+    async themKhachHangBH(khachHangData) {
+      const response = await khachHangService.themKhachHangBH(khachHangData)
+      if (response.error) {
+        throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng bán hàng') // Ném lỗi để component xử lý
+      }
+      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
+      return response.khachHang // Trả về thông tin khách hàng vừa thêm
+    },
+
+
+    // Lấy danh sách khách hàng
     async getAllKhachHang(page = 0, size = 5, keyword = null, trangThai = null, updatedId = null) {
       try {
         const khachHang = await khachHangService.getAllKhachHang(
@@ -1176,15 +1188,6 @@ export const useGbStore = defineStore('gbStore', {
       await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
       return response.khachHang // Trả về thông tin khách hàng vừa thêm
     },
-    async themKhachHangBH(khachHangData) {
-      const response = await khachHangService.themKhachHangBH(khachHangData)
-      if (response.error) {
-        throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng bán hàng') // Ném lỗi để component xử lý
-      }
-      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
-      return response.khachHang // Trả về thông tin khách hàng vừa thêm
-    },
-
 
     // Lấy thông tin khách hàng để chỉnh sửa
     async getKhachHangByIdForEdit(id) {
@@ -1204,25 +1207,61 @@ export const useGbStore = defineStore('gbStore', {
 
     async suaKhachHang(khachHangData) {
       try {
-        const response = await khachHangService.suaKhachHang(khachHangData)
-        if (response.error) {
-          toast.error(response.message || 'Có lỗi xảy ra khi cập nhật khách hàng')
-          return false
+        console.log('Sending data to update customer:', khachHangData);
+
+        // Make a copy of the data to avoid modifying the original
+        const dataToSend = { ...khachHangData };
+
+        // Format the date if it's not already a string
+        if (dataToSend.ngaySinh && typeof dataToSend.ngaySinh !== 'string') {
+          dataToSend.ngaySinh = new Date(dataToSend.ngaySinh).toISOString();
         }
 
+        const response = await khachHangService.suaKhachHang(dataToSend);
+
+        if (response.error) {
+          console.error('Error response from update API:', response);
+          return false;
+        }
+
+        // Update user details in store if update is for the current logged-in user
+        if (this.userDetails && this.userDetails.idKhachHang === khachHangData.idKhachHang) {
+          // Make shallow copy of userDetails
+          const updatedUserDetails = { ...this.userDetails };
+
+          // Update relevant fields
+          updatedUserDetails.tenKhachHang = khachHangData.tenKhachHang;
+          updatedUserDetails.soDienThoai = khachHangData.soDienThoai;
+          updatedUserDetails.ngaySinh = khachHangData.ngaySinh;
+          updatedUserDetails.gioiTinh = khachHangData.gioiTinh;
+
+          // Update the store
+          this.userDetails = updatedUserDetails;
+
+          // Update localStorage or sessionStorage based on remember me setting
+          if (localStorage.getItem('isLoggedIn') === 'true') {
+            localStorage.setItem('userDetails', JSON.stringify(updatedUserDetails));
+          } else if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            sessionStorage.setItem('userDetails', JSON.stringify(updatedUserDetails));
+          }
+
+          console.log('Updated user details in store:', this.userDetails);
+        }
+
+        // Refresh the customer list if we're on the admin page
         await this.getAllKhachHang(
           0,
           3,
           this.searchs,
           this.selectedTrangThai,
           khachHangData.idKhachHang,
-        )
-        this.successMessage = 'Cập nhật khách hàng thành công!'
-        return true
+        );
+
+        this.successMessage = 'Cập nhật khách hàng thành công!';
+        return true;
       } catch (error) {
-        console.error('Lỗi khi cập nhật khách hàng:', error)
-        toast.error('Có lỗi xảy ra khi cập nhật khách hàng')
-        return false
+        console.error('Error updating customer:', error);
+        return false;
       }
     },
 
@@ -1297,6 +1336,7 @@ export const useGbStore = defineStore('gbStore', {
         return null
       }
     },
+
 
     ///=======Code bán hàng tại quầy=======///
     async getAllCTSPKM() {
