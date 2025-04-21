@@ -136,7 +136,7 @@ export const useGbStore = defineStore('gbStore', {
   }),
 
   ///Đầu mút2
-    actions: {
+  actions: {
     //Giỏ hàng của khấch hàng có tài khoản
     async getGioHang(idKhachHang) {
       try {

@@ -1,4 +1,7 @@
 import axios from "axios";
+import { message } from 'ant-design-vue';
+import router from '../router';
+
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:8080/',
     headers: {
@@ -9,7 +12,7 @@ const axiosInstance = axios.create({
 // Thêm interceptor để gửi token trong mọi request
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token'); // Lấy token từ localStorage
+        const token = sessionStorage.getItem('token') || localStorage.getItem('token'); // Lấy token từ localStorage
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         } else {

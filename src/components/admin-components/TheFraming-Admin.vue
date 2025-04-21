@@ -27,11 +27,10 @@
                     <a-menu-item key="3" @click="changeRoute('/admin/quanlysanpham');">Tất cả
                         sản
                         phẩm</a-menu-item>
-                    <a-menu-item key="4" v-if="store.id_roles !== 3" @click="changeRoute('/admin/quanlysanpham/sanpham');">Sản phẩm</a-menu-item>
-                    <a-menu-item key="5" v-if="store.id_roles !== 3" @click="changeRoute('/admin/quanlysanpham/chitietsanpham');">Biến thể sản
-                        phẩm</a-menu-item>
+
                     <!-- <a-menu-item key="6">Thuộc tính</a-menu-item> -->
-                    <a-menu-item key="7" v-if="store.id_roles !== 3" @click="changeRoute('/admin/quanlysanpham/thuoctinh');">Thuộc
+                    <a-menu-item key="7" v-if="store.id_roles !== 3"
+                        @click="changeRoute('/admin/quanlysanpham/thuoctinh');">Thuộc
                         tính</a-menu-item>
                 </a-sub-menu>
                 <a-menu-item key="8" @click="changeRoute('/admin/quanlyhoadon');">
