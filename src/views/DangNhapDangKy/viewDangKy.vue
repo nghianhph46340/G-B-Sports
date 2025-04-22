@@ -256,8 +256,13 @@ const validateEmail = () => {
 };
 
 const validatePassword = () => {
-    if (form.value.password.length < 6) {
+    const password = form.value.password;
+    if (password.length < 6) {
         errors.value.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else if (password.length > 20) {
+        errors.value.password = 'Mật khẩu không được vuợt quá 20 ký tự';
+    } else if (/\s/.test(password)) {
+        errors.value.password = 'Mật khẩu không được chứa khoảng trắng';
     } else {
         errors.value.password = '';
     }

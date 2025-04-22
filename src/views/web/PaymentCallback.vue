@@ -57,8 +57,7 @@ const route = useRoute();
 
 // Payment status: success, failed, processing
 const paymentStatus = ref('success');
-const orderCode = ref(localStorage.getItem('pendingOrderCode') || localStorage.getItem('lastOrderCode') || 'GB-123456789');
-const orderAmount = ref(localStorage.getItem('orderAmount') || 500000);
+const orderResponse = ref(localStorage.getItem('pendingOrderCode'));
 const paymentTime = ref(new Date());
 
 // Computed properties for dynamic content
@@ -131,7 +130,7 @@ const processPaymentResult = async () => {
         }
 
         // Simulate amount and payment time
-        orderAmount.value = localStorage.getItem('orderAmount') || 500000;
+        orderAmount.value = localStorage.getItem('tong_tien_sau_giam') || 500000;
         paymentTime.value = new Date();
 
         // Display success message

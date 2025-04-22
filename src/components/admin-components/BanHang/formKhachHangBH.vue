@@ -1,12 +1,12 @@
 <template>
     <div>
         <div class="header-section">
-            <h2>Thêm khách hàng</h2>
-            <button class="btn btn-secondary btn-sm" @click="router.push('/admin/quanlykhachhang')">Quay lại</button>
+            <h2>Thông tin khách hàng</h2>
         </div>
         <form @submit.prevent="themKhachHang" @reset.prevent="resetForm">
             <a-form :model="formData" :label-col="{ span: 24 }" :wrapper-col="{ span: 24 }">
-                <a-row :gutter="16">
+                <!-- Thông tin cơ bản -->
+                <a-row :gutter="12">
                     <a-col :span="8">
                         <a-form-item label="Họ tên khách hàng" :validate-status="errors.tenKhachHang ? 'error' : ''"
                             :help="errors.tenKhachHang">
@@ -28,8 +28,8 @@
                     </a-col>
                 </a-row>
 
+                <!-- Danh sách địa chỉ -->
                 <div v-for="(diaChi, index) in formData.diaChiList" :key="index" class="address-section">
-                    <h3>Địa chỉ {{ index + 1 }}</h3>
                     <a-row :gutter="16">
                         <a-col :span="6">
                             <a-form-item label="Tỉnh/Thành phố"
@@ -79,13 +79,6 @@
                                 <a-input v-model:value="diaChi.soNha" placeholder="Số nhà, tên đường..." />
                             </a-form-item>
                         </a-col>
-
-                        <a-col :span="1">
-                            <a-form-item label="Mặc định">
-                                <a-checkbox v-model:checked="diaChi.diaChiMacDinh"
-                                    @change="handleDefaultChange(index)" />
-                            </a-form-item>
-                        </a-col>
                     </a-row>
                     <button type="button" class="btn btn-danger" @click="xoaDiaChi(index)"
                         v-if="formData.diaChiList.length > 1">
@@ -93,12 +86,10 @@
                     </button>
                 </div>
 
-                <hr>
-                <button type="button" class="btn btn-primary" @click="themDiaChi">+ Thêm địa chỉ khác</button>
-
+                <!-- Nút hành động -->
                 <div class="mt-4">
-                    <button type="btn buttonADD" class="btn btn-warning me-2" @click="confirmThemKhachHang">+ Tạo tài
-                        khoản</button>
+                    <button type="button" class="btn btn-warning me-2" @click="confirmThemKhachHang">Thêm khách mới</button>
+                    <button type="button" class="btn btn-warning me-2" @click="luuThongTinKhachHang">Lưu thông tin khách hàng</button>
                     <button type="button" class="btn btn-secondary" @click="resetForm">Làm mới</button>
                 </div>
             </a-form>
@@ -110,10 +101,8 @@
 import { ref, onMounted, reactive } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
-import { useRouter } from 'vue-router';
 
 const gbStore = useGbStore();
-const router = useRouter();
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
@@ -146,32 +135,44 @@ const errors = reactive({
 
 const validateForm = () => {
     let isValid = true;
+
+    // Reset lỗi
     Object.keys(errors).forEach(key => {
         if (key !== 'diaChiErrors') errors[key] = '';
     });
     errors.diaChiErrors = formData.diaChiList.map(() => ({}));
 
+    // Kiểm tra tên khách hàng
+    const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/; // Chỉ cho phép chữ cái và khoảng trắng
     if (!formData.tenKhachHang.trim()) {
         errors.tenKhachHang = 'Vui lòng nhập tên khách hàng';
         isValid = false;
+    } else if (!nameRegex.test(formData.tenKhachHang)) {
+        errors.tenKhachHang = 'Tên không được chứa ký tự đặc biệt';
+        isValid = false;
     }
 
+    // Kiểm tra số điện thoại
+    const phoneRegex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
     if (!formData.soDienThoai.trim()) {
         errors.soDienThoai = 'Vui lòng nhập số điện thoại';
         isValid = false;
-    } else if (!validatePhoneNumber(formData.soDienThoai)) {
+    } else if (!phoneRegex.test(formData.soDienThoai)) {
         errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
         isValid = false;
     }
 
+    // Kiểm tra email
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
     if (!formData.email.trim()) {
         errors.email = 'Vui lòng nhập email';
         isValid = false;
-    } else if (!validateEmail(formData.email)) {
+    } else if (!emailRegex.test(formData.email)) {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
         isValid = false;
     }
 
+    // Kiểm tra danh sách địa chỉ
     formData.diaChiList.forEach((diaChi, index) => {
         if (!diaChi.tinhThanhPho) {
             errors.diaChiErrors[index].tinhThanhPho = 'Vui lòng chọn tỉnh/thành phố';
@@ -191,21 +192,12 @@ const validateForm = () => {
         }
     });
 
+    // Đảm bảo có địa chỉ mặc định
     if (!formData.diaChiList.some(d => d.diaChiMacDinh) && formData.diaChiList.length > 0) {
         formData.diaChiList[0].diaChiMacDinh = true;
     }
 
     return isValid;
-};
-
-const validatePhoneNumber = (phone) => {
-    const regex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
-    return regex.test(phone);
-};
-
-const validateEmail = (email) => {
-    const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    return regex.test(email) && email.length <= 100;
 };
 
 const loadProvinces = async () => {
@@ -244,19 +236,6 @@ const handleDistrictChange = async (index) => {
             console.error('Lỗi khi tải phường/xã:', error);
         }
     }
-};
-
-const themDiaChi = () => {
-    formData.diaChiList.push({
-        soNha: '',
-        xaPhuong: '',
-        quanHuyen: '',
-        tinhThanhPho: '',
-        diaChiMacDinh: false
-    });
-    districts.value.push([]);
-    wards.value.push([]);
-    errors.diaChiErrors.push({});
 };
 
 const xoaDiaChi = (index) => {
@@ -339,11 +318,40 @@ const themKhachHang = async () => {
         }
     }
 };
+const luuThongTin = async () => {
+    if (!validateForm()) {
+        toast.error('Vui lòng điền đầy đủ và chính xác thông tin!');
+        return;
+    }
+
+    const dataToSend = { ...formData };
+
+    try {
+        const result = await gbStore.themKhachHangBH(dataToSend);
+        if (result) {
+            toast.success('Thêm khách hàng thành công!', {
+                autoClose: 2000,
+                position: 'top-right'
+            });
+        }
+    } catch (error) {
+        console.error('Lỗi khi thêm khách hàng:', error);
+        // Kiểm tra lỗi từ backend
+        toast.error('Có lỗi xảy ra khi thêm khách hàng');
+        
+    }
+};
 const confirmThemKhachHang = () => {
     if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
         themKhachHang();
     }
 };
+
+const luuThongTinKhachHang = () => {
+    if (confirm('Bạn có chắc chắn muốn lưu thông tin khách hàng này không?')) {
+        luuThongTin();
+    }
+};  
 
 onMounted(async () => {
     await loadProvinces();

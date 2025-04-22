@@ -59,8 +59,8 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <a-tooltip title="Tra cứu đơn hàng">
-                <a-button type="primary" shape="circle" class="action-btn">
-                    <template #icon><file-search-outlined /></template>
+                <a-button type="primary" shape="circle" class="action-btn" @click="changeRoute('/admin/quanlyhoadon')">
+                    <template #icon> <file-search-outlined /></template>
                 </a-button>
             </a-tooltip>
             <a-tooltip title="Trả hàng">
@@ -79,7 +79,7 @@
     <div class="text">
         <div class="row ">
             <div class="col-8 text-center">
-                <div class="table-responsive mt-4" style="max-height: 350px; overflow-y: auto;">
+                <div class="table-responsive mt-4" style="max-height: 350px; height: 350px; overflow-y: auto;">
                     <table class="table table-hover">
                         <thead class="sticky-top bg-white" style="top: 0; z-index: 1;">
                             <tr>
@@ -112,8 +112,7 @@
                                 <td>
                                     <a-space direction="vertical">
                                         <a-input-number v-model:value="item.so_luong" :min="1"
-                                            :max="item.so_luong_ton_goc + item.so_luong"
-                                            @change="updateItemTotal(item)"
+                                            :max="item.so_luong_ton_goc + item.so_luong" @change="updateItemTotal(item)"
                                             style="width: 80px;" />
 
                                     </a-space>
@@ -131,7 +130,9 @@
                     </table>
                 </div>
 
-                <FormKhachHangBH />
+                <div v-if="ptnh === 'Giao hàng'">
+                    <FormKhachHangBH />
+                </div>
             </div>
             <div class="col-4">
                 <form v-if="activeTabData && activeTabData.hd" @submit.prevent="handlePayment">
@@ -282,8 +283,8 @@
                         <div v-if="activeTabData.hd.hinh_thuc_thanh_toan === 'Tiền mặt'" class="mt-2">
                             <label class="form-label">Tiền khách đưa (VNĐ)</label>
                             <a-input-number v-model:value="tienKhachDua" :min="0"
-                                :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                                :parser="value => value.replace(/\$\s?|(,*)/g, '')" placeholder="Nhập số tiền khách đưa"
+                                :formatter="value => `${Number(value).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}`"
+                                :parser="value => value.replace(/[^\d]/g, '')" placeholder="Nhập số tiền khách đưa"
                                 style="width: 100%" />
                             <label class="form-label mt-2">Tiền dư trả khách (VNĐ)</label>
                             <input type="text" class="form-control" :value="formatCurrency(calculatedChange)" disabled>
@@ -331,6 +332,9 @@ import '../../../config/fonts/Roboto-bold'
 import { toast } from 'vue3-toastify';
 import { thanhToanService } from '@/services/thanhToan';
 import FormKhachHangBH from './formKhachHangBH.vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const pageSize = ref(5);
 const store = useGbStore();
@@ -345,16 +349,42 @@ const danhSachKhachHang = computed(() => {
 const diaChiMap = computed(() => store.diaChiMap);
 
 const chonKhachHang = async (khachHang) => {
-    activeTabData.value.hd.ten_khach_hang = khachHang.tenKhachHang;
-    activeTabData.value.hd.so_dien_thoai = khachHang.soDienThoai;
-    activeTabData.value.hd.dia_chi = diaChiMap[khachHang.idKhachHang] || "Chưa có địa chỉ";
-    activeTabData.value.hd.id_khach_hang = khachHang.idKhachHang;
-    store.addKHHD(activeTabData.value.hd.id_hoa_don, khachHang.idKhachHang, khachHang.diaChi, khachHang.tenKhachHang, khachHang.soDienThoai);
-    await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
+    try {
+        console.log('Khách hàng được chọn:', khachHang);
 
-    open.value = false;
+        // Cập nhật thông tin khách hàng
+        Object.assign(activeTabData.value.hd, {
+            ten_khach_hang: khachHang.tenKhachHang,
+            so_dien_thoai: khachHang.soDienThoai,
+            dia_chi: khachHang.diaChi || 'Chưa có địa chỉ',
+            id_khach_hang: khachHang.idKhachHang
+        });
+
+        // Gọi store để thêm khách hàng vào hóa đơn
+        await store.addKHHD(
+            activeTabData.value.hd.id_hoa_don,
+            khachHang.idKhachHang,
+            khachHang.diaChi,
+            khachHang.tenKhachHang,
+            khachHang.soDienThoai
+        );
+
+        // Làm mới danh sách khách hàng
+        await store.getAllKhachHangNoPage();
+
+        // Đóng modal
+        open.value = false;
+
+        // Làm mới dữ liệu hóa đơn
+        await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
+
+        console.log('activeTabData.hd sau khi làm mới:', activeTabData.value.hd);
+        message.success(`Đã chọn khách hàng: ${khachHang.tenKhachHang}`);
+    } catch (error) {
+        console.error('Lỗi khi chọn khách hàng:', error);
+        message.error('Không thể chọn khách hàng. Vui lòng thử lại!');
+    }
 };
-
 
 // --- State cho tìm kiếm và dropdown ---
 const dropdownVisible = ref(false);
@@ -382,6 +412,7 @@ const handleOk = () => {
 const handleCancel = () => {
     open.value = false;
 };
+const ptnh = ref('Nhận tại cửa hàng');
 
 const openKhachLe = ref(false);
 const khachLeForm = reactive({
@@ -407,6 +438,27 @@ const handleAddKhachLe = () => {
     openKhachLe.value = false;
 };
 
+const selectedKeys = ref([store.indexMenu]);
+console.log(selectedKeys);
+
+const changeRoute = (path) => {
+    // Update all store properties related to navigation
+    store.getPath(path);
+    store.getRoutePresent(router.path);
+    store.getIndex(path);
+
+    // Log for debugging
+    console.log('TheFraming - Navigating to:', path);
+    console.log('TheFraming - Updated store.checkRouter:', store.checkRouter);
+    console.log('TheFraming - Updated selectedKeys:', store.indexMenu);
+
+    // Update selectedKeys from store
+    selectedKeys.value = store.indexMenu;
+
+    // Navigate
+    router.push(path);
+
+};
 
 // --- Computed Properties ---
 // Lọc sản phẩm cho dropdown tìm kiếm
@@ -441,15 +493,30 @@ const formatCurrency = (value) => {
 };
 
 // Xử lý khi người dùng gõ vào ô tìm kiếm
+const normalizeString = (str) => {
+    return str
+        .trim() // Loại bỏ khoảng trắng ở đầu và cuối
+        .toLowerCase() // Chuyển về chữ thường
+        .normalize('NFD') // Chuẩn hóa Unicode
+        .replace(/[\u0300-\u036f]/g, '') // Loại bỏ dấu tiếng Việt
+        .replace(/[^a-z0-9\s]/g, '') // Loại bỏ ký tự đặc biệt, giữ lại khoảng trắng
+        .replace(/\s+/g, ' '); // Thay nhiều khoảng trắng liên tiếp bằng một khoảng trắng
+};
+
 const handleSearchInput = () => {
-    if (!searchQuery.value.trim()) {
+    const normalizedQuery = normalizeString(searchQuery.value);
+    console.log("normalizedQuery: ", normalizedQuery);
+    if (!normalizedQuery) {
         filteredProducts.value = [];
         return;
     }
 
-    filteredProducts.value = allProducts.value.filter(product =>
-        product.ten_san_pham.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
+    filteredProducts.value = allProducts.value.filter(product => {
+        const normalizedProductName = normalizeString(product.ten_san_pham);
+        const isMatch = normalizedProductName.includes(normalizedQuery);
+        console.log(`So sánh: "${normalizedProductName}" với "${normalizedQuery}" → ${isMatch}`);
+        return isMatch;
+    });
 
     console.log("Kết quả tìm kiếm:", filteredProducts.value);
 };
@@ -475,7 +542,9 @@ const refreshHoaDon = async (idHoaDon) => {
             currentTab.hd = {
                 ...currentTab.hd, // giữ lại tham chiếu nếu cần
                 ...hoaDonInfo     // ghi đè bằng dữ liệu mới từ server
+                
             };
+            ptnh.value = hoaDonInfo.phuong_thuc_nhan_hang
         }
     } catch (error) {
         console.error('Lỗi khi cập nhật thông tin hóa đơn:', error);
@@ -733,9 +802,10 @@ const add = async () => {
                 phi_van_chuyen: 0,
                 tong_tien_truoc_giam: 0,
                 tong_tien_sau_giam: 0
+                
             })
         });
-
+        ptnh.value = 'Nhận tại cửa hàng';
         activeKey.value = newKey;
     } catch (error) {
         console.error("Lỗi khi tạo hóa đơn:", error);
@@ -805,8 +875,6 @@ const performRemove = async (tabToRemove, targetKey) => {
     }
 };
 
-
-
 // Thêm font Arial tiếng Việt (cần tải file font .ttf và chuyển thành base64)
 const callAddFont = function () {
     this.addFileToVFS('Arial-normal.ttf', 'base64-encoded-font-here');
@@ -853,7 +921,7 @@ const printInvoice = () => {
     doc.text(`Mã hóa đơn: ${activeTabData.value.hd.ma_hoa_don || 'N/A'}`, 20, 86);
     doc.text(`Tên nhân viên: ${activeTabData.value.hd.ten_nhan_vien || 'N/A'}`, 20, 94);
     doc.text(`Ngày tạo: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
-    doc.text(`Tên khách hàng: ${activeTabData.value.hd.khach_hang || 'Khách lẻ'}`, 20, 110);
+    doc.text(`Tên khách hàng: ${activeTabData.value.hd.ho_ten || 'Khách lẻ'}`, 20, 110);
     // Danh sách sản phẩm
     let y = 120;
     doc.setFontSize(12);
@@ -1000,7 +1068,7 @@ const confirmPrint = async (shouldPrint) => {
         try {
             await store.trangThaiDonHang(activeTabData.value.hd.id_hoa_don);
             message.success('Thanh toán tiền mặt thành công!');
-            window.location.href = 'http://localhost:5173/admin';
+            window.location.href = 'http://localhost:5173/admin/banhang';
         } catch (error) {
             console.error('Lỗi khi thanh toán:', error);
             message.error('Đã xảy ra lỗi khi thanh toán!');
@@ -1017,12 +1085,13 @@ const confirmPrint = async (shouldPrint) => {
                 price: Number(activeTabData.value.hd.tong_tien_sau_giam || 0),
                 cancelUrl: "http://localhost:5173/admin/banhang"
             }
+
             console.log(payment_info);
             const res = await thanhToanService.handlePayOSPayment(payment_info);
             console.log(res);
         } catch (error) {
-            console.error('Lỗi khi tạo yêu cầu thanh toán Momo:', error);
-            message.error('Không thể tạo thanh toán Momo!');
+            console.error('Lỗi khi tạo yêu cầu thanh toán PayOS:', error);
+            message.error('Không thể tạo thanh toán PayOs!');
         }
     }
 };
@@ -1065,12 +1134,13 @@ async function loadData() {
             items: ref([]),
             hd: reactive({
                 ...hd,
-                hinh_thuc_thanh_toan: hd.hinh_thuc_thanh_toan || 'Tiền mặt',
-                phuong_thuc_nhan_hang: hd.phuong_thuc_nhan_hang || 'Nhận tại cửa hàng',
-                isKhachLe: !hd.id_khach_hang
+                hinh_thuc_thanh_toan: hd.hinh_thuc_thanh_toan,
+                phuong_thuc_nhan_hang: hd.phuong_thuc_nhan_hang,
+                isKhachLe: !hd.id_khach_hang,
+                
             })
         }));
-
+        
         if (panes.value.length > 0) {
             activeKey.value = panes.value[0].key;
         } else {
@@ -1115,6 +1185,7 @@ watch(() => activeKey.value, async (newKey) => {
             so_luong_ton_goc: item.so_luong_ton || 0
         })) || [];
     }
+    ptnh.value = currentTab.hd.phuong_thuc_nhan_hang;
 }, { immediate: true });
 
 watch(() => searchQuery, (newVal) => {
@@ -1129,16 +1200,17 @@ const handlePhuongThucChange = async () => {
     const idHD = activeTabData.value.hd.id_hoa_don;
 
     if (activeTabData.value.hd.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
+        ptnh.value = 'Nhận tại cửa hàng';
         activeTabData.value.hd.phi_van_chuyen = 0;
         await store.setTrangThaiNhanHang(idHD, 'Nhận tại cửa hàng');
     } else {
+        ptnh.value = 'Giao hàng';
         activeTabData.value.hd.phi_van_chuyen = 30000;
         await store.setTrangThaiNhanHang(idHD, 'Giao hàng');
     }
 
     refreshHoaDon(idHD);
 };
-
 
 
 // watch(

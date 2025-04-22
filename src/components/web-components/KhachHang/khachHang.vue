@@ -113,7 +113,7 @@
                 </a-card>
 
                 <!-- Đơn hàng -->
-                <a-card v-if="selectedMenu.includes('orders')" title="Đơn hàng của tôi">
+                <!-- <a-card v-if="selectedMenu.includes('orders')" title="Đơn hàng của tôi">
                     <a-tabs v-model:activeKey="orderTabActive">
                         <a-tab-pane key="all" tab="Tất cả">
                             <a-empty v-if="orders.length === 0" description="Bạn chưa có đơn hàng nào" />
@@ -247,6 +247,69 @@
                             </a-list>
                         </a-tab-pane>
                     </a-tabs>
+
+                    <a-list v-if="orders.length > 0" :data-source="orders" :pagination="false">
+                        <template #renderItem="{ item }">
+                            <a-list-item>
+                                <a-card style="width: 100%">
+                                    <a-row>
+                                        <a-col :span="16">
+                                            <p>Mã đơn: {{ item.ma_hoa_don }}</p>
+                                            <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
+                                            <p>Trạng thái: <a-tag :color="getOrderStatusColor(item.trang_thai)">{{
+                                                item.trang_thai }}</a-tag></p>
+                                        </a-col>
+                                        <a-col :span="8" style="text-align: right">
+                                            <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
+                                            <a-button type="primary" size="small"
+                                                @click="viewOrderDetail(item.ma_hoa_don)">Chi tiết</a-button>
+                                        </a-col>
+                                    </a-row>
+                                </a-card>
+                            </a-list-item>
+                        </template>
+                    </a-list>
+
+                    <a-pagination :current="pagination.currentPage + 1" :pageSize="pagination.pageSize"
+                        :total="pagination.totalItems" @change="handlePageChange"
+                        style="margin-top: 16px; text-align: center" />
+                </a-card> -->
+
+                <!-- Đơn hàng -->
+                <a-card v-if="selectedMenu.includes('orders')" title="Đơn hàng của tôi">
+                    <a-tabs v-model:activeKey="orderTabActive" @change="handleTabChange">
+                        <a-tab-pane key="all" tab="Tất cả"></a-tab-pane>
+                        <a-tab-pane key="Chờ xác nhận" tab="Chờ xác nhận"></a-tab-pane>
+                        <a-tab-pane key="Đang giao" tab="Đang giao"></a-tab-pane>
+                        <a-tab-pane key="Hoàn thành" tab="Hoàn thành"></a-tab-pane>
+                        <a-tab-pane key="Đã hủy" tab="Đã hủy"></a-tab-pane>
+                    </a-tabs>
+
+                    <a-list v-if="orders.length > 0" :data-source="orders" :pagination="false">
+                        <template #renderItem="{ item }">
+                            <a-list-item>
+                                <a-card style="width: 100%">
+                                    <a-row>
+                                        <a-col :span="16">
+                                            <p>Mã đơn: {{ item.ma_hoa_don }}</p>
+                                            <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
+                                            <p>Trạng thái: <a-tag :color="getOrderStatusColor(item.trang_thai)">{{
+                                                item.trang_thai }}</a-tag></p>
+                                        </a-col>
+                                        <a-col :span="8" style="text-align: right">
+                                            <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
+                                            <a-button type="primary" size="small"
+                                                @click="viewOrderDetail(item.ma_hoa_don)">Chi tiết</a-button>
+                                        </a-col>
+                                    </a-row>
+                                </a-card>
+                            </a-list-item>
+                        </template>
+                    </a-list>
+
+                    <a-pagination :current="pagination.currentPage + 1" :pageSize="pagination.pageSize"
+                        :total="pagination.totalItems" @change="handlePageChange"
+                        style="margin-top: 16px; text-align: center" />
                 </a-card>
 
                 <!-- Địa chỉ -->
@@ -514,6 +577,9 @@ import dayjs from 'dayjs';
 import { khachHangService } from '@/services/khachHangService';
 import { hoaDonService } from '@/services/hoaDonService';
 import OrderList from '@/components/OrderList.vue';
+import { toast } from 'vue3-toastify';
+
+const isLoading = ref(false);
 
 // Add a global center message for consistent UX
 if (!window.centerMessage) {
@@ -644,7 +710,7 @@ const getOrderStatusColor = (status) => {
     const colors = {
         'Chờ xác nhận': 'orange',
         'Đang giao': 'blue',
-        'Đã giao': 'green',
+        'Hoàn thành': 'green',
         'Đã hủy': 'red'
     };
     return colors[status] || 'default';
@@ -798,6 +864,13 @@ const changePassword = async () => {
 
     if (!passwordForm.confirmPassword) {
         return message.error('Vui lòng xác nhận mật khẩu mới');
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+        return toast.error('Mật khẩu mới phải có ít nhất 6 ký tự');
+    }
+    if (passwordForm.newPassword.length > 20) {
+        return toast.error('Mật khẩu mới không được vượt quá 20 ký tự');
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -1282,7 +1355,51 @@ const handleLogout = () => {
         store.logout();
     }
 };
+const fetchOrders = async (trangThai = null) => {
+    try {
+        isLoading.value = true;
+        // Xây dựng URL API
+        const url = trangThai && trangThai !== 'all'
+            ? `/api/khach-hang/hd_kh_tt?idKH=${store.userDetails.idKhachHang}&trangThai=${trangThai}&page=${pagination.currentPage}&size=${pagination.pageSize}`
+            : `/api/khach-hang/hd_kh?idKH=${store.userDetails.idKhachHang}&page=${pagination.currentPage}&size=${pagination.pageSize}`;
 
+        // Gọi API
+        const response = await axiosInstance.get(url);
+
+        // Cập nhật danh sách hóa đơn và thông tin phân trang
+        orders.value = response.data.content || [];
+        pagination.totalItems = response.data.totalElements;
+        pagination.totalPages = response.data.totalPages;
+
+        // toast.success('Tải danh sách hóa đơn thành công!');
+    } catch (error) {
+        toast.error('Có lỗi xảy ra khi tải danh sách hóa đơn!');
+        console.error(error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+const pagination = reactive({
+    currentPage: 0,
+    pageSize: 3,
+    totalItems: 0,
+    totalPages: 0,
+});
+const handleTabChange = (key) => {
+    orderTabActive.value = key;
+    fetchOrders(key === 'all' ? null : key); // Gọi API với trạng thái tương ứng
+};
+const handlePageChange = (page) => {
+    pagination.currentPage = page - 1; // Ant Design sử dụng 1-based index, API sử dụng 0-based index
+    fetchOrders(orderTabActive.value === 'all' ? null : orderTabActive.value); // Gọi lại API với trạng thái hiện tại
+};
+
+// Khởi tạo dữ liệu
+onMounted(async () => {
+    await loadProvinces();
+    await fetchOrders();
+    console.log('Id khách hàng: ', store.userDetails.idKhachHang);
+});
 // Cập nhật thông tin từ store khi component được mount
 const loadUserInfo = async () => {
     console.log('🔥 Đã gọi loadUserInfo');
@@ -1356,25 +1473,25 @@ watch(selectedMenu, (newVal) => {
         selectedMenu.value = ['info'];
     }
 });
-const fetchOrders = async () => {
-    try {
-        const result = await axiosInstance.get(`/qlhd/khach-hang/${store.userDetails.idKhachHang}`);
+// const fetchOrders = async () => {
+//     try {
+//         const result = await axiosInstance.get(`/qlhd/khach-hang/${store.userDetails.idKhachHang}`);
 
-        orders.value = result.data || [];
-    } catch (error) {
-        console.error("❌ Lỗi khi lấy đơn hàng:", error.response?.data || error);
-    }
-};
+//         orders.value = result.data || [];
+//     } catch (error) {
+//         console.error("❌ Lỗi khi lấy đơn hàng:", error.response?.data || error);
+//     }
+// };
 
-const fetchVouchers = async () => {
-    try {
-        const res = await axiosInstance.get(`/admin/quan_ly_voucher/used-by-customer?idKhachHang=${store.userDetails.idKhachHang}`);
+// const fetchVouchers = async () => {
+//     try {
+//         const res = await axiosInstance.get(`/admin/quan_ly_voucher/used-by-customer?idKhachHang=${store.userDetails.idKhachHang}`);
 
-        vouchers.value = res.data || [];
-    } catch (err) {
-        console.error("❌ Lỗi khi lấy voucher:", err);
-    }
-};
+//         vouchers.value = res.data || [];
+//     } catch (err) {
+//         console.error("❌ Lỗi khi lấy voucher:", err);
+//     }
+// };
 
 // Khởi tạo dữ liệu
 onMounted(async () => {

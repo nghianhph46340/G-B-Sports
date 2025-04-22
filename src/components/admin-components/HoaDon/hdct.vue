@@ -225,13 +225,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -442,7 +442,8 @@
 
                                 <a-form-item>
                                     <a-button type="primary" html-type="submit" style="margin-right:10px">Lưu</a-button>
-                                    <a-button type="default" @click="closeDrawer" style="margin-right:auto">Hủy</a-button>
+                                    <a-button type="default" @click="closeDrawer"
+                                        style="margin-right:auto">Hủy</a-button>
                                     <a-button type="default" @click="editedCustomer">Xóa form</a-button>
                                 </a-form-item>
                             </a-form>
@@ -476,9 +477,7 @@
                         <div v-else>
                             <a-form @submit="saveNote">
                                 <a-form-item>
-                                    <a-textarea v-model:value="editedNote" :rows="2" placeholder="Nhập ghi chú..."
-                                        maxlength="100" />
-                                    <p style="color: red;">Nhập tối đa 100 ký tự</p>
+                                    <a-textarea v-model:value="editedNote" :rows="2" placeholder="Nhập ghi chú..."/>
                                 </a-form-item>
                             </a-form>
                         </div>
@@ -487,7 +486,7 @@
             </a-row>
 
             <!-- Popup thêm sản phẩm -->
-            <a-modal v-model:visible="showAddProductPopup" title="Danh sách sản phẩm" :footer="null" width="80%">
+            <a-modal v-model:visible="showAddProductPopup" title="Danh sách sản phẩm" :footer="null" width="85%">
                 <a-row :gutter="16" class="modal-header">
                     <a-col :span="18">
                         <a-input v-model:value="searchKeyword" @input="searchProducts"
@@ -503,18 +502,21 @@
                         <template v-if="column.key === 'stt'">
                             {{ index + 1 + (store.currentPage * 5) }}
                         </template>
+                        <template v-if="column.key === 'hinh_anh'">
+                            <a-image :width="50" :height="50" :src="record.hinh_anh || '/images/default.jpg'"
+                                alt="Hình ảnh sản phẩm" />
+                        </template>
                         <template v-if="column.key === 'gia_ban'">
                             <div>
-                                <span v-if="record.gia_sau_giam && record.gia_sau_giam < record.gia_ban"
-                                    style="color: red;">
-                                    {{ formatCurrency(record.gia_sau_giam || 0) }}
+                                <span v-if="record.giaHienTai && record.giaHienTai < record.giaGoc" style="color: red;">
+                                    {{ formatCurrency(record.giaHienTai || 0) }}
                                 </span>
                                 <span v-else>
-                                    {{ formatCurrency(record.gia_ban || 0) }}
+                                    {{ formatCurrency(record.giaGoc || 0) }}
                                 </span>
-                                <div v-if="record.gia_sau_giam && record.gia_sau_giam < record.gia_ban"
+                                <div v-if="record.giaHienTai && record.giaHienTai < record.giaGoc"
                                     class="original-price">
-                                    {{ formatCurrency(record.gia_ban || 0) }}
+                                    {{ formatCurrency(record.giaGoc || 0) }}
                                 </div>
                             </div>
                         </template>
@@ -621,15 +623,16 @@ const productColumns = [
 
 // Product popup table columns
 const productPopupColumns = [
-    { title: 'STT', key: 'stt' },
-    { title: 'Danh mục', dataIndex: 'ten_danh_muc', key: 'ten_danh_muc' },
-    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham' },
-    { title: 'Màu sắc', dataIndex: 'ten_mau', key: 'ten_mau' },
-    { title: 'Kích cỡ', dataIndex: 'gia_tri', key: 'gia_tri' },
-    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong' },
-    { title: 'Giá bán(VNĐ)', key: 'gia_ban' },
-    { title: 'Trạng thái', dataIndex: 'trang_thai', key: 'trang_thai' },
-    { title: 'Số lượng mua', key: 'so_luong_mua' },
+    { title: 'STT', key: 'stt', width: '2%' },
+    { title: 'Hình ảnh', dataIndex: 'hinh_anh', key: 'hinh_anh', width: '10%' },
+    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham', width: '20%' },
+    { title: 'Danh mục', dataIndex: 'ten_danh_muc', key: 'ten_danh_muc', width: '15%' },
+    { title: 'Màu sắc', dataIndex: 'ten_mau', key: 'ten_mau', width: '8%' },
+    { title: 'Size', dataIndex: 'gia_tri', key: 'gia_tri', width: '7%' },
+    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: '8%' },
+    { title: 'Giá bán(VNĐ)', key: 'gia_ban', width: '10%' },
+    // { title: 'Trạng thái', dataIndex: 'trang_thai', key: 'trang_thai', width: '8%' },
+    { title: 'Số lượng mua', key: 'so_luong_mua', width: '20%' },
 ];
 
 // Danh sách trạng thái cho hình thức "Giao hàng"
@@ -1115,12 +1118,6 @@ const changeStatus = () => {
     }
 };
 
-const cancelOrder = () => {
-    if (confirm('Bạn có chắc muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.')) {
-        store.cancelHoaDon(store.hoaDonDetail.ma_hoa_don);
-    }
-};
-
 // Trạng thái chỉnh sửa ghi chú
 const isEditingNote = ref(false);
 const editedNote = ref('');
@@ -1133,11 +1130,25 @@ const startEditingNote = () => {
 
 // Lưu ghi chú
 const saveNote = () => {
+    // Loại bỏ khoảng trắng thừa trong chuỗi
+    const trimmedNote = editedNote.value.trim().replace(/\s+/g, ' ');
+
+    // Kiểm tra nếu ghi chú chỉ chứa khoảng trắng
+    if (editedNote.value && !trimmedNote) {
+        message.error('Ghi chú không được chứa khoảng trắng!');
+        return;
+    }
+
+    // Kiểm tra độ dài ghi chú sau khi loại bỏ khoảng trắng thừa
+    if (trimmedNote.length > 100) {
+        message.error('Ghi chú không được vượt quá 100 ký tự!');
+        return;
+    }
     AModal.confirm({
         title: 'Xác nhận',
         content: 'Bạn có đồng ý sửa ghi chú không?',
         onOk: () => {
-            store.updateNote(store.hoaDonDetail.ma_hoa_don, editedNote.value);
+            store.updateNote(store.hoaDonDetail.ma_hoa_don, trimmedNote);
             isEditingNote.value = false;
         },
     });
@@ -2525,8 +2536,15 @@ const getUpdatePosition = (update) => {
     border-top-color: rgba(0, 0, 0, 0.85);
 }
 
+.original-price {
+    text-decoration: line-through;
+    color: gray;
+    font-size: 12px;
+    /* Kích thước chữ nhỏ hơn */
+}
+
 /* Animation for active status */
-@keyframes pulse-blue {
+/* @keyframes pulse-blue {
     0% {
         box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.5);
     }
@@ -2538,10 +2556,10 @@ const getUpdatePosition = (update) => {
     100% {
         box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
     }
-}
+} */
 
 /* Responsive styles */
-@media (max-width: 992px) {
+/* @media (max-width: 992px) {
     .timeline-step {
         min-width: 80px;
     }
@@ -2558,7 +2576,7 @@ const getUpdatePosition = (update) => {
     .timeline-content h4 {
         font-size: 14px;
     }
-}
+} */
 
 @media (max-width: 767px) {
     .timeline-steps {
@@ -2590,7 +2608,7 @@ const getUpdatePosition = (update) => {
 }
 
 /* ------------------------------------------------------------------------------ */
-.timeline-step.cancelled .timeline-icon {
+/* .timeline-step.cancelled .timeline-icon {
     background-color: #fff1f0;
     color: #f5222d;
     border-color: #f5222d;
@@ -2603,9 +2621,9 @@ const getUpdatePosition = (update) => {
 
 .timeline-step.cancelled .timeline-content h4 {
     color: #f5222d;
-}
+} */
 
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
     .timeline-steps {
         flex-wrap: nowrap;
         overflow-x: auto;
@@ -2625,5 +2643,5 @@ const getUpdatePosition = (update) => {
     .update-marker {
         top: 32px;
     }
-}
+} */
 </style>

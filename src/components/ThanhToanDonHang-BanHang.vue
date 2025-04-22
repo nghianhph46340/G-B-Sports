@@ -917,7 +917,7 @@ const placeOrder = async () => {
 
                     // Lưu mã hóa đơn vào localStorage để kiểm tra sau khi thanh toán
                     if (response && response.ma_hoa_don) {
-                        localStorage.setItem('pendingOrderCode', response.ma_hoa_don);
+                        localStorage.setItem('pendingOrderCode', hoaDon);
                     }
 
                     // Đặt URL callback để xử lý sau khi thanh toán
@@ -940,6 +940,13 @@ const placeOrder = async () => {
                 const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);
+                localStorage.setItem('hoaDon', hoaDon);
+
+
+                // Đặt URL callback để xử lý sau khi thanh toán
+                const returnUrl = window.location.origin + '/payment-callback';
+                orderData.payment_info.returnUrl = returnUrl;
+
                 // Implement VNPAY payment logic here
             } else if (selectedOnlineMethod.value === 'momo') {
                 // Redirect to Momo payment gateway
@@ -1099,17 +1106,17 @@ const allVouchers = ref([]);
 
 // Fetch vouchers from store
 const fetchVouchers = async () => {
-    try {
-        const response = await store.getAllVouchers();
-        if (response && response.content) {
-            allVouchers.value = response.content;
-            filterValidVouchers();
-            console.log('Loaded vouchers:', allVouchers.value);
-        }
-    } catch (error) {
-        console.error('Error loading vouchers:', error);
-        message.error('Không thể tải danh sách voucher');
-    }
+    // try {
+    //     const response = await store.getAllVouchers();
+    //     if (response && response.content) {
+    //         allVouchers.value = response.content;
+    //         filterValidVouchers();
+    //         console.log('Loaded vouchers:', allVouchers.value);
+    //     }
+    // } catch (error) {
+    //     console.error('Error loading vouchers:', error);
+    //     message.error('Không thể tải danh sách voucher');
+    // }
 };
 
 // Filter valid vouchers based on current order and date
