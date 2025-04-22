@@ -693,18 +693,18 @@ const themNhanVien = async () => {
                     const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
                     const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
 
-                    // Format the date back to string for API
-                    const formattedDate = formData.ngaySinh
-                        ? (typeof formData.ngaySinh === 'object' && formData.ngaySinh !== null && typeof formData.ngaySinh.format === 'function'
-                            ? formData.ngaySinh.format('DD-MM-YYYY')
-                            : (typeof formData.ngaySinh === 'string'
-                                ? formData.ngaySinh
-                                : dayjs(formData.ngaySinh).format('DD-MM-YYYY')))
-                        : '';
+                    // Chuyển đổi định dạng ngày từ DD-MM-YYYY sang YYYY-MM-DD cho API
+                    let formattedDate = '';
+                    if (formData.ngaySinh) {
+                        // Parse ngày từ định dạng DD-MM-YYYY
+                        const parsedDate = dayjs(formData.ngaySinh, 'DD-MM-YYYY');
+                        // Format lại thành YYYY-MM-DD cho API
+                        formattedDate = parsedDate.format('YYYY-MM-DD');
+                    }
 
                     const nhanVienMoi = {
                         ...formData,
-                        ngaySinh: formattedDate,
+                        ngaySinh: formattedDate, // Sử dụng định dạng YYYY-MM-DD cho API
                         diaChiLienHe: `${formData.diaChiLienHe}, ${ward}, ${district}, ${province}`.trim()
                     };
 
@@ -715,7 +715,6 @@ const themNhanVien = async () => {
                         console.log(themNhanVien.error);
                     } else {
                         toast.success('Thêm nhân viên thành công');
-                        // Sử dụng setTimeout để đảm bảo toast hiển thị trước khi chuyển trang
                         setTimeout(() => {
                             console.log('Chuyển trang...');
                             window.location.href = '/admin/quanlynhanvien';

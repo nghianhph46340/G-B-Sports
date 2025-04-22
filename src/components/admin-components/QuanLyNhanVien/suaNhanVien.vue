@@ -782,18 +782,16 @@ const suaNhanVien = async () => {
     }
 
     if (validateForm()) {
-        // Lưu thông tin nhân viên ban đầu
         const nhanVienGoc = await store.getNhanVienById(route.params.id);
 
-        // Kiểm tra xem có thay đổi gì không
+        // Kiểm tra thay đổi, chuyển đổi ngày sang cùng định dạng để so sánh
         const isUnchanged =
             formData.tenNhanVien === nhanVienGoc.tenNhanVien &&
             formData.gioiTinh === nhanVienGoc.gioiTinh &&
-            dayjs(formData.ngaySinh).format('DD-MM-YYYY') === dayjs(nhanVienGoc.ngaySinh).format('DD-MM-YYYY') &&
+            dayjs(formData.ngaySinh, 'DD-MM-YYYY').format('YYYY-MM-DD') === dayjs(nhanVienGoc.ngaySinh).format('YYYY-MM-DD') &&
             formData.soDienThoai === nhanVienGoc.soDienThoai &&
             formData.email === nhanVienGoc.email &&
             formData.anhNhanVien === nhanVienGoc.anhNhanVien &&
-            // Kiểm tra toàn bộ địa chỉ bao gồm cả địa chỉ hành chính
             `${formData.diaChiLienHe}, ${wards.value.find(w => w.code === selectedWard.value)?.name || ''}, ${districts.value.find(d => d.code === selectedDistrict.value)?.name || ''}, ${provinces.value.find(p => p.code === selectedProvince.value)?.name || ''}`.trim() === nhanVienGoc.diaChiLienHe;
 
         if (isUnchanged) {
@@ -803,18 +801,15 @@ const suaNhanVien = async () => {
                 okText: 'Tiếp tục sửa',
                 cancelText: 'Quay lại danh sách',
                 onOk() {
-                    // Ở lại trang
                     return;
                 },
                 onCancel() {
-                    // Quay về trang danh sách
                     window.location.href = '/admin/quanlynhanvien';
                 }
             });
             return;
         }
 
-        // Tiếp tục xử lý khi có thay đổi
         Modal.confirm({
             title: 'Bạn có chắc chắn muốn sửa nhân viên này không?',
             onOk: async () => {
@@ -823,21 +818,17 @@ const suaNhanVien = async () => {
                     const district = districts.value.find(d => d.code === selectedDistrict.value)?.name || '';
                     const ward = wards.value.find(w => w.code === selectedWard.value)?.name || '';
 
-                    // Format the date back to string for API
-                    const formattedDate = formData.ngaySinh
-                        ? (typeof formData.ngaySinh === 'object' && formData.ngaySinh !== null && typeof formData.ngaySinh.format === 'function'
-                            ? formData.ngaySinh.format('DD-MM-YYYY')
-                            : (typeof formData.ngaySinh === 'string'
-                                ? formData.ngaySinh
-                                : dayjs(formData.ngaySinh).format('DD-MM-YYYY')))
-                        : '';
+                    // Chuyển đổi ngày từ DD-MM-YYYY sang YYYY-MM-DD trước khi gửi lên API
+                    const formattedDate = formData.ngaySinh 
+                        ? dayjs(formData.ngaySinh, 'DD-MM-YYYY').format('YYYY-MM-DD')
+                        : null;
 
                     const nhanVienUpdate = {
                         idNhanVien: formData.idNhanVien,
                         maNhanVien: formData.maNhanVien,
                         tenNhanVien: formData.tenNhanVien,
                         gioiTinh: formData.gioiTinh,
-                        ngaySinh: formattedDate,
+                        ngaySinh: formattedDate, // Gửi ngày dạng YYYY-MM-DD
                         soDienThoai: formData.soDienThoai,
                         email: formData.email,
                         trangThai: formData.trangThai,
@@ -849,16 +840,15 @@ const suaNhanVien = async () => {
                             roles: formData.taiKhoan.roles
                         }
                     };
-                    console.log('Dữ liệu truyền vào mới sửa nhan vien', nhanVienUpdate);
+
+                    console.log('Dữ liệu truyền vào API sửa nhân viên:', nhanVienUpdate);
                     const suaNhanViens = await store.suaNhanVien(nhanVienUpdate);
                     if (suaNhanViens.error) {
                         toast.error('Có lỗi xảy ra');
                         console.log(suaNhanViens.error);
                     } else {
                         toast.success('Sửa nhân viên thành công');
-                        // Sử dụng setTimeout để đảm bảo toast hiển thị trước khi chuyển trang
                         setTimeout(() => {
-                            console.log('Chuyển trang...');
                             window.location.href = '/admin/quanlynhanvien';
                         }, 1000);
                     }
@@ -871,17 +861,13 @@ const suaNhanVien = async () => {
             }
         });
     }
-}
+};
 
 onMounted(async () => {
     try {
-        // Load provinces trước
         await loadProvinces();
-
-        // Lấy danh sách nhân viên admin để check trùng
         await getAdminStaffList();
 
-        // Lấy thông tin nhân viên
         const nhanVienById = await store.getNhanVienById(route.params.id);
         console.log('Dữ liệu nhân viên:', nhanVienById);
 
@@ -890,6 +876,7 @@ onMounted(async () => {
         formData.maNhanVien = nhanVienById.maNhanVien;
         formData.tenNhanVien = nhanVienById.tenNhanVien;
         formData.gioiTinh = nhanVienById.gioiTinh;
+        // Chuyển đổi ngày từ YYYY-MM-DD sang DD-MM-YYYY để hiển thị
         formData.ngaySinh = nhanVienById.ngaySinh ? dayjs(nhanVienById.ngaySinh).format('DD-MM-YYYY') : null;
         formData.soDienThoai = nhanVienById.soDienThoai;
         formData.email = nhanVienById.email;
