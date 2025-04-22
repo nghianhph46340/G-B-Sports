@@ -47,7 +47,8 @@
                             <!-- Tên nhân viên -->
                             <a-col :span="12">
                                 <a-form-item label="Tên nhân viên" class="form-item-custom"
-                                    :validateStatus="errors.tenNhanVien ? 'error' : ''" :help="errors.tenNhanVien">
+                                    :validateStatus="errors.tenNhanVien.length ? 'error' : ''" 
+                                    :help="errors.tenNhanVien.join(', ')">
                                     <a-input v-model:value="formData.tenNhanVien" placeholder="Nhập tên nhân viên" />
                                 </a-form-item>
                             </a-col>
@@ -57,7 +58,7 @@
                             <!-- Giới tính -->
                             <a-col :span="12">
                                 <a-form-item label="Giới tính" class="form-item-custom"
-                                    :validateStatus="errors.gioiTinh ? 'error' : ''" :help="errors.gioiTinh">
+                                    :validateStatus="errors.gioiTinh.length ? 'error' : ''" :help="errors.gioiTinh.join(', ')">
                                     <a-radio-group v-model:value="formData.gioiTinh">
                                         <a-radio :value="true">Nam</a-radio>
                                         <a-radio :value="false">Nữ</a-radio>
@@ -68,9 +69,9 @@
                             <!-- Ngày sinh -->
                             <a-col :span="12">
                                 <a-form-item label="Ngày sinh" class="form-item-custom"
-                                    :validateStatus="errors.ngaySinh ? 'error' : ''" :help="errors.ngaySinh">
-                                    <a-date-picker v-model:value="formData.ngaySinh" format="YYYY-MM-DD"
-                                        style="width: 100%" placeholder="Chọn ngày sinh" :valueFormat="'YYYY-MM-DD'" />
+                                    :validateStatus="errors.ngaySinh.length ? 'error' : ''" :help="errors.ngaySinh.join(', ')">
+                                    <a-date-picker v-model:value="formData.ngaySinh" format="DD-MM-YYYY"
+                                        style="width: 100%" placeholder="Chọn ngày sinh" :valueFormat="'DD-MM-YYYY'" />
                                 </a-form-item>
                             </a-col>
                         </a-row>
@@ -79,14 +80,14 @@
                         <a-row :gutter="16">
                             <a-col :span="12">
                                 <a-form-item label="Số điện thoại" class="form-item-custom"
-                                    :validateStatus="errors.soDienThoai ? 'error' : ''" :help="errors.soDienThoai">
+                                    :validateStatus="errors.soDienThoai.length ? 'error' : ''" :help="errors.soDienThoai.join(', ')">
                                     <a-input v-model:value="formData.soDienThoai" placeholder="Nhập số điện thoại" />
                                 </a-form-item>
                             </a-col>
 
                             <a-col :span="12">
                                 <a-form-item label="Email" class="form-item-custom"
-                                    :validateStatus="errors.email ? 'error' : ''" :help="errors.email">
+                                    :validateStatus="errors.email.length ? 'error' : ''" :help="errors.email.join(', ')">
                                     <a-input v-model:value="formData.email" placeholder="Nhập email" />
                                 </a-form-item>
                             </a-col>
@@ -98,7 +99,7 @@
                     <!-- Tỉnh/Thành phố -->
                     <a-col :span="8">
                         <a-form-item label="Tỉnh/Thành phố" class="form-item-custom"
-                            :validateStatus="errors.selectedProvince ? 'error' : ''" :help="errors.selectedProvince">
+                            :validateStatus="errors.selectedProvince.length ? 'error' : ''" :help="errors.selectedProvince.join(', ')">
                             <a-select v-model:value="selectedProvince" show-search placeholder="Chọn Tỉnh/Thành phố"
                                 :options="provinceOptions" :filter-option="filterOption" @change="handleProvinceChange"
                                 allowClear></a-select>
@@ -108,7 +109,7 @@
                     <!-- Quận/Huyện -->
                     <a-col :span="8">
                         <a-form-item label="Quận/Huyện" class="form-item-custom"
-                            :validateStatus="errors.selectedDistrict ? 'error' : ''" :help="errors.selectedDistrict">
+                            :validateStatus="errors.selectedDistrict.length ? 'error' : ''" :help="errors.selectedDistrict.join(', ')">
                             <a-select v-model:value="selectedDistrict" show-search placeholder="Chọn Quận/Huyện"
                                 :options="districtOptions" :filter-option="filterOption" :disabled="!selectedProvince"
                                 @change="handleDistrictChange" allowClear></a-select>
@@ -118,7 +119,7 @@
                     <!-- Phường/Xã -->
                     <a-col :span="8">
                         <a-form-item label="Phường/Xã" class="form-item-custom"
-                            :validateStatus="errors.selectedWard ? 'error' : ''" :help="errors.selectedWard">
+                            :validateStatus="errors.selectedWard.length ? 'error' : ''" :help="errors.selectedWard.join(', ')">
                             <a-select v-model:value="selectedWard" show-search placeholder="Chọn Phường/Xã"
                                 :options="wardOptions" :filter-option="filterOption" :disabled="!selectedDistrict"
                                 allowClear></a-select>
@@ -128,7 +129,7 @@
                     <!-- Địa chỉ cụ thể -->
                     <a-col :span="24">
                         <a-form-item label="Địa chỉ cụ thể" class="form-item-custom"
-                            :validateStatus="errors.diaChiLienHe ? 'error' : ''" :help="errors.diaChiLienHe">
+                            :validateStatus="errors.diaChiLienHe.length ? 'error' : ''" :help="errors.diaChiLienHe.join(', ')">
                             <a-input v-model:value="formData.diaChiLienHe" placeholder="Số nhà, tên đường..." />
                         </a-form-item>
                     </a-col>
@@ -203,28 +204,39 @@ const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
 };
 
+// Thêm hàm chuẩn hóa chuỗi với các chế độ khác nhau
+const normalizeString = (str, mode = 'default') => {
+    if (!str) return '';
+    
+    switch (mode) {
+        case 'phone':
+            // Xóa tất cả khoảng trắng trong số điện thoại
+            return str.replace(/\s+/g, '');
+            
+        case 'email':
+            // Xóa tất cả khoảng trắng trong email
+            return str.replace(/\s+/g, '');
+            
+        default:
+            // Chế độ mặc định: xóa khoảng trắng đầu cuối và thay thế nhiều khoảng trắng liên tiếp bằng một khoảng trắng
+            return str.trim().replace(/\s+/g, ' ');
+    }
+};
+
 // Thêm hàm kiểm tra tên nhân viên
 const validateTenNhanVien = (ten) => {
-    // Kiểm tra xem chuỗi có chứa ít nhất một ký tự không phải số
-    const hasNonNumber = /[^0-9]/.test(ten);
-    
-    // Kiểm tra không chứa ký tự đặc biệt (chỉ cho phép chữ cái, số và khoảng trắng)
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(ten);
-    
-    // Kiểm tra độ dài từ 2-50 ký tự, không chứa toàn số và không có ký tự đặc biệt
-    return ten.length >= 2 && ten.length <= 50 && hasNonNumber && !hasSpecialChar;
+    const normalizedTen = normalizeString(ten);
+    const hasNonNumber = /[^0-9]/.test(normalizedTen);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(normalizedTen);
+    return normalizedTen.length >= 2 && normalizedTen.length <= 50 && hasNonNumber && !hasSpecialChar;
 };
 
 // Thêm hàm kiểm tra địa chỉ cụ thể
 const validateDiaChi = (diaChi) => {
-    // Kiểm tra xem chuỗi có chứa ít nhất một ký tự không phải số
-    const hasNonNumber = /[^0-9]/.test(diaChi);
-    
-    // Kiểm tra không chứa các ký tự đặc biệt không được phép
-    const hasInvalidChar = /[@$!^%&*<>{}]/.test(diaChi);
-    
-    // Kiểm tra độ dài từ 2-100 ký tự, không chứa toàn số và không có ký tự đặc biệt không được phép
-    return diaChi.length >= 2 && diaChi.length <= 100 && hasNonNumber && !hasInvalidChar;
+    const normalizedDiaChi = normalizeString(diaChi);
+    const hasNonNumber = /[^0-9]/.test(normalizedDiaChi);
+    const hasInvalidChar = /[@$!^%&*<>{}]/.test(normalizedDiaChi);
+    return normalizedDiaChi.length >= 2 && normalizedDiaChi.length <= 100 && hasNonNumber && !hasInvalidChar;
 };
 
 const validateForm = () => {
@@ -232,145 +244,165 @@ const validateForm = () => {
 
     // Reset tất cả lỗi
     Object.keys(errors).forEach(key => {
-        errors[key] = '';
+        errors[key] = [];
     });
 
-    // Check mã nhân viên
-    if (!formData.maNhanVien) {
-        errors.maNhanVien = 'Mã nhân viên không được để trống';
-        isValid = false;
-    }
+    // Chuẩn hóa dữ liệu trước khi validate
+    formData.tenNhanVien = normalizeString(formData.tenNhanVien);
+    formData.soDienThoai = normalizeString(formData.soDienThoai, 'phone');
+    formData.email = normalizeString(formData.email, 'email');
+    formData.diaChiLienHe = normalizeString(formData.diaChiLienHe);
 
     // Check tên nhân viên
-    if (!formData.tenNhanVien.trim()) {
-        errors.tenNhanVien = 'Vui lòng nhập tên nhân viên';
-        isValid = false;
-    } else if (!validateTenNhanVien(formData.tenNhanVien.trim())) {
-        if (formData.tenNhanVien.trim().length < 2 || formData.tenNhanVien.trim().length > 50) {
-            errors.tenNhanVien = 'Tên nhân viên phải từ 2 đến 50 ký tự';
-        } else if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(formData.tenNhanVien.trim())) {
-            errors.tenNhanVien = 'Tên nhân viên không được chứa ký tự đặc biệt';
-        } else {
-            errors.tenNhanVien = 'Tên nhân viên không được chứa toàn số';
-        }
-        isValid = false;
-    }
-
-    // Check giới tính
-    if (formData.gioiTinh === null) {
-        errors.gioiTinh = 'Vui lòng chọn giới tính';
-        isValid = false;
-    }
-
-    // Check ngày sinh và tuổi
-    if (!formData.ngaySinh) {
-        errors.ngaySinh = 'Vui lòng nhập ngày sinh';
+    if (!formData.tenNhanVien) {
+        errors.tenNhanVien.push('Vui lòng nhập tên nhân viên');
         isValid = false;
     } else {
-        const age = calculateAge(formData.ngaySinh);
-        if (age < 18) {
-            errors.ngaySinh = 'Nhân viên phải đủ 18 tuổi';
+        if (formData.tenNhanVien.length < 2 || formData.tenNhanVien.length > 50) {
+            errors.tenNhanVien.push('Tên nhân viên phải từ 2 đến 50 ký tự');
             isValid = false;
-        } else if (age > 60) {
-            errors.ngaySinh = 'Nhân viên không được quá 60 tuổi';
+        }
+        if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(formData.tenNhanVien)) {
+            errors.tenNhanVien.push('Tên nhân viên không được chứa ký tự đặc biệt');
+            isValid = false;
+        }
+        if (/[0-9]/.test(formData.tenNhanVien)) {
+            errors.tenNhanVien.push('Tên nhân viên không được chứa số');
+            isValid = false;
+        }
+    }
+
+    // Check ngày sinh
+    if (!formData.ngaySinh) {
+        errors.ngaySinh.push('Vui lòng chọn ngày sinh');
+        isValid = false;
+    } else {
+        const ngaySinh = dayjs(formData.ngaySinh, 'DD-MM-YYYY');
+        const today = dayjs();
+        
+        // Kiểm tra ngày trong tương lai
+        if (ngaySinh.isAfter(today)) {
+            errors.ngaySinh.push('Ngày sinh không được là ngày trong tương lai');
+            isValid = false;
+        }
+        
+        // Tính tuổi
+        const tuoi = today.diff(ngaySinh, 'year');
+        
+        if (tuoi < 18) {
+            errors.ngaySinh.push('Nhân viên phải đủ 18 tuổi');
+            isValid = false;
+        }
+        
+        if (tuoi > 60) {
+            errors.ngaySinh.push('Nhân viên không được quá 60 tuổi');
+            isValid = false;
+        }
+    }
+
+    // Check email
+    if (!formData.email) {
+        errors.email.push('Vui lòng nhập email');
+        isValid = false;
+    } else {
+        if (formData.email.length < 6 || formData.email.length > 320) {
+            errors.email.push('Email phải có độ dài từ 6 đến 320 ký tự');
+            isValid = false;
+        }
+        if (/[\(\),;:<>\[\]"\\\s]/.test(formData.email)) {
+            errors.email.push('Email không được chứa các ký tự đặc biệt như (), , : ; < > [ ] " \\ và khoảng trắng');
+            isValid = false;
+        }
+        if (!validateEmail(formData.email)) {
+            errors.email.push('Email không hợp lệ (VD: example@gmail.com)');
+            isValid = false;
+        }
+        if (adminStaffList.value.some(nv => 
+            normalizeString(nv.email, 'email') === formData.email)) {
+            errors.email.push('Email này đã tồn tại trong hệ thống');
             isValid = false;
         }
     }
 
     // Check số điện thoại
-    if (!formData.soDienThoai.trim()) {
-        errors.soDienThoai = 'Vui lòng nhập số điện thoại';
+    if (!formData.soDienThoai) {
+        errors.soDienThoai.push('Vui lòng nhập số điện thoại');
         isValid = false;
-    } else if (!validatePhoneNumber(formData.soDienThoai)) {
-        errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678 hoặc 09123456789)';
-        isValid = false;
-    } else if (adminStaffList.value.some(nv => nv.soDienThoai === formData.soDienThoai)) {
-        errors.soDienThoai = 'Số điện thoại này đã tồn tại trong hệ thống';
-        isValid = false;
-    }
-
-    // Check email
-    if (!formData.email.trim()) {
-        errors.email = 'Vui lòng nhập email';
-        isValid = false;
-    } else if (formData.email.length < 6 || formData.email.length > 320) {
-        errors.email = 'Email phải có độ dài từ 6 đến 320 ký tự';
-        isValid = false;
-    } else if (/[\(\),;:<>\[\]"\\\s]/.test(formData.email)) {
-        errors.email = 'Email không được chứa các ký tự đặc biệt như (), , : ; < > [ ] " \\ và khoảng trắng';
-        isValid = false;
-    } else if (!validateEmail(formData.email)) {
-        errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
-        isValid = false;
-    } else if (adminStaffList.value.some(nv => nv.email?.toLowerCase() === formData.email.toLowerCase())) {
-        errors.email = 'Email này đã tồn tại trong hệ thống';
-        isValid = false;
+    } else {
+        if (!validatePhoneNumber(formData.soDienThoai)) {
+            errors.soDienThoai.push('Số điện thoại không hợp lệ (VD: 0912345678)');
+            isValid = false;
+        }
+        if (adminStaffList.value.some(nv => 
+            normalizeString(nv.soDienThoai, 'phone') === formData.soDienThoai)) {
+            errors.soDienThoai.push('Số điện thoại này đã tồn tại trong hệ thống');
+            isValid = false;
+        }
     }
 
     // Check địa chỉ
-    if (!selectedProvince.value) {
-        errors.selectedProvince = 'Vui lòng chọn tỉnh/thành phố';
+    if (!formData.diaChiLienHe) {
+        errors.diaChiLienHe.push('Vui lòng nhập địa chỉ cụ thể');
         isValid = false;
-    }
-
-    if (!selectedDistrict.value && selectedProvince.value) {
-        errors.selectedDistrict = 'Vui lòng chọn quận/huyện';
-        isValid = false;
-    }
-
-    if (!selectedWard.value && selectedDistrict.value) {
-        errors.selectedWard = 'Vui lòng chọn phường/xã';
-        isValid = false;
-    }
-
-    if (!formData.diaChiLienHe.trim()) {
-        errors.diaChiLienHe = 'Vui lòng nhập địa chỉ cụ thể';
-        isValid = false;
-    } else if (!validateDiaChi(formData.diaChiLienHe.trim())) {
-        if (formData.diaChiLienHe.trim().length < 2 || formData.diaChiLienHe.trim().length > 100) {
-            errors.diaChiLienHe = 'Địa chỉ phải từ 2 đến 100 ký tự';
-        } else if (/[@$!^%&*<>{}]/.test(formData.diaChiLienHe.trim())) {
-            errors.diaChiLienHe = 'Địa chỉ không được chứa các ký tự đặc biệt (@, $, !, ^, %, &, *, <, >, {, })';
-        } else {
-            errors.diaChiLienHe = 'Địa chỉ không được chứa toàn số';
+    } else {
+        if (formData.diaChiLienHe.length < 2 || formData.diaChiLienHe.length > 100) {
+            errors.diaChiLienHe.push('Địa chỉ phải từ 2 đến 100 ký tự');
+            isValid = false;
         }
+        if (/[@$!^%&*<>{}]/.test(formData.diaChiLienHe)) {
+            errors.diaChiLienHe.push('Địa chỉ không được chứa các ký tự đặc biệt (@, $, !, ^, %, &, *, <, >, {, })');
+            isValid = false;
+        }
+        if (!/[^0-9]/.test(formData.diaChiLienHe)) {
+            errors.diaChiLienHe.push('Địa chỉ không được chứa toàn số');
+            isValid = false;
+        }
+    }
+
+    // Check các trường địa chỉ hành chính
+    if (!selectedProvince.value) {
+        errors.selectedProvince.push('Vui lòng chọn Tỉnh/Thành phố');
+        isValid = false;
+    }
+    if (!selectedDistrict.value && selectedProvince.value) {
+        errors.selectedDistrict.push('Vui lòng chọn Quận/Huyện');
+        isValid = false;
+    }
+    if (!selectedWard.value && selectedDistrict.value) {
+        errors.selectedWard.push('Vui lòng chọn Phường/Xã');
         isValid = false;
     }
 
-    // Nếu có lỗi, hiển thị toast thông báo
     if (!isValid) {
         toast.error('Vui lòng điền đầy đủ và chính xác thông tin!');
-        // Log ra các trường bị lỗi để debug
-        console.log('Các trường có lỗi:', Object.entries(errors).filter(([_, value]) => value !== ''));
+        console.log('Các trường có lỗi:', Object.entries(errors).filter(([_, value]) => value.length > 0));
     }
 
     return isValid;
 };
 
-// Cập nhật hàm validatePhoneNumber để chặt chẽ hơn
+// Cập nhật hàm validatePhoneNumber
 const validatePhoneNumber = (phone) => {
+    // Chuẩn hóa số điện thoại trước khi validate
+    const normalizedPhone = normalizeString(phone, 'phone');
     // Số điện thoại Việt Nam: bắt đầu bằng 0, theo sau là 9 hoặc 10 chữ số
-    // Ví dụ hợp lệ: 10 số (03x...), 11 số (01x...) nếu cần
     const regex = /^0\d{9,10}$/;
-    return regex.test(phone);
+    return regex.test(normalizedPhone);
 };
 
 // Cập nhật hàm validateEmail
 const validateEmail = (email) => {
-    // Kiểm tra độ dài email từ 6-320 ký tự
-    if (email.length < 6 || email.length > 320) {
+    // Chuẩn hóa email trước khi validate
+    const normalizedEmail = normalizeString(email, 'email');
+    if (normalizedEmail.length < 6 || normalizedEmail.length > 320) {
         return false;
     }
-
-    // Kiểm tra các ký tự đặc biệt không được phép và khoảng trắng
-    const hasInvalidChar = /[\(\),;:<>\[\]"\\\s]/.test(email);
+    const hasInvalidChar = /[\(\),;:<>\[\]"\\\s]/.test(normalizedEmail);
     if (hasInvalidChar) {
         return false;
     }
-
-    // Kiểm tra format email cơ bản
     const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    return emailRegex.test(email);
+    return emailRegex.test(normalizedEmail);
 };
 
 // Tính tuổi
@@ -388,15 +420,15 @@ const calculateAge = (birthdate) => {
 
 // Lỗi
 const errors = reactive({
-    tenNhanVien: '',
-    gioiTinh: '',
-    ngaySinh: '',
-    soDienThoai: '',
-    email: '',
-    selectedProvince: '',
-    selectedDistrict: '',
-    selectedWard: '',
-    diaChiLienHe: ''
+    tenNhanVien: [],
+    gioiTinh: [],
+    ngaySinh: [],
+    soDienThoai: [],
+    email: [],
+    selectedProvince: [],
+    selectedDistrict: [],
+    selectedWard: [],
+    diaChiLienHe: []
 });
 
 // Xử lý ảnh
@@ -588,7 +620,7 @@ const resetForm = () => {
                 Object.assign(formData, {
                     tenNhanVien: '',
                     gioiTinh: null,
-                    ngaySinh: null,
+                    ngaySinh: '',
                     soDienThoai: '',
                     email: '',
                     diaChiLienHe: '',
@@ -617,7 +649,7 @@ const resetForm = () => {
 
                 // Clear any error messages
                 Object.keys(errors).forEach(key => {
-                    errors[key] = '';
+                    errors[key] = [];
                 });
 
                 message.success('Đã làm mới form');
@@ -664,10 +696,10 @@ const themNhanVien = async () => {
                     // Format the date back to string for API
                     const formattedDate = formData.ngaySinh
                         ? (typeof formData.ngaySinh === 'object' && formData.ngaySinh !== null && typeof formData.ngaySinh.format === 'function'
-                            ? formData.ngaySinh.format('YYYY-MM-DD')
+                            ? formData.ngaySinh.format('DD-MM-YYYY')
                             : (typeof formData.ngaySinh === 'string'
                                 ? formData.ngaySinh
-                                : dayjs(formData.ngaySinh).format('YYYY-MM-DD')))
+                                : dayjs(formData.ngaySinh).format('DD-MM-YYYY')))
                         : '';
 
                     const nhanVienMoi = {
