@@ -555,7 +555,7 @@
 </template>
 <script setup>
 
-import { ref, reactive, onMounted, watch, h } from 'vue';
+import { ref, reactive, onMounted, watch, h, computed } from 'vue';
 import {
     UserOutlined,
     ShoppingOutlined,
@@ -852,18 +852,10 @@ const updateProfile = async (event) => {
 };
 
 // Xử lý đổi mật khẩu
+// Xử lý đổi mật khẩu
 const changePassword = async () => {
-    // Validate các trường trước khi hiển thị modal xác nhận
-    if (!passwordForm.currentPassword) {
-        return message.error('Vui lòng nhập mật khẩu hiện tại');
-    }
-
-    if (!passwordForm.newPassword) {
-        return message.error('Vui lòng nhập mật khẩu mới');
-    }
-
-    if (!passwordForm.confirmPassword) {
-        return message.error('Vui lòng xác nhận mật khẩu mới');
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+        return toast.error('Vui lòng nhập đầy đủ thông tin');
     }
 
     if (passwordForm.newPassword.length < 6) {
@@ -874,99 +866,56 @@ const changePassword = async () => {
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        return message.error('Mật khẩu xác nhận không khớp');
+        return toast.error('Mật khẩu xác nhận không khớp');
     }
 
-    // Kiểm tra mật khẩu mới có trùng với mật khẩu cũ không
-    if (passwordForm.currentPassword === passwordForm.newPassword) {
-        return message.error({
-            content: 'Mật khẩu mới không được trùng với mật khẩu hiện tại',
-            duration: 3,
-            style: {
-                marginTop: '20vh', // Hiển thị ở giữa màn hình
-            }
+    try {
+        isLoading.value = true;
+        // Gọi API đổi mật khẩu
+        const response = await axiosInstance.post('api/khach-hang/change-password', {
+            oldPassword: passwordForm.currentPassword,
+            newPassword: passwordForm.newPassword
         });
-    }
 
-    // Kiểm tra độ dài mật khẩu mới
-    if (passwordForm.newPassword.length < 6 || passwordForm.newPassword.length > 20) {
-        return message.error('Mật khẩu mới phải từ 6 đến 20 ký tự');
-    }
+        // Kiểm tra phản hồi từ API
+        if (response.data.successMessage) {
+            toast.success(response.data.successMessage + 'Vui lòng đăng nhập lại!');
 
-    // Hiển thị modal xác nhận trước khi thay đổi mật khẩu
-    Modal.confirm({
-        title: 'Xác nhận đổi mật khẩu',
-        content: 'Bạn có chắc chắn muốn đổi mật khẩu không?',
-        okText: 'Đổi mật khẩu',
-        cancelText: 'Hủy',
-        centered: true, // Đảm bảo modal hiển thị ở giữa màn hình
-        wrapClassName: 'modal-center-screen', // Thêm class để CSS đặc biệt
-        maskClosable: false, // Ngăn việc đóng modal khi bấm ra ngoài
-        zIndex: 1500, // Tăng z-index để modal hiển thị trên cùng
-        onOk: async () => {
-            try {
-                // Hiển thị trạng thái đang xử lý
-                const loadingMessage = message.loading('Đang xử lý...', 0);
+            // Reset form
+            passwordForm.currentPassword = '';
+            passwordForm.newPassword = '';
+            passwordForm.confirmPassword = '';
+            localStorage.removeItem('userInfo')
+            localStorage.removeItem('isLoggedIn')
+            localStorage.removeItem('id_roles')
+            localStorage.removeItem('userDetails')
+            localStorage.removeItem('token')
+            sessionStorage.removeItem('userInfo')
+            sessionStorage.removeItem('isLoggedIn')
+            sessionStorage.removeItem('id_roles')
+            sessionStorage.removeItem('userDetails')
+            sessionStorage.removeItem('token')
 
-                // Gọi API đổi mật khẩu
-                const result = await khachHangService.changePassword(
-                    store.userDetails.idKhachHang,
-                    {
-                        currentPassword: passwordForm.currentPassword,
-                        newPassword: passwordForm.newPassword
-                    }
-                );
-
-                // Đóng thông báo loading
-                loadingMessage();
-
-                // Kiểm tra kết quả từ API
-                if (result.error) {
-                    // Hiển thị thông báo lỗi chính xác từ backend
-                    message.error({
-                        content: result.message || 'Đổi mật khẩu thất bại',
-                        duration: 3,
-                        style: {
-                            marginTop: '20vh', // Hiển thị ở giữa màn hình
-                        }
-                    });
-                    console.log('Lỗi từ backend:', result.message);
-                    return;
-                }
-
-                // Hiển thị thông báo thành công nổi bật hơn
-                message.success({
-                    content: 'Đổi mật khẩu thành công!',
-                    duration: 3, // Hiển thị trong 3 giây
-                    style: {
-                        marginTop: '20vh', // Hiển thị ở giữa màn hình
-                    },
-                    icon: () => h(CheckCircleFilled, { style: { color: '#52c41a' } })
-                });
-
-                // Reset form
-                passwordForm.currentPassword = '';
-                passwordForm.newPassword = '';
-                passwordForm.confirmPassword = '';
-            } catch (error) {
-                console.error('Lỗi khi đổi mật khẩu:', error);
-
-                // Hiển thị thông báo lỗi chi tiết từ backend
-                let errorMessage = 'Có lỗi xảy ra khi đổi mật khẩu';
-                if (error.response && error.response.data) {
-                    errorMessage = error.response.data.message || errorMessage;
-                }
-
-                message.error({
-                    content: errorMessage,
-                    duration: 3,
-                    style: {
-                        marginTop: '20vh', // Hiển thị ở giữa màn hình
-                    }
-                });
-            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+            router.push('/login-register/login');
+        } else {
+            toast.error(response.data.error || 'Có lỗi xảy ra khi đổi mật khẩu');
         }
-    });
+    } catch (error) {
+        // Xử lý lỗi từ API
+        if (error.response?.status === 403) {
+            toast.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
+            localStorage.removeItem('token');
+            router.push('/login-register/login');
+        } else if (error.response?.data?.error) {
+            toast.error(error.response.data.error);
+        } else {
+            toast.error('Có lỗi xảy ra khi đổi mật khẩu');
+        }
+        console.error(error);
+    } finally {
+        isLoading.value = false;
+    }
 };
 
 // Xem chi tiết đơn hàng

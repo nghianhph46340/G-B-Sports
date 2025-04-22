@@ -4,7 +4,7 @@
         <div class="search-section">
             <a-dropdown v-model:visible="dropdownVisible" :trigger="['click']" overlayClassName="product-dropdown">
                 <a-input-search v-model:value="searchQuery" placeholder="Tìm kiếm sản phẩm theo tên..."
-                    @input="handleSearchInput" @search="performSearch" style="width: 300px">
+                    @search="performSearch" style="width: 300px">
                     <template #enterButton>
                         <search-outlined />
                     </template>
@@ -145,7 +145,8 @@
                     </div>
                     <div class="mb-3">
                         <label for="idKhachHang" class="form-label">
-                            Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || 'Khách lẻ' }}
+                            Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || activeTabData.hd.ho_ten || 'Khách lẻ'
+                            }}
                         </label>
                         <div class="mb-3">
                             <a-switch v-model:checked="activeTabData.hd.isKhachLe" />
@@ -470,11 +471,13 @@ const filteredProducts = computed(() => {
         return allProducts.value;
     }
 
-    const lowerCaseQuery = searchQuery.value.toLowerCase();
-    return allProducts.value.filter(product =>
-        product.ten_san_pham.toLowerCase().includes(lowerCaseQuery)
-    );
+    const normalizedQuery = normalizeString(searchQuery.value);
+    return allProducts.value.filter(product => {
+        const normalizedProductName = normalizeString(product.ten_san_pham);
+        return normalizedProductName.includes(normalizedQuery);
+    });
 });
+
 
 // Lấy dữ liệu của tab đang active
 const activeTabData = computed(() => {
@@ -494,32 +497,36 @@ const formatCurrency = (value) => {
 
 // Xử lý khi người dùng gõ vào ô tìm kiếm
 const normalizeString = (str) => {
+    if (!str) return '';
     return str
-        .trim() // Loại bỏ khoảng trắng ở đầu và cuối
-        .toLowerCase() // Chuyển về chữ thường
-        .normalize('NFD') // Chuẩn hóa Unicode
-        .replace(/[\u0300-\u036f]/g, '') // Loại bỏ dấu tiếng Việt
-        .replace(/[^a-z0-9\s]/g, '') // Loại bỏ ký tự đặc biệt, giữ lại khoảng trắng
-        .replace(/\s+/g, ' '); // Thay nhiều khoảng trắng liên tiếp bằng một khoảng trắng
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
+        .replace(/\s+/g, ' ')
+        .trim();
 };
 
-const handleSearchInput = () => {
-    const normalizedQuery = normalizeString(searchQuery.value);
-    console.log("normalizedQuery: ", normalizedQuery);
+const handleSearchInput = (query) => {
+    const normalizedQuery = normalizeString(query);
     if (!normalizedQuery) {
         filteredProducts.value = [];
         return;
     }
+    console.log('All products:', allProducts.value.map(p => p.ten_san_pham));
 
     filteredProducts.value = allProducts.value.filter(product => {
-        const normalizedProductName = normalizeString(product.ten_san_pham);
-        const isMatch = normalizedProductName.includes(normalizedQuery);
-        console.log(`So sánh: "${normalizedProductName}" với "${normalizedQuery}" → ${isMatch}`);
-        return isMatch;
+        const normalizedProductName = normalizeString(product.ten_san_pham || '');
+        const match = normalizedProductName.includes(normalizedQuery);
+        console.log(`✅ MATCH: ${match} | "${normalizedProductName}" vs "${normalizedQuery}"`);
+        return match;
     });
+    console.log('🎯 Kết quả lọc:', filteredProducts.value.map(p => p.ten_san_pham));
 
-    console.log("Kết quả tìm kiếm:", filteredProducts.value);
 };
+
+
+
 
 
 // Xử lý khi nhấn Enter hoặc nút Search (có thể dùng để tìm kiếm chính xác hơn)
@@ -542,10 +549,11 @@ const refreshHoaDon = async (idHoaDon) => {
             currentTab.hd = {
                 ...currentTab.hd, // giữ lại tham chiếu nếu cần
                 ...hoaDonInfo     // ghi đè bằng dữ liệu mới từ server
-                
+
             };
             ptnh.value = hoaDonInfo.phuong_thuc_nhan_hang
         }
+        console.log("currentTab.hd sau khi làm mới:", currentTab.hd);
     } catch (error) {
         console.error('Lỗi khi cập nhật thông tin hóa đơn:', error);
         message.error('Không thể làm mới thông tin hóa đơn.');
@@ -802,7 +810,7 @@ const add = async () => {
                 phi_van_chuyen: 0,
                 tong_tien_truoc_giam: 0,
                 tong_tien_sau_giam: 0
-                
+
             })
         });
         ptnh.value = 'Nhận tại cửa hàng';
@@ -1137,10 +1145,10 @@ async function loadData() {
                 hinh_thuc_thanh_toan: hd.hinh_thuc_thanh_toan,
                 phuong_thuc_nhan_hang: hd.phuong_thuc_nhan_hang,
                 isKhachLe: !hd.id_khach_hang,
-                
+
             })
         }));
-        
+
         if (panes.value.length > 0) {
             activeKey.value = panes.value[0].key;
         } else {
@@ -1168,6 +1176,7 @@ function setupAutoReloadAtMidnight() {
     }, timeUntilMidnight);
 }
 
+
 watch(() => activeKey.value, async (newKey) => {
     const currentTab = panes.value.find(p => p.key === newKey);
     if (currentTab && currentTab.hd.id_hoa_don) {
@@ -1186,6 +1195,7 @@ watch(() => activeKey.value, async (newKey) => {
         })) || [];
     }
     ptnh.value = currentTab.hd.phuong_thuc_nhan_hang;
+    store.setCurrentHoaDonId(currentTab.hd.id_hoa_don);
 }, { immediate: true });
 
 watch(() => searchQuery, (newVal) => {
@@ -1195,6 +1205,13 @@ watch(() => searchQuery, (newVal) => {
         dropdownVisible.value = false
     }
 })
+
+watch(searchQuery, (newQuery) => {
+    handleSearchInput(newQuery);
+    dropdownVisible.value = true;
+});
+
+
 
 const handlePhuongThucChange = async () => {
     const idHD = activeTabData.value.hd.id_hoa_don;

@@ -148,9 +148,9 @@ const getHoaDonByIdHoaDon = async(idHD) => {
     }
 }
 
-const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt) => {
+const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt, email) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `addKhHD?idHD=${idHoaDon}&idKH=${idKhachHang}&diaChi=${diaChi}&tenKhachHang=${tenKhachHang}&soDienThoai=${sdt}`);
+        const { data } = await axiosInstance.post(banHang + `addKhHD?idHD=${idHoaDon}&idKH=${idKhachHang}&diaChi=${diaChi}&tenKhachHang=${tenKhachHang}&soDienThoai=${sdt}&email=${email}`);
         return data;
     } catch (error) {
         console.error('Lỗi API thêm khách hàng hoá đơn:', error);

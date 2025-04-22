@@ -157,7 +157,7 @@ const getUserDetail = async ({ username, id_roles }) => {
 
 const themKhachHangBH = async (data) => {
   try {
-    const response = await axiosInstance.post('/api/khach-hang/add/banhang', data)
+    const response = await axiosInstance.post('/api/khach-hang/addKHMoi', data)
     return response.data
   } catch (error) {
     console.error('Lỗi khi thêm khách hàng:', error)

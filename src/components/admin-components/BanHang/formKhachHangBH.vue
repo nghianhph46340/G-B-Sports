@@ -98,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
 
@@ -191,11 +191,6 @@ const validateForm = () => {
             isValid = false;
         }
     });
-
-    // Đảm bảo có địa chỉ mặc định
-    if (!formData.diaChiList.some(d => d.diaChiMacDinh) && formData.diaChiList.length > 0) {
-        formData.diaChiList[0].diaChiMacDinh = true;
-    }
 
     return isValid;
 };
@@ -294,7 +289,7 @@ const themKhachHang = async () => {
     const dataToSend = { ...formData };
 
     try {
-        const result = await gbStore.themKhachHang(dataToSend);
+        const result = await gbStore.themKhachHangBH(dataToSend);
         if (result) {
             toast.success('Thêm khách hàng thành công!', {
                 autoClose: 2000,
@@ -321,22 +316,32 @@ const luuThongTin = async () => {
         return;
     }
 
-    const dataToSend = { ...formData };
+    const idHoaDon = gbStore.getCurrentHoaDonId()
+    console.log('idHoaDon', idHoaDon)
+    const diaChiList = formData.diaChiList.map(diaChi => {
+        return `${diaChi.soNha}, ${diaChi.xaPhuong}, ${diaChi.quanHuyen}, ${diaChi.tinhThanhPho}`;
+    });
 
-    try {
-        const result = await gbStore.themKhachHang(dataToSend);
-        if (result) {
-            toast.success('Thêm khách hàng thành công!', {
-                autoClose: 2000,
-                position: 'top-right'
-            });
-        }
-    } catch (error) {
-        console.error('Lỗi khi thêm khách hàng:', error);
-        // Kiểm tra lỗi từ backend
-        toast.error('Có lỗi xảy ra khi thêm khách hàng');
-        
-    }
+    console.log('Địa chỉ gộp:', diaChiList);
+
+    // Thực hiện logic lưu thông tin (ví dụ: gửi dữ liệu đến API)
+    const dataToSend = {
+        ...formData,
+        diaChiList, // Thêm chuỗi địa chỉ gộp vào dữ liệu gửi đi
+        idHoaDon,  // Thêm ID hóa đơn
+    };
+
+    console.log('Dữ liệu gửi đi:', dataToSend);
+
+    console.log('Lưu thông tin khách hàng:', idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
+
+    gbStore.addKHHD(idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
+
+    toast.success('Lưu thông tin khách hàng thành công!', {
+        autoClose: 2000,
+        position: 'top-right'
+    });
+
 };
 const confirmThemKhachHang = () => {
     if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
