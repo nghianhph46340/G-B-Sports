@@ -2830,11 +2830,6 @@ export const useGbStore = defineStore('gbStore', {
     },
 
 
-
-
-
-
-
     async searchKhuyenMai(keyword, page = 0, size = 5) {
       try {
         const khuyenMaiSearch = await khuyenMaiService.searchKhuyenMai(keyword, page, size);
