@@ -292,12 +292,9 @@ const themKhachHang = async () => {
     }
 
     const dataToSend = { ...formData };
-    if (dataToSend.ngaySinh) {
-        dataToSend.ngaySinh = new Date(dataToSend.ngaySinh).toISOString();
-    }
 
     try {
-        const result = await gbStore.themKhachHangBH(dataToSend);
+        const result = await gbStore.themKhachHang(dataToSend);
         if (result) {
             toast.success('Thêm khách hàng thành công!', {
                 autoClose: 2000,
@@ -327,7 +324,7 @@ const luuThongTin = async () => {
     const dataToSend = { ...formData };
 
     try {
-        const result = await gbStore.themKhachHangBH(dataToSend);
+        const result = await gbStore.themKhachHang(dataToSend);
         if (result) {
             toast.success('Thêm khách hàng thành công!', {
                 autoClose: 2000,
