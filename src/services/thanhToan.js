@@ -53,6 +53,17 @@ const handlePayOSPayment = async (orderData) => {
     }
 };
 
+const paymentStatus = async (orderCode) => {
+    try {
+        // Gọi API backend để kiế trách thanh toán
+        const response = await axiosInstance.get(`/order/payment-status/${orderCode}`);
+        return response.data;
+    } catch (error) {
+        console.error('Lỗi khi kiế trách thanh toán:', error);    
+    }
+};
+
 export const thanhToanService = {
-    handlePayOSPayment
+    handlePayOSPayment,
+    paymentStatus
 }
