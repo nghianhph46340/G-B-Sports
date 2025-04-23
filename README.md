@@ -56,3 +56,6 @@ npm install xlsx
 
 #chat
 npm install sockjs-client @stomp/stompjs @ant-design/icons-vue
+
+#Qrcode
+npm install html5-qrcode

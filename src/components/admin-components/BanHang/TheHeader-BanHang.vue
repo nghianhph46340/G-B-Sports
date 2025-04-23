@@ -44,7 +44,20 @@
                     </div>
                 </template>
             </a-dropdown>
+            <!-- Thêm nút QR Code bên ngoài kính lúp -->
+            <a-tooltip title="Quét mã QR">
+                <a-qrcode error-level="H" :value="qrValue" :size="70" :icon="logo" :iconSize="20" @click="showQrScanner"
+                    style="cursor: pointer; margin-left: 10px;" />
+            </a-tooltip>
         </div>
+
+        <!-- Thêm modal cho quét QR -->
+        <a-modal v-model:open="qrScannerVisible" title="Quét mã QR sản phẩm" @cancel="stopQrScanner" :footer="null">
+            <div id="qr-reader" style="width: 100%;"></div>
+            <!-- <div v-if="qrScanResult" class="mt-2">
+                <p>Kết quả quét: {{ qrScanResult }}</p>
+            </div> -->
+        </a-modal>
 
         <!-- Invoice Tabs -->
         <div class="invoice-tabs">
@@ -68,7 +81,7 @@
                     <template #icon><rollback-outlined /></template>
                 </a-button>
             </a-tooltip>
-            <a-tooltip title="Báo cáo thống kê">
+            <a-tooltip  v-if="store.id_roles !== 3"  title="Báo cáo thống kê">
                 <a-button type="primary" shape="circle" class="action-btn">
                     <template #icon><bar-chart-outlined /></template>
                 </a-button>
@@ -112,8 +125,7 @@
                                 <td>
                                     <a-space direction="vertical">
                                         <a-input-number v-model:value="item.so_luong" :min="1"
-                                            :max="item.so_luong_ton_goc + item.so_luong"
-                                            @change="updateItemTotal(item)"
+                                            :max="item.so_luong_ton_goc + item.so_luong" @change="updateItemTotal(item)"
                                             style="width: 80px;" />
 
                                     </a-space>
@@ -331,6 +343,114 @@ import '../../../config/fonts/Roboto-bold'
 import { toast } from 'vue3-toastify';
 import { thanhToanService } from '@/services/thanhToan';
 import FormKhachHangBH from './formKhachHangBH.vue';
+import { Html5Qrcode } from 'html5-qrcode';
+// Thêm state cho quét QR
+const qrScannerVisible = ref(false);
+const qrScanResult = ref('');
+let html5QrCode = null;
+let isProcessing = false;
+
+// Hiển thị modal quét QR
+const showQrScanner = () => {
+    qrScannerVisible.value = true;
+    // Khởi tạo scanner sau khi modal được mở
+    setTimeout(() => {
+        initQrScanner();
+    }, 100);
+};
+
+// Khởi tạo máy quét QR
+const initQrScanner = () => {
+    html5QrCode = new Html5Qrcode("qr-reader");
+    const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+        if (isProcessing) return; // Nếu đang xử lý, bỏ qua
+        isProcessing = true;
+        qrScanResult.value = decodedText;
+        stopQrScanner();
+        await handleQrResult(decodedText);
+        isProcessing = false; // Đặt lại trạng thái sau khi xử lý xong
+    };
+    const qrCodeErrorCallback = (error) => {
+        console.warn(`QR scan error: ${error}`);
+    };
+
+    // Cấu hình quét QR
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        qrCodeSuccessCallback,
+        qrCodeErrorCallback
+    ).catch(err => {
+        message.error('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập!');
+        console.error("QR Scanner error:", err);
+        qrScannerVisible.value = false;
+    });
+};
+
+// Xử lý kết quả quét QR
+const handleQrResult = async (qrData) => {
+    try {
+        // Giả sử mã QR chứa id_chi_tiet_san_pham
+        const product = allProducts.value.find(p => p.id_chi_tiet_san_pham === Number(qrData));
+        console.log("qrData: ", qrData);
+        console.log("product: ", product);
+        console.log("allProducts.value: ", allProducts.value);
+
+        if (!product) {
+            message.error('Không tìm thấy sản phẩm với mã QR này!(Sản phẩm đã ngừng hoạt động)');
+            return;
+        }
+
+        const currentTab = activeTabData.value;
+        if (!currentTab || !currentTab.hd?.id_hoa_don) {
+            message.error('Vui lòng chọn hoặc tạo một hóa đơn hợp lệ trước!');
+            return;
+        }
+
+        // Kiểm tra xem sản phẩm đã có trong hóa đơn chưa
+        const existingItem = currentTab.items.value.find(
+            item => item.id_chi_tiet_san_pham === product.id_chi_tiet_san_pham
+        );
+
+        if (existingItem) {
+            // Nếu sản phẩm đã có, tăng số lượng
+            const newQuantity = existingItem.so_luong + 1;
+            const productInfo = allProducts.value.find(p => p.id_chi_tiet_san_pham === existingItem.id_chi_tiet_san_pham);
+            const soLuongTonKho = productInfo ? productInfo.so_luong_ton : 0;
+
+            if (newQuantity > soLuongTonKho + existingItem.so_luong) {
+                message.warning(`Số lượng vượt quá tồn kho (${soLuongTonKho})!`);
+                return;
+            }
+
+            existingItem.so_luong = newQuantity;
+            await updateItemTotal(existingItem);
+        } else {
+            // Nếu chưa có, thêm mới
+            await addToBill(product);
+        }
+
+        message.success(`Đã thêm sản phẩm "${product.ten_san_pham}" từ mã QR!`);
+    } catch (error) {
+        console.error('Lỗi khi xử lý mã QR:', error);
+        message.error('Có lỗi xảy ra khi xử lý mã QR!');
+    }
+};
+
+// Dừng máy quét QR
+const stopQrScanner = () => {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            html5QrCode = null;
+        }).catch(err => {
+            console.error("Lỗi khi dừng QR scanner:", err);
+        });
+    }
+    qrScannerVisible.value = false;
+    qrScanResult.value = '';
+};
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const pageSize = ref(5);
 const store = useGbStore();
@@ -1047,6 +1167,7 @@ const da = ref([]);
 // --- Lifecycle Hooks ---
 onMounted(async () => {
     await loadData(); // Gọi lần đầu
+    stopQrScanner();
     setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
 });
 
@@ -1172,8 +1293,9 @@ const handlePhuongThucChange = async () => {
 }
 
 .search-section {
-    flex-shrink: 0;
-    margin-right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .dropdown-content-custom {
@@ -1414,5 +1536,25 @@ const handlePhuongThucChange = async () => {
 
 :deep(.ant-tabs-content) {
     display: none;
+}
+
+:deep(.ant-qrcode) {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+:deep(.ant-qrcode:hover) {
+    transform: scale(1.1);
+}
+
+/* Style cho modal quét QR */
+#qr-reader {
+    width: 100%;
+    max-height: 400px;
+}
+
+.qr-scanner-modal :deep(.ant-modal-body) {
+    padding: 16px;
+    text-align: center;
 }
 </style>

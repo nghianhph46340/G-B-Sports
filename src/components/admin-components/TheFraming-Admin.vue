@@ -37,14 +37,14 @@
                     <AccountBookOutlined />
                     <span>Hóa đơn</span>
                 </a-menu-item>
-                <a-sub-menu key="sub2">
+                <a-sub-menu v-if="store.id_roles !== 3" key="sub2">
                     <template #title>
                         <span>
                             <user-outlined />
                             <span>Tài khoản</span>
                         </span>
                     </template>
-                    <a-menu-item v-if="store.id_roles !== 3" key="10" @click="changeRoute('/admin/quanlynhanvien');">Nhân viên</a-menu-item>
+                    <a-menu-item key="10" @click="changeRoute('/admin/quanlynhanvien');">Nhân viên</a-menu-item>
                     <a-menu-item key="11" @click="changeRoute('/admin/quanlykhachhang');">Khách hàng</a-menu-item>
                 </a-sub-menu>
                 <a-sub-menu v-if="store.id_roles !== 3" key="sub3">
