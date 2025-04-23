@@ -20,6 +20,11 @@
               Hồ sơ
             </a>
           </a-menu-item>
+          <!-- <a-menu-item key="0">
+            <a target="_blank" style="text-decoration: none;" rel="noopener noreferrer" href="#">
+              Đổi mật khẩu
+            </a>
+          </a-menu-item> -->
           <a-menu-item key="1">
             <a style="text-decoration: none;" @click="showPasswordModal = true">
               Đổi mật khẩu

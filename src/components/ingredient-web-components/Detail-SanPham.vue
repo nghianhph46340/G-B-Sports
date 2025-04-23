@@ -82,7 +82,8 @@
                 </div>
 
                 <div class="product-price">
-                    <span class="current-price" @input="handleGiaBanInput" @blur="handleGiaBanBlur">{{ formatCurrency(product.gia_khuyen_mai) }}</span>
+                    <span class="current-price" @input="handleGiaBanInput" @blur="handleGiaBanBlur">{{
+                        formatCurrency(product.gia_khuyen_mai) }}</span>
                     <span class="original-price" v-if="product.giam_gia">{{ formatCurrency(product.gia_goc) }}</span>
                     <span class="discount-percent" v-if="product.giam_gia">(-{{ discountPercent }}%)</span>
                 </div>
@@ -2275,7 +2276,7 @@ const validateGiaBan = (value) => {
 const handleGiaBanInput = (value) => {
     // Convert value to number for validation
     const numValue = parseFloat(String(value).replace(/,/g, ''));
-    
+
     if (!isNaN(numValue)) {
         if (validateGiaBan(numValue)) {
             product.value.gia_goc = numValue;

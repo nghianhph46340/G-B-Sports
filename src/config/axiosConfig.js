@@ -27,10 +27,18 @@ axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 403) {
+            localStorage.removeItem('userInfo')
+            localStorage.removeItem('isLoggedIn')
+            localStorage.removeItem('id_roles')
+            localStorage.removeItem('userDetails')
+            localStorage.removeItem('token')
+            sessionStorage.removeItem('userInfo')
+            sessionStorage.removeItem('isLoggedIn')
+            sessionStorage.removeItem('id_roles')
+            sessionStorage.removeItem('userDetails')
+            sessionStorage.removeItem('token')
+            router.push('/login-register/loginAdmin');
             message.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
-            localStorage.removeItem('token');
-            sessionStorage.removeItem('token');
-            router.push('/login-register/login');
         }
         return Promise.reject(error);
     }

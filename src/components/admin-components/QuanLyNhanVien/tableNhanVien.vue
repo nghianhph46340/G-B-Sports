@@ -73,13 +73,19 @@
               <td>{{ nhanVien.diaChiLienHe }}</td>
               <td>{{ nhanVien.email }}</td>
               <td>
-                <a-switch :checked="nhanVien.trangThai == 'Đang hoạt động' ? true : false"
-                  :style="{ backgroundColor: nhanVien.trangThai === 'Đang hoạt động' ? '#f33b47' : '#ccc' }"
-                  @click="chuyenTrangThai(nhanVien.idNhanVien)" />
+                <a-switch 
+                  :checked="nhanVienStatus[nhanVien.idNhanVien] ? 
+                    nhanVienStatus[nhanVien.idNhanVien] === 'Đang hoạt động' : 
+                    nhanVien.trangThai === 'Đang hoạt động'"
+                  :style="{ backgroundColor: (nhanVienStatus[nhanVien.idNhanVien] || nhanVien.trangThai) === 'Đang hoạt động' ? '#f33b47' : '#ccc' }"
+                  @click="chuyenTrangThai(nhanVien.idNhanVien)" 
+                />
               </td>
               <td>
                 <button class="btn btn-outline-danger btn-sm"
-                  @click="router.push(`/admin/quanlynhanvien/update/${nhanVien.idNhanVien}`)">
+                  @click="router.push(`/admin/quanlynhanvien/update/${nhanVien.idNhanVien}`)"
+                  :disabled="(nhanVienStatus[nhanVien.idNhanVien] || nhanVien.trangThai) === 'Ngừng hoạt động'"
+                  :class="{ 'disabled-button': (nhanVienStatus[nhanVien.idNhanVien] || nhanVien.trangThai) === 'Ngừng hoạt động' }">
                   <i class="fas fa-edit me-1"></i>Sửa
                 </button>
               </td>
@@ -101,7 +107,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, reactive } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import { Modal } from 'ant-design-vue';
@@ -113,49 +119,17 @@ const store = useGbStore();
 const pageSize = ref(5);
 const selectedTrangThai = ref('');
 
-// const fetchData = (page) => {
-//   if (page >= 0 && page < store.totalPages) {
-//     store.getAllNhanVien(page, pageSize.value);
-//   }
-// };
-const fetchData = (page = 0) => {
-  if (page < 0) return;
+// Thay đổi từ computed thành ref
+const dataNhanVien = ref([]);
 
-  store.currentPage = page;
+// Thêm object để theo dõi trạng thái
+const nhanVienStatus = reactive({});
 
-  if (store.searchs && store.searchs.trim() !== '') {
-    store.searchNhanVien(store.searchs, page, pageSize.value);
-  } else if (selectedTrangThai.value) {
-    store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
-  } else {
-    store.getAllNhanVien(page, pageSize.value);
-  }
-};
-//Lọc theo trạng thái
-// Hàm gọi API lấy dữ liệu nhân viên theo trạng thái
-const fetchNhanVien = (page) => {
-  if (page >= 0 && page < store.totalPages) {
-    store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
-  }
-};
-//Chuyểnn trạng thái
-// const checked = ref(false);
-const chuyenTrangThai = (id) => {
-  Modal.confirm({
-    title: 'Bạn có chắc chắn muốn chuyển trạng thái nhân viên này không?',
-    onOk: () => {
-      store.changeTrangThai(id)
-      console.log(id);
-    }
-  })
-}
-
-//Search nhân viên
-const dataNhanVien = computed(() => {
+// Hàm cập nhật dữ liệu
+const updateDataNhanVien = () => {
   if (store.searchs && store.searchs.trim() !== '' && store.nhanVienSearch && store.nhanVienSearch.length > 0) {
-    console.log('Hiển thị kết quả tìm kiếm:', store.nhanVienSearch);
-    return store.nhanVienSearch.map((item, index) => ({
-      stt: index + 1,
+    dataNhanVien.value = store.nhanVienSearch.map((item) => ({
+      stt: item.stt,
       key: item.idNhanVien,
       anhNhanVien: item.anhNhanVien,
       idNhanVien: item.idNhanVien,
@@ -168,13 +142,81 @@ const dataNhanVien = computed(() => {
       email: item.email,
       trangThai: item.trangThai,
     }));
+  } else {
+    dataNhanVien.value = store.getAllNhanVienArr;
   }
-  if (store.searchs) {
-    return [];
-  }
-  // Nếu không có từ khóa tìm kiếm hoặc không có kết quả tìm kiếm, hiển thị tất cả sản phẩm
-  return store.getAllNhanVienArr;
+};
+
+// Cập nhật hàm chuyển trạng thái
+const chuyenTrangThai = (id) => {
+  Modal.confirm({
+    title: 'Bạn có chắc chắn muốn chuyển trạng thái nhân viên này không?',
+    async onOk() {
+      try {
+        const nhanVien = dataNhanVien.value.find(nv => nv.idNhanVien === id);
+        if (nhanVien) {
+          // Lưu trạng thái hiện tại
+          const currentStatus = nhanVien.trangThai;
+          // Cập nhật trạng thái mới vào object theo dõi
+          nhanVienStatus[id] = currentStatus === 'Đang hoạt động' ? 'Ngừng hoạt động' : 'Đang hoạt động';
+          
+          // Gọi API
+          await store.changeTrangThai(id);
+          
+          // Cập nhật trạng thái trong danh sách
+          nhanVien.trangThai = nhanVienStatus[id];
+        }
+      } catch (error) {
+        console.error('Lỗi khi chuyển trạng thái:', error);
+        // Hoàn tác trạng thái nếu có lỗi
+        if (nhanVienStatus[id]) {
+          delete nhanVienStatus[id];
+        }
+      }
+    }
+  });
+};
+
+// Cập nhật các watch và mounted
+watch(() => store.getAllNhanVienArr, () => {
+  updateDataNhanVien();
+}, { deep: true });
+
+watch(() => store.nhanVienSearch, () => {
+  updateDataNhanVien();
+}, { deep: true });
+
+onMounted(() => {
+  store.getAllNhanVien(0, pageSize.value);
+  updateDataNhanVien();
 });
+
+// Cập nhật fetchData
+const fetchData = async (page = 0) => {
+  if (page < 0) return;
+
+  store.currentPage = page;
+  // Reset trạng thái theo dõi
+  Object.keys(nhanVienStatus).forEach(key => delete nhanVienStatus[key]);
+
+  if (store.searchs && store.searchs.trim() !== '') {
+    await store.searchNhanVien(store.searchs, page, pageSize.value);
+  } else if (selectedTrangThai.value) {
+    await store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+  } else {
+    await store.getAllNhanVien(page, pageSize.value);
+  }
+  updateDataNhanVien();
+};
+
+//Lọc theo trạng thái
+// Hàm gọi API lấy dữ liệu nhân viên theo trạng thái
+const fetchNhanVien = (page) => {
+  if (page >= 0 && page < store.totalPages) {
+    store.getNhanVienLocTrangThai(page, pageSize.value, selectedTrangThai.value);
+  }
+};
+
 // watch(() => store.searchs, (newValue) => {
 //   if (!newValue || newValue.trim() === '') {
 //     store.getAllNhanVien(0, pageSize.value);
@@ -182,12 +224,7 @@ const dataNhanVien = computed(() => {
 //     store.searchNhanVien(newValue, 0, pageSize.value);
 //   }
 // });
-// Mounted hook
-onMounted(() => {
-  store.getAllNhanVien(0, pageSize.value);
-  fetchNhanVien();
 
-});
 watch(pageSize, () => {
   store.currentPage = 0;  // Reset về trang đầu khi đổi số lượng
   fetchData(0);
@@ -265,5 +302,19 @@ watch([selectedTrangThai, pageSize], () => {
 .form-check-input:focus-visible {
   box-shadow: none;
   outline: none;
+}
+
+.disabled-button {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    background-color: #ccc !important;
+    border-color: #ccc !important;
+    color: #666 !important;
+}
+
+.disabled-button:hover {
+    background-color: #ccc !important;
+    border-color: #ccc !important;
+    color: #666 !important;
 }
 </style>

@@ -46,10 +46,6 @@ const getDanhSachDiaChi = async (idKhachHang) => {
     const response = await axiosInstance.get('/gioHangWeb/danhSachDiaChi?idKhachHang=' + idKhachHang);
     return response.data;
 }
-const getGHByIdKH = async (idKhachHang, idChiTietSanPham, soLuong) => {
-    const response = await axiosInstance.get('/gioHangWeb/themGHByIdKH?idKH=' + idKhachHang + '&idCTSP=' + idChiTietSanPham + '&soLuong=' + soLuong);
-    return response.data;
-}
 export const banHangOnlineService = {
     createOrder,
     createOrderChiTiet,
@@ -59,7 +55,6 @@ export const banHangOnlineService = {
     updateOrderStatus,
     createOrder1,
     getGioHang,
-    getDanhSachDiaChi,
-    getGHByIdKH
+    getDanhSachDiaChi
 }
 
