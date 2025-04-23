@@ -133,7 +133,20 @@ export const useGbStore = defineStore('gbStore', {
     gioHang: [],
     // Danh sách địa chỉ của khách hàng
     danhSachDiaChi: [],
+    // Giỏ hàng của khách hàng có tài khoản
+    gioHangByIdKH: [],
   }),
+  // Giỏ hàng của khách hàng có tài khoản
+  async getGHByIdKH(idKhachHang, idChiTietSanPham, soLuong) {
+    try {
+      const response = await banHangOnlineService.getGHByIdKH(idKhachHang, idChiTietSanPham, soLuong);
+      this.gioHangByIdKH = response;
+    } catch (error) {
+      console.error('Lỗi trong getGHByIdKH:', error);
+      toast.error('Có lỗi xảy ra khi lấy giỏ hàng')
+    }
+  },
+
 
   ///Đầu mút2
   actions: {

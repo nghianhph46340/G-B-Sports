@@ -1095,7 +1095,7 @@ onMounted(async () => {
         fetchCustomerData(),
         fetchCustomerAddresses(),
         fetchProvinces(),
-        fetchVouchers() // Load vouchers on mount
+        // fetchVouchers() // Load vouchers on mount
     ]);
 });
 
