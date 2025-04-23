@@ -17,7 +17,7 @@
 
                 <a-form-item label="Danh mục" name="id_danh_muc"
                     :rules="[{ required: true, message: 'Vui lòng chọn danh mục!' }]">
-                    <a-select v-model:value="formState.id_danh_muc" placeholder="Chọn danh mục">
+                    <a-select :disabled="true" v-model:value="formState.id_danh_muc" placeholder="Chọn danh mục">
                         <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc" :value="item.id_danh_muc">
                             {{ item.ten_danh_muc }}
                         </a-select-option>
@@ -26,7 +26,7 @@
 
                 <a-form-item label="Thương hiệu" name="id_thuong_hieu"
                     :rules="[{ required: true, message: 'Vui lòng chọn thương hiệu!' }]">
-                    <a-select v-model:value="formState.id_thuong_hieu" placeholder="Chọn thương hiệu">
+                    <a-select :disabled="true" v-model:value="formState.id_thuong_hieu" placeholder="Chọn thương hiệu">
                         <a-select-option v-for="item in thuongHieuList" :key="item.id_thuong_hieu"
                             :value="item.id_thuong_hieu">
                             {{ item.ten_thuong_hieu }}
@@ -36,7 +36,7 @@
 
                 <a-form-item label="Chất liệu" name="id_chat_lieu"
                     :rules="[{ required: true, message: 'Vui lòng chọn chất liệu!' }]">
-                    <a-select v-model:value="formState.id_chat_lieu" placeholder="Chọn chất liệu">
+                    <a-select :disabled="true" v-model:value="formState.id_chat_lieu" placeholder="Chọn chất liệu">
                         <a-select-option v-for="item in chatLieuList" :key="item.id_chat_lieu"
                             :value="item.id_chat_lieu">
                             {{ item.ten_chat_lieu }}
@@ -102,8 +102,9 @@
             <template v-if="isProductValidated">
                 <div v-for="(variant, index) in variants" :key="index" class="variant-item mb-3 p-3 border rounded">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6>Biến thể #{{ index + 1 }}</h6>
-                        <a-button type="text" danger @click="removeVariant(index)">
+                        <h6>Biến thể #{{ index + 1 }} <span v-if="variant.isExisting" class="badge badge-info">Đã tồn
+                                tại</span></h6>
+                        <a-button type="text" danger @click="removeVariant(index)" v-if="!variant.isExisting">
                             <delete-outlined />
                         </a-button>
                     </div>
@@ -113,7 +114,8 @@
                             <div class="col-md-6">
                                 <a-form-item label="Màu sắc"
                                     :rules="[{ required: true, message: 'Vui lòng chọn màu sắc!' }]">
-                                    <a-select v-model:value="variant.id_mau_sac" placeholder="Chọn màu sắc">
+                                    <a-select :disabled="variant.isExisting" v-model:value="variant.id_mau_sac"
+                                        placeholder="Chọn màu sắc">
                                         <a-select-option v-for="color in mauSacList" :key="color.id_mau_sac"
                                             :value="color.id_mau_sac">
                                             {{ color.ma_mau_sac + ' ' + color.ten_mau_sac }}
@@ -124,7 +126,8 @@
                             <div class="col-md-6">
                                 <a-form-item label="Kích thước"
                                     :rules="[{ required: true, message: 'Vui lòng chọn size!' }]">
-                                    <a-select v-model:value="variant.id_kich_thuoc" placeholder="Chọn size">
+                                    <a-select :disabled="variant.isExisting" v-model:value="variant.id_kich_thuoc"
+                                        placeholder="Chọn size">
                                         <a-select-option v-for="size in sizeList" :key="size.id_kich_thuoc"
                                             :value="size.id_kich_thuoc">
                                             {{ size.gia_tri }}
@@ -169,10 +172,12 @@
                                         }
                                     }
                                 ]">
-                                    <a-input-number v-model:value="variant.gia_ban" class="w-full" :controls="false"
+                                    <a-input-number :readonly="variant.isExisting" v-model:value="variant.gia_ban"
+                                        class="w-full" :controls="false"
                                         :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
                                         :parser="(value) => value.replace(/,/g, '')" placeholder="Nhập giá bán sản phẩm"
-                                        :disabled="useCommonPrice" @blur="formatPriceOnBlur($event, index)" />
+                                        :disabled="useCommonPrice || variant.isExisting"
+                                        @blur="formatPriceOnBlur($event, index)" />
                                 </a-form-item>
                             </div>
                         </div>
@@ -377,7 +382,7 @@ const validateForm = async () => {
     }
 };
 
-// Thêm state cho biến thể
+// Thêm biến thể
 const addVariant = async () => {
     // Validate lại form trước khi thêm biến thể
     try {
@@ -396,6 +401,7 @@ const addVariant = async () => {
         console.log('Thêm biến thể mới với giá chung:', giaBan);
     }
 
+    // Thêm biến thể mới với isExisting = false để cho phép chỉnh sửa
     variants.value.push({
         id_chi_tiet_san_pham: null,
         id_mau_sac: undefined,
@@ -406,11 +412,17 @@ const addVariant = async () => {
         fileList: [],
         hinh_anh: [],
         ngay_sua: new Date().toISOString(),
-        ngay_tao: new Date().toISOString()
+        ngay_tao: new Date().toISOString(),
+        isExisting: false // Đánh dấu đây là biến thể mới
     });
 };
 
 const removeVariant = (index) => {
+    const variant = variants.value[index];
+    if (variant.isExisting) {
+        message.warning('Không thể xóa biến thể đã tồn tại. Bạn có thể vô hiệu hóa nó trong màn hình quản lý.');
+        return;
+    }
     variants.value.splice(index, 1);
 };
 
@@ -538,10 +550,14 @@ const onFinish = async () => {
             throw new Error('Vui lòng thêm ít nhất một biến thể');
         }
 
-        // Validate từng biến thể
-        for (const variant of variants.value) {
+        // Tách biến thể thành 2 loại: đã tồn tại và mới 
+        const existingVariants = variants.value.filter(v => v.isExisting);
+        const newVariants = variants.value.filter(v => !v.isExisting);
+
+        // Validate từng biến thể mới
+        for (const variant of newVariants) {
             if (!variant.id_mau_sac || !variant.id_kich_thuoc) {
-                throw new Error('Vui lòng điền đầy đủ thông tin cho tất cả biến thể');
+                throw new Error('Vui lòng điền đầy đủ thông tin cho tất cả biến thể mới');
             }
             // Validate giá của biến thể
             if (!useCommonPrice.value) {
@@ -580,8 +596,9 @@ const onFinish = async () => {
                 formState.hinh_anh = imageUrl;
             }
         }
-        // Upload ảnh mới cho từng biến thể nếu có
-        for (const variant of variants.value) {
+
+        // Upload ảnh mới cho từng biến thể mới nếu có
+        for (const variant of newVariants) {
             if (variant.fileList && variant.fileList.length > 0) {
                 // Tìm các file mới cần upload
                 const newFiles = variant.fileList.filter(file => file.originFileObj && file.needUpload);
@@ -589,7 +606,6 @@ const onFinish = async () => {
                 // Upload các file mới
                 for (const file of newFiles) {
                     try {
-                        // Giả định có hàm uploadImage trong store hoặc utility
                         const imageUrl = await uploadImage(file.originFileObj);
                         if (imageUrl) {
                             console.log('Đã upload ảnh mới, URL trả về:', imageUrl);
@@ -629,19 +645,18 @@ const onFinish = async () => {
                 throw new Error(response?.message || 'Không nhận được dữ liệu phản hồi hợp lệ từ server');
             }
 
-            // Cập nhật các biến thể CTSP
-            for (const variant of variants.value) {
-                // Đảm bảo variant có id_san_pham và id_chi_tiet_san_pham
+            // Cập nhật chỉ các biến thể mới
+            for (const variant of newVariants) {
+                // Đảm bảo variant có id_san_pham
                 variant.id_san_pham = formState.id_san_pham;
 
                 // Log để debug
-                console.log('Gửi biến thể với giá:', variant.gia_ban, 'và số lượng:', variant.so_luong);
+                console.log('Gửi biến thể mới với giá:', variant.gia_ban, 'và số lượng:', variant.so_luong);
 
                 // Gọi API lưu chi tiết sản phẩm
                 await store.createCTSP({
                     ...variant,
-                    hinh_anh: variant.hinh_anh,
-                    id_chi_tiet_san_pham: variant.id_chi_tiet_san_pham
+                    hinh_anh: variant.hinh_anh
                 });
             }
 
@@ -983,7 +998,8 @@ onMounted(async () => {
                             ? ctsp.hinh_anh
                             : [],
                     ngay_tao: ctsp.ngay_tao,
-                    ngay_sua: ctsp.ngay_sua
+                    ngay_sua: ctsp.ngay_sua,
+                    isExisting: true // Đánh dấu đây là biến thể đã tồn tại
                 };
             });
 

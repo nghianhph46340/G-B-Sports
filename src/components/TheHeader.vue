@@ -35,7 +35,7 @@
                                 :class="{ 'icon-animated': animatedIcon === 'support' }" />
                         </div>
                         <span class="nav-text">{{ !store.changeLanguage.hoTro ? 'Hỗ trợ' : store.changeLanguage.hoTro
-                        }}</span>
+                            }}</span>
                     </div>
                     <div class="nav-item text-center" @click="chuyenTrang('/giohang-banhang')"
                         @mouseenter="animateIcon('cart')">
@@ -51,7 +51,7 @@
                         <div class="icon-container">
                             <User class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'user' }" />
                         </div>
-                        <span class="nav-text">{{ displayName }}</span>
+                        <span class="nav-text">{{ displayName ? displayName : 'Đăng nhập' }}</span>
 
                         <!-- User dropdown menu -->
                         <div v-if="store.isLoggedIn && showMenu" class="user-dropdown">
@@ -142,14 +142,14 @@ const updateCartCount = async () => {
     try {
         // Kiểm tra xem khách hàng đã đăng nhập chưa
         const userDetailsStr = sessionStorage.getItem('userDetails');
-        
+
         if (userDetailsStr) {
             const userDetails = JSON.parse(userDetailsStr);
-            
+
             if (userDetails && userDetails.idKhachHang) {
                 // Nếu đã đăng nhập, lấy giỏ hàng từ API
                 const response = await banHangOnlineService.getGioHang(userDetails.idKhachHang);
-                
+
                 if (response && Array.isArray(response)) {
                     // Tính tổng số lượng sản phẩm từ API
                     cartItemCount.value = response.reduce((total, item) => total + (item.so_luong || 1), 0);
@@ -160,7 +160,7 @@ const updateCartCount = async () => {
                 return; // Kết thúc hàm sau khi đã xử lý KH đăng nhập
             }
         }
-        
+
         // Nếu không đăng nhập hoặc không có idKhachHang, lấy từ localStorage
         const savedCart = localStorage.getItem('gb-sport-cart');
         if (savedCart) {
@@ -184,7 +184,7 @@ const navigateTo = (path) => {
 // Cập nhật lại onMounted để thêm listener document.click
 onMounted(async () => {
     await updateCartCount();
-    
+
     // Lắng nghe sự kiện 'cart-updated' nếu có
     window.addEventListener('cart-updated', updateCartCount);
 

@@ -1808,9 +1808,9 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
 
-    async setTrangThaiNhanHang(idHoaDon, phuongThucNhanHang) {
+    async setTrangThaiNhanHang(idHoaDon, phuongThucNhanHang, phiVanChuyen) {
       try {
-        const result = await banHangService.setTrangThaiNhanHang(idHoaDon, phuongThucNhanHang)
+        const result = await banHangService.setTrangThaiNhanHang(idHoaDon, phuongThucNhanHang, phiVanChuyen)
         if (result.error) {
           toast.error(result.message || 'Không thêm được khách hàng hoá đơn')
           return null

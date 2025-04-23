@@ -216,6 +216,10 @@
                                         <a-button type="primary" @click="showAddKichThuocModal">
                                             <plus-outlined />
                                         </a-button>
+                                        <a-button type="default" size="small" @click="showSizeGuideModal"
+                                            class="size-guide-btn">
+                                            <QuestionCircleOutlined />
+                                        </a-button>
                                     </div>
                                 </a-form-item>
                             </div>
@@ -362,11 +366,429 @@
             </a-form-item>
         </a-form>
     </a-modal>
+
+    <!-- Thêm modal hiển thị hướng dẫn chọn size -->
+    <a-modal v-model:visible="sizeGuideModalVisible" title="Hướng dẫn chọn size" width="800px" footer={null}
+        class="size-guide-modal">
+        <a-tabs>
+            <a-tab-pane key="1" tab="Size nữ">
+                <div class="size-guide-content">
+                    <h3 class="size-guide-title">Bảng size Uniqlo Nữ</h3>
+                    <div class="size-tables">
+                        <div class="table-container">
+                            <table class="size-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">UNIQLO SIZE</th>
+                                        <th colspan="2">Phần trên</th>
+                                        <th colspan="3">Phần dưới</th>
+                                    </tr>
+                                    <tr>
+                                        <th>NGỰC</th>
+                                        <th>EO</th>
+                                        <th>INCH</th>
+                                        <th>US SIZE</th>
+                                        <th>CM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>XS</td>
+                                        <td>31 1/2-33</td>
+                                        <td>80-84</td>
+                                        <td>24-25</td>
+                                        <td>0-2</td>
+                                        <td>61.0-63.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S</td>
+                                        <td>33-34 3/4</td>
+                                        <td>84-88</td>
+                                        <td>26-27</td>
+                                        <td>4-6</td>
+                                        <td>66.0-68.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>M</td>
+                                        <td>35-36 1/2</td>
+                                        <td>89-93</td>
+                                        <td>28-29</td>
+                                        <td>8-10</td>
+                                        <td>71-73.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>L</td>
+                                        <td>37-38 1/2</td>
+                                        <td>94-98</td>
+                                        <td>30</td>
+                                        <td>12</td>
+                                        <td>76.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>XL</td>
+                                        <td>39-40 1/2</td>
+                                        <td>99-103</td>
+                                        <td>32</td>
+                                        <td>14</td>
+                                        <td>81.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>XXL</td>
+                                        <td>41-42 1/2</td>
+                                        <td>104-108</td>
+                                        <td>34</td>
+                                        <td>16</td>
+                                        <td>86.0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-container">
+                            <h4 class="measurement-title">Hướng dẫn cách đo</h4>
+                            <table class="size-table">
+                                <thead>
+                                    <tr>
+                                        <th>SIZE</th>
+                                        <th colspan="2">XXS</th>
+                                        <th colspan="2">XS</th>
+                                        <th colspan="2">S</th>
+                                        <th colspan="2">M</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Chiều dài lưng</td>
+                                        <td>21 1/4</td>
+                                        <td>54</td>
+                                        <td>21 2/3</td>
+                                        <td>55</td>
+                                        <td>22 4/9</td>
+                                        <td>57</td>
+                                        <td>23 2/9</td>
+                                        <td>59</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng vai</td>
+                                        <td>14</td>
+                                        <td>35.5</td>
+                                        <td>14 3/8</td>
+                                        <td>36.5</td>
+                                        <td>14 3/4</td>
+                                        <td>37.5</td>
+                                        <td>15 1/3</td>
+                                        <td>39</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng cơ thể</td>
+                                        <td>16 1/2</td>
+                                        <td>42</td>
+                                        <td>17 5/7</td>
+                                        <td>45</td>
+                                        <td>18 1/2</td>
+                                        <td>47</td>
+                                        <td>19 2/3</td>
+                                        <td>50</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều dài tay</td>
+                                        <td>22 5/6</td>
+                                        <td>58</td>
+                                        <td>23 2/9</td>
+                                        <td>59</td>
+                                        <td>23 2/9</td>
+                                        <td>59</td>
+                                        <td>23 5/8</td>
+                                        <td>60</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="size-table mt-3">
+                                <thead>
+                                    <tr>
+                                        <th>SIZE</th>
+                                        <th colspan="2">L</th>
+                                        <th colspan="2">XL</th>
+                                        <th colspan="2">XXL</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Chiều dài lưng</td>
+                                        <td>24</td>
+                                        <td>61</td>
+                                        <td>24 4/5</td>
+                                        <td>63</td>
+                                        <td>25 3/5</td>
+                                        <td>65</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng vai</td>
+                                        <td>16</td>
+                                        <td>40.5</td>
+                                        <td>16 1/3</td>
+                                        <td>41.5</td>
+                                        <td>16 3/4</td>
+                                        <td>42.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng cơ thể</td>
+                                        <td>20 6/7</td>
+                                        <td>53</td>
+                                        <td>22</td>
+                                        <td>56</td>
+                                        <td>23 2/9</td>
+                                        <td>59</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều dài tay</td>
+                                        <td>23 5/8</td>
+                                        <td>60</td>
+                                        <td>23 5/8</td>
+                                        <td>60</td>
+                                        <td>23 5/8</td>
+                                        <td>60</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </a-tab-pane>
+            <a-tab-pane key="2" tab="Size nam">
+                <div class="size-guide-content">
+                    <h3 class="size-guide-title">Bảng size Uniqlo Nam</h3>
+                    <div class="size-tables">
+                        <div class="table-container">
+                            <table class="size-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">UNIQLO SIZE</th>
+                                        <th colspan="2">Phần trên</th>
+                                        <th colspan="3">Phần dưới</th>
+                                    </tr>
+                                    <tr>
+                                        <th>INCH</th>
+                                        <th>CM</th>
+                                        <th>INCH</th>
+                                        <th>CM</th>
+                                        <th>INCH</th>
+                                        <th>CM</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>XS</td>
+                                        <td>32-35</td>
+                                        <td>81-89</td>
+                                        <td>14 1/4</td>
+                                        <td>36</td>
+                                        <td>32</td>
+                                        <td>81</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S</td>
+                                        <td>36-38</td>
+                                        <td>90-97</td>
+                                        <td>15</td>
+                                        <td>38</td>
+                                        <td>33</td>
+                                        <td>84</td>
+                                    </tr>
+                                    <tr>
+                                        <td>M</td>
+                                        <td>39-41</td>
+                                        <td>97-104</td>
+                                        <td>15 3/4</td>
+                                        <td>40</td>
+                                        <td>34</td>
+                                        <td>86.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>L</td>
+                                        <td>41-44</td>
+                                        <td>104-112</td>
+                                        <td>16 1/2</td>
+                                        <td>42</td>
+                                        <td>35</td>
+                                        <td>89</td>
+                                    </tr>
+                                    <tr>
+                                        <td>XL</td>
+                                        <td>44-47</td>
+                                        <td>112-119</td>
+                                        <td>17 1/4</td>
+                                        <td>44</td>
+                                        <td>35 3/4</td>
+                                        <td>91</td>
+                                    </tr>
+                                    <tr>
+                                        <td>XXL</td>
+                                        <td>47-50</td>
+                                        <td>119-127</td>
+                                        <td>18 1/4</td>
+                                        <td>46.5</td>
+                                        <td>36 1/2</td>
+                                        <td>92.5</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-container">
+                            <h4 class="measurement-title">Hướng dẫn cách đo</h4>
+                            <table class="size-table">
+                                <thead>
+                                    <tr>
+                                        <th>SIZE</th>
+                                        <th colspan="2">XS</th>
+                                        <th colspan="2">S</th>
+                                        <th colspan="2">M</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Chiều dài lưng</td>
+                                        <td>25 1/5</td>
+                                        <td>64</td>
+                                        <td>26 3/8</td>
+                                        <td>67</td>
+                                        <td>27 5/9</td>
+                                        <td>70</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng vai</td>
+                                        <td>15 3/4</td>
+                                        <td>40</td>
+                                        <td>16 1/3</td>
+                                        <td>41.5</td>
+                                        <td>17</td>
+                                        <td>43</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng cơ thể</td>
+                                        <td>18 1/2</td>
+                                        <td>47</td>
+                                        <td>19 2/3</td>
+                                        <td>50</td>
+                                        <td>20 6/7</td>
+                                        <td>53</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều dài tay</td>
+                                        <td>7 1/2</td>
+                                        <td>19</td>
+                                        <td>7 7/8</td>
+                                        <td>20</td>
+                                        <td>8 1/2</td>
+                                        <td>21.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng tay</td>
+                                        <td>7 2/5</td>
+                                        <td>19.5</td>
+                                        <td>8</td>
+                                        <td>20.5</td>
+                                        <td>8 1/4</td>
+                                        <td>21</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <table class="size-table mt-3">
+                                <thead>
+                                    <tr>
+                                        <th>SIZE</th>
+                                        <th colspan="2">L</th>
+                                        <th colspan="2">XL</th>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                        <th>inch</th>
+                                        <th>cm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Chiều dài lưng</td>
+                                        <td>28 3/4</td>
+                                        <td>73</td>
+                                        <td>30</td>
+                                        <td>76</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng vai</td>
+                                        <td>17 5/7</td>
+                                        <td>45</td>
+                                        <td>18 1/2</td>
+                                        <td>47</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng cơ thể</td>
+                                        <td>22 4/9</td>
+                                        <td>57</td>
+                                        <td>24</td>
+                                        <td>61</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều dài tay</td>
+                                        <td>8 6/7</td>
+                                        <td>22.5</td>
+                                        <td>8 6/7</td>
+                                        <td>22.5</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Chiều rộng tay</td>
+                                        <td>8 2/3</td>
+                                        <td>22</td>
+                                        <td>9 4/9</td>
+                                        <td>24</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </a-tab-pane>
+        </a-tabs>
+    </a-modal>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, watch, onBeforeUnmount, nextTick, computed } from 'vue';
-import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined, BoldOutlined, ItalicOutlined, UnderlineOutlined, StrikethroughOutlined, DownOutlined, AlignLeftOutlined, AlignCenterOutlined, AlignRightOutlined } from '@ant-design/icons-vue';
+import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined, BoldOutlined, ItalicOutlined, UnderlineOutlined, StrikethroughOutlined, DownOutlined, AlignLeftOutlined, AlignCenterOutlined, AlignRightOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
@@ -476,17 +898,26 @@ const removeDiacritics = (str) => {
         .replace(/đ/g, 'd').replace(/Đ/g, 'D'); // Replace Vietnamese 'd/D'
 };
 
+// Hàm chuẩn hóa chuỗi: xóa khoảng trắng đầu/cuối và thay khoảng trắng thừa giữa các từ bằng 1 khoảng trắng
+const normalizeString = (str) => {
+    if (!str) return '';
+
+    // Xóa khoảng trắng ở đầu/cuối và thay nhiều khoảng trắng bằng một khoảng trắng
+    return str.trim().replace(/\s+/g, ' ');
+};
+
 // Validator cho danh mục
 const validateDanhMucName = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...danhMucList.value, ...newLocalAttributes.danhMuc]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_danh_muc.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_danh_muc).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -504,13 +935,14 @@ const validateDanhMucName = (_, value) => {
 const validateThuongHieuName = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...thuongHieuList.value, ...newLocalAttributes.thuongHieu]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_thuong_hieu.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_thuong_hieu).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -528,27 +960,30 @@ const validateThuongHieuName = (_, value) => {
 const validateChatLieuName = (_, value) => {
     if (!value) return Promise.resolve();
 
+    // Chuẩn hóa đầu vào trước khi kiểm tra độ dài
+    const normalizedValue = normalizeString(value);
+
     // Kiểm tra độ dài
-    if (value.trim().length < 2) {
+    if (normalizedValue.length < 2) {
         return Promise.reject('Tên chất liệu phải có ít nhất 2 ký tự!');
     }
 
-    if (value.trim().length > 50) {
+    if (normalizedValue.length > 50) {
         return Promise.reject('Tên chất liệu không được vượt quá 50 ký tự!');
     }
 
     // Kiểm tra chỉ chứa chữ cái, số, dấu cách và dấu gạch ngang
-    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(value)) {
+    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(normalizedValue)) {
         return Promise.reject('Tên chất liệu chỉ được chứa chữ cái, số, dấu cách và dấu gạch ngang');
     }
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...chatLieuList.value, ...newLocalAttributes.chatLieu]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_chat_lieu.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_chat_lieu).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -566,13 +1001,14 @@ const validateChatLieuName = (_, value) => {
 const validateMauSacName = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Chuẩn hóa đầu vào
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...mauSacList.value, ...newLocalAttributes.mauSac]
         .find(item => {
-            const normalizedName = removeDiacritics(item.ten_mau_sac.trim().toLowerCase());
+            const normalizedName = removeDiacritics(normalizeString(item.ten_mau_sac).toLowerCase());
             return normalizedName === normalizedInput;
         });
 
@@ -590,18 +1026,19 @@ const validateMauSacName = (_, value) => {
 const validateKichThuocValue = (_, value) => {
     if (!value) return Promise.resolve();
 
-    // Lấy giá trị đơn vị hiện tại
-    const donVi = newKichThuoc.don_vi ? newKichThuoc.don_vi.trim() : '';
+    // Lấy giá trị đơn vị hiện tại và chuẩn hóa
+    const donVi = newKichThuoc.don_vi ? normalizeString(newKichThuoc.don_vi) : '';
 
-    // Chuẩn hóa đầu vào
-    const normalizedGiaTri = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+    const normalizedGiaTri = removeDiacritics(normalizedValue.toLowerCase());
     const normalizedDonVi = removeDiacritics(donVi.toLowerCase());
 
     // Kiểm tra trùng lặp trên danh sách kết hợp (API + local)
     const existingItem = [...sizeList.value, ...newLocalAttributes.kichThuoc]
         .find(item => {
-            const itemGiaTri = removeDiacritics(item.gia_tri.toString().trim().toLowerCase());
-            const itemDonVi = item.don_vi ? removeDiacritics(item.don_vi.trim().toLowerCase()) : '';
+            const itemGiaTri = removeDiacritics(normalizeString(item.gia_tri.toString()).toLowerCase());
+            const itemDonVi = item.don_vi ? removeDiacritics(normalizeString(item.don_vi).toLowerCase()) : '';
 
             return itemGiaTri === normalizedGiaTri &&
                 (normalizedDonVi ? itemDonVi === normalizedDonVi : !itemDonVi);
@@ -676,32 +1113,35 @@ const rules = {
 const validateProductName = async (rule, value) => {
     if (!value) return Promise.reject('Tên sản phẩm không được để trống');
 
+    // Chuẩn hóa đầu vào - loại bỏ khoảng trắng thừa
+    const normalizedValue = normalizeString(value);
+
     // Kiểm tra độ dài
-    if (value.trim().length < 3) {
+    if (normalizedValue.length < 3) {
         return Promise.reject('Tên sản phẩm phải có ít nhất 3 ký tự!');
     }
 
-    if (value.trim().length > 100) {
+    if (normalizedValue.length > 100) {
         return Promise.reject('Tên sản phẩm không được vượt quá 100 ký tự!');
     }
 
     // Kiểm tra nếu tên sản phẩm chỉ chứa số
-    if (/^\d+$/.test(value)) {
+    if (/^\d+$/.test(normalizedValue)) {
         return Promise.reject('Tên sản phẩm không được chỉ chứa số');
     }
 
     // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt
     // Cho phép chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc
-    if (!/^[a-zA-Z0-9À-ỹ\s\-\.,()]+$/.test(value)) {
+    if (!/^[a-zA-Z0-9À-ỹ\s\-\.,()]+$/.test(normalizedValue)) {
         return Promise.reject('Tên sản phẩm chỉ được chứa chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc');
     }
 
-    // Chuẩn hóa tên sản phẩm
-    const normalizedInput = removeDiacritics(value.trim().toLowerCase());
+    // Chuẩn hóa tên sản phẩm - loại bỏ khoảng trắng thừa và dấu
+    const normalizedInput = removeDiacritics(normalizedValue.toLowerCase());
 
     // Kiểm tra tên sản phẩm đã tồn tại trong danh sách sản phẩm
     const existingProduct = store.getAllSanPham.find(p => {
-        const normalizedName = removeDiacritics(p.ten_san_pham.trim().toLowerCase());
+        const normalizedName = removeDiacritics(normalizeString(p.ten_san_pham).toLowerCase());
         return normalizedName === normalizedInput;
     });
 
@@ -2438,6 +2878,14 @@ const validateGiaBanSafe = (value, typeIndex, isBlur = false) => {
     // QUAN TRỌNG: Không gọi updateVariantsFromType ở đây để tránh vòng lặp đệ quy
     return true;
 };
+
+// Add new refs for modals
+const sizeGuideModalVisible = ref(false);
+
+// Add functions to show modals
+const showSizeGuideModal = () => {
+    sizeGuideModalVisible.value = true;
+};
 </script>
 
 <style scoped>
@@ -2747,5 +3195,111 @@ const validateGiaBanSafe = (value, typeIndex, isBlur = false) => {
     background: linear-gradient(to bottom, #65bfff, #40a9ff) !important;
     border-color: #40a9ff !important;
     box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3) !important;
+}
+
+.size-guide-btn {
+    margin-left: 10px;
+    background-color: #f0f0f0;
+    border: none;
+    color: #333;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.size-guide-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.size-guide-modal {
+    max-width: 90vw;
+}
+
+.size-guide-content {
+    padding: 15px;
+}
+
+.size-guide-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1890ff;
+    margin-bottom: 20px;
+    text-align: center;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.size-tables {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.table-container {
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.measurement-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin: 15px 0;
+    padding: 0 15px;
+}
+
+.size-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #f0f0f0;
+    background-color: white;
+}
+
+.size-table th {
+    background-color: #1890ff;
+    color: white;
+    font-weight: 600;
+    padding: 12px 8px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+}
+
+.size-table td {
+    padding: 10px 8px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+}
+
+.size-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.size-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.mt-3 {
+    margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+    .size-tables {
+        flex-direction: column;
+    }
+
+    .size-table {
+        font-size: 12px;
+    }
+
+    .size-table th,
+    .size-table td {
+        padding: 6px 4px;
+    }
 }
 </style>

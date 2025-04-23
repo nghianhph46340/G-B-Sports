@@ -315,7 +315,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, watch, onUnmounted } from 'vue';
 import {
     SearchOutlined,
     FileSearchOutlined,
@@ -334,6 +334,7 @@ import { toast } from 'vue3-toastify';
 import { thanhToanService } from '@/services/thanhToan';
 import FormKhachHangBH from './formKhachHangBH.vue';
 import { useRouter } from 'vue-router';
+import { banHangService } from '@/services/banHangService';
 
 const router = useRouter();
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
@@ -1093,24 +1094,18 @@ const confirmPrint = async (shouldPrint) => {
                 price: Number(activeTabData.value.hd.tong_tien_sau_giam || 0),
                 cancelUrl: "http://localhost:5173/admin/banhang"
             }
-
+            localStorage.setItem('checkPaymentStatus', 'true');
+            localStorage.setItem('idHDPayMent', JSON.stringify(activeTabData.value.hd.id_hoa_don));
             console.log(payment_info);
-            const res = await thanhToanService.handlePayOSPayment(payment_info);
-            if (res && res.data) {
-                // Lưu dữ liệu trả về vào localStorage
-                localStorage.setItem('paymentResponse', JSON.stringify(res.data));
+            await thanhToanService.handlePayOSPayment(payment_info);
 
-                console.log('Dữ liệu đã lưu vào localStorage:', res.data);
-            } else {
-                console.error('Không có dữ liệu trả về từ API');
-            }
+
         } catch (error) {
             console.error('Lỗi khi tạo yêu cầu thanh toán PayOS:', error);
             message.error('Không thể tạo thanh toán PayOs!');
         }
     }
 };
-
 
 const updateHinhThucThanhToan = async () => {
     try {
@@ -1132,6 +1127,39 @@ const da = ref([]);
 onMounted(async () => {
     await loadData(); // Gọi lần đầu
     setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
+
+    const checkPaymentStatus = localStorage.getItem('checkPaymentStatus');
+    if (checkPaymentStatus === 'true') {
+        try {
+            const paymentResponse = JSON.parse(localStorage.getItem('paymentResponse'));
+            const idhdpay = JSON.parse(localStorage.getItem('idHDPayMent'));
+            console.log("idhdpay: ", idhdpay);
+            if (paymentResponse && paymentResponse.data && paymentResponse.data.orderCode) {
+                const paystatus = await thanhToanService.checkStatusPayment(paymentResponse.data.orderCode);
+                console.log("paystatus: ", paystatus);
+
+                if (paystatus.status === "PAID") {
+                    console.log("Paid:", idhdpay);
+                    await store.trangThaiDonHang(idhdpay);
+                    toast.success('Thanh toán thành công');
+                } else if (paystatus.status === "PENDING") {
+                    console.log("Pending:", idhdpay);
+                    toast.warning('Thanh toán đang chờ xử lý');
+                } else if (paystatus.status === "CANCELLED") {
+                    console.log("CANCELLED:", idhdpay);
+                    toast.error('Thanh toán đã bị huỷ');
+                }
+            } else {
+                console.error("Không tìm thấy thông tin thanh toán trong localStorage.");
+            }
+        } catch (error) {
+            console.error("Lỗi khi kiểm tra trạng thái thanh toán:", error);
+            toast.error('Không thể kiểm tra trạng thái thanh toán');
+        } finally {
+            // Xóa cờ sau khi kiểm tra xong
+            localStorage.removeItem('checkPaymentStatus');
+        }
+    }
 });
 
 async function loadData() {
@@ -1204,11 +1232,6 @@ watch(() => activeKey.value, async (newKey) => {
     ptnh.value = currentTab.hd.phuong_thuc_nhan_hang;
     store.setCurrentHoaDonId(currentTab.hd.id_hoa_don);
 
-    const paymentResponse = JSON.parse(localStorage.getItem('paymentResponse'));
-    console.log("paymentResponse: ", paymentResponse);
-    // if (paymentResponse.data.orderCode === "PAID") {
-    //     await store.trangThaiDonHang(currentTab.hd.id_hoa_don)
-    // }
 }, { immediate: true });
 
 watch(() => searchQuery, (newVal) => {
@@ -1225,38 +1248,64 @@ watch(searchQuery, (newQuery) => {
 });
 
 
+function tachDiaChi(addressString) {
+    if (!addressString) return null;
+
+    const parts = addressString.split(',').map(p => p.trim());
+    if (parts.length < 4) return null;
+
+    const diaChi = {
+        address: parts[0],                        // Số nhà 11
+        ward: parts[1],                           // Phường Xuân Đỉnh
+        district: parts[2],                       // Quận Bắc Từ Liêm
+        province: parts[3],                       // Hà Nội
+    };
+    return diaChi;
+}
+
+
 
 const handlePhuongThucChange = async () => {
     const idHD = activeTabData.value.hd.id_hoa_don;
+    const diaChiNhan = activeTabData.value.hd.dia_chi; // chuỗi full địa chỉ
 
+    let phiShip = 0;
+    const weight = 500; // gram — bạn có thể lấy từ thực tế hàng hóa
+    const tongTienHoaDon = activeTabData.value.hd.tong_tien_sau_giam;
     if (activeTabData.value.hd.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
         ptnh.value = 'Nhận tại cửa hàng';
-        activeTabData.value.hd.phi_van_chuyen = 0;
-        await store.setTrangThaiNhanHang(idHD, 'Nhận tại cửa hàng');
+        await store.setTrangThaiNhanHang(idHD, 'Nhận tại cửa hàng', 0);
     } else {
         ptnh.value = 'Giao hàng';
-        activeTabData.value.hd.phi_van_chuyen = 30000;
-        await store.setTrangThaiNhanHang(idHD, 'Giao hàng');
+        if (activeTabData.value.hd.tong_tien_truoc_giam >= 2000000) {
+            phiShip = 0;
+            await store.setTrangThaiNhanHang(idHD, 'Giao hàng', phiShip);
+            refreshHoaDon(idHD);
+            return;
+        }
+        const diaChi = tachDiaChi(diaChiNhan);
+        console.log("Địa chỉ giao hàng:", diaChi);
+        if (diaChi) {
+            const result = await banHangService.tinhPhiShip(
+                "Hà Nội", // pickProvince
+                "Nam Từ Liêm", // pickDistrict
+                diaChi.province,
+                diaChi.district,
+                weight,
+                tongTienHoaDon
+            );
+            console.log("Kết quả tính phí ship:", result);
+            phiShip = result.fee || 0;
+            console.log("Phí ship:", phiShip);
+        } else {
+            console.warn('⚠️ Không có địa chỉ giao hàng hợp lệ, phí = 0');
+        }
+
+        await store.setTrangThaiNhanHang(idHD, 'Giao hàng', phiShip);
     }
 
     refreshHoaDon(idHD);
 };
-
-
-// watch(
-//   () => activeTabData.value.hd.phuong_thuc_nhan_hang,
-//   (newVal) => {
-//     if (newVal === 'Nhận tại cửa hàng') {
-//       activeTabData.value.hd.phi_van_chuyen = 0;
-//       store.setTrangThaiNhanHang(activeTabData.value.hd.id_hoa_don, 'Nhận tại cửa hàng');
-//     } else if (newVal === 'Giao hàng') {
-//       activeTabData.value.hd.phi_van_chuyen = 30000;
-//       store.setTrangThaiNhanHang(activeTabData.value.hd.id_hoa_don, 'Giao hàng');
-//     }
-//   }
-// );
-
-
 
 
 </script>
