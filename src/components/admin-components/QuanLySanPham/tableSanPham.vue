@@ -45,7 +45,7 @@
                 :scroll="{ x: 1300 }" @change="handleTableChange">
                 <template #bodyCell="{ column, record }">
                     <template v-if="column.key === 'trang_thai'">
-                        <a-switch @change="(checked) => changeStatusSanPham(record.id_san_pham, checked)"
+                        <a-switch @change="(checked) => handleSwitchClick(record.id_san_pham, checked)"
                             :style="{ backgroundColor: record.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
                             :checked="record.trang_thai === 'Hoạt động' ? true : false"
                             :disabled="record.trang_thai === 'Không hoạt động'" />
@@ -58,7 +58,7 @@
                     </template>
                     <template v-if="column.key === 'action'">
                         <div class="d-flex gap-2">
-                            <a-button type="" @click="changeRouter(record.id_san_pham)" style="color: white;"
+                            <a-button v-if="store.id_roles !== 3" type="" @click="changeRouter(record.id_san_pham)" style="color: white;"
                                 class="d-flex align-items-center btn btn-warning">
                                 <EditOutlined />Sửa
                             </a-button>
@@ -135,7 +135,7 @@
                             <a-switch
                                 :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
                                 size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false"
-                                @change="() => changeStatusCTSP(ctspRecord)" />
+                                @change="() => handleSwitchClickCTSP(ctspRecord.id_chi_tiet_san_pham)" />
                         </template>
                         <template v-if="column.key === 'gia_ban'">
                             {{ formatCurrency(ctspRecord.gia_ban) }}
@@ -614,6 +614,14 @@ const getCTSPForProduct = async (record) => {
     return productCTSPMap.value.get(productId) || [];
 };
 
+const handleSwitchClick = (idSanPham, checked) => {
+    if (store.id_roles === 3) {
+        message.warning('Bạn không có quyền thay đổi trạng thái sản phẩm!');
+        return;
+    }
+    // Nếu có quyền, gọi hàm thay đổi trạng thái
+    changeStatusSanPham(idSanPham, checked);
+};
 const changeStatusSanPham = async (id, checked) => {
     try {
         await store.changeStatusSanPham(id);
@@ -658,7 +666,15 @@ const changeStatusSanPham = async (id, checked) => {
         message.error('Có lỗi xảy ra khi thay đổi trạng thái sản phẩm');
     }
 };
-const changeStatusCTSP = async (record) => {
+const handleSwitchClickCTSP = (idCTSP) => {
+    if (store.id_roles === 3) {
+        message.warning('Bạn không có quyền thay đổi trạng thái sản phẩm!');
+        return;
+    }
+    // Nếu có quyền, gọi hàm thay đổi trạng thái
+    changeStatusCTSP(idCTSP);
+};
+const changeStatusCTSP = async (id) => {
     try {
         const ctspId = record.id_chi_tiet_san_pham;
         const currentStatus = record.trang_thai;

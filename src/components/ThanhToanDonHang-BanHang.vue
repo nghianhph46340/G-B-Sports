@@ -1106,17 +1106,17 @@ const allVouchers = ref([]);
 
 // Fetch vouchers from store
 const fetchVouchers = async () => {
-    try {
-        const response = await store.getAllVouchers();
-        if (response && response.content) {
-            allVouchers.value = response.content;
-            filterValidVouchers();
-            console.log('Loaded vouchers:', allVouchers.value);
-        }
-    } catch (error) {
-        console.error('Error loading vouchers:', error);
-        message.error('Không thể tải danh sách voucher');
-    }
+    // try {
+    //     const response = await store.getAllVouchers();
+    //     if (response && response.content) {
+    //         allVouchers.value = response.content;
+    //         filterValidVouchers();
+    //         console.log('Loaded vouchers:', allVouchers.value);
+    //     }
+    // } catch (error) {
+    //     console.error('Error loading vouchers:', error);
+    //     message.error('Không thể tải danh sách voucher');
+    // }
 };
 
 // Filter valid vouchers based on current order and date
