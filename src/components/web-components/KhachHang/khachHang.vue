@@ -12,7 +12,7 @@
                             <a-button class="upload-avatar-btn" shape="circle" size="small">
                                 <template #icon><camera-outlined /></template>
                             </a-button>
-                        </div>
+    </div>
                         <div class="profile-info">
                             <div class="profile-info-header">
                                 <h2>{{ userInfo.name || 'Khách hàng' }}</h2>
@@ -139,7 +139,7 @@
                                             </a-row>
                                         </a-card>
                                     </a-list-item>
-                                </template>
+</template>
                             </a-list>
                         </a-tab-pane>
                         <a-tab-pane key="pending" tab="Chờ xác nhận">

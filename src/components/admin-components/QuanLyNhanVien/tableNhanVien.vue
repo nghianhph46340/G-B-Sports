@@ -41,38 +41,38 @@
       <a-empty :image="simpleImage" />
     </div>
     <div v-else>
-      <div class="table-responsive mt-4">
-        <table class="table table-hover">
-          <thead>
-            <tr class="">
-              <th scope="col">#</th>
-              <th scope="col">Ảnh</th>
-              <th scope="col">Mã nhân viên</th>
-              <th scope="col">Tên nhân viên </th>
-              <th scope="col">Giới tính</th>
-              <th scope="col">Ngày sinh</th>
-              <th scope="col">SĐT</th>
-              <th scope="col">Địa chỉ</th>
-              <th scope="col">Email</th>
-              <th scope="col">Trạng thái</th>
-              <th scope="col">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(nhanVien, index) in dataNhanVien" :key="nhanVien.idNhanVien">
-              <td>{{ index + 1 }}</td>
-              <td>
+    <div class="table-responsive mt-4">
+      <table class="table table-hover">
+        <thead>
+          <tr class="">
+            <th scope="col">#</th>
+            <th scope="col">Ảnh</th>
+            <th scope="col">Mã nhân viên</th>
+            <th scope="col">Tên nhân viên </th>
+            <th scope="col">Giới tính</th>
+            <th scope="col">Ngày sinh</th>
+            <th scope="col">SĐT</th>
+            <th scope="col">Địa chỉ</th>
+            <th scope="col">Email</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(nhanVien, index) in dataNhanVien" :key="nhanVien.idNhanVien">
+            <td>{{ index + 1 }}</td>
+            <td>
                 <a-image :width="75" :src="nhanVien.anhNhanVien" />
 
-              </td>
-              <td>{{ nhanVien.maNhanVien }}</td>
-              <td>{{ nhanVien.tenNhanVien }}</td>
+            </td>
+            <td>{{ nhanVien.maNhanVien }}</td>
+            <td>{{ nhanVien.tenNhanVien }}</td>
               <td>{{ nhanVien.gioiTinh? "Nam" : "Nữ" }}</td>
-              <td>{{ nhanVien.ngaySinh }}</td>
-              <td>{{ nhanVien.soDienThoai }}</td>
-              <td>{{ nhanVien.diaChiLienHe }}</td>
-              <td>{{ nhanVien.email }}</td>
-              <td>
+            <td>{{ nhanVien.ngaySinh }}</td>
+            <td>{{ nhanVien.soDienThoai }}</td>
+            <td>{{ nhanVien.diaChiLienHe }}</td>
+            <td>{{ nhanVien.email }}</td>
+            <td>
                 <a-switch 
                   :checked="nhanVienStatus[nhanVien.idNhanVien] ? 
                     nhanVienStatus[nhanVien.idNhanVien] === 'Đang hoạt động' : 
@@ -80,26 +80,26 @@
                   :style="{ backgroundColor: (nhanVienStatus[nhanVien.idNhanVien] || nhanVien.trangThai) === 'Đang hoạt động' ? '#f33b47' : '#ccc' }"
                   @click="chuyenTrangThai(nhanVien.idNhanVien)" 
                 />
-              </td>
-              <td>
+            </td>
+            <td>
                 <button class="btn btn-outline-danger btn-sm"
                   @click="router.push(`/admin/quanlynhanvien/update/${nhanVien.idNhanVien}`)"
                   :disabled="(nhanVienStatus[nhanVien.idNhanVien] || nhanVien.trangThai) === 'Ngừng hoạt động'"
                   :class="{ 'disabled-button': (nhanVienStatus[nhanVien.idNhanVien] || nhanVien.trangThai) === 'Ngừng hoạt động' }">
-                  <i class="fas fa-edit me-1"></i>Sửa
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <i class="fas fa-edit me-1"></i>Sửa
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
       <div class="d-flex justify-content-center align-items-center mt-3">
-        <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
-          :disabled="store.currentPage === 0">Previous</button>
-        <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages }}</span>
-        <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
-          :disabled="store.currentPage >= store.totalPages - 1">Next</button>
+    <button class="btn buttonPT p-0" @click="fetchData(store.currentPage - 1)"
+      :disabled="store.currentPage === 0">Previous</button>
+    <span class="mx-3">Trang {{ store.currentPage + 1 }} / {{ store.totalPages }}</span>
+    <button class="btn buttonPT" @click="fetchData(store.currentPage + 1)"
+      :disabled="store.currentPage >= store.totalPages - 1">Next</button>
       </div>
     </div>
 

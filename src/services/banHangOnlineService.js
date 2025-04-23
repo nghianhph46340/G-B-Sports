@@ -46,6 +46,16 @@ const getDanhSachDiaChi = async (idKhachHang) => {
     const response = await axiosInstance.get('/gioHangWeb/danhSachDiaChi?idKhachHang=' + idKhachHang);
     return response.data;
 }
+// Thêm giỏ hàng cho khách hàng có tài khoản
+const themGioHangByIdKH = async (idKH, idCTSP, soLuong) => {
+    const response = await axiosInstance.post('/gioHangWeb/themGHByIdKH?idKH=' + idKH + '&idCTSP=' + idCTSP + '&soLuong=' + soLuong);
+    return response.data;
+}
+// Xoá số lượng sản phẩm trong giỏ hàng
+const xoaSoLuongSPGH = async (idKH, idCTSP, soLuong) => {
+    const response = await axiosInstance.delete('/gioHangWeb/deleteGHByIdKH?idKH=' + idKH + '&idCTSP=' + idCTSP + '&soLuong=' + soLuong);
+    return response.data;
+}
 export const banHangOnlineService = {
     createOrder,
     createOrderChiTiet,
@@ -55,6 +65,8 @@ export const banHangOnlineService = {
     updateOrderStatus,
     createOrder1,
     getGioHang,
-    getDanhSachDiaChi
+    getDanhSachDiaChi,
+    themGioHangByIdKH,
+    xoaSoLuongSPGH
 }
 
