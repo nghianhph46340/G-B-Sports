@@ -1511,14 +1511,14 @@ export const useGbStore = defineStore('gbStore', {
           console.log('Updated user details in store:', this.userDetails)
         }
 
-        // Refresh the customer list if we're on the admin page
-        await this.getAllKhachHang(
-          0,
-          3,
-          this.searchs,
-          this.selectedTrangThai,
-          khachHangData.idKhachHang,
-        )
+        // // Refresh the customer list if we're on the admin page
+        // await this.getAllKhachHang(
+        //   0,
+        //   3,
+        //   this.searchs,
+        //   this.selectedTrangThai,
+        //   khachHangData.idKhachHang,
+        // )
 
         this.successMessage = 'Cập nhật khách hàng thành công!'
         return true

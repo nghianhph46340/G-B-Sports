@@ -458,6 +458,7 @@ const danhSachKhachHang = computed(() => {
     }));
 });
 
+console.log("danhSachKhachHang: ", danhSachKhachHang.value);
 const diaChiMap = computed(() => store.diaChiMap);
 
 const chonKhachHang = async (khachHang) => {
@@ -493,10 +494,14 @@ const chonKhachHang = async (khachHang) => {
         // Làm mới dữ liệu hóa đơn
         await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
 
+        localStorage.setItem('khachHangBH', JSON.stringify(khachHang));
+        localStorage.setItem('chonKH', true)
+
+
         console.log('activeTabData.hd sau khi làm mới:', activeTabData.value.hd);
         message.success(`Đã chọn khách hàng: ${khachHang.tenKhachHang}`);
 
-
+        
     } catch (error) {
         console.error('Lỗi khi chọn khách hàng:', error);
         message.error('Không thể chọn khách hàng. Vui lòng thử lại!');

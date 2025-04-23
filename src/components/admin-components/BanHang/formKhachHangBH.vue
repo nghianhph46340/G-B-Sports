@@ -343,6 +343,21 @@ const luuThongTin = async () => {
     });
 
 };
+
+function tachDiaChi(addressString) {
+    if (!addressString) return null;
+
+    const parts = addressString.split(',').map(p => p.trim());
+    if (parts.length < 4) return null;
+
+    const diaChi = {
+        address: parts[0],                        // Số nhà 11
+        ward: parts[1],                           // Phường Xuân Đỉnh
+        district: parts[2],                       // Quận Bắc Từ Liêm
+        province: parts[3],                       // Hà Nội
+    };
+    return diaChi;
+}
 const confirmThemKhachHang = () => {
     if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
         themKhachHang();
@@ -359,6 +374,25 @@ onMounted(async () => {
     await loadProvinces();
     districts.value = [[]];
     wards.value = [[]];
+    const checkKH = localStorage.getItem('chonKH');
+    if (checkKH === 'true') {
+        try {
+            const khachHang = JSON.parse(localStorage.getItem('khachHang'));
+            console.log('Khách hàng từ localStorage:', khachHang);
+            if (khachHang) {
+                formData.tenKhachHang = khachHang.tenKhachHang;
+                formData.soDienThoai = khachHang.soDienThoai;
+                formData.email = khachHang.email;
+                formData.diaChiList = khachHang.diaChiList.map(diaChi => tachDiaChi(diaChi));
+                formData.diaChiList.forEach((diaChi, index) => {
+                    handleProvinceChange(index);
+                    handleDistrictChange(index);
+                });
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy thông tin khách hàng từ localStorage:', error);
+        }
+    }
 });
 </script>
 

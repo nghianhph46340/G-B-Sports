@@ -238,7 +238,8 @@
                             </a-button>
                             <p class="login-to-review" v-else>
                                 <a-alert type="info" show-icon>
-                                    <template #message>Vui lòng <a @click="navigateToLogin">đăng nhập</a> để viết đánh giá</template>
+                                    <template #message>Vui lòng <a @click="navigateToLogin">đăng nhập</a> để viết đánh
+                                        giá</template>
                                 </a-alert>
                             </p>
                         </div>
@@ -257,7 +258,8 @@
                                 <div class="review-actions">
                                     <div class="review-rating">
                                         <star-filled v-for="i in review.danh_gia" :key="'review-star-' + i" />
-                                        <star-outlined v-for="i in (5 - review.danh_gia)" :key="'review-empty-star-' + i" />
+                                        <star-outlined v-for="i in (5 - review.danh_gia)"
+                                            :key="'review-empty-star-' + i" />
                                     </div>
                                     <div class="review-buttons" v-if="isOwnReview(review)">
                                         <a-button type="text" size="small" @click="editReview(review)">
@@ -418,55 +420,44 @@
         </a-modal>
 
         <!-- Modal chỉnh sửa đánh giá -->
-        <a-modal
-          v-model:open="editReviewVisible"
-          :footer="null"
-          :mask-closable="true"
-          :width="600"
-          centered
-          class="edit-review-modal"
-        >
-          <div class="edit-review">
-            <h3>Chỉnh sửa đánh giá</h3>
-            <a-form layout="vertical">
-              <a-form-item label="Đánh giá">
-                <a-rate v-model:value="editReviewForm.rating" />
-              </a-form-item>
-              <a-form-item label="Nội dung">
-                <a-textarea v-model:value="editReviewForm.content" rows="4" />
-              </a-form-item>
-              <div class="edit-review-actions">
-                <a-button @click="cancelEditReview">Hủy</a-button>
-                <a-button type="primary" @click="saveEditedReview">Lưu</a-button>
-              </div>
-            </a-form>
-          </div>
+        <a-modal v-model:open="editReviewVisible" :footer="null" :mask-closable="true" :width="600" centered
+            class="edit-review-modal">
+            <div class="edit-review">
+                <h3>Chỉnh sửa đánh giá</h3>
+                <a-form layout="vertical">
+                    <a-form-item label="Đánh giá">
+                        <a-rate v-model:value="editReviewForm.rating" />
+                    </a-form-item>
+                    <a-form-item label="Nội dung">
+                        <a-textarea v-model:value="editReviewForm.content" rows="4" />
+                    </a-form-item>
+                    <div class="edit-review-actions">
+                        <a-button @click="cancelEditReview">Hủy</a-button>
+                        <a-button type="primary" @click="saveEditedReview">Lưu</a-button>
+                    </div>
+                </a-form>
+            </div>
         </a-modal>
 
         <!-- Modal thêm bình luận mới -->
-        <a-modal
-          v-model:open="addReviewVisible"
-          :footer="null"
-          :mask-closable="true"
-          :width="600"
-          centered
-          class="add-review-modal"
-        >
-          <div class="add-review">
-            <h3>Thêm bình luận mới</h3>
-            <a-form layout="vertical">
-              <a-form-item label="Đánh giá sao">
-                <a-rate v-model:value="newReviewForm.rating" />
-              </a-form-item>
-              <a-form-item label="Nội dung bình luận">
-                <a-textarea v-model:value="newReviewForm.content" rows="4" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..." />
-              </a-form-item>
-              <div class="add-review-actions">
-                <a-button @click="cancelAddReview">Hủy</a-button>
-                <a-button type="primary" @click="submitNewReview">Gửi bình luận</a-button>
-              </div>
-            </a-form>
-          </div>
+        <a-modal v-model:open="addReviewVisible" :footer="null" :mask-closable="true" :width="600" centered
+            class="add-review-modal">
+            <div class="add-review">
+                <h3>Thêm bình luận mới</h3>
+                <a-form layout="vertical">
+                    <a-form-item label="Đánh giá sao">
+                        <a-rate v-model:value="newReviewForm.rating" />
+                    </a-form-item>
+                    <a-form-item label="Nội dung bình luận">
+                        <a-textarea v-model:value="newReviewForm.content" rows="4"
+                            placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..." />
+                    </a-form-item>
+                    <div class="add-review-actions">
+                        <a-button @click="cancelAddReview">Hủy</a-button>
+                        <a-button type="primary" @click="submitNewReview">Gửi bình luận</a-button>
+                    </div>
+                </a-form>
+            </div>
         </a-modal>
     </div>
 </template>
@@ -1804,14 +1795,14 @@ const viewCart = () => {
 
 // Thêm phương thức tăng số lượt yêu thích
 const increaseFavoriteCount = (isAdded, newCount) => {
-  // Update the product's favorite count to the new value from the API
-  if (newCount !== undefined) {
-    if (!product.value.so_luot_yeu_thich) {
-      product.value.so_luot_yeu_thich = 0;
+    // Update the product's favorite count to the new value from the API
+    if (newCount !== undefined) {
+        if (!product.value.so_luot_yeu_thich) {
+            product.value.so_luot_yeu_thich = 0;
+        }
+        product.value.so_luot_yeu_thich = newCount;
+        console.log('Updated product favorite count to:', newCount);
     }
-    product.value.so_luot_yeu_thich = newCount;
-    console.log('Updated product favorite count to:', newCount);
-  }
 };
 
 // Thêm phương thức để chuyển đến trang chi tiết sản phẩm
@@ -2097,11 +2088,29 @@ const submitNewReview = async () => {
         const hasReviewed = checkIfUserAlreadyReviewed();
         console.log("Đã bình luận:", hasReviewed);
 
+        const canReview = await reviewService.checkCanReviewProduct(
+            store.userDetails.idKhachHang,
+            selectedVariant.value.id_chi_tiet_san_pham
+        )
+
         if (hasReviewed) {
             const antd = await import('ant-design-vue');
             antd.Modal.error({
                 title: 'Không thể bình luận',
                 content: 'Bạn đã bình luận sản phẩm này rồi. Mỗi người dùng chỉ có thể bình luận một lần.',
+                okText: 'Đã hiểu',
+                centered: true
+            });
+            addReviewVisible.value = false;
+            return;
+        }
+
+        // Kiểm tra xem người dùng có thể bình luận hay không
+        if (!canReview) {
+            const antd = await import('ant-design-vue');
+            antd.Modal.error({
+                title: 'Không thể bình luận',
+                content: 'Bạn không thể bình luận sản phẩm này. Vì bạn chưa mua sản phẩm này hoặc đơn hàng chưa giao thành công.',
                 okText: 'Đã hiểu',
                 centered: true
             });
@@ -4080,7 +4089,8 @@ const handleGiaBanBlur = (e) => {
 
 :deep(.ant-rate) {
     font-size: 26px;
-    z-index: 1001; /* Tăng z-index để đảm bảo có thể chọn được */
+    z-index: 1001;
+    /* Tăng z-index để đảm bảo có thể chọn được */
     position: relative;
 }
 
@@ -4152,7 +4162,7 @@ const handleGiaBanBlur = (e) => {
 :deep(.custom-warning-modal .ant-modal-content) {
     padding: 30px 20px;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 :deep(.custom-warning-modal .ant-modal-confirm-body-wrapper) {

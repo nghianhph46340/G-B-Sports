@@ -61,9 +61,27 @@ const deleteProductReview = async (reviewId) => {
   }
 };
 
+// đoạn mới thêm
+// Kiểm tra nếu khách hàng có thể đánh giá sản phẩm
+const checkCanReviewProduct = async (idKhachHang, idChiTietSanPham) => {
+  try {
+    const response = await axiosInstance.get(
+      `/api/reviews/can-review?idKhachHang=${idKhachHang}&idChiTietSanPham=${idChiTietSanPham}`,
+    )
+    return response.data
+  } catch (error) {
+    console.error('Error checking if customer can review product:', error)
+    return {
+      canReview: false,
+      message: error.response?.data?.message || 'Lỗi khi kiểm tra quyền đánh giá sản phẩm',
+    }
+  }
+}
+
 export const reviewService = {
   getProductReviews,
   addProductReview,
   updateProductReview,
-  deleteProductReview
+  deleteProductReview,
+  checkCanReviewProduct
 };
