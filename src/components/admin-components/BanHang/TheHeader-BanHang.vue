@@ -44,7 +44,20 @@
                     </div>
                 </template>
             </a-dropdown>
+            <!-- Thêm nút QR Code bên ngoài kính lúp -->
+            <a-tooltip title="Quét mã QR">
+                <a-qrcode error-level="H" :value="qrValue" :size="70" :icon="logo" :iconSize="20" @click="showQrScanner"
+                    style="cursor: pointer; margin-left: 10px;" />
+            </a-tooltip>
         </div>
+
+        <!-- Thêm modal cho quét QR -->
+        <a-modal v-model:open="qrScannerVisible" title="Quét mã QR sản phẩm" @cancel="stopQrScanner" :footer="null">
+            <div id="qr-reader" style="width: 100%;"></div>
+            <!-- <div v-if="qrScanResult" class="mt-2">
+                <p>Kết quả quét: {{ qrScanResult }}</p>
+            </div> -->
+        </a-modal>
 
         <!-- Invoice Tabs -->
         <div class="invoice-tabs">
@@ -68,7 +81,7 @@
                     <template #icon><rollback-outlined /></template>
                 </a-button>
             </a-tooltip>
-            <a-tooltip title="Báo cáo thống kê">
+            <a-tooltip v-if="store.id_roles !== 3" title="Báo cáo thống kê">
                 <a-button type="primary" shape="circle" class="action-btn">
                     <template #icon><bar-chart-outlined /></template>
                 </a-button>
@@ -148,78 +161,67 @@
                             Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || activeTabData.hd.ho_ten || 'Khách lẻ'
                             }}
                         </label>
-                        <div class="mb-3">
-                            <a-switch v-model:checked="activeTabData.hd.isKhachLe" />
-                        </div>
+                        <div class="row mb-3">
+                            <div class="col-2">
+                                <a-switch v-model:checked="activeTabData.hd.isKhachLe" />
+                            </div>
 
-                        <div v-if="activeTabData.hd.isKhachLe">
-                            <a-button type="primary" @click="handleThemDiaChi">
-                                Thêm địa chỉ khách hàng
-                            </a-button>
-                            <a-modal v-model:open="openKhachLe" title="Thông tin khách lẻ" @ok="handleAddKhachLe">
-                                <a-form layout="vertical">
-                                    <a-form-item label="Tên khách hàng">
-                                        <a-input v-model:value="khachLeForm.tenKhachHang" />
-                                    </a-form-item>
-                                    <a-form-item label="Số điện thoại">
-                                        <a-input v-model:value="khachLeForm.soDienThoai" />
-                                    </a-form-item>
-                                    <a-form-item label="Địa chỉ">
-                                        <a-input v-model:value="khachLeForm.diaChi" />
-                                    </a-form-item>
-                                </a-form>
-                            </a-modal>
+                            <div class="col-8">
 
-                        </div>
+                                <div v-if="!activeTabData.hd.isKhachLe">
+                                    <a-button type="primary" @click="showModal">Chọn khách hàng</a-button>
 
-                        <div v-else>
-                            <a-button type="primary" @click="showModal">Chọn khách hàng</a-button>
+                                    <a-modal v-model:open="open" title="Danh sách khách hàng" @ok="handleOk"
+                                        width="1000px">
+                                        <template #footer>
+                                            <a-button key="back" @click="handleCancel">Quay lại</a-button>
+                                            <a-button key="submit" type="primary" :loading="loading"
+                                                @click="handleOk">Xác
+                                                nhận</a-button>
+                                        </template>
+                                        <div v-if="danhSachKhachHang.length === 0" class="text-center py-4">
+                                            <a-empty :image="simpleImage" />
+                                        </div>
+                                        <div v-else>
+                                            <div class="table-responsive mt-4" ref="scrollContainer"
+                                                style="max-height: 400px; overflow-y: auto" @scroll="handleScroll">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">STT</th>
+                                                            <th scope="col">Tên khách hàng</th>
+                                                            <th scope="col">Giới tính</th>
+                                                            <th scope="col">Số điện thoại</th>
+                                                            <th scope="col">Địa chỉ</th>
+                                                            <th scope="col">Thao tác</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr v-for="(khachHang, index) in danhSachKhachHang"
+                                                            :key="khachHang.idKhachHang">
+                                                            <td>{{ index + 1 }}</td>
 
-                            <a-modal v-model:open="open" title="Danh sách khách hàng" @ok="handleOk" width="1000px">
-                                <template #footer>
-                                    <a-button key="back" @click="handleCancel">Quay lại</a-button>
-                                    <a-button key="submit" type="primary" :loading="loading" @click="handleOk">Xác
-                                        nhận</a-button>
-                                </template>
-                                <div v-if="danhSachKhachHang.length === 0" class="text-center py-4">
-                                    <a-empty :image="simpleImage" />
+                                                            <td>{{ khachHang.tenKhachHang }}</td>
+                                                            <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
+                                                            <td>{{ khachHang.soDienThoai }}</td>
+                                                            <td>{{ khachHang.diaChi }}</td>
+                                                            <td>
+                                                                <a-button size="small" type="link"
+                                                                    @click="chonKhachHang(khachHang)">Chọn</a-button>
+                                                            </td>
+                                                            <td></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                        </div>
+                                    </a-modal>
                                 </div>
-                                <div v-else>
-                                    <div class="table-responsive mt-4" ref="scrollContainer"
-                                        style="max-height: 400px; overflow-y: auto" @scroll="handleScroll">
-                                        <table class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th scope="col">STT</th>
-                                                    <th scope="col">Tên khách hàng</th>
-                                                    <th scope="col">Giới tính</th>
-                                                    <th scope="col">Số điện thoại</th>
-                                                    <th scope="col">Địa chỉ</th>
-                                                    <th scope="col">Thao tác</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr v-for="(khachHang, index) in danhSachKhachHang"
-                                                    :key="khachHang.idKhachHang">
-                                                    <td>{{ index + 1 }}</td>
-
-                                                    <td>{{ khachHang.tenKhachHang }}</td>
-                                                    <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
-                                                    <td>{{ khachHang.soDienThoai }}</td>
-                                                    <td>{{ khachHang.diaChi }}</td>
-                                                    <td>
-                                                        <a-button size="small" type="link"
-                                                            @click="chonKhachHang(khachHang)">Chọn</a-button>
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                </div>
-                            </a-modal>
+                            </div>
                         </div>
+
+
                     </div>
                     <div class="mb-3">
                         <label class="form-label d-block mb-2">Phương thức nhận hàng</label>
@@ -237,9 +239,9 @@
                             <label class="form-check-label" :for="'giaoHang_' + activeKey">Giao hàng</label>
                         </div>
                         <div v-if="activeTabData.hd.phuong_thuc_nhan_hang === 'Giao hàng'" class="mt-2">
-                            <label class="form-label">Địa chỉ nhận hàng</label>
+                            <!-- <label class="form-label">Địa chỉ nhận hàng</label>
                             <input type="text" class="form-control mb-2" placeholder="Nhập địa chỉ"
-                                v-model="activeTabData.hd.dia_chi">
+                                v-model="activeTabData.hd.dia_chi"> -->
                             <label class="form-label">Phí vận chuyển (VNĐ)</label>
                             <a-input-number v-model:value="activeTabData.hd.phi_van_chuyen" :min="0"
                                 :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
@@ -337,6 +339,113 @@ import { useRouter } from 'vue-router';
 import { banHangService } from '@/services/banHangService';
 
 const router = useRouter();
+import { Html5Qrcode } from 'html5-qrcode';
+// Thêm state cho quét QR
+const qrScannerVisible = ref(false);
+const qrScanResult = ref('');
+let html5QrCode = null;
+let isProcessing = false;
+
+// Hiển thị modal quét QR
+const showQrScanner = () => {
+    qrScannerVisible.value = true;
+    // Khởi tạo scanner sau khi modal được mở
+    setTimeout(() => {
+        initQrScanner();
+    }, 100);
+};
+
+// Khởi tạo máy quét QR
+const initQrScanner = () => {
+    html5QrCode = new Html5Qrcode("qr-reader");
+    const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+        if (isProcessing) return; // Nếu đang xử lý, bỏ qua
+        isProcessing = true;
+        qrScanResult.value = decodedText;
+        stopQrScanner();
+        await handleQrResult(decodedText);
+        isProcessing = false; // Đặt lại trạng thái sau khi xử lý xong
+    };
+    const qrCodeErrorCallback = (error) => {
+        console.warn(`QR scan error: ${error}`);
+    };
+
+    // Cấu hình quét QR
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        qrCodeSuccessCallback,
+        qrCodeErrorCallback
+    ).catch(err => {
+        message.error('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập!');
+        console.error("QR Scanner error:", err);
+        qrScannerVisible.value = false;
+    });
+};
+
+// Xử lý kết quả quét QR
+const handleQrResult = async (qrData) => {
+    try {
+        // Giả sử mã QR chứa id_chi_tiet_san_pham
+        const product = allProducts.value.find(p => p.id_chi_tiet_san_pham === Number(qrData));
+        console.log("qrData: ", qrData);
+        console.log("product: ", product);
+        console.log("allProducts.value: ", allProducts.value);
+
+        if (!product) {
+            message.error('Không tìm thấy sản phẩm với mã QR này!(Sản phẩm đã ngừng hoạt động)');
+            return;
+        }
+
+        const currentTab = activeTabData.value;
+        if (!currentTab || !currentTab.hd?.id_hoa_don) {
+            message.error('Vui lòng chọn hoặc tạo một hóa đơn hợp lệ trước!');
+            return;
+        }
+
+        // Kiểm tra xem sản phẩm đã có trong hóa đơn chưa
+        const existingItem = currentTab.items.value.find(
+            item => item.id_chi_tiet_san_pham === product.id_chi_tiet_san_pham
+        );
+
+        if (existingItem) {
+            // Nếu sản phẩm đã có, tăng số lượng
+            const newQuantity = existingItem.so_luong + 1;
+            const productInfo = allProducts.value.find(p => p.id_chi_tiet_san_pham === existingItem.id_chi_tiet_san_pham);
+            const soLuongTonKho = productInfo ? productInfo.so_luong_ton : 0;
+
+            if (newQuantity > soLuongTonKho + existingItem.so_luong) {
+                message.warning(`Số lượng vượt quá tồn kho (${soLuongTonKho})!`);
+                return;
+            }
+
+            existingItem.so_luong = newQuantity;
+            await updateItemTotal(existingItem);
+        } else {
+            // Nếu chưa có, thêm mới
+            await addToBill(product);
+        }
+
+    } catch (error) {
+        console.error('Lỗi khi xử lý mã QR:', error);
+        message.error('Có lỗi xảy ra khi xử lý mã QR!');
+    }
+};
+
+// Dừng máy quét QR
+const stopQrScanner = () => {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            html5QrCode = null;
+        }).catch(err => {
+            console.error("Lỗi khi dừng QR scanner:", err);
+        });
+    }
+    qrScannerVisible.value = false;
+    qrScanResult.value = '';
+};
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const pageSize = ref(5);
 const store = useGbStore();
@@ -348,6 +457,7 @@ const danhSachKhachHang = computed(() => {
         diaChi: store.diaChiMap[khachHang.idKhachHang] || 'Chưa có địa chỉ'
     }));
 });
+
 const diaChiMap = computed(() => store.diaChiMap);
 
 const chonKhachHang = async (khachHang) => {
@@ -376,12 +486,17 @@ const chonKhachHang = async (khachHang) => {
 
         // Đóng modal
         open.value = false;
+        if (!activeTabData.value.hd.isKhachLe) {
+            handlePhuongThucChange();
 
+        }
         // Làm mới dữ liệu hóa đơn
         await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
 
         console.log('activeTabData.hd sau khi làm mới:', activeTabData.value.hd);
         message.success(`Đã chọn khách hàng: ${khachHang.tenKhachHang}`);
+
+
     } catch (error) {
         console.error('Lỗi khi chọn khách hàng:', error);
         message.error('Không thể chọn khách hàng. Vui lòng thử lại!');
@@ -1126,6 +1241,7 @@ const da = ref([]);
 // --- Lifecycle Hooks ---
 onMounted(async () => {
     await loadData(); // Gọi lần đầu
+    stopQrScanner();
     setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
 
     const checkPaymentStatus = localStorage.getItem('checkPaymentStatus');
@@ -1264,7 +1380,6 @@ function tachDiaChi(addressString) {
 }
 
 
-
 const handlePhuongThucChange = async () => {
     const idHD = activeTabData.value.hd.id_hoa_don;
     const diaChiNhan = activeTabData.value.hd.dia_chi; // chuỗi full địa chỉ
@@ -1323,8 +1438,9 @@ const handlePhuongThucChange = async () => {
 }
 
 .search-section {
-    flex-shrink: 0;
-    margin-right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .dropdown-content-custom {
@@ -1565,5 +1681,25 @@ const handlePhuongThucChange = async () => {
 
 :deep(.ant-tabs-content) {
     display: none;
+}
+
+:deep(.ant-qrcode) {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+:deep(.ant-qrcode:hover) {
+    transform: scale(1.1);
+}
+
+/* Style cho modal quét QR */
+#qr-reader {
+    width: 100%;
+    max-height: 400px;
+}
+
+.qr-scanner-modal :deep(.ant-modal-body) {
+    padding: 16px;
+    text-align: center;
 }
 </style>

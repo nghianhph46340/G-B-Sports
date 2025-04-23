@@ -70,3 +70,5 @@ npm list | findstr "qrcode"
 npm list html2pdf.js
 
 npm install html2pdf.js --save
+#Qrcode
+npm install html5-qrcode

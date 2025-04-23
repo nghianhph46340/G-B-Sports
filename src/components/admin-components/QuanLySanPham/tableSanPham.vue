@@ -140,6 +140,11 @@
                         <template v-if="column.key === 'gia_ban'">
                             {{ formatCurrency(ctspRecord.gia_ban) }}
                         </template>
+                        <template v-if="column.key === 'qrcode'">
+                            <a-tooltip title="Tải QR Code">
+                                <a-qrcode @click="showConfirmDownload(ctspRecord)" :size="60" :value="ctspRecord.id_chi_tiet_san_pham"/>
+                            </a-tooltip>
+                        </template>
                         <template v-if="column.key === 'action'">
                             <a-button @click="showDrawer" type="" style="color: white;"
                                 class="d-flex align-items-center btn btn-warning">
@@ -188,13 +193,17 @@
 import menuAction from '@/components/admin-components/QuanLySanPham/menuAction.vue';
 import {
     EditOutlined, PlusOutlined, DeleteOutlined, EyeOutlined, ReloadOutlined,
-    CheckCircleOutlined, StopOutlined
+    CheckCircleOutlined, StopOutlined, QrcodeOutlined
 } from '@ant-design/icons-vue';
 import { onMounted, ref, render, computed, watch, onBeforeUnmount, nextTick } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
-import { message } from 'ant-design-vue';
+import { message,Modal as AModal } from 'ant-design-vue';
 import { useRouter } from 'vue-router';
 import { Modal } from 'bootstrap';
+import '../../../config/fonts/Roboto-bold'
+import '../../../config/fonts/Roboto-normal';
+import QRCode from 'qrcode';
+import { jsPDF } from 'jspdf';
 
 // Cache utilities
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 phút (đơn vị milliseconds)
@@ -514,12 +523,62 @@ const columnsCTSP = [
         dataIndex: 'trang_thai',
         key: 'trang_thai',
     },
-    // {
-    //     title: 'Hành động',
-    //     dataIndex: 'action',
-    //     key: 'action',
-    // },
+    {
+        title: 'QR Code',
+        key: 'qrcode',
+    },
 ];
+const showConfirmDownload = (ctspRecord) => {
+    console.log('Record:', ctspRecord);
+    AModal.confirm({
+        title: 'Xác nhận tải QR Code',
+        content: `Bạn có muốn tải QR Code sản phẩm chi tiết này không?`,
+        okText: 'Có',
+        cancelText: 'Không',
+        onOk: () => generateQRCodePDF(ctspRecord),
+    });
+};
+
+const generateQRCodePDF = async (ctspRecord) => {
+    try {
+        if (!ctspRecord || !ctspRecord.id_chi_tiet_san_pham) {
+            throw new Error('Dữ liệu sản phẩm không hợp lệ.');
+        }
+
+        const doc = new jsPDF();
+
+        // Tạo mã QR Code từ id_chi_tiet_san_pham
+        const qrCodeDataUrl = await QRCode.toDataURL(ctspRecord.id_chi_tiet_san_pham.toString());
+
+        // Thêm thông tin sản phẩm lên đầu file PDF
+        doc.setFont("Roboto", "bold");
+        doc.setFontSize(16);
+        const title = "Thông tin sản phẩm chi tiết";
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const titleWidth = doc.getTextWidth(title);
+        const centerX = (pageWidth - titleWidth) / 2;
+        doc.text(title, centerX, 20);
+
+        doc.setFont("Roboto", "normal");
+        doc.setFontSize(12);
+        doc.text(`Tên sản phẩm: ${ctspRecord.ten_san_pham}`, 20, 40);
+        doc.text(`Màu sắc: ${ctspRecord.mau_sac}`, 20, 50);
+        doc.text(`Size: ${ctspRecord.size}`, 20, 60);
+        doc.text(`Đơn giá: ${ctspRecord.gia_ban}`, 20, 70);
+
+        // Thêm mã QR Code to hơn vào giữa file PDF
+        const qrSize = 100;
+        const qrX = (pageWidth - qrSize) / 2;
+        doc.addImage(qrCodeDataUrl, 'PNG', qrX, 80, qrSize, qrSize);
+
+        // Lưu file PDF
+        doc.save(`QRCode_${ctspRecord.id_chi_tiet_san_pham}.pdf`);
+    } catch (error) {
+        console.error("Lỗi khi tạo QR Code PDF:", error);
+        message.error("Không thể tạo QR Code PDF. Vui lòng thử lại.");
+    }
+};
+
 const data = ref([]);
 const selectedCTSPKeys = ref([]);
 const rowSelection = ref({
