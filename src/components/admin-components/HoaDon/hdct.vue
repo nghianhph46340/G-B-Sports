@@ -102,7 +102,21 @@
                                 <p v-if="getStatusDate('Hoàn thành')">{{ formatDate(getStatusDate('Hoàn thành')) }}</p>
                             </div>
                         </div>
+                        <!-- Trả hàng -->
+                     <div class="timeline-step" :class="{
+                            'active': store.hoaDonDetail.trang_thai === 'Trả hàng',
+                        }">
+                            <div class="timeline-icon">
+                                <i class="fas fa-undo" ></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>Trả hàng</h4>
+                                <p v-if="getStatusDate('Trả hàng')">{{ formatDate(getStatusDate('Trả hàng')) }}</p>
+                            </div>
+                        </div>
+                    
                     </div>
+                     
 
                     <!-- Intermediate update points between main statuses -->
                     <div class="update-markers">
@@ -278,53 +292,116 @@
                                 </template>
                             </template>
                         </a-table>
-                        <div class="total-section">
-                            <a-row>
-                                <a-col :md="16"></a-col>
-                                <a-col :md="4" style="text-align: left;">
-                                    <p>Tổng tiền hàng:</p>
-                                </a-col>
-                                <a-col :md="4" style="text-align: right;">
-                                    <h6>{{ formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam) }} VNĐ</h6>
-                                </a-col>
-                            </a-row>
-                            <a-row>
-                                <a-col :md="7"></a-col>
-                                <a-col :md="9" style="text-align: left;color: red;">
-                                    <p>{{ store.hoaDonDetail.mo_ta }}</p>
-                                </a-col>
-                                <a-col :md="4" style="text-align: left;">
-                                    <p>Giảm giá:</p>
-                                </a-col>
-                                <a-col :md="4" style="text-align: right;color: red;">
-                                    <p>- {{
-                                        formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
-                                            (store.hoaDonDetail.phi_van_chuyen || 0) -
-                                            (store.hoaDonDetail.tong_tien_sau_giam ||
-                                                0)) }} VNĐ</p>
-                                </a-col>
-                            </a-row>
-                            <a-row>
-                                <a-col :md="16"></a-col>
-                                <a-col :md="4" style="text-align: left;">
-                                    <p>Phí vận chuyển:</p>
-                                </a-col>
-                                <a-col :md="4" style="text-align: right;">
-                                    <p>+ {{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
-                                </a-col>
-                            </a-row>
-                            <a-row>
-                                <a-col :md="16"></a-col>
-                                <a-col :md="4" style="text-align: left;">
-                                    <p>Thành tiền:</p>
-                                </a-col>
-                                <a-col :md="4" style="text-align: right;">
-                                    <h6>{{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</h6>
-                                </a-col>
-                            </a-row>
-                        </div>
                     </div>
+                    <div class="info-box">
+            <a-row>
+                <a-col :md="19">
+                    <h5>Danh sách sản phẩm hoàn trả</h5>
                 </a-col>
+            </a-row>
+            <hr>
+            <a-table
+  :columns="productColumnsHoan"
+  :data-source="store.chiTietTraHangs"
+  :pagination="false"
+  row-key="id"
+>
+  <template #bodyCell="{ column, record }">
+    <template v-if="column.key === 'san_pham'">
+      <img
+        :src="record.hinh_anh || '/images/default.jpg'"
+        alt="Product"
+        class="product-image"
+        style="width: 50px; height: 50px; object-fit: cover; margin-right: 8px;"
+      />
+      {{ record.ten_san_pham || 'N/A' }} <br />
+      Kích thước: {{ record.kich_thuoc || 'N/A' }}, Màu: {{ record.ten_mau_sac || 'N/A' }}
+    </template>
+    <template v-if="column.key === 'don_gia'">
+      {{ formatCurrency(record.don_gia) }} VNĐ
+    </template>
+    <template v-if="column.key === 'so_luong'">
+      <div class="quantity-display">
+        <span>{{ record.so_luong || 0 }}</span>
+      </div>
+    </template>
+    <template v-if="column.key === 'thanh_tien'">
+      {{ formatCurrency(record.tien_hoan) }} VNĐ
+    </template>
+    <template v-if="column.key === 'trang_thai'">
+      <span style="color: #f33b47;">Trả hàng</span>
+    </template>
+  </template>
+</a-table>
+
+            <div class="total-section">
+                <!-- Existing total section content -->
+                <a-row>
+                    <a-col :md="16"></a-col>
+                    <a-col :md="4" style="text-align: left;">
+                        <p>Tổng tiền hàng:</p>
+                    </a-col>
+                    <a-col :md="4" style="text-align: right;">
+                        <h6>{{ formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam) }} VNĐ</h6>
+                    </a-col>
+                </a-row>
+                <a-row>
+                    <a-col :md="7"></a-col>
+                    <a-col :md="9" style="text-align: left;color: red;">
+                        <p>{{ store.hoaDonDetail.mo_ta }}</p>
+                    </a-col>
+                    <a-col :md="4" style="text-align: left;">
+                        <p>Giảm giá:</p>
+                    </a-col>
+                    <a-col :md="4" style="text-align: right;color: red;">
+                        <p>- {{
+                            formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
+                                (store.hoaDonDetail.phi_van_chuyen || 0) -
+                                (store.hoaDonDetail.tong_tien_sau_giam ||
+                                    0)) }} VNĐ</p>
+                    </a-col>
+                </a-row>
+                <a-row>
+                    <a-col :md="16"></a-col>
+                    <a-col :md="4" style="text-align: left;">
+                        <p>Phí vận chuyển:</p>
+                    </a-col>
+                    <a-col :md="4" style="text-align: right;">
+                        <p>+ {{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
+                    </a-col>
+                </a-row>
+                <a-row>
+                    <a-col :md="16"></a-col>
+                    <a-col :md="4" style="text-align: left;">
+                        <p>Tổng tiền khách đã thanh toán:</p>
+                    </a-col>
+                    <a-col :md="4" style="text-align: right;">
+                        <p>{{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</p>
+                    </a-col>
+                </a-row>
+                <a-row>
+                    <a-col :md="16"></a-col>
+                    <a-col :md="4" style="text-align: left;">
+                        <p>Tổng tiền hoàn:</p>
+                    </a-col>
+                    <a-col :md="4" style="text-align: right;">
+                        <p>- {{ formatCurrency(store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0)) }} VNĐ</p>
+                    </a-col>
+                </a-row>
+                
+                <a-row>
+                    <a-col :md="16"></a-col>
+                    <a-col :md="4" style="text-align: left;">
+                        <p>Thành tiền:</p>
+                    </a-col>
+                    <a-col :md="4" style="text-align: right;">
+                        <h6>{{ formatCurrency((store.hoaDonDetail.tong_tien_sau_giam)-(store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0))) }} VNĐ</h6>
+                    </a-col>
+                </a-row>
+            </div>
+        </div>
+                </a-col>
+                
 
                 <a-col :md="8">
                     <div class="info-box">
@@ -471,7 +548,7 @@
                     </div>
                 </a-col>
             </a-row>
-
+            
             <!-- Popup thêm sản phẩm -->
             <a-modal v-model:visible="showAddProductPopup" title="Danh sách sản phẩm" :footer="null" width="80%">
                 <a-row :gutter="16" class="modal-header">
@@ -540,9 +617,20 @@
             </a-modal>
 
             <div class="notification">
-                {{ store.hoaDonDetail.trang_thai?.toUpperCase() || 'ĐANG XỬ LÝ' }} ĐƠN HÀNG {{
-                    formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ
-            </div>
+  <template v-if="store.hoaDonDetail.trang_thai?.toLowerCase() === 'trả hàng'">
+    HOÀN THÀNH ĐƠN HÀNG {{
+      formatCurrency(
+        store.hoaDonDetail.tong_tien_sau_giam -
+        store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0)
+      )
+    }} VNĐ
+  </template>
+  <template v-else>
+    {{ store.hoaDonDetail.trang_thai?.toUpperCase() || 'ĐANG XỬ LÝ' }} ĐƠN HÀNG {{
+      formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)
+    }} VNĐ
+  </template>
+</div>
         </div>
         <div v-else class="text-center">
             <p>Không tìm thấy hóa đơn.</p>
@@ -577,7 +665,13 @@ const productColumns = [
     { title: 'Thành tiền', key: 'thanh_tien', width: '20%' },
     { title: 'Thao tác', key: 'thao_tac', width: '10%' },
 ];
-
+const productColumnsHoan = [
+    { title: 'Sản phẩm', key: 'san_pham', width: '35%' },
+    { title: 'Đơn giá', key: 'don_gia', width: '20%' },
+    { title: 'Số lượng', key: 'so_luong', width: '10%' },
+    { title: 'Thành tiền', key: 'thanh_tien', width: '20%' },
+    { title: 'Trạng thái', key: 'trang_thai', width: '15%' },
+];
 // Product popup table columns
 const productPopupColumns = [
     { title: 'STT', key: 'stt' },

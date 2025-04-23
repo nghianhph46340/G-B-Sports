@@ -122,7 +122,13 @@ const admin = [
         name: 'admin-quan-ly-khach-hang-update',
         component: () => import('@/views/admin/KhachHang/suaKH.vue'),
       },
+      
       // Sau khi sửa
+      {
+        path: 'traHang',
+        name: 'traHang',
+        component: () => import('@/views/admin/TraHang/traHang.vue'),
+      },
       {
         path: 'quanlykhachhang/detail/:id',
         name: 'admin-quan-ly-khach-hang-detail',
