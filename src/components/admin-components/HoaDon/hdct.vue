@@ -1187,6 +1187,10 @@ const cannotDecreaseOrRemoveProduct = computed(() => {
     const hinhThucThanhToan = store.hoaDonDetail?.hinh_thuc_thanh_toan;
     return hinhThucThanhToan === 'Chuyển khoản';
 });
+const cannotDecreaseOrRemoveProduct = computed(() => {
+    const hinhThucThanhToan = store.hoaDonDetail?.hinh_thuc_thanh_toan;
+    return hinhThucThanhToan === 'Chuyển khoản';
+});
 
 const cannotEditProduct = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
@@ -1854,7 +1858,6 @@ const printInvoice = async () => {
         y = 118; // nếu không có địa chỉ, dòng sản phẩm bắt đầu ngay sau tên khách hàng
     }
     // Danh sách sản phẩm
-
     doc.setFontSize(10);
     doc.setFont("Roboto", "bold");
     doc.text("Thông tin sản phẩm", 20, y);

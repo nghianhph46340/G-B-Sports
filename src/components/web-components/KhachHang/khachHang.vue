@@ -1,528 +1,528 @@
 <template>
-    <div class="customer-profile">
-      <!-- Header profile -->
-      <a-row :gutter="[24, 24]">
-        <a-col :span="24">
-          <a-card class="profile-header">
-            <div class="profile-content">
-  
-              <div class="profile-info">
-                <div class="profile-info-header">
-                  <h2>{{ userInfo.name || 'Khách hàng' }}</h2>
-                </div>
-                <p class="user-email"><mail-outlined /> {{ userInfo.email }}</p>
-                <p class="user-member-since"><calendar-outlined /> Thành viên từ: {{
-                  formatDate(userInfo.createdAt) }}</p>
-                <div class="user-stats">
-                  <div class="stat-item">
-                    <shopping-outlined />
-                    <span>{{ orders.length || 0 }}</span>
-                    <p>Đơn hàng</p>
-                  </div>
-                  <div class="stat-divider"></div>
-                  <div class="stat-item">
-                    <environment-outlined />
-                    <span>{{ addresses.length || 0 }}</span>
-                    <p>Địa chỉ</p>
-                  </div>
-                  <div class="stat-divider"></div>
-                  <div class="stat-item">
-                    <heart-outlined />
-                    <span>{{ favoriteProducts || 0 }}</span>
-                    <p>Sản phẩm đã yêu thích</p>
-                    <a-dropdown v-if="favoriteProducts > 0" :trigger="['click']" placement="bottomRight"
-                      overlay-class-name="favorite-products-dropdown">
-                      <a-button type="link" class="view-favorites-btn">
-                        <span class="favorites-btn-content">
-                          Xem sản phẩm <down-outlined />
-                        </span>
-                      </a-button>
-                      <template #overlay>
-                        <div class="favorites-dropdown-container">
-                          <div class="favorites-header">
-                            <heart-outlined />
-                            <span>Sản phẩm đã yêu thích</span>
-                            <span class="favorites-count">{{ favoriteProducts }}</span>
-                          </div>
-                          <a-menu class="favorites-dropdown-menu">
-                            <a-menu-item v-if="favoritesList.length === 0" disabled>
-                              <div class="favorites-loading">
-                                <a-spin size="small" />
-                                <span>Đang tải danh sách...</span>
-                              </div>
-                            </a-menu-item>
-                            <a-menu-item v-for="item in favoritesList" :key="item.id_chi_tiet_san_pham"
-                              @click="goToProductDetail(item)">
-                              <div class="favorite-product-item">
-                                <div class="favorite-product-image">
-                                  <img :src="item.hinh_anh" :alt="item.ten_san_pham" />
-                                </div>
-                                <div class="favorite-product-info">
-                                  <div class="product-name">{{ item.ten_san_pham }}</div>
-                                  <div class="product-details">
-                                    <span v-if="item.ten_mau_sac">{{ item.ten_mau_sac }}</span>
-                                    <span v-if="item.gia_tri && item.ten_mau_sac"> - {{ item.gia_tri }}</span>
-                                    <span v-if="item.gia_tri && !item.ten_mau_sac">{{ item.gia_tri }}</span>
-                                  </div>
-                                  <div class="product-price">{{ formatCurrency(item.gia_ban) }}</div>
-                                </div>
-                              </div>
-                            </a-menu-item>
-                          </a-menu>
-                        </div>
-                      </template>
-                    </a-dropdown>
-                  </div>
-                </div>
+  <div class="customer-profile">
+    <!-- Header profile -->
+    <a-row :gutter="[24, 24]">
+      <a-col :span="24">
+        <a-card class="profile-header">
+          <div class="profile-content">
+
+            <div class="profile-info">
+              <div class="profile-info-header">
+                <h2>{{ userInfo.name || 'Khách hàng' }}</h2>
               </div>
-            </div>
-          </a-card>
-        </a-col>
-      </a-row>
-  
-      <!-- Menu và nội dung -->
-      <a-row :gutter="[24, 24]" class="mt-4">
-        <a-col :xs="24" :md="6">
-          <a-card title="Tài khoản của tôi">
-            <a-menu v-model:selectedKeys="selectedMenu" mode="inline" style="border-right: 0">
-              <a-menu-item key="info">
-                <template #icon><user-outlined /></template>
-                Thông tin cá nhân
-              </a-menu-item>
-              <a-menu-item key="orders">
-                <template #icon><shopping-outlined /></template>
-                Đơn hàng của tôi
-              </a-menu-item>
-              <a-menu-item key="address">
-                <template #icon><environment-outlined /></template>
-                Sổ địa chỉ
-              </a-menu-item>
-              <a-menu-item key="password">
-                <template #icon><lock-outlined /></template>
-                Đổi mật khẩu
-              </a-menu-item>
-              <a-menu-item key="logout">
-                <template #icon><logout-outlined /></template>
-                Đăng xuất
-              </a-menu-item>
-            </a-menu>
-          </a-card>
-        </a-col>
-  
-        <a-col :xs="24" :md="18">
-          <!-- Thông tin cá nhân -->
-          <a-card v-if="selectedMenu.includes('info')" title="Thông tin cá nhân">
-            <a-form :model="userInfo" layout="vertical">
-              <a-row :gutter="16">
-                <a-col :span="12">
-                  <a-form-item label="Nhập tên" :validateStatus="nameValidation.status" :help="nameValidation.message">
-                    <a-input v-model:value="userInfo.name" placeholder="Nhập tên" @change="validateName" />
-                  </a-form-item>
-                </a-col>
-                <a-col :span="12">
-                  <a-form-item label="Email">
-                    <a-input v-model:value="userInfo.email" disabled placeholder="Email" />
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-row :gutter="16">
-                <a-col :span="12">
-                  <a-form-item label="Số điện thoại" :validateStatus="phoneValidation.status"
-                    :help="phoneValidation.message">
-                    <a-input v-model:value="userInfo.phone" placeholder="Nhập số điện thoại" @change="validatePhone" />
-                  </a-form-item>
-                </a-col>
-                <a-col :span="12">
-                  <a-form-item label="Ngày sinh" :validateStatus="birthdayValidation.status"
-                    :help="birthdayValidation.message">
-                    <a-date-picker v-model:value="userInfo.birthday" style="width: 100%" format="DD/MM/YYYY"
-                      @change="validateBirthday" />
-                  </a-form-item>
-                </a-col>
-              </a-row>
-              <a-form-item>
-                <a-button type="primary" :loading="isUpdating" @click="updateProfile" class="update-profile-btn"
-                  size="large" :disabled="!isFormValid">
-                  Cập nhật thông tin
-                </a-button>
-              </a-form-item>
-            </a-form>
-          </a-card>
-  
-          <!-- Đơn hàng -->
-          <a-card v-if="selectedMenu.includes('orders')" title="Đơn hàng của tôi">
-            <a-tabs v-model:activeKey="orderTabActive">
-              <a-tab-pane key="all" tab="Tất cả">
-                <a-empty v-if="orders.length === 0" description="Bạn chưa có đơn hàng nào" />
-                <a-list v-else :data-source="orders" :pagination="{ pageSize: 5 }">
-                  <template #renderItem="{ item }">
-                    <a-list-item>
-                      <a-card style="width: 100%">
-                        <a-row>
-                          <a-col :span="16">
-                            <p>Mã đơn: {{ item.ma_hoa_don }}</p>
-                            <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
-                            <p>Trạng thái:
-                              <a-tag :color="getOrderStatusColor(item.trang_thai)">
-                                {{ item.trang_thai }}
-                              </a-tag>
-                            </p>
-                          </a-col>
-                          <a-col :span="8" style="text-align: right">
-                            <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
-                            <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
-                              tiết</a-button>
-                          </a-col>
-                        </a-row>
-                      </a-card>
-                    </a-list-item>
-                  </template>
-                </a-list>
-              </a-tab-pane>
-              <a-tab-pane key="pending" tab="Chờ xác nhận">
-                <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Chờ xác nhận').length"
-                  description="Không có đơn hàng nào đang chờ xác nhận" />
-                <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Chờ xác nhận')"
-                  :pagination="{ pageSize: 5 }">
-                  <template #renderItem="{ item }">
-                    <a-list-item>
-                      <a-card style="width: 100%">
-                        <a-row>
-                          <a-col :span="16">
-                            <p>Mã đơn: {{ item.ma_hoa_don }}</p>
-                            <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
-                            <p>Trạng thái:
-                              <a-tag color="orange">{{ item.trang_thai }}</a-tag>
-                            </p>
-                          </a-col>
-                          <a-col :span="8" style="text-align: right">
-                            <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
-                            <div style="display: flex; gap: 8px; justify-content: flex-end">
-                              <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
-                                tiết</a-button>
-                              <a-button type="danger" size="small" @click="cancelOrder(item.id_hoa_don)">Hủy
-                                đơn</a-button>
+              <p class="user-email"><mail-outlined /> {{ userInfo.email }}</p>
+              <p class="user-member-since"><calendar-outlined /> Thành viên từ: {{
+                formatDate(userInfo.createdAt) }}</p>
+              <div class="user-stats">
+                <div class="stat-item">
+                  <shopping-outlined />
+                  <span>{{ orders.length || 0 }}</span>
+                  <p>Đơn hàng</p>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                  <environment-outlined />
+                  <span>{{ addresses.length || 0 }}</span>
+                  <p>Địa chỉ</p>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                  <heart-outlined />
+                  <span>{{ favoriteProducts || 0 }}</span>
+                  <p>Sản phẩm đã yêu thích</p>
+                  <a-dropdown v-if="favoriteProducts > 0" :trigger="['click']" placement="bottomRight"
+                    overlay-class-name="favorite-products-dropdown">
+                    <a-button type="link" class="view-favorites-btn">
+                      <span class="favorites-btn-content">
+                        Xem sản phẩm <down-outlined />
+                      </span>
+                    </a-button>
+                    <template #overlay>
+                      <div class="favorites-dropdown-container">
+                        <div class="favorites-header">
+                          <heart-outlined />
+                          <span>Sản phẩm đã yêu thích</span>
+                          <span class="favorites-count">{{ favoriteProducts }}</span>
+                        </div>
+                        <a-menu class="favorites-dropdown-menu">
+                          <a-menu-item v-if="favoritesList.length === 0" disabled>
+                            <div class="favorites-loading">
+                              <a-spin size="small" />
+                              <span>Đang tải danh sách...</span>
                             </div>
-                          </a-col>
-                        </a-row>
-                      </a-card>
-                    </a-list-item>
-                  </template>
-                </a-list>
-              </a-tab-pane>
-              <a-tab-pane key="shipping" tab="Đang giao">
-                <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Đang giao').length"
-                  description="Không có đơn hàng nào đang giao" />
-                <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Đang giao')"
-                  :pagination="{ pageSize: 5 }">
-                  <template #renderItem="{ item }">
-                    <a-list-item>
-                      <a-card style="width: 100%">
-                        <a-row>
-                          <a-col :span="16">
-                            <p>Mã đơn: {{ item.ma_hoa_don }}</p>
-                            <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
-                            <p>Trạng thái:
-                              <a-tag color="blue">{{ item.trang_thai }}</a-tag>
-                            </p>
-                          </a-col>
-                          <a-col :span="8" style="text-align: right">
-                            <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
-                            <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
-                              tiết</a-button>
-                          </a-col>
-                        </a-row>
-                      </a-card>
-                    </a-list-item>
-                  </template>
-                </a-list>
-              </a-tab-pane>
-              <a-tab-pane key="completed" tab="Hoàn thành">
-                <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Hoàn thành').length"
-                  description="Không có đơn hàng nào Hoàn thành" />
-                <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Hoàn thành')"
-                  :pagination="{ pageSize: 5 }">
-                  <template #renderItem="{ item }">
-                    <a-list-item>
-                      <a-card style="width: 100%">
-                        <a-row>
-                          <a-col :span="16">
-                            <p>Mã đơn: {{ item.ma_hoa_don }}</p>
-                            <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
-                            <p>Trạng thái:
-                              <a-tag color="green">{{ item.trang_thai }}</a-tag>
-                            </p>
-                          </a-col>
-                          <a-col :span="8" style="text-align: right">
-                            <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
-                            <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
-                              tiết</a-button>
-                          </a-col>
-                        </a-row>
-                      </a-card>
-                    </a-list-item>
-                  </template>
-                </a-list>
-              </a-tab-pane>
-              <a-tab-pane key="cancelled" tab="Đã hủy">
-                <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Đã hủy').length"
-                  description="Không có đơn hàng nào đã hủy" />
-                <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Đã hủy')"
-                  :pagination="{ pageSize: 5 }">
-                  <template #renderItem="{ item }">
-                    <a-list-item>
-                      <a-card style="width: 100%">
-                        <a-row>
-                          <a-col :span="16">
-                            <p>Mã đơn: {{ item.ma_hoa_don }}</p>
-                            <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
-                            <p>Trạng thái:
-                              <a-tag color="red">{{ item.trang_thai }}</a-tag>
-                            </p>
-                          </a-col>
-                          <a-col :span="8" style="text-align: right">
-                            <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
-                            <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
-                              tiết</a-button>
-                          </a-col>
-                        </a-row>
-                      </a-card>
-                    </a-list-item>
-                  </template>
-                </a-list>
-              </a-tab-pane>
-            </a-tabs>
-          </a-card>
-  
-          <!-- Địa chỉ -->
-          <a-card v-if="selectedMenu.includes('address')" title="Sổ địa chỉ">
-            <a-button type="primary" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px"
-              @click="showAddAddressModal">
-              <plus-outlined /> <span>Thêm địa chỉ mới</span>
-            </a-button>
-  
-            <a-list :data-source="addresses" :pagination="{ pageSize: 3 }">
-              <template #renderItem="{ item }">
-                <a-list-item>
-                  <a-card style="width: 100%">
-                    <div style="display: flex; justify-content: space-between">
-                      <div>
-                        <div style="display: flex; align-items: center; gap: 8px">
-                          <strong>{{ store.userDetails.tenKhachHang }}</strong>
-                          <a-tag v-if="item.isDefault" color="blue">Mặc định</a-tag>
-                        </div>
-                        <p style="margin: 8px 0">{{ store.userDetails.soDienThoai }}</p>
-                        <p>{{ item.address }}, {{ item.ward }}, {{ item.district }}, {{
-                          item.province }}</p>
+                          </a-menu-item>
+                          <a-menu-item v-for="item in favoritesList" :key="item.id_chi_tiet_san_pham"
+                            @click="goToProductDetail(item)">
+                            <div class="favorite-product-item">
+                              <div class="favorite-product-image">
+                                <img :src="item.hinh_anh" :alt="item.ten_san_pham" />
+                              </div>
+                              <div class="favorite-product-info">
+                                <div class="product-name">{{ item.ten_san_pham }}</div>
+                                <div class="product-details">
+                                  <span v-if="item.ten_mau_sac">{{ item.ten_mau_sac }}</span>
+                                  <span v-if="item.gia_tri && item.ten_mau_sac"> - {{ item.gia_tri }}</span>
+                                  <span v-if="item.gia_tri && !item.ten_mau_sac">{{ item.gia_tri }}</span>
+                                </div>
+                                <div class="product-price">{{ formatCurrency(item.gia_ban) }}</div>
+                              </div>
+                            </div>
+                          </a-menu-item>
+                        </a-menu>
                       </div>
-                      <div>
-                        <a-button type="link" @click="editAddress(item)">Sửa</a-button>
-                        <a-popconfirm v-if="addresses.length > 1" title="Bạn có chắc muốn xóa địa chỉ này không?"
-                          ok-text="Có" cancel-text="Không" @confirm="deleteAddress(item.id)">
-                          <a-button type="link" danger>Xóa</a-button>
-                        </a-popconfirm>
-                      </div>
-                    </div>
-                  </a-card>
-                </a-list-item>
-              </template>
-            </a-list>
-          </a-card>
-  
-          <!-- Đổi mật khẩu -->
-          <a-card v-if="selectedMenu.includes('password')" title="Đổi mật khẩu">
-            <a-form :model="passwordForm" layout="vertical">
-              <a-form-item label="Mật khẩu hiện tại" name="currentPassword">
-                <a-input-password v-model:value="passwordForm.currentPassword" placeholder="Nhập mật khẩu hiện tại" />
-              </a-form-item>
-              <a-form-item label="Mật khẩu mới" name="newPassword">
-                <a-input-password v-model:value="passwordForm.newPassword" placeholder="Nhập mật khẩu mới" />
-              </a-form-item>
-              <a-form-item label="Xác nhận mật khẩu mới" name="confirmPassword">
-                <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="Nhập lại mật khẩu mới" />
-              </a-form-item>
-              <a-form-item>
-                <a-button type="primary" @click="changePassword">Đổi mật khẩu</a-button>
-              </a-form-item>
-            </a-form>
-          </a-card>
-        </a-col>
-      </a-row>
-  
-      <!-- Modal thêm/sửa địa chỉ -->
-      <a-modal v-model:visible="addressModal.visible" :title="'Thêm địa chỉ mới'" :footer="null" :width="550"
-        class="mt-5">
-        <div>
-  
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <label>Tỉnh/Thành phố</label>
-              <a-select v-model:value="addressModal.data.provinceCode" placeholder="Chọn Tỉnh/Thành phố"
-                style="width: 100%" @change="handleProvinceChange">
-                <a-select-option v-for="province in provinces" :key="province.code" :value="province.code">
-                  {{ province.name }}
-                </a-select-option>
-              </a-select>
-            </div>
-            <div class="col-md-4">
-              <label>Quận/Huyện</label>
-              <a-select v-model:value="addressModal.data.districtCode" placeholder="Chọn Quận/Huyện" style="width: 100%"
-                :disabled="!addressModal.data.provinceCode" @change="handleDistrictChange">
-                <a-select-option v-for="district in districts" :key="district.code" :value="district.code">
-                  {{ district.name }}
-                </a-select-option>
-              </a-select>
-            </div>
-            <div class="col-md-4">
-              <label>Phường/Xã</label>
-              <a-select v-model:value="addressModal.data.wardCode" placeholder="Chọn Phường/Xã" style="width: 100%"
-                :disabled="!addressModal.data.districtCode">
-                <a-select-option v-for="ward in wards" :key="ward.code" :value="ward.code">
-                  {{ ward.name }}
-                </a-select-option>
-              </a-select>
-            </div>
-          </div>
-  
-          <div class="mb-3">
-            <label>Địa chỉ cụ thể</label>
-            <a-input v-model:value="addressModal.data.address" placeholder="Số nhà, tên đường..." />
-          </div>
-  
-          <div class="mb-3">
-            <a-checkbox v-model:checked="addressModal.data.isDefault"
-              :disabled="(addressModal.isEdit && addressModal.data.isDefault && addresses.length === 1)">
-              Đặt làm địa chỉ mặc định
-            </a-checkbox>
-  
-          </div>
-  
-          <div class="text-end">
-            <a-button @click="addressModal.visible = false" class="me-2">Cancel</a-button>
-            <a-button type="primary" @click="saveAddress">OK</a-button>
-          </div>
-        </div>
-      </a-modal>
-  
-      <!-- Modal chi tiết đơn hàng -->
-      <a-modal v-model:visible="orderDetailModal.visible" :title="`Chi tiết đơn hàng: ${orderDetailModal.maHoaDon}`"
-        :footer="null" :width="600" class="order-detail-modal" centered>
-        <a-spin :spinning="orderDetailModal.loading">
-          <div v-if="orderDetailModal.data" class="modal-content">
-            <!-- Thông tin chung -->
-            <div class="section-container">
-              <h3 class="section-title">Thông tin đơn hàng</h3>
-              <a-descriptions bordered :column="1" size="small">
-                <a-descriptions-item label="Mã đơn hàng">
-                  {{ orderDetailModal.data.ma_hoa_don }}
-                </a-descriptions-item>
-                <a-descriptions-item label="Ngày đặt">
-                  {{ formatDate(orderDetailModal.data.ngay_tao) }}
-                </a-descriptions-item>
-                <a-descriptions-item label="Trạng thái">
-                  <a-tag :color="getOrderStatusColor(orderDetailModal.data.trang_thai)">
-                    {{ orderDetailModal.data.trang_thai }}
-                  </a-tag>
-                </a-descriptions-item>
-                <a-descriptions-item label="Phương thức thanh toán">
-                  {{ orderDetailModal.data.phuong_thuc_thanh_toan || 'Tiền mặt' }}
-                </a-descriptions-item>
-              </a-descriptions>
-            </div>
-  
-            <!-- Thông tin người nhận -->
-            <div class="section-container">
-              <h3 class="section-title">Thông tin người nhận</h3>
-              <a-descriptions bordered :column="1" size="small">
-                <a-descriptions-item label="Tên người nhận">
-                  {{ orderDetailModal.data.ten_nguoi_nhan }}
-                </a-descriptions-item>
-                <a-descriptions-item label="Số điện thoại">
-                  {{ orderDetailModal.data.so_dien_thoai }}
-                </a-descriptions-item>
-                <a-descriptions-item label="Địa chỉ">
-                  {{ orderDetailModal.data.dia_chi }}
-                </a-descriptions-item>
-                <a-descriptions-item label="Ghi chú">
-                  <a-tooltip :title="orderDetailModal.data.ghi_chu || 'Không có ghi chú'">
-                    <span class="truncate">{{ orderDetailModal.data.ghi_chu || 'Không có ghi chú' }}</span>
-                  </a-tooltip>
-                </a-descriptions-item>
-              </a-descriptions>
-            </div>
-  
-            <!-- Danh sách sản phẩm -->
-            <div class="section-container">
-              <h3 class="section-title">Sản phẩm đã mua</h3>
-              <a-table :columns="orderProductColumns" :data-source="orderDetailModal.products" :pagination="false"
-                :rowKey="record => record.id_chi_tiet_san_pham" size="small" class="compact-table">
-                <template #bodyCell="{ column, text, record }">
-                  <template v-if="column.dataIndex === 'hinh_anh'">
-                    <img :src="record.hinh_anh" :alt="record.ten_san_pham" class="product-image" />
-                  </template>
-                  <template v-else-if="column.dataIndex === 'ten_san_pham'">
-                    <div class="product-info">
-                      <div class="product-name truncate">{{ record.ten_san_pham }}</div>
-                      <div class="product-attrs">
-                        <span v-if="record.mau_sac">{{ record.mau_sac }}</span>
-                        <span v-if="record.kich_thuoc"> - {{ record.kich_thuoc }}</span>
-                      </div>
-                    </div>
-                  </template>
-                  <template v-else-if="column.dataIndex === 'gia'">
-                    {{ formatCurrency(record.gia) }}
-                  </template>
-                  <template v-else-if="column.dataIndex === 'thanh_tien'">
-                    {{ formatCurrency(record.gia * record.so_luong) }}
-                  </template>
-                </template>
-              </a-table>
-            </div>
-  
-            <!-- Thông tin thanh toán -->
-            <div class="section-container">
-              <h3 class="section-title">Thanh toán</h3>
-              <div class="payment-summary">
-                <div class="summary-item">
-                  <span>Tổng tiền sản phẩm</span>
-                  <span>{{ formatCurrency(calculateProductTotal()) }}</span>
-                </div>
-                <div class="summary-item">
-                  <span>Phí vận chuyển</span>
-                  <span>{{ formatCurrency(orderDetailModal.data.phi_van_chuyen || 0) }}</span>
-                </div>
-                <div class="summary-item" v-if="orderDetailModal.data.giam_gia > 0">
-                  <span>Giảm giá</span>
-                  <span class="discount-value">- {{ formatCurrency(orderDetailModal.data.giam_gia || 0) }}</span>
-                </div>
-                <div class="summary-item total-row">
-                  <span>Tổng thanh toán:</span>
-                  <span class="total-value">{{ formatCurrency(calculateProductTotal() +
-                    (orderDetailModal.data.phi_van_chuyen
-                      || 0) - (orderDetailModal.data.giam_gia || 0)) }}</span>
+                    </template>
+                  </a-dropdown>
                 </div>
               </div>
             </div>
           </div>
-          <div v-else-if="!orderDetailModal.loading" class="empty-data">
-            <a-empty description="Không có thông tin đơn hàng" />
+        </a-card>
+      </a-col>
+    </a-row>
+
+    <!-- Menu và nội dung -->
+    <a-row :gutter="[24, 24]" class="mt-4">
+      <a-col :xs="24" :md="6">
+        <a-card title="Tài khoản của tôi">
+          <a-menu v-model:selectedKeys="selectedMenu" mode="inline" style="border-right: 0">
+            <a-menu-item key="info">
+              <template #icon><user-outlined /></template>
+              Thông tin cá nhân
+            </a-menu-item>
+            <a-menu-item key="orders">
+              <template #icon><shopping-outlined /></template>
+              Đơn hàng của tôi
+            </a-menu-item>
+            <a-menu-item key="address">
+              <template #icon><environment-outlined /></template>
+              Sổ địa chỉ
+            </a-menu-item>
+            <a-menu-item key="password">
+              <template #icon><lock-outlined /></template>
+              Đổi mật khẩu
+            </a-menu-item>
+            <a-menu-item key="logout">
+              <template #icon><logout-outlined /></template>
+              Đăng xuất
+            </a-menu-item>
+          </a-menu>
+        </a-card>
+      </a-col>
+
+      <a-col :xs="24" :md="18">
+        <!-- Thông tin cá nhân -->
+        <a-card v-if="selectedMenu.includes('info')" title="Thông tin cá nhân">
+          <a-form :model="userInfo" layout="vertical">
+            <a-row :gutter="16">
+              <a-col :span="12">
+                <a-form-item label="Nhập tên" :validateStatus="nameValidation.status" :help="nameValidation.message">
+                  <a-input v-model:value="userInfo.name" placeholder="Nhập tên" @change="validateName" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="Email">
+                  <a-input v-model:value="userInfo.email" disabled placeholder="Email" />
+                </a-form-item>
+              </a-col>
+            </a-row>
+            <a-row :gutter="16">
+              <a-col :span="12">
+                <a-form-item label="Số điện thoại" :validateStatus="phoneValidation.status"
+                  :help="phoneValidation.message">
+                  <a-input v-model:value="userInfo.phone" placeholder="Nhập số điện thoại" @change="validatePhone" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item label="Ngày sinh" :validateStatus="birthdayValidation.status"
+                  :help="birthdayValidation.message">
+                  <a-date-picker v-model:value="userInfo.birthday" style="width: 100%" format="DD/MM/YYYY"
+                    @change="validateBirthday" />
+                </a-form-item>
+              </a-col>
+            </a-row>
+            <a-form-item>
+              <a-button type="primary" :loading="isUpdating" @click="updateProfile" class="update-profile-btn"
+                size="large" :disabled="!isFormValid">
+                Cập nhật thông tin
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </a-card>
+
+        <!-- Đơn hàng -->
+        <a-card v-if="selectedMenu.includes('orders')" title="Đơn hàng của tôi">
+          <a-tabs v-model:activeKey="orderTabActive">
+            <a-tab-pane key="all" tab="Tất cả">
+              <a-empty v-if="orders.length === 0" description="Bạn chưa có đơn hàng nào" />
+              <a-list v-else :data-source="orders" :pagination="{ pageSize: 5 }">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <a-card style="width: 100%">
+                      <a-row>
+                        <a-col :span="16">
+                          <p>Mã đơn: {{ item.ma_hoa_don }}</p>
+                          <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
+                          <p>Trạng thái:
+                            <a-tag :color="getOrderStatusColor(item.trang_thai)">
+                              {{ item.trang_thai }}
+                            </a-tag>
+                          </p>
+                        </a-col>
+                        <a-col :span="8" style="text-align: right">
+                          <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
+                          <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
+                            tiết</a-button>
+                        </a-col>
+                      </a-row>
+                    </a-card>
+                  </a-list-item>
+                </template>
+              </a-list>
+            </a-tab-pane>
+            <a-tab-pane key="pending" tab="Chờ xác nhận">
+              <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Chờ xác nhận').length"
+                description="Không có đơn hàng nào đang chờ xác nhận" />
+              <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Chờ xác nhận')"
+                :pagination="{ pageSize: 5 }">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <a-card style="width: 100%">
+                      <a-row>
+                        <a-col :span="16">
+                          <p>Mã đơn: {{ item.ma_hoa_don }}</p>
+                          <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
+                          <p>Trạng thái:
+                            <a-tag color="orange">{{ item.trang_thai }}</a-tag>
+                          </p>
+                        </a-col>
+                        <a-col :span="8" style="text-align: right">
+                          <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
+                          <div style="display: flex; gap: 8px; justify-content: flex-end">
+                            <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
+                              tiết</a-button>
+                            <a-button type="danger" size="small" @click="cancelOrder(item.id_hoa_don)">Hủy
+                              đơn</a-button>
+                          </div>
+                        </a-col>
+                      </a-row>
+                    </a-card>
+                  </a-list-item>
+                </template>
+              </a-list>
+            </a-tab-pane>
+            <a-tab-pane key="shipping" tab="Đang giao">
+              <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Đang giao').length"
+                description="Không có đơn hàng nào đang giao" />
+              <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Đang giao')"
+                :pagination="{ pageSize: 5 }">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <a-card style="width: 100%">
+                      <a-row>
+                        <a-col :span="16">
+                          <p>Mã đơn: {{ item.ma_hoa_don }}</p>
+                          <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
+                          <p>Trạng thái:
+                            <a-tag color="blue">{{ item.trang_thai }}</a-tag>
+                          </p>
+                        </a-col>
+                        <a-col :span="8" style="text-align: right">
+                          <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
+                          <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
+                            tiết</a-button>
+                        </a-col>
+                      </a-row>
+                    </a-card>
+                  </a-list-item>
+                </template>
+              </a-list>
+            </a-tab-pane>
+            <a-tab-pane key="completed" tab="Hoàn thành">
+              <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Hoàn thành').length"
+                description="Không có đơn hàng nào Hoàn thành" />
+              <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Hoàn thành')"
+                :pagination="{ pageSize: 5 }">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <a-card style="width: 100%">
+                      <a-row>
+                        <a-col :span="16">
+                          <p>Mã đơn: {{ item.ma_hoa_don }}</p>
+                          <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
+                          <p>Trạng thái:
+                            <a-tag color="green">{{ item.trang_thai }}</a-tag>
+                          </p>
+                        </a-col>
+                        <a-col :span="8" style="text-align: right">
+                          <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
+                          <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
+                            tiết</a-button>
+                        </a-col>
+                      </a-row>
+                    </a-card>
+                  </a-list-item>
+                </template>
+              </a-list>
+            </a-tab-pane>
+            <a-tab-pane key="cancelled" tab="Đã hủy">
+              <a-empty v-if="!orders.filter(o => o.trang_thai.trim() === 'Đã hủy').length"
+                description="Không có đơn hàng nào đã hủy" />
+              <a-list v-else :data-source="orders.filter(o => o.trang_thai.trim() === 'Đã hủy')"
+                :pagination="{ pageSize: 5 }">
+                <template #renderItem="{ item }">
+                  <a-list-item>
+                    <a-card style="width: 100%">
+                      <a-row>
+                        <a-col :span="16">
+                          <p>Mã đơn: {{ item.ma_hoa_don }}</p>
+                          <p>Ngày đặt: {{ formatDate(item.ngay_tao) }}</p>
+                          <p>Trạng thái:
+                            <a-tag color="red">{{ item.trang_thai }}</a-tag>
+                          </p>
+                        </a-col>
+                        <a-col :span="8" style="text-align: right">
+                          <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
+                          <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
+                            tiết</a-button>
+                        </a-col>
+                      </a-row>
+                    </a-card>
+                  </a-list-item>
+                </template>
+              </a-list>
+            </a-tab-pane>
+          </a-tabs>
+        </a-card>
+
+        <!-- Địa chỉ -->
+        <a-card v-if="selectedMenu.includes('address')" title="Sổ địa chỉ">
+          <a-button type="primary" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px"
+            @click="showAddAddressModal">
+            <plus-outlined /> <span>Thêm địa chỉ mới</span>
+          </a-button>
+
+          <a-list :data-source="addresses" :pagination="{ pageSize: 3 }">
+            <template #renderItem="{ item }">
+              <a-list-item>
+                <a-card style="width: 100%">
+                  <div style="display: flex; justify-content: space-between">
+                    <div>
+                      <div style="display: flex; align-items: center; gap: 8px">
+                        <strong>{{ store.userDetails.tenKhachHang }}</strong>
+                        <a-tag v-if="item.isDefault" color="blue">Mặc định</a-tag>
+                      </div>
+                      <p style="margin: 8px 0">{{ store.userDetails.soDienThoai }}</p>
+                      <p>{{ item.address }}, {{ item.ward }}, {{ item.district }}, {{
+                        item.province }}</p>
+                    </div>
+                    <div>
+                      <a-button type="link" @click="editAddress(item)">Sửa</a-button>
+                      <a-popconfirm v-if="addresses.length > 1" title="Bạn có chắc muốn xóa địa chỉ này không?"
+                        ok-text="Có" cancel-text="Không" @confirm="deleteAddress(item.id)">
+                        <a-button type="link" danger>Xóa</a-button>
+                      </a-popconfirm>
+                    </div>
+                  </div>
+                </a-card>
+              </a-list-item>
+            </template>
+          </a-list>
+        </a-card>
+
+        <!-- Đổi mật khẩu -->
+        <a-card v-if="selectedMenu.includes('password')" title="Đổi mật khẩu">
+          <a-form :model="passwordForm" layout="vertical">
+            <a-form-item label="Mật khẩu hiện tại" name="currentPassword">
+              <a-input-password v-model:value="passwordForm.currentPassword" placeholder="Nhập mật khẩu hiện tại" />
+            </a-form-item>
+            <a-form-item label="Mật khẩu mới" name="newPassword">
+              <a-input-password v-model:value="passwordForm.newPassword" placeholder="Nhập mật khẩu mới" />
+            </a-form-item>
+            <a-form-item label="Xác nhận mật khẩu mới" name="confirmPassword">
+              <a-input-password v-model:value="passwordForm.confirmPassword" placeholder="Nhập lại mật khẩu mới" />
+            </a-form-item>
+            <a-form-item>
+              <a-button type="primary" @click="changePassword">Đổi mật khẩu</a-button>
+            </a-form-item>
+          </a-form>
+        </a-card>
+      </a-col>
+    </a-row>
+
+    <!-- Modal thêm/sửa địa chỉ -->
+    <a-modal v-model:visible="addressModal.visible" :title="'Thêm địa chỉ mới'" :footer="null" :width="550"
+      class="mt-5">
+      <div>
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label>Tỉnh/Thành phố</label>
+            <a-select v-model:value="addressModal.data.provinceCode" placeholder="Chọn Tỉnh/Thành phố"
+              style="width: 100%" @change="handleProvinceChange">
+              <a-select-option v-for="province in provinces" :key="province.code" :value="province.code">
+                {{ province.name }}
+              </a-select-option>
+            </a-select>
           </div>
-        </a-spin>
-        <div class="modal-footer">
-          <a-button @click="orderDetailModal.visible = false" class="btn-close">Đóng</a-button>
-          <a-button v-if="orderDetailModal.data && orderDetailModal.data.trang_thai === 'Chờ xác nhận'" type="danger"
-            @click="cancelOrder(orderDetailModal.data.id_hoa_don)" class="btn-cancel">
-            Hủy đơn hàng
-          </a-button>
-          <a-button v-if="orderDetailModal.data && orderDetailModal.data.trang_thai === 'Hoàn thành'" type="primary"
-            class="btn-reorder">
-            Mua lại
-          </a-button>
+          <div class="col-md-4">
+            <label>Quận/Huyện</label>
+            <a-select v-model:value="addressModal.data.districtCode" placeholder="Chọn Quận/Huyện" style="width: 100%"
+              :disabled="!addressModal.data.provinceCode" @change="handleDistrictChange">
+              <a-select-option v-for="district in districts" :key="district.code" :value="district.code">
+                {{ district.name }}
+              </a-select-option>
+            </a-select>
+          </div>
+          <div class="col-md-4">
+            <label>Phường/Xã</label>
+            <a-select v-model:value="addressModal.data.wardCode" placeholder="Chọn Phường/Xã" style="width: 100%"
+              :disabled="!addressModal.data.districtCode">
+              <a-select-option v-for="ward in wards" :key="ward.code" :value="ward.code">
+                {{ ward.name }}
+              </a-select-option>
+            </a-select>
+          </div>
         </div>
-      </a-modal>
-    </div>
-  </template>
-  <script setup>
+
+        <div class="mb-3">
+          <label>Địa chỉ cụ thể</label>
+          <a-input v-model:value="addressModal.data.address" placeholder="Số nhà, tên đường..." />
+        </div>
+
+        <div class="mb-3">
+          <a-checkbox v-model:checked="addressModal.data.isDefault"
+            :disabled="(addressModal.isEdit && addressModal.data.isDefault && addresses.length === 1)">
+            Đặt làm địa chỉ mặc định
+          </a-checkbox>
+
+        </div>
+
+        <div class="text-end">
+          <a-button @click="addressModal.visible = false" class="me-2">Cancel</a-button>
+          <a-button type="primary" @click="saveAddress">OK</a-button>
+        </div>
+      </div>
+    </a-modal>
+
+    <!-- Modal chi tiết đơn hàng -->
+    <a-modal v-model:visible="orderDetailModal.visible" :title="`Chi tiết đơn hàng: ${orderDetailModal.maHoaDon}`"
+      :footer="null" :width="600" class="order-detail-modal" centered>
+      <a-spin :spinning="orderDetailModal.loading">
+        <div v-if="orderDetailModal.data" class="modal-content">
+          <!-- Thông tin chung -->
+          <div class="section-container">
+            <h3 class="section-title">Thông tin đơn hàng</h3>
+            <a-descriptions bordered :column="1" size="small">
+              <a-descriptions-item label="Mã đơn hàng">
+                {{ orderDetailModal.data.ma_hoa_don }}
+              </a-descriptions-item>
+              <a-descriptions-item label="Ngày đặt">
+                {{ formatDate(orderDetailModal.data.ngay_tao) }}
+              </a-descriptions-item>
+              <a-descriptions-item label="Trạng thái">
+                <a-tag :color="getOrderStatusColor(orderDetailModal.data.trang_thai)">
+                  {{ orderDetailModal.data.trang_thai }}
+                </a-tag>
+              </a-descriptions-item>
+              <a-descriptions-item label="Phương thức thanh toán">
+                {{ orderDetailModal.data.phuong_thuc_thanh_toan || 'Tiền mặt' }}
+              </a-descriptions-item>
+            </a-descriptions>
+          </div>
+
+          <!-- Thông tin người nhận -->
+          <div class="section-container">
+            <h3 class="section-title">Thông tin người nhận</h3>
+            <a-descriptions bordered :column="1" size="small">
+              <a-descriptions-item label="Tên người nhận">
+                {{ orderDetailModal.data.ten_nguoi_nhan }}
+              </a-descriptions-item>
+              <a-descriptions-item label="Số điện thoại">
+                {{ orderDetailModal.data.so_dien_thoai }}
+              </a-descriptions-item>
+              <a-descriptions-item label="Địa chỉ">
+                {{ orderDetailModal.data.dia_chi }}
+              </a-descriptions-item>
+              <a-descriptions-item label="Ghi chú">
+                <a-tooltip :title="orderDetailModal.data.ghi_chu || 'Không có ghi chú'">
+                  <span class="truncate">{{ orderDetailModal.data.ghi_chu || 'Không có ghi chú' }}</span>
+                </a-tooltip>
+              </a-descriptions-item>
+            </a-descriptions>
+          </div>
+
+          <!-- Danh sách sản phẩm -->
+          <div class="section-container">
+            <h3 class="section-title">Sản phẩm đã mua</h3>
+            <a-table :columns="orderProductColumns" :data-source="orderDetailModal.products" :pagination="false"
+              :rowKey="record => record.id_chi_tiet_san_pham" size="small" class="compact-table">
+              <template #bodyCell="{ column, text, record }">
+                <template v-if="column.dataIndex === 'hinh_anh'">
+                  <img :src="record.hinh_anh" :alt="record.ten_san_pham" class="product-image" />
+                </template>
+                <template v-else-if="column.dataIndex === 'ten_san_pham'">
+                  <div class="product-info">
+                    <div class="product-name truncate">{{ record.ten_san_pham }}</div>
+                    <div class="product-attrs">
+                      <span v-if="record.mau_sac">{{ record.mau_sac }}</span>
+                      <span v-if="record.kich_thuoc"> - {{ record.kich_thuoc }}</span>
+                    </div>
+                  </div>
+                </template>
+                <template v-else-if="column.dataIndex === 'gia'">
+                  {{ formatCurrency(record.gia) }}
+                </template>
+                <template v-else-if="column.dataIndex === 'thanh_tien'">
+                  {{ formatCurrency(record.gia * record.so_luong) }}
+                </template>
+              </template>
+            </a-table>
+          </div>
+
+          <!-- Thông tin thanh toán -->
+          <div class="section-container">
+            <h3 class="section-title">Thanh toán</h3>
+            <div class="payment-summary">
+              <div class="summary-item">
+                <span>Tổng tiền sản phẩm</span>
+                <span>{{ formatCurrency(calculateProductTotal()) }}</span>
+              </div>
+              <div class="summary-item">
+                <span>Phí vận chuyển</span>
+                <span>{{ formatCurrency(orderDetailModal.data.phi_van_chuyen || 0) }}</span>
+              </div>
+              <div class="summary-item" v-if="orderDetailModal.data.giam_gia > 0">
+                <span>Giảm giá</span>
+                <span class="discount-value">- {{ formatCurrency(orderDetailModal.data.giam_gia || 0) }}</span>
+              </div>
+              <div class="summary-item total-row">
+                <span>Tổng thanh toán:</span>
+                <span class="total-value">{{ formatCurrency(calculateProductTotal() +
+                  (orderDetailModal.data.phi_van_chuyen
+                    || 0) - (orderDetailModal.data.giam_gia || 0)) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else-if="!orderDetailModal.loading" class="empty-data">
+          <a-empty description="Không có thông tin đơn hàng" />
+        </div>
+      </a-spin>
+      <div class="modal-footer">
+        <a-button @click="orderDetailModal.visible = false" class="btn-close">Đóng</a-button>
+        <a-button v-if="orderDetailModal.data && orderDetailModal.data.trang_thai === 'Chờ xác nhận'" type="danger"
+          @click="cancelOrder(orderDetailModal.data.id_hoa_don)" class="btn-cancel">
+          Hủy đơn hàng
+        </a-button>
+        <a-button v-if="orderDetailModal.data && orderDetailModal.data.trang_thai === 'Hoàn thành'" type="primary"
+          class="btn-reorder">
+          Mua lại
+        </a-button>
+      </div>
+    </a-modal>
+  </div>
+</template>
+<script setup>
   
   import { ref, reactive, onMounted, watch, h, computed } from 'vue';
   import {

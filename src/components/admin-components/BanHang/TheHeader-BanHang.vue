@@ -492,8 +492,8 @@ const chonKhachHang = async (khachHang) => {
         open.value = false;
         if (!activeTabData.value.hd.isKhachLe) {
             handlePhuongThucChange();
-        }
 
+        }
         // Làm mới dữ liệu hóa đơn
         await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
 
