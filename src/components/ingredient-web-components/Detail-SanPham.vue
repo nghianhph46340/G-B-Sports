@@ -82,8 +82,7 @@
                 </div>
 
                 <div class="product-price">
-                    <span class="current-price" @input="handleGiaBanInput" @blur="handleGiaBanBlur">{{
-                        formatCurrency(product.gia_khuyen_mai) }}</span>
+                    <span class="current-price" @input="handleGiaBanInput" @blur="handleGiaBanBlur">{{ formatCurrency(product.gia_khuyen_mai) }}</span>
                     <span class="original-price" v-if="product.giam_gia">{{ formatCurrency(product.gia_goc) }}</span>
                     <span class="discount-percent" v-if="product.giam_gia">(-{{ discountPercent }}%)</span>
                 </div>
@@ -540,20 +539,16 @@ const initializeColorAndSizeOptions = () => {
 // Thêm lại hàm lấy mã màu
 const getColorCode = (colorId) => {
     const colorMap = {
-        1: '#000000', // Đen
-        2: '#FFFFFF', // Trắng
-        6: '#FF0000', // Đỏ
-        5: '#0000FF', // Xanh dương
-        7: '#FFFF00', // Vàng
-        10: '#FF66FF', // Xanh lá
+        4: '#000000', // Đen
+        5: '#FFFFFF', // Trắng
+        1: '#FF0000', // Đỏ
+        2: '#0000FF', // Xanh dương
+        3: '#FFFF00', // Vàng
+        6: '#FF66FF', // Xanh lá
         8: '#FFA500', // Cam
-        11: '#800080', // Tím
-        15: '#A52A2A', // Nâu
-        3: '#808080', // Xám
-        4: '#03204c', // Xanh Navy
-        9: '#FF0099', // Hồng
-        12: '#fecca7', //Be
-        14: '#26ec08', //Xanh neon
+        7: '#800080', // Tím
+        9: '#A52A2A', // Nâu
+        10: '#808080', // Xám
         // Thêm các màu khác nếu cần
     };
 
@@ -1729,7 +1724,7 @@ const validateGiaBan = (value) => {
 const handleGiaBanInput = (value) => {
     // Convert value to number for validation
     const numValue = parseFloat(String(value).replace(/,/g, ''));
-
+    
     if (!isNaN(numValue)) {
         if (validateGiaBan(numValue)) {
             product.value.gia_goc = numValue;
