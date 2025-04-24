@@ -1,4 +1,4 @@
-```vue
+
 <template>
   <div class="container-fluid">
     <h3 class="fw-bold mb-4" style="color: #f33b47;">Thêm Voucher</h3>
@@ -366,4 +366,3 @@ const submitForm = async () => {
   border-color: #ced4da;
 }
 </style>
-```

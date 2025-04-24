@@ -370,24 +370,26 @@
                         <p>+ {{ formatCurrency(store.hoaDonDetail.phi_van_chuyen) }} VNĐ</p>
                     </a-col>
                 </a-row>
-                <a-row>
-                    <a-col :md="16"></a-col>
-                    <a-col :md="4" style="text-align: left;">
-                        <p>Tổng tiền khách đã thanh toán:</p>
-                    </a-col>
-                    <a-col :md="4" style="text-align: right;">
-                        <p>{{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</p>
-                    </a-col>
-                </a-row>
-                <a-row>
-                    <a-col :md="16"></a-col>
-                    <a-col :md="4" style="text-align: left;">
-                        <p>Tổng tiền hoàn:</p>
-                    </a-col>
-                    <a-col :md="4" style="text-align: right;">
-                        <p>- {{ formatCurrency(store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0)) }} VNĐ</p>
-                    </a-col>
-                </a-row>
+                <template v-if="store.hoaDonDetail.trang_thai?.toLowerCase() === 'trả hàng'">
+    <a-row>
+        <a-col :md="16"></a-col>
+        <a-col :md="4" style="text-align: left;">
+            <p>Tổng tiền khách đã thanh toán:</p>
+        </a-col>
+        <a-col :md="4" style="text-align: right;">
+            <p>{{ formatCurrency(store.hoaDonDetail.tong_tien_sau_giam) }} VNĐ</p>
+        </a-col>
+    </a-row>
+    <a-row>
+        <a-col :md="16"></a-col>
+        <a-col :md="4" style="text-align: left;">
+            <p>Tổng tiền hoàn trả lại khách:</p>
+        </a-col>
+        <a-col :md="4" style="text-align: right;">
+            <p>- {{ formatCurrency(store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0)) }} VNĐ</p>
+        </a-col>
+    </a-row>
+</template>
                 
                 <a-row>
                     <a-col :md="16"></a-col>
