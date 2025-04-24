@@ -37,6 +37,7 @@ const getImageInCTSP = async (id, anhChinh) => {
     const { data } = await axiosInstance.get(
       qlsp + 'HinhAnhSanPham?idCTSP=' + id + '&anhChinh=' + anhChinh,
     )
+    console.log('Data hình ảnh:', data)
     return data
   } catch (error) {
     console.log(error)

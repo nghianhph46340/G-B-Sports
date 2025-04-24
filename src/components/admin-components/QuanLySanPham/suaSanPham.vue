@@ -190,18 +190,19 @@
                         <a-form-item label="Hình ảnh biến thể"
                             :rules="[{ required: true, message: 'Vui lòng chọn ít nhất 1 hình ảnh!' }]">
                             <div class="d-flex align-items-center gap-2">
-                                <a-upload v-model:file-list="variant.fileList" list-type="picture-card" :max-count="3"
-                                    :multiple="true"
-                                    :before-upload="(file) => beforeUpload(file, variant.fileList.length)"
-                                    :customRequest="handleCustomRequest"
-                                    @change="(info) => handleVariantImageChange(info, index)" @preview="handlePreview">
-                                    <div v-if="variant.fileList.length < 3">
-                                        <plus-outlined />
-                                        <div style="margin-top: 8px">Upload (Tối đa 3)</div>
+                                <a-upload v-model:file-list="variant.fileList"
+                                    :customRequest="(options) => handleUpload(options, variant)"
+                                    :remove="(file) => handleRemoveImage(file, variant)" :itemRender="uploadItemRender"
+                                    :preview="(file) => showPreviewImage(file, variant)" list-type="picture-card"
+                                    :multiple="true" :disabled="loading">
+                                    <div v-if="!loading">
+                                        <plus-outlined></plus-outlined>
+                                        <div style="margin-top: 8px">Tải lên</div>
                                     </div>
                                 </a-upload>
                                 <span class="text-muted">
-                                    {{ variant.fileList.length }}/3 ảnh
+                                    {{ variant.fileList && variant.fileList.length ? variant.fileList.length : 0 }}/3
+                                    ảnh
                                 </span>
                             </div>
                         </a-form-item>
@@ -231,9 +232,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, h } from 'vue';
 import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
-import { message, Modal } from 'ant-design-vue';
+import { message, Modal, Button } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
@@ -861,13 +862,41 @@ const handleImageChange = async (info) => {
     }
 };
 
-// Preview ảnh
-const handleCustomRequest = (options) => {
-    if (options && typeof options.onSuccess === 'function') {
-        setTimeout(() => {
-            options.onSuccess('ok');
-        }, 0);
+let previewVariant = ref(null);
+let previewFile = ref(null);
+
+// Xử lý khi người dùng chọn ảnh chính
+const setMainImage = (variant, file) => {
+    if (!variant || !variant.fileList || variant.fileList.length === 0) return;
+
+    console.log('Đặt ảnh chính cho variant:', variant);
+    console.log('File đặt làm ảnh chính:', file);
+
+    // Đặt tất cả ảnh không phải ảnh chính trước
+    variant.fileList.forEach(item => {
+        if (item && item.uid === file.uid) {
+            item.anh_chinh = "1";
+            console.log('Đã đặt ảnh', item.name, 'làm ảnh chính');
+        } else if (item) {
+            item.anh_chinh = "0";
+        }
+    });
+
+    // Force cập nhật UI 
+    variant.fileList = [...variant.fileList];
+
+    console.log('FileList sau khi đặt ảnh chính:', variant.fileList);
+};
+
+const showPreviewImage = (file, variant) => {
+    if (!file || !file.url) {
+        console.log('Không thể xem trước ảnh:', file);
+        return;
     }
+
+    previewVisible.value = true;
+    previewImage.value = file.url;
+    previewTitle.value = file.name || (file.url && file.url.substring(file.url.lastIndexOf('/') + 1)) || 'Hình ảnh';
 };
 
 onMounted(async () => {
@@ -944,6 +973,7 @@ onMounted(async () => {
 
         // Xử lý dữ liệu biến thể
         if (store.getCTSPBySanPhams && store.getCTSPBySanPhams.length > 0) {
+            // Tạo mảng biến thể trước
             variants.value = store.getCTSPBySanPhams.map(ctsp => {
                 console.log('Đang xử lý biến thể:', ctsp);
 
@@ -954,36 +984,7 @@ onMounted(async () => {
                 console.log('Màu sắc tìm thấy:', mauSac);
                 console.log('Kích thước tìm thấy:', kichThuoc);
 
-                // Chuyển đổi URL hình ảnh thành định dạng fileList cho a-upload
-                let variantFileList = [];
-
-                if (ctsp.hinh_anh) {
-                    console.log('Hình ảnh biến thể gốc:', ctsp.hinh_anh);
-
-                    // Nếu hinh_anh là chuỗi, chuyển thành mảng có một phần tử
-                    const hinhAnhArray = typeof ctsp.hinh_anh === 'string'
-                        ? [ctsp.hinh_anh]
-                        : Array.isArray(ctsp.hinh_anh)
-                            ? ctsp.hinh_anh
-                            : [];
-
-                    console.log('Mảng hình ảnh sau khi xử lý:', hinhAnhArray);
-
-                    variantFileList = hinhAnhArray.map((url, index) => {
-                        const fileItem = {
-                            uid: `-${index}`,
-                            name: `image-${index}.jpg`,
-                            status: 'done',
-                            url: url
-                        };
-                        console.log('File item được tạo:', fileItem);
-                        return fileItem;
-                    });
-                }
-
-                console.log('FileList cuối cùng:', variantFileList);
-
-                // Tạo đối tượng biến thể
+                // Tạo đối tượng biến thể với fileList rỗng ban đầu
                 return {
                     id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
                     id_mau_sac: ctsp.id_mau_sac,
@@ -991,29 +992,57 @@ onMounted(async () => {
                     so_luong: ctsp.so_luong || 1,
                     gia_ban: ctsp.gia_ban || 1100,
                     trang_thai: ctsp.trang_thai || 'Hoạt động',
-                    fileList: variantFileList,
-                    hinh_anh: typeof ctsp.hinh_anh === 'string'
-                        ? [ctsp.hinh_anh]
-                        : Array.isArray(ctsp.hinh_anh)
-                            ? ctsp.hinh_anh
-                            : [],
+                    fileList: [], // Khởi tạo rỗng, sẽ được cập nhật sau
+                    hinh_anh: [], // Khởi tạo rỗng, sẽ được cập nhật sau
                     ngay_tao: ctsp.ngay_tao,
                     ngay_sua: ctsp.ngay_sua,
                     isExisting: true // Đánh dấu đây là biến thể đã tồn tại
                 };
             });
 
+            // Lấy hình ảnh cho từng biến thể
+            for (let i = 0; i < variants.value.length; i++) {
+                const variant = variants.value[i];
+                try {
+                    console.log('Đang lấy hình ảnh cho biến thể:', variant.id_chi_tiet_san_pham);
+
+                    // Gọi API trực tiếp từ sanPhamService thay vì dùng store
+                    const { data } = await axiosInstance.get(
+                        'admin/quan_ly_san_pham/HinhAnhSanPham?idCTSP=' + variant.id_chi_tiet_san_pham + '&anhChinh='
+                    );
+
+                    console.log('Hình ảnh đã lấy được:', data);
+
+                    if (data && Array.isArray(data)) {
+                        // Lưu URL của tất cả hình ảnh vào biến thể
+                        variant.hinh_anh = data.map(img => img.hinh_anh);
+
+                        // Tạo fileList cho component a-upload với thông tin anh_chinh đầy đủ
+                        variant.fileList = data.map((img, index) => ({
+                            uid: `-${index}`,
+                            name: `image-${index}.jpg`,
+                            status: 'done',
+                            url: img.hinh_anh,
+                            anh_chinh: img.anh_chinh === true ? "1" : "0", // Chuyển boolean thành string
+                            id_hinh_anh: img.id_hinh_anh
+                        }));
+
+                        console.log('FileList sau khi xử lý:', variant.fileList);
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi lấy hình ảnh cho biến thể:', error);
+                }
+            }
+
             console.log('Variants sau khi xử lý:', variants.value);
-
-            // Đánh dấu form đã được validate để có thể chỉnh sửa biến thể
-            isProductValidated.value = true;
-
-            // Đảm bảo validate form sau khi tải dữ liệu
-            await validateForm();
         }
+
+        // Set valid để có thể thêm biến thể sau khi đã tải xong dữ liệu
+        isProductValidated.value = true;
+
     } catch (error) {
-        message.error('Có lỗi khi tải dữ liệu: ' + error.message);
-        console.error('Chi tiết lỗi:', error);
+        console.error('Lỗi khi tải thông tin sản phẩm:', error);
+        message.error('Không thể tải thông tin sản phẩm: ' + error.message);
     }
 });
 
@@ -1259,6 +1288,199 @@ const formatCommonPriceOnBlur = () => {
     let formattedValue = numericValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     formState.gia_ban_chung = formattedValue;
 };
+
+// Renderer cho itemRender trong a-upload
+const uploadItemRender = (originNode, file, fileList) => {
+    // Kiểm tra file tồn tại trước khi truy cập thuộc tính
+    if (!file) {
+        return originNode;
+    }
+
+    // Trả về render tùy chỉnh cho các file đã upload
+    if (file.status === 'uploading') {
+        return h('a-spin');
+    }
+
+    // Xử lý cho các file đã hoàn tất hoặc lỗi
+    if (file.status === 'done' || file.status === 'error') {
+        return h('div', {
+            class: 'custom-upload-item',
+            style: {
+                position: 'relative',
+                display: 'inline-block',
+                width: '100px',
+                height: '100px',
+                margin: '0 8px 8px 0',
+                border: '1px solid #d9d9d9',
+                borderRadius: '4px',
+                overflow: 'hidden',
+            }
+        }, [
+            // Hiển thị hình ảnh
+            h('img', {
+                src: file.url || (file.originFileObj ? URL.createObjectURL(file.originFileObj) : ''),
+                style: {
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                }
+            }),
+
+            // Hiển thị badge "Chính" nếu là ảnh chính
+            file.anh_chinh === "1" ? h('div', {
+                style: {
+                    position: 'absolute',
+                    top: '5px',
+                    right: '5px',
+                    backgroundColor: '#52c41a',
+                    color: 'white',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                }
+            }, 'Chính') : null,
+
+            // Overlay với các nút thao tác khi hover
+            h('div', {
+                class: 'custom-upload-actions',
+                style: {
+                    position: 'absolute',
+                    bottom: '0',
+                    left: '0',
+                    right: '0',
+                    background: 'rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '4px'
+                }
+            }, [
+                // Nút đặt ảnh chính
+                h('a-button', {
+                    type: file.anh_chinh === "1" ? "primary" : "default",
+                    size: "small",
+                    onClick: (e) => {
+                        e.stopPropagation();
+                        // Tìm biến thể chứa file này
+                        const variant = variants.value.find(v =>
+                            v.fileList && v.fileList.some(f => f.uid === file.uid)
+                        );
+                        if (variant) {
+                            setMainImage(variant, file);
+                        }
+                    }
+                }, { default: () => file.anh_chinh === "1" ? 'Chính' : 'Đặt chính' }),
+
+                // Nút xóa ảnh
+                h('a-button', {
+                    type: "text",
+                    size: "small",
+                    onClick: (e) => {
+                        e.stopPropagation();
+                        // Tìm biến thể chứa file này
+                        const variant = variants.value.find(v =>
+                            v.fileList && v.fileList.some(f => f.uid === file.uid)
+                        );
+                        if (variant) {
+                            handleRemoveImage(file, variant);
+                        }
+                    },
+                    style: {
+                        color: 'white'
+                    }
+                }, {
+                    default: () => h(DeleteOutlined)
+                })
+            ])
+        ]);
+    }
+
+    // Trả về node gốc cho các trường hợp khác
+    return originNode;
+};
+
+// Xử lý tải lên hình ảnh
+const handleUpload = async (options, variant) => {
+    try {
+        console.log('Đang tải lên ảnh cho biến thể:', variant.id_chi_tiet_san_pham);
+        const { file, onSuccess, onError } = options;
+
+        // Tạo URL tạm thời cho file
+        const previewUrl = URL.createObjectURL(file);
+        console.log('URL tạm thời:', previewUrl);
+
+        // Thêm ảnh mới vào fileList với thông tin đầy đủ
+        const newFile = {
+            uid: Date.now().toString(),
+            name: file.name,
+            status: 'uploading',
+            originFileObj: file,
+            url: previewUrl,
+            anh_chinh: variant.fileList.length === 0 ? "1" : "0", // Nếu là ảnh đầu tiên, đặt làm ảnh chính
+            id_hinh_anh: null, // Ảnh mới chưa có ID
+            isNew: true // Đánh dấu đây là ảnh mới
+        };
+
+        // Cập nhật danh sách file
+        variant.fileList = [...variant.fileList, newFile];
+
+        // Đảm bảo hinh_anh mảng đã được khởi tạo
+        if (!Array.isArray(variant.hinh_anh)) {
+            variant.hinh_anh = [];
+        }
+
+        // Cập nhật trạng thái sau khi tải lên
+        setTimeout(() => {
+            const index = variant.fileList.findIndex(item => item.uid === newFile.uid);
+            if (index !== -1) {
+                variant.fileList[index].status = 'done';
+                variant.fileList = [...variant.fileList];
+            }
+            onSuccess();
+        }, 500);
+    } catch (error) {
+        console.error('Lỗi khi tải lên hình ảnh:', error);
+        message.error('Không thể tải lên hình ảnh, vui lòng thử lại sau');
+        options.onError();
+    }
+};
+
+// Xử lý xóa hình ảnh
+const handleRemoveImage = (file, variant) => {
+    console.log('Xóa hình ảnh:', file);
+
+    if (!variant || !variant.fileList) {
+        console.error('Variant hoặc fileList không hợp lệ', variant);
+        return true;
+    }
+
+    const index = variant.fileList.findIndex(item => item && item.uid === file.uid);
+    if (index !== -1) {
+        // Nếu xóa ảnh chính, chuyển ảnh đầu tiên còn lại thành ảnh chính
+        if (file.anh_chinh === "1" && variant.fileList.length > 1) {
+            // Tìm ảnh tiếp theo để đặt làm ảnh chính
+            const nextIndex = variant.fileList.findIndex((item, i) => i !== index && item);
+            if (nextIndex !== -1) {
+                variant.fileList[nextIndex].anh_chinh = "1";
+                console.log('Đã đặt ảnh', variant.fileList[nextIndex].name, 'làm ảnh chính mới');
+            }
+        }
+
+        // Nếu là ảnh đã lưu trong DB, đánh dấu để xóa khi lưu
+        if (file.id_hinh_anh) {
+            variant.imagesToDelete = variant.imagesToDelete || [];
+            variant.imagesToDelete.push(file.id_hinh_anh);
+        }
+
+        // Xóa khỏi fileList
+        variant.fileList.splice(index, 1);
+        variant.fileList = [...variant.fileList];
+
+        message.success('Đã xóa ảnh');
+    } else {
+        console.warn('Không tìm thấy file cần xóa trong fileList');
+    }
+    return true;
+};
 </script>
 
 <style scoped>
@@ -1302,19 +1524,41 @@ const formatCommonPriceOnBlur = () => {
 
 :deep(.ant-upload-list-picture-card) {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
 :deep(.ant-upload-list-picture-card-container) {
-    width: 100px;
-    height: 100px;
+    width: 100px !important;
+    height: 100px !important;
     margin: 0 !important;
+}
+
+:deep(.ant-upload-list-item-image) {
+    object-fit: cover !important;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 :deep(.ant-upload.ant-upload-select-picture-card) {
     width: 100px;
     height: 100px;
     margin: 0;
+}
+
+:deep(.custom-upload-item) {
+    display: flex !important;
+    flex-direction: column;
+    position: relative;
+}
+
+:deep(.custom-upload-actions) {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+:deep(.custom-upload-item:hover .custom-upload-actions) {
+    opacity: 1;
 }
 
 .text-muted {

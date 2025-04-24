@@ -1312,10 +1312,24 @@ const updateSelectedRows = (rows) => {
     selectedRows.value = rows;
 };
 
+// Thêm phương thức để nhận thông tin phân trang ảo
+const updateVirtualPaginationInfo = (paginationInfo) => {
+    console.log('Đã nhận thông tin phân trang:', paginationInfo);
+    if (!paginationInfo) return;
+
+    // Lưu thông tin phân trang để sử dụng khi lọc
+    const { currentPage, pageSize, total } = paginationInfo;
+
+    // Cập nhật bộ lọc nếu cần
+    // Đảm bảo khi lọc vẫn giữ được thông tin phân trang
+    // và có thể quay lại đúng trang khi bỏ lọc
+};
+
 // Expose để component cha có thể gọi
 defineExpose({
     checkAndLoadFilterData,
-    updateSelectedRows
+    updateSelectedRows,
+    updateVirtualPaginationInfo
 });
 
 // Các hàm tiện ích
