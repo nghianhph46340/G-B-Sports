@@ -79,6 +79,8 @@ export const useGbStore = defineStore('gbStore', {
     getAllHoaDonCTTArr: [],
     listCTSP_HD: [],
     listDCKHinHD: [],
+    chiTietTraHang: [], // For returned product details
+        traHangs: [],
 
     // Đăng ký đăng nhập // Thêm state để lưu thông tin người dùng
     userInfo: JSON.parse(localStorage.getItem('userInfo')) || null,
@@ -935,26 +937,35 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
-    // Thêm action mới để lấy chi tiết hóa đơn
     async getHoaDonDetail(maHoaDon) {
       try {
-        console.log('maHoaDon:', maHoaDon)
-        const response = await hoaDonService.getCTHD(maHoaDon)
-        console.log('Response từ getCTHD:', response)
-        if (response.error) {
-          toast.error('Không lấy được chi tiết hóa đơn')
-          return
-        } else {
-          this.hoaDonDetail = response.hoaDon || {}
-          this.chiTietHoaDons = response.chiTietHoaDons || []
-          this.trangThaiHistory = response.trangThaiHistory || []
-          this.listDCKHinHD = response.listDC || []
-        }
+          const response = await hoaDonService.getCTHD(maHoaDon);
+          const response1 = await hoaDonService.getCTTH(maHoaDon);
+          console.log('Dữ liệu từ getCTHD:', response.chiTietHoaDons); // Kiểm tra dữ liệu
+          if (response.error) {
+              toast.error(response.message || 'Không lấy được chi tiết hóa đơn');
+              return;
+          }
+  
+          this.hoaDonDetail = response.hoaDon || {};
+          // Lọc trùng lặp dựa trên id_chi_tiet_san_pham
+          const uniqueChiTietHoaDons = [];
+          const seenIds = new Set();
+          for (const item of response.chiTietHoaDons || []) {
+              if (!seenIds.has(item.id_chi_tiet_san_pham)) {
+                  seenIds.add(item.id_chi_tiet_san_pham);
+                  uniqueChiTietHoaDons.push(item);
+              }
+          }
+          this.chiTietHoaDons = uniqueChiTietHoaDons;
+          this.trangThaiHistory = response.trangThaiHistory || [];
+          this.chiTietTraHangs = response1.chiTietTraHangs || [];
+          this.traHangs = response1.traHangs || [];
       } catch (error) {
-        console.error('Lỗi trong getHoaDonDetail:', error)
-        toast.error('Có lỗi xảy ra khi lấy chi tiết hóa đơn')
+          console.error('Lỗi trong getHoaDonDetail:', error);
+          toast.error('Có lỗi xảy ra khi lấy chi tiết hóa đơn');
       }
-    },
+  },
     // Thêm action để thay đổi trạng thái hóa đơn
     async changeTrangThaiHoaDon(maHoaDon, newTrangThai, nhanVienDoi, noiDungDoi) {
       try {
@@ -2939,8 +2950,67 @@ export const useGbStore = defineStore('gbStore', {
     getCurrentHoaDonId() {
       return this.currentHoaDonId
     },
+    
+   // Lấy chi tiết hóa đơn
+   async getHoaDonDetails(maHoaDon) {
+    try {
+      const result = await hoaDonService.getHoaDonDetails(maHoaDon);
+      const response = await hoaDonService.getCTHD(maHoaDon);
+  
+      if (result.thanh_cong) {
+        const data = {
+          ma_hoa_don: result.ma_hoa_don,
+          trang_thai: result.trang_thai,
+          hinh_thuc_thanh_toan: result.hinh_thuc_thanh_toan,
+          ngay_tao: result.ngay_tao,
+          ho_ten: result.ho_ten,
+          dia_chi: result.dia_chi,
+          gia_tri_giam: result.gia_tri_giam,
+          tong_tien: result.tong_tien,
+          tong_tien_thanh_toan: result.tong_tien_thanh_toan,
+          chiTietHoaDons: result.chi_tiet_hoa_don,
+          return_status: result.trang_thai_tra_hang,
+          return_history: result.lich_su_tra_hang
+        };
+  
+        this.hoaDonDetail = response.hoaDon || {};
+        this.chiTietHoaDons = response.chiTietHoaDons || [];
+        this.trangThaiHistory = response.trangThaiHistory || [];
+  
+        return data;
+      } else {
+        
+        throw new Error(result.message || 'Không tìm thấy đơn hàng');
+      }
+    } catch (error) {
+      console.error('Lỗi khi tìm kiếm đơn hàng:', error);
+      throw error;
+    }
   },
 
+  // Xử lý trả hàng
+  async processReturn(returnData) {
+    try {
+      const result = await hoaDonService.processReturn(returnData);
+      if (result.thanh_cong) {
+        return {
+          success: true,
+          id_tra_hang: result.id_tra_hang
+        };
+      } else {
+        toast.error(result.message || 'Xử lý trả hàng thất bại');
+        return {
+          success: false,
+          thong_bao: result.message || 'Xử lý trả hàng thất bại'
+        };
+      }
+    } catch (error) {
+      console.error('Lỗi khi xử lý trả hàng:', error);
+      toast.error('Có lỗi xảy ra khi xử lý trả hàng');
+      throw error;
+    }
+  }
+},
   persist: {
     enabled: true,
     strategies: [

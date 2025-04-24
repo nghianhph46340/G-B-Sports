@@ -144,7 +144,7 @@
                 </div>
 
                 <div v-if="ptnh === 'Giao hàng'">
-                    <FormKhachHangBH />
+                    <FormKhachHangBH :triggerUpdate="triggerUpdate" />
                 </div>
             </div>
             <div class="col-4">
@@ -337,7 +337,7 @@ import { thanhToanService } from '@/services/thanhToan';
 import FormKhachHangBH from './formKhachHangBH.vue';
 import { useRouter } from 'vue-router';
 import { banHangService } from '@/services/banHangService';
-
+import QRCode from 'qrcode';
 const router = useRouter();
 import { Html5Qrcode } from 'html5-qrcode';
 // Thêm state cho quét QR
@@ -345,6 +345,9 @@ const qrScannerVisible = ref(false);
 const qrScanResult = ref('');
 let html5QrCode = null;
 let isProcessing = false;
+const triggerUpdate = ref(Date.now());
+
+
 
 // Hiển thị modal quét QR
 const showQrScanner = () => {
@@ -498,6 +501,9 @@ const chonKhachHang = async (khachHang) => {
         try {
             localStorage.setItem('khachHangBH', JSON.stringify(khachHang));
             localStorage.setItem('chonKH', true);
+            
+
+
             console.log('Đã lưu khách hàng vào localStorage:', khachHang);
         } catch (error) {
             console.error('Lỗi khi lưu khách hàng vào localStorage:', error);
@@ -505,6 +511,7 @@ const chonKhachHang = async (khachHang) => {
 
         console.log('activeTabData.hd sau khi làm mới:', activeTabData.value.hd);
         message.success(`Đã chọn khách hàng: ${khachHang.tenKhachHang}`);
+        triggerUpdate.value = Date.now(); // Sau khi chọn xong khách
     } catch (error) {
         console.error('Lỗi khi chọn khách hàng:', error);
         message.error('Không thể chọn khách hàng. Vui lòng thử lại!');
@@ -683,7 +690,6 @@ const refreshHoaDon = async (idHoaDon) => {
         message.error('Không thể làm mới thông tin hóa đơn.');
     }
 };
-
 
 
 
@@ -1021,50 +1027,157 @@ const formatDate = (date) => {
 };
 
 // Phương thức in hóa đơn
-const printInvoice = () => {
-    const doc = new jsPDF();
-    // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
-    doc.setFont("Roboto");
+// const printInvoice = () => {
+//     const doc = new jsPDF();
+//     // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
+//     doc.setFont("Roboto");
 
-    // Thêm logo
-    const logoWidth = 30; // Chiều rộng logo (mm)
-    const logoHeight = 20; // Chiều cao logo (mm)
-    const pageWidth = doc.internal.pageSize.getWidth(); // Chiều rộng trang A4 (210mm)
-    const logoX = (pageWidth - logoWidth) / 2; // Căn giữa logo theo chiều ngang
-    doc.addImage(logo, 'PNG', logoX, 10, logoWidth, logoHeight); // Thêm logo vào PDF
-    // Tiêu đề "HÓA ĐƠN BÁN HÀNG"
+//     // Thêm logo
+//     const logoWidth = 30; // Chiều rộng logo (mm)
+//     const logoHeight = 20; // Chiều cao logo (mm)
+//     const pageWidth = doc.internal.pageSize.getWidth(); // Chiều rộng trang A4 (210mm)
+//     const logoX = (pageWidth - logoWidth) / 2; // Căn giữa logo theo chiều ngang
+//     doc.addImage(logo, 'PNG', logoX, 10, logoWidth, logoHeight); // Thêm logo vào PDF
+//     // Tiêu đề "HÓA ĐƠN BÁN HÀNG"
+//     doc.setFontSize(18);
+//     doc.setFont("Roboto", "bold");
+//     doc.text("HÓA ĐƠN BÁN HÀNG", 105, 50, { align: "center" });
+//     // Thông tin cửa hàng
+//     doc.setFontSize(16);
+//     doc.setFont("Roboto", "bold");
+//     doc.text("G&B SPORTS", 105, 60, { align: "center" });
+//     doc.setFontSize(10);
+//     doc.setFont("Roboto", "normal");
+//     doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 68, { align: "center" });
+//     doc.text("Điện thoại: 0123456789", 105, 74, { align: "center" });
+//     // Vẽ đường kẻ ngang
+//     doc.setLineWidth(0.5);
+//     doc.line(20, 78, 190, 78);
+//     // Thông tin hóa đơn
+//     doc.setFontSize(12);
+//     doc.setFont("Roboto", "normal");
+//     doc.text(`Mã hóa đơn: ${activeTabData.value.hd.ma_hoa_don || 'N/A'}`, 20, 86);
+//     doc.text(`Tên nhân viên: ${activeTabData.value.hd.ten_nhan_vien || 'N/A'}`, 20, 94);
+//     doc.text(`Ngày tạo: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
+//     doc.text(`Tên khách hàng: ${activeTabData.value.hd.ho_ten || 'Khách lẻ'}`, 20, 110);
+//     // Danh sách sản phẩm
+//     let y = 120;
+//     doc.setFontSize(12);
+//     doc.setFont("Roboto", "bold");
+//     doc.text("Sản phẩm", 20, y);
+//     // Tiêu đề bảng
+//     doc.setFontSize(10);
+//     doc.setFont("Roboto", "bold");
+//     doc.text("Số lượng", 100, y, { align: "center" });
+//     doc.text("Đơn giá", 130, y, { align: "center" });
+//     doc.text("Tổng tiền", 170, y, { align: "center" });
+//     // Vẽ đường kẻ ngang dưới tiêu đề bảng
+//     y += 2;
+//     doc.setLineWidth(0.2);
+//     doc.line(20, y, 190, y);
+//     // Danh sách sản phẩm
+//     y += 6;
+//     doc.setFontSize(10);
+//     doc.setFont("Roboto", "normal");
+//     currentInvoiceItems.value.forEach((item, index) => {
+//         // Tên sản phẩm
+//         const productName = `${index + 1}. ${item.ten_san_pham} (${item.mau_sac} - ${item.kich_thuoc})`;
+//         const productLines = doc.splitTextToSize(productName, 80); // Chia nhỏ nếu tên quá dài
+//         doc.text(productLines, 20, y);
+
+//         // Số lượng
+//         doc.text(`${item.so_luong}`, 100, y, { align: "center" });
+
+//         // Đơn giá
+//         doc.text(`${formatCurrency(item.gia_ban)}`, 130, y, { align: "center" });
+
+//         // Thành tiền
+//         const thanhTien = item.gia_ban * item.so_luong;
+//         doc.text(`${formatCurrency(thanhTien)}`, 170, y, { align: "center" });
+
+//         // Tăng y dựa trên số dòng của tên sản phẩm
+//         y += productLines.length * 6 + 4;
+//     });
+//     // Vẽ đường kẻ ngang sau danh sách sản phẩm
+//     doc.setLineWidth(0.2);
+//     doc.line(20, y, 190, y);
+//     // Tổng tiền
+//     y += 10;
+//     doc.setFontSize(12);
+//     doc.setFont("Roboto", "normal");
+//     doc.text(`Tổng tiền hàng: ${formatCurrency(activeTabData.value.hd.tong_tien_truoc_giam)}`, 20, y);
+//     y += 6;
+//     const giamGia = (activeTabData.value.hd.tong_tien_truoc_giam || 0) +
+//         (activeTabData.value.hd.phi_van_chuyen || 0) -
+//         (activeTabData.value.hd.tong_tien_sau_giam || 0);
+//     doc.text(`Giảm giá: ${formatCurrency(giamGia)}`, 20, y);
+//     y += 6;
+//     doc.text(`Phí vận chuyển: ${formatCurrency(activeTabData.value.hd.phi_van_chuyen || 0)}`, 20, y);
+//     y += 6;
+//     doc.setFont("Roboto", "bold");
+//     doc.text(`Thành tiền: ${formatCurrency(activeTabData.value.hd.tong_tien_sau_giam)}`, 20, y);
+//     // Chân trang
+//     y += 10;
+//     doc.setFontSize(10);
+//     doc.setFont("Roboto", "normal");
+//     doc.text("Cảm ơn Quý Khách, hẹn gặp lại!", 105, y, { align: "center" });
+//     // Lưu file PDF
+//     doc.save(`HoaDon_${activeTabData.value.hd.ma_hoa_don}.pdf`);
+// };
+
+const printInvoice = async () => {
+    const doc = new jsPDF();
+    doc.setFont("Roboto");
+    const logoWidth = 30;
+    const logoHeight = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const logoX = (pageWidth - logoWidth) / 2;
+    doc.addImage(logo, 'PNG', logoX, 15, logoWidth, logoHeight); // Logo gần chữ hơn
+    const qrCodeDataUrl = await QRCode.toDataURL(activeTabData.value.hd.ma_hoa_don || 'N/A');
+    doc.addImage(qrCodeDataUrl, 'PNG', 15, 10, 40, 40); // QR code gần chữ hơn
     doc.setFontSize(18);
     doc.setFont("Roboto", "bold");
-    doc.text("HÓA ĐƠN BÁN HÀNG", 105, 50, { align: "center" });
+    doc.text("HÓA ĐƠN BÁN HÀNG", 105, 45, { align: "center" }); // Chỉnh vị trí chữ "Hóa đơn bán hàng"
     // Thông tin cửa hàng
     doc.setFontSize(16);
     doc.setFont("Roboto", "bold");
-    doc.text("G&B SPORTS", 105, 60, { align: "center" });
+    doc.text("G&B SPORTS", 105, 55, { align: "center" });
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
-    doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 68, { align: "center" });
-    doc.text("Điện thoại: 0123456789", 105, 74, { align: "center" });
+    doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 63, { align: "center" });
+    doc.text("Điện thoại: 0397572262", 105, 69, { align: "center" });
     // Vẽ đường kẻ ngang
     doc.setLineWidth(0.5);
-    doc.line(20, 78, 190, 78);
+    doc.line(20, 73, 190, 73);
     // Thông tin hóa đơn
+    let y = 120;
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
     doc.text(`Mã hóa đơn: ${activeTabData.value.hd.ma_hoa_don || 'N/A'}`, 20, 86);
     doc.text(`Tên nhân viên: ${activeTabData.value.hd.ten_nhan_vien || 'N/A'}`, 20, 94);
-    doc.text(`Ngày tạo: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
+    doc.text(`Ngày: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
     doc.text(`Tên khách hàng: ${activeTabData.value.hd.ho_ten || 'Khách lẻ'}`, 20, 110);
+    // Kiểm tra nếu là đơn Online/Offline và giao hàng thì hiển thị thêm số điện thoại và địa chỉ
+    if (activeTabData.value.hd.loai_hoa_don === 'Online' || activeTabData.value.hd.loai_hoa_don === 'Offline'
+        && activeTabData.value.hd.phuong_thuc_nhan_hang === 'Giao hàng') {
+        doc.text(`SĐT: ${activeTabData.value.hd.sdt_nguoi_nhan || ''}`, 110, 110, { align: "left" });
+        doc.text(`Địa chỉ: ${activeTabData.value.hd.dia_chi || ''}`, 20, 118);
+        y = 126; // cập nhật vị trí `y` sau địa chỉ
+    } else {
+        y = 118; // nếu không có địa chỉ, dòng sản phẩm bắt đầu ngay sau tên khách hàng
+    }
     // Danh sách sản phẩm
-    let y = 120;
-    doc.setFontSize(12);
-    doc.setFont("Roboto", "bold");
-    doc.text("Sản phẩm", 20, y);
-    // Tiêu đề bảng
+
     doc.setFontSize(10);
     doc.setFont("Roboto", "bold");
-    doc.text("Số lượng", 100, y, { align: "center" });
-    doc.text("Đơn giá", 130, y, { align: "center" });
-    doc.text("Tổng tiền", 170, y, { align: "center" });
+    doc.text("Thông tin sản phẩm", 20, y);
+    // Tiêu đề bảng
+    // y += 10;
+    doc.setFontSize(10);
+    doc.setFont("Roboto", "bold");
+    doc.text("Số lượng", 110, y, { align: "center" });
+    doc.text("Đơn giá", 140, y, { align: "center" });
+    doc.text("Tổng tiền", 180, y, { align: "center" });
     // Vẽ đường kẻ ngang dưới tiêu đề bảng
     y += 2;
     doc.setLineWidth(0.2);
@@ -1074,23 +1187,37 @@ const printInvoice = () => {
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
     currentInvoiceItems.value.forEach((item, index) => {
-        // Tên sản phẩm
-        const productName = `${index + 1}. ${item.ten_san_pham} (${item.mau_sac} - ${item.kich_thuoc})`;
-        const productLines = doc.splitTextToSize(productName, 80); // Chia nhỏ nếu tên quá dài
+        const productName = `${index + 1}. ${item.ten_san_pham} (Màu: ${item.mau_sac} - Size: ${item.kich_thuoc})`;
+        const productLines = doc.splitTextToSize(productName, 85);
         doc.text(productLines, 20, y);
-
-        // Số lượng
-        doc.text(`${item.so_luong}`, 100, y, { align: "center" });
+        doc.text(`${item.so_luong}`, 110, y, { align: "center" });
 
         // Đơn giá
-        doc.text(`${formatCurrency(item.gia_ban)}`, 130, y, { align: "center" });
+        const donGia = item.gia_sau_giam && item.gia_sau_giam < item.gia_ban ? item.gia_sau_giam : item.gia_ban;
+        if (item.gia_sau_giam && item.gia_sau_giam < item.gia_ban) {
+            doc.setTextColor(255, 0, 0); // Màu đỏ
+        }
+        doc.text(`${formatCurrency(donGia)}`, 140, y, { align: "center" });
+        doc.setTextColor(0); // Reset màu về đen
 
         // Thành tiền
-        const thanhTien = item.gia_ban * item.so_luong;
-        doc.text(`${formatCurrency(thanhTien)}`, 170, y, { align: "center" });
+        if (item.gia_sau_giam && item.gia_sau_giam < item.gia_ban) {
+            doc.setTextColor(255, 0, 0); // Màu đỏ
+        }
+        doc.text(`${formatCurrency(donGia * item.so_luong)}`, 180, y, { align: "center" });
+        doc.setTextColor(0); // Reset màu về đen
 
-        // Tăng y dựa trên số dòng của tên sản phẩm
         y += productLines.length * 6 + 4;
+
+        // Hiển thị giá gốc nếu có khuyến mãi
+        if (item.gia_sau_giam && item.gia_sau_giam < item.gia_ban) {
+            doc.setFontSize(8);
+            doc.setTextColor(150); // Màu xám
+            doc.text(`Giá gốc: ${formatCurrency(item.gia_ban)}`, 140, y - 6, { align: "center" });
+            doc.setTextColor(0); // Reset màu về đen
+            doc.setFontSize(10);
+            y += 4;
+        }
     });
     // Vẽ đường kẻ ngang sau danh sách sản phẩm
     doc.setLineWidth(0.2);
@@ -1099,22 +1226,42 @@ const printInvoice = () => {
     y += 10;
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
-    doc.text(`Tổng tiền hàng: ${formatCurrency(activeTabData.value.hd.tong_tien_truoc_giam)}`, 20, y);
+    doc.text(`Tổng tiền hàng:`, 115, y, { align: "left" });
+    doc.text(`${formatCurrency(activeTabData.value.hd.tong_tien_truoc_giam)}`, 190, y, { align: "right" });
+
     y += 6;
     const giamGia = (activeTabData.value.hd.tong_tien_truoc_giam || 0) +
         (activeTabData.value.hd.phi_van_chuyen || 0) -
         (activeTabData.value.hd.tong_tien_sau_giam || 0);
-    doc.text(`Giảm giá: ${formatCurrency(giamGia)}`, 20, y);
+    doc.text(`Giảm giá:`, 115, y, { align: "left" });
+    doc.text(`-${formatCurrency(giamGia)}`, 190, y, { align: "right" });
+
     y += 6;
-    doc.text(`Phí vận chuyển: ${formatCurrency(activeTabData.value.hd.phi_van_chuyen || 0)}`, 20, y);
+    doc.text(`Phí vận chuyển:`, 115, y, { align: "left" });
+    doc.text(`+${formatCurrency(activeTabData.value.hd.phi_van_chuyen || 0)}`, 190, y, { align: "right" });
+
     y += 6;
     doc.setFont("Roboto", "bold");
-    doc.text(`Thành tiền: ${formatCurrency(activeTabData.value.hd.tong_tien_sau_giam)}`, 20, y);
+    doc.text(`Thành tiền:`, 115, y, { align: "left" });
+    doc.text(`${formatCurrency(activeTabData.value.hd.tong_tien_sau_giam)}`, 190, y, { align: "right" });
+    if (activeTabData.value.hd.hinh_thuc_thanh_toan === "Tiền mặt") {
+        y += 6;
+        doc.setFont("Roboto", "bold");
+        doc.text(`Tiền khách đưa:`, 115, y, { align: "left" });
+        doc.text(`${formatCurrency(tienKhachDua.value)}`, 190, y, { align: "right" });
+        y += 6;
+        doc.setFont("Roboto", "bold");
+        doc.text(`Tiền trả khách:`, 115, y, { align: "left" });
+        doc.text(`${formatCurrency(calculatedChange.value)}`, 190, y, { align: "right" });
+    }
+
+
     // Chân trang
     y += 10;
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
     doc.text("Cảm ơn Quý Khách, hẹn gặp lại!", 105, y, { align: "center" });
+
     // Lưu file PDF
     doc.save(`HoaDon_${activeTabData.value.hd.ma_hoa_don}.pdf`);
 };

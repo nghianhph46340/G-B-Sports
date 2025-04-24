@@ -346,24 +346,6 @@ const luuThongTin = async () => {
 
 };
 
-function tachDiaChi(addressString) {
-    if (!addressString) return {
-        soNha: '',
-        xaPhuong: '',
-        quanHuyen: '',
-        tinhThanhPho: ''
-    };
-
-    const parts = addressString.split(',').map(p => p.trim());
-    return {
-        soNha: parts[0] || '',        // Số nhà
-        xaPhuong: parts[1] || '',     // Phường/Xã
-        quanHuyen: parts[2] || '',    // Quận/Huyện
-        tinhThanhPho: parts[3] || ''  // Tỉnh/Thành phố
-    };
-}
-
-console.log("địa chỉ test", tachDiaChi("số 32, Xã Đức Hạnh, Huyện Bảo Lâm, Tỉnh Cao Bằng"))
 const confirmThemKhachHang = () => {
     if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
         themKhachHang();
@@ -376,60 +358,121 @@ const luuThongTinKhachHang = () => {
     }
 };
 
+const tachDiaChi = (diaChiDayDu) => {
+    const result = {
+        soNha: '',
+        xaPhuong: '',
+        quanHuyen: '',
+        tinhThanhPho: ''
+    };
+
+    if (!diaChiDayDu) return result;
+
+    const parts = diaChiDayDu.split(',').map(p => p.trim());
+
+    // Giả định định dạng là: "số nhà, xã/phường, quận/huyện, tỉnh/thành phố"
+    if (parts.length >= 4) {
+        result.soNha = parts[0];
+        result.xaPhuong = timTenGanDung(parts[1], 'ward');
+        result.quanHuyen = timTenGanDung(parts[2], 'district');
+        result.tinhThanhPho = timTenGanDung(parts[3], 'province');
+    }
+
+    return result;
+};
+
+const timTenGanDung = (tenTuClient, cap) => {
+    const normalize = str => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    const normalizedInput = normalize(tenTuClient);
+
+    let danhSach = [];
+    if (cap === 'province') {
+        danhSach = provinces.value || [];
+    } else if (cap === 'district') {
+        danhSach = districts.value[0] || []; // chỉ lấy theo index 0 (vì lúc này chưa phân index)
+    } else if (cap === 'ward') {
+        danhSach = wards.value[0] || [];
+    }
+
+    const matched = danhSach.find(item => normalize(item.name).includes(normalizedInput));
+    return matched ? matched.name : tenTuClient;
+};
+
+const props = defineProps({
+    triggerUpdate: Number,
+});
+
+
 onMounted(async () => {
-    await loadProvinces();
-    districts.value = [[]];
-    wards.value = [[]];
+    await initializeLocationData();
 
     const checkKH = localStorage.getItem('chonKH');
     if (checkKH === 'true') {
-        const khachHangData = localStorage.getItem('khachHangBH');
-        if (!khachHangData) {
-            console.error('Không tìm thấy thông tin khách hàng trong localStorage');
-            return;
-        }
-        try {
-            const khachHang = JSON.parse(khachHangData);
-            console.log('Khách hàng từ localStorage:', khachHang);
-            if (khachHang) {
-                formData.tenKhachHang = khachHang.tenKhachHang || '';
-                formData.soDienThoai = khachHang.soDienThoai || '';
-                formData.email = khachHang.email || '';
+        await loadKhachHangTuLocalStorage();
 
-                // Xử lý địa chỉ
-                if (khachHang.diaChi) {
-                    const diaChi = tachDiaChi(khachHang.diaChi);
-                    formData.diaChiList = {
-                        soNha: diaChi.soNha,
-                        xaPhuong: diaChi.xaPhuong,
-                        quanHuyen: diaChi.quanHuyen,
-                        tinhThanhPho: diaChi.tinhThanhPho
-                    };
-                    console.log("địa chỉ formData", formData.diaChiList)
-                    console.log('Địa chỉ sau khi tách:', diaChi);
-                } else {
-                    formData.diaChiList = [{
-                        soNha: '',
-                        xaPhuong: '',
-                        quanHuyen: '',
-                        tinhThanhPho: ''
-                    }];
-                }
-
-                if (formData.diaChiList.length > 0) {
-                    formData.diaChiList.forEach((diaChi, index) => {
-                        console.log(`Đang xử lý địa chỉ tại index ${index}:`, diaChi);
-                        handleProvinceChange(index);
-                        handleDistrictChange(index);
-                    });
-                }
-                console.log('Thông tin khách hàng sau khi gán vào formData:', formData);
-            }
-        } catch (error) {
-            console.error('Lỗi khi phân tích thông tin khách hàng từ localStorage:', error);
-        }
+        await handleAllAddressLevels();
     }
 });
+
+watch(() => props.triggerUpdate, async () => {
+    if (localStorage.getItem('chonKH') === 'true') {
+        await loadKhachHangTuLocalStorage();
+        await handleAllAddressLevels();
+        localStorage.setItem('chonKH', 'false');
+    }
+}, { immediate: true });
+
+
+
+const initializeLocationData = async () => {
+    await loadProvinces();
+    districts.value = [[]];
+    wards.value = [[]];
+};
+
+const loadKhachHangTuLocalStorage = async () => {
+    const khachHangData = localStorage.getItem('khachHangBH');
+    if (!khachHangData) return;
+
+    try {
+        const khachHang = JSON.parse(khachHangData);
+        formData.tenKhachHang = khachHang.tenKhachHang || '';
+        formData.soDienThoai = khachHang.soDienThoai || '';
+        formData.email = khachHang.email || '';
+
+        if (khachHang.diaChi) {
+            const diaChi = tachDiaChi(khachHang.diaChi);
+            formData.diaChiList = [{
+                soNha: diaChi.soNha || '',
+                xaPhuong: diaChi.xaPhuong || '',
+                quanHuyen: diaChi.quanHuyen || '',
+                tinhThanhPho: diaChi.tinhThanhPho || '',
+                diaChiMacDinh: true
+            }];
+        }
+    } catch (err) {
+        console.error('Lỗi khi đọc khách hàng:', err);
+    }
+};
+
+const handleAllAddressLevels = async () => {
+    if (formData.diaChiList.length === 0) return;
+
+    for (let index = 0; index < formData.diaChiList.length; index++) {
+        const diaChi = formData.diaChiList[index];
+        console.log(`Đang xử lý địa chỉ tại index ${index}:`, diaChi);
+
+        // Gọi API tỉnh
+        await handleProvinceChange(index);
+        formData.diaChiList[index].quanHuyen = timTenGanDung(diaChi.quanHuyen, 'district');
+
+        // Gọi API huyện
+        await handleDistrictChange(index);
+        formData.diaChiList[index].xaPhuong = timTenGanDung(diaChi.xaPhuong, 'ward');
+    }
+};
+
 
 
 </script>
