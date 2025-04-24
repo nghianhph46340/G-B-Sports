@@ -930,7 +930,7 @@ const getIconForStatus = (trangThai) => {
 
 const isCompletedOrCancelled = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
-    return trangThai === 'Hoàn thành' || trangThai === 'Đã hủy';
+    return trangThai === 'Hoàn thành' || trangThai === 'Đã hủy'|| trangThai === 'Trả hàng';
 });
 
 const cannotCancel = computed(() => {
@@ -938,7 +938,7 @@ const cannotCancel = computed(() => {
     if (store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng') {
         return ['Hoàn thành', 'Đã hủy'].includes(trangThai);
     }
-    return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy'].includes(trangThai);
+    return ['Đang giao', 'Đã nhận hàng', 'Hoàn thành', 'Đã hủy','Trả hàng'].includes(trangThai);
 });
 
 const cannotEditProduct = computed(() => {
