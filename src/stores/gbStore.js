@@ -2211,7 +2211,6 @@ export const useGbStore = defineStore('gbStore', {
 
     async getImage(id, anhChinh) {
       const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh)
-
       if (getImageRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
@@ -2222,22 +2221,31 @@ export const useGbStore = defineStore('gbStore', {
     },
     //Lấy danh sách chi tiết sản phẩm theo sản phẩm
     async getCTSPBySanPham(id) {
-      const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
-      if (getCTSPBySanPhamRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        this.getCTSPBySanPhams = getCTSPBySanPhamRespone
-        try {
-          const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
-            const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
-            ctsp.hinh_anh = (await images.length) > 0 ? images[0].hinh_anh : 'Không có ảnh chính' // Thêm trường hinh_anh vào object ctsp
-          })
-          this.getCTSPBySanPhams = await Promise.all(imagePromises)
+      try {
+        const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
+        if (getCTSPBySanPhamRespone.error) {
+          toast.error('Không lấy được dữ liệu chi tiết sản phẩm')
+          return
+        } else {
+          // Lấy hình ảnh cho từng chi tiết sản phẩm trong một lần gọi
+          for (let i = 0; i < getCTSPBySanPhamRespone.length; i++) {
+            const ctsp = getCTSPBySanPhamRespone[i]
+            // Lấy TẤT CẢ hình ảnh (anhChinh = "")
+            const images = await sanPhamService.getImageInCTSP(ctsp.id_chi_tiet_san_pham, "")
+
+            if (images && Array.isArray(images) && images.length > 0) {
+              // Thêm danh sách hình ảnh đầy đủ vào chi tiết sản phẩm
+              ctsp.hinh_anh_list = images
+            } else {
+              ctsp.hinh_anh_list = []
+            }
+          }
+
           this.getCTSPBySanPhams = getCTSPBySanPhamRespone
-        } catch (error) {
-          console.log(error)
         }
+      } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm và hình ảnh:', error)
+        toast.error('Có lỗi xảy ra khi lấy dữ liệu')
       }
     },
     //Lấy danh sách sản phẩm
