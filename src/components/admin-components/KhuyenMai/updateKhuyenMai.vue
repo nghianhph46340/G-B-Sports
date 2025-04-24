@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3 co p-3">
@@ -12,13 +13,13 @@
             <div class="mb-3">
               <label for="maKhuyenMai" class="form-label">Mã khuyến mãi</label>
               <input type="text" class="form-control" id="maKhuyenMai" v-model="khuyenMai.maKhuyenMai" disabled
-                     :class="{ 'is-invalid': errors.maKhuyenMai }" @input="validateMaKhuyenMai" />
+                     :class="{ 'is-invalid': errors.maKhuyenMai }" />
               <div class="text-danger" v-if="errors.maKhuyenMai">{{ errors.maKhuyenMai }}</div>
             </div>
             <div class="mb-3">
               <label for="tenKhuyenMai" class="form-label">Tên khuyến mãi</label>
               <input type="text" class="form-control" id="tenKhuyenMai" v-model="khuyenMai.tenKhuyenMai" required
-                     :class="{ 'is-invalid': errors.tenKhuyenMai }" @input="validateTenKhuyenMai" />
+                     :class="{ 'is-invalid': errors.tenKhuyenMai }" @input="handleTenKhuyenMaiInput" />
               <div class="text-danger" v-if="errors.tenKhuyenMai">{{ errors.tenKhuyenMai }}</div>
             </div>
             <div class="mb-3">
@@ -33,14 +34,21 @@
             </div>
             <div class="mb-3">
               <label for="giaTriGiam" class="form-label">Giá trị giảm</label>
-              <input type="number" step="1" class="form-control" id="giaTriGiam" v-model="khuyenMai.giaTriGiam" min="0" required
-                     :class="{ 'is-invalid': errors.giaTriGiam }" @input="validateGiaTriGiam" />
+              <div class="input-group">
+                <input type="text" class="form-control" id="giaTriGiam" v-model="displayGiaTriGiam" required
+                       :class="{ 'is-invalid': errors.giaTriGiam }" @input="handleCurrencyInput('giaTriGiam', $event)" />
+                <span class="input-group-text">{{ khuyenMai.kieuGiamGia === 'Phần trăm' ? '%' : '₫' }}</span>
+              </div>
               <div class="text-danger" v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</div>
             </div>
             <div class="mb-3">
               <label for="giaTriToiDa" class="form-label">Giá trị tối đa</label>
-              <input type="number" step="1" class="form-control" id="giaTriToiDa" v-model="khuyenMai.giaTriToiDa" min="0"
-                     :disabled="khuyenMai.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }" @input="validateGiaTriToiDa" />
+              <div class="input-group">
+                <input type="text" class="form-control" id="giaTriToiDa" v-model="displayGiaTriToiDa" required
+                       :disabled="khuyenMai.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }"
+                       @input="handleCurrencyInput('giaTriToiDa', $event)" />
+                <span class="input-group-text">₫</span>
+              </div>
               <div class="text-danger" v-if="errors.giaTriToiDa">{{ errors.giaTriToiDa }}</div>
             </div>
             <div class="mb-3">
@@ -128,7 +136,7 @@
                       <td>{{ index + 1 }}</td>
                       <td>{{ item.sanPham.maSanPham }}</td>
                       <td>{{ item.sanPham.tenSanPham }}</td>
-                      <td>{{ formatNumber(item.giaBan) }}</td>
+                      <td>{{ formatCurrency(item.giaBan) }}</td>
                       <td>{{ item.soLuong }}</td>
                       <td>{{ item.kichThuoc?.giaTri || 'N/A' }}</td>
                       <td>{{ item.mauSac?.tenMauSac || 'N/A' }}</td>
@@ -183,17 +191,60 @@ const selectedChiTietSanPhamIds = ref([]);
 const initialChiTietSanPhamIds = ref([]);
 const initialSanPhamIds = ref([]);
 
+// Display values for formatted inputs
+const displayGiaTriGiam = ref('');
+const displayGiaTriToiDa = ref('');
+
+// Format number to VND currency (e.g., 1000000 -> 1.000.000)
+const formatCurrency = (value, includeCurrency = false) => {
+  if (value === null || value === '' || isNaN(value)) return '';
+  const formatted = new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  }).format(value);
+  return includeCurrency ? `${formatted} ₫` : formatted;
+};
+
+// Parse currency input (e.g., "1.000.000" -> 1000000)
+const parseCurrency = (value) => {
+  if (!value) return null;
+  return parseFloat(value.replace(/\./g, '').replace(',', '.')) || null;
+};
+
+// Handle currency input for giaTriGiam, giaTriToiDa
+const handleCurrencyInput = (field, event) => {
+  const rawValue = event.target.value.replace(/\./g, '');
+  const parsedValue = parseCurrency(rawValue);
+  khuyenMai.value[field] = parsedValue;
+  if (field === 'giaTriGiam') {
+    displayGiaTriGiam.value = formatCurrency(parsedValue);
+    validateGiaTriGiam();
+  }
+  if (field === 'giaTriToiDa') {
+    displayGiaTriToiDa.value = formatCurrency(parsedValue);
+    validateGiaTriToiDa();
+  }
+};
+
+// Handle tenKhuyenMai input to trim
+const handleTenKhuyenMaiInput = () => {
+  khuyenMai.value.tenKhuyenMai = khuyenMai.value.tenKhuyenMai.trim();
+  validateTenKhuyenMai();
+};
+
 // Validation functions
 const validateMaKhuyenMai = () => {
-  if (!khuyenMai.value.maKhuyenMai || khuyenMai.value.maKhuyenMai.trim() === '') {
+  if (!khuyenMai.value.maKhuyenMai) {
     errors.value.maKhuyenMai = 'Mã khuyến mãi không được để trống!';
+  } else if (!/^[a-zA-Z0-9]+$/.test(khuyenMai.value.maKhuyenMai)) {
+    errors.value.maKhuyenMai = 'Mã khuyến mãi chỉ được chứa chữ cái và số!';
   } else {
     errors.value.maKhuyenMai = '';
   }
 };
 
 const validateTenKhuyenMai = () => {
-  if (!khuyenMai.value.tenKhuyenMai || khuyenMai.value.tenKhuyenMai.trim() === '') {
+  if (!khuyenMai.value.tenKhuyenMai) {
     errors.value.tenKhuyenMai = 'Tên khuyến mãi không được để trống!';
   } else {
     errors.value.tenKhuyenMai = '';
@@ -210,11 +261,11 @@ const validateKieuGiamGia = () => {
 };
 
 const validateGiaTriGiam = () => {
-  const giaTri = parseFloat(khuyenMai.value.giaTriGiam);
-  if (isNaN(giaTri) || giaTri <= 0) {
-    errors.value.giaTriGiam = 'Giá trị giảm phải là số lớn hơn 0!';
+  const giaTri = khuyenMai.value.giaTriGiam;
+  if (giaTri === null || isNaN(giaTri) || giaTri <= 0) {
+    errors.value.giaTriGiam = 'Giá trị giảm phải lớn hơn 0!';
   } else if (giaTri > 5000000) {
-    errors.value.giaTriGiam = 'Giá trị giảm không được lớn hơn 5,000,000!';
+    errors.value.giaTriGiam = `Giá trị giảm không được lớn hơn ${formatCurrency(5000000, true)}!`;
   } else if (khuyenMai.value.kieuGiamGia === 'Phần trăm' && giaTri > 100) {
     errors.value.giaTriGiam = 'Giá trị giảm không được vượt quá 100 khi chọn Phần trăm!';
   } else {
@@ -223,19 +274,21 @@ const validateGiaTriGiam = () => {
 
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = giaTri;
+    displayGiaTriToiDa.value = formatCurrency(giaTri);
     validateGiaTriToiDa();
   }
 };
 
 const validateGiaTriToiDa = () => {
-  const giaTriToiDa = parseFloat(khuyenMai.value.giaTriToiDa);
+  const giaTri = khuyenMai.value.giaTriToiDa || 0;
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatCurrency(khuyenMai.value.giaTriGiam);
     errors.value.giaTriToiDa = '';
-  } else if (isNaN(giaTriToiDa) || giaTriToiDa <= 0) {
-    errors.value.giaTriToiDa = 'Giá trị tối đa phải là số lớn hơn 0!';
-  } else if (giaTriToiDa > 5000000) {
-    errors.value.giaTriToiDa = 'Giá trị tối đa không được lớn hơn 5,000,000!';
+  } else if (giaTri <= 0) {
+    errors.value.giaTriToiDa = 'Giá trị tối đa phải lớn hơn 0!';
+  } else if (giaTri > 5000000) {
+    errors.value.giaTriToiDa = `Giá trị tối đa không được lớn hơn ${formatCurrency(5000000, true)}!`;
   } else {
     errors.value.giaTriToiDa = '';
   }
@@ -266,15 +319,23 @@ const hasErrors = computed(() => {
 watch(() => khuyenMai.value.kieuGiamGia, () => {
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatCurrency(khuyenMai.value.giaTriGiam);
   }
   validateKieuGiamGia();
 });
 
-watch(() => khuyenMai.value.giaTriGiam, () => {
+watch(() => khuyenMai.value.giaTriGiam, (newValue) => {
+  displayGiaTriGiam.value = formatCurrency(newValue);
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
-    khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
+    khuyenMai.value.giaTriToiDa = newValue;
+    displayGiaTriToiDa.value = formatCurrency(newValue);
   }
   validateGiaTriGiam();
+});
+
+watch(() => khuyenMai.value.giaTriToiDa, (newValue) => {
+  displayGiaTriToiDa.value = formatCurrency(newValue);
+  validateGiaTriToiDa();
 });
 
 // Debounce function
@@ -294,7 +355,7 @@ const fetchSanPham = async () => {
       sanPhamList.value = response.content.map(sp => ({
         idSanPham: sp.idSanPham || sp.id_san_pham,
         maSanPham: sp.maSanPham || sp.ma_san_pham,
-        tenSanPham: sp.tenSanPham || sp.ten_san_pham
+        tenSanPham: sp.tenSanPham || sp.ten_san_pham,
       }));
     } else {
       sanPhamList.value = [];
@@ -332,13 +393,13 @@ const refreshChiTietSanPham = async () => {
           sanPham: {
             idSanPham: ctsp.sanPham?.idSanPham || ctsp.sanPham?.id_san_pham,
             maSanPham: ctsp.sanPham?.maSanPham || ctsp.sanPham?.ma_san_pham,
-            tenSanPham: ctsp.sanPham?.tenSanPham || ctsp.sanPham?.ten_san_pham
+            tenSanPham: ctsp.sanPham?.tenSanPham || ctsp.sanPham?.ten_san_pham,
           },
           giaBan: ctsp.giaBan || ctsp.gia_ban,
           soLuong: ctsp.soLuong || ctsp.so_luong,
           hinhAnhSanPhams: ctsp.hinhAnhSanPhams || [],
           kichThuoc: ctsp.kichThuoc ? { giaTri: ctsp.kichThuoc.giaTri || ctsp.kichThuoc.gia_tri } : null,
-          mauSac: ctsp.mauSac ? { tenMauSac: ctsp.mauSac.tenMauSac || ctsp.mauSac.ten_mau_sac } : null
+          mauSac: ctsp.mauSac ? { tenMauSac: ctsp.mauSac.tenMauSac || ctsp.mauSac.ten_mau_sac } : null,
         };
         uniqueChiTietSanPhamMap.set(mappedCtsp.idChiTietSanPham, mappedCtsp);
       });
@@ -372,11 +433,6 @@ const toggleSelectAllChiTietSanPham = (event) => {
   }
 };
 
-const formatNumber = (number) => {
-  if (!number) return '0';
-  return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number);
-};
-
 // Load promotion data on mount
 onMounted(async () => {
   const id = route.params.id;
@@ -407,6 +463,10 @@ onMounted(async () => {
         ngayHetHan: adjustToLocalTime(response.ngayHetHan),
         moTa: response.moTa || '',
       };
+
+      // Initialize display values
+      displayGiaTriGiam.value = formatCurrency(khuyenMai.value.giaTriGiam);
+      displayGiaTriToiDa.value = formatCurrency(khuyenMai.value.giaTriToiDa);
 
       initialChiTietSanPhamIds.value = response.chiTietSanPhams?.map(ctsp => ctsp.idChiTietSanPham || ctsp.id_chi_tiet_san_pham) || [];
       initialSanPhamIds.value = [...new Set(response.chiTietSanPhams?.map(ctsp => ctsp.sanPham?.idSanPham || ctsp.sanPham?.id_san_pham))] || [];
@@ -448,9 +508,9 @@ const submitForm = async () => {
     id: khuyenMai.value.id,
     maKhuyenMai: khuyenMai.value.maKhuyenMai,
     tenKhuyenMai: khuyenMai.value.tenKhuyenMai,
-    giaTriGiam: parseFloat(khuyenMai.value.giaTriGiam),
+    giaTriGiam: khuyenMai.value.giaTriGiam,
     kieuGiamGia: khuyenMai.value.kieuGiamGia,
-    giaTriToiDa: parseFloat(khuyenMai.value.giaTriToiDa),
+    giaTriToiDa: khuyenMai.value.giaTriToiDa,
     ngayBatDau: khuyenMai.value.ngayBatDau ? new Date(khuyenMai.value.ngayBatDau).toISOString() : null,
     ngayHetHan: khuyenMai.value.ngayHetHan ? new Date(khuyenMai.value.ngayHetHan).toISOString() : null,
     moTa: khuyenMai.value.moTa || '',
@@ -512,7 +572,13 @@ const submitForm = async () => {
 }
 
 .scrollable-table {
-  max-height: 300px; /* Giới hạn chiều cao để hiển thị thanh cuộn */
-  overflow-y: auto; /* Thêm thanh cuộn dọc */
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
 }
 </style>
+```
