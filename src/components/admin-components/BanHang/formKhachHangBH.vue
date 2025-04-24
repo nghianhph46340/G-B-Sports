@@ -88,8 +88,10 @@
 
                 <!-- Nút hành động -->
                 <div class="mt-4">
-                    <button type="button" class="btn btn-warning me-2" @click="confirmThemKhachHang">Thêm khách mới</button>
-                    <button type="button" class="btn btn-warning me-2" @click="luuThongTinKhachHang">Lưu thông tin khách hàng</button>
+                    <button type="button" class="btn btn-warning me-2" @click="confirmThemKhachHang">Thêm khách
+                        mới</button>
+                    <button type="button" class="btn btn-warning me-2" @click="luuThongTinKhachHang">Lưu thông tin khách
+                        hàng</button>
                     <button type="button" class="btn btn-secondary" @click="resetForm">Làm mới</button>
                 </div>
             </a-form>
@@ -98,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive, computed } from 'vue';
+import { ref, onMounted, reactive, computed, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
 
@@ -345,19 +347,23 @@ const luuThongTin = async () => {
 };
 
 function tachDiaChi(addressString) {
-    if (!addressString) return null;
+    if (!addressString) return {
+        soNha: '',
+        xaPhuong: '',
+        quanHuyen: '',
+        tinhThanhPho: ''
+    };
 
     const parts = addressString.split(',').map(p => p.trim());
-    if (parts.length < 4) return null;
-
-    const diaChi = {
-        address: parts[0],                        // Số nhà 11
-        ward: parts[1],                           // Phường Xuân Đỉnh
-        district: parts[2],                       // Quận Bắc Từ Liêm
-        province: parts[3],                       // Hà Nội
+    return {
+        soNha: parts[0] || '',        // Số nhà
+        xaPhuong: parts[1] || '',     // Phường/Xã
+        quanHuyen: parts[2] || '',    // Quận/Huyện
+        tinhThanhPho: parts[3] || ''  // Tỉnh/Thành phố
     };
-    return diaChi;
 }
+
+console.log("địa chỉ test", tachDiaChi("số 32, Xã Đức Hạnh, Huyện Bảo Lâm, Tỉnh Cao Bằng"))
 const confirmThemKhachHang = () => {
     if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
         themKhachHang();
@@ -368,32 +374,64 @@ const luuThongTinKhachHang = () => {
     if (confirm('Bạn có chắc chắn muốn lưu thông tin khách hàng này không?')) {
         luuThongTin();
     }
-};  
+};
 
 onMounted(async () => {
     await loadProvinces();
     districts.value = [[]];
     wards.value = [[]];
+
     const checkKH = localStorage.getItem('chonKH');
     if (checkKH === 'true') {
+        const khachHangData = localStorage.getItem('khachHangBH');
+        if (!khachHangData) {
+            console.error('Không tìm thấy thông tin khách hàng trong localStorage');
+            return;
+        }
         try {
-            const khachHang = JSON.parse(localStorage.getItem('khachHang'));
+            const khachHang = JSON.parse(khachHangData);
             console.log('Khách hàng từ localStorage:', khachHang);
             if (khachHang) {
-                formData.tenKhachHang = khachHang.tenKhachHang;
-                formData.soDienThoai = khachHang.soDienThoai;
-                formData.email = khachHang.email;
-                formData.diaChiList = khachHang.diaChiList.map(diaChi => tachDiaChi(diaChi));
-                formData.diaChiList.forEach((diaChi, index) => {
-                    handleProvinceChange(index);
-                    handleDistrictChange(index);
-                });
+                formData.tenKhachHang = khachHang.tenKhachHang || '';
+                formData.soDienThoai = khachHang.soDienThoai || '';
+                formData.email = khachHang.email || '';
+
+                // Xử lý địa chỉ
+                if (khachHang.diaChi) {
+                    const diaChi = tachDiaChi(khachHang.diaChi);
+                    formData.diaChiList = {
+                        soNha: diaChi.soNha,
+                        xaPhuong: diaChi.xaPhuong,
+                        quanHuyen: diaChi.quanHuyen,
+                        tinhThanhPho: diaChi.tinhThanhPho
+                    };
+                    console.log("địa chỉ formData", formData.diaChiList)
+                    console.log('Địa chỉ sau khi tách:', diaChi);
+                } else {
+                    formData.diaChiList = [{
+                        soNha: '',
+                        xaPhuong: '',
+                        quanHuyen: '',
+                        tinhThanhPho: ''
+                    }];
+                }
+
+                if (formData.diaChiList.length > 0) {
+                    formData.diaChiList.forEach((diaChi, index) => {
+                        console.log(`Đang xử lý địa chỉ tại index ${index}:`, diaChi);
+                        handleProvinceChange(index);
+                        handleDistrictChange(index);
+                    });
+                }
+                console.log('Thông tin khách hàng sau khi gán vào formData:', formData);
             }
         } catch (error) {
-            console.error('Lỗi khi lấy thông tin khách hàng từ localStorage:', error);
+            console.error('Lỗi khi phân tích thông tin khách hàng từ localStorage:', error);
         }
     }
 });
+
+
 </script>
 
 <style scoped>

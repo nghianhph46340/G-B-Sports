@@ -489,19 +489,22 @@ const chonKhachHang = async (khachHang) => {
         open.value = false;
         if (!activeTabData.value.hd.isKhachLe) {
             handlePhuongThucChange();
-
         }
+
         // Làm mới dữ liệu hóa đơn
         await refreshHoaDon(activeTabData.value.hd.id_hoa_don);
 
-        localStorage.setItem('khachHangBH', JSON.stringify(khachHang));
-        localStorage.setItem('chonKH', true)
-
+        // Lưu vào localStorage
+        try {
+            localStorage.setItem('khachHangBH', JSON.stringify(khachHang));
+            localStorage.setItem('chonKH', true);
+            console.log('Đã lưu khách hàng vào localStorage:', khachHang);
+        } catch (error) {
+            console.error('Lỗi khi lưu khách hàng vào localStorage:', error);
+        }
 
         console.log('activeTabData.hd sau khi làm mới:', activeTabData.value.hd);
         message.success(`Đã chọn khách hàng: ${khachHang.tenKhachHang}`);
-
-        
     } catch (error) {
         console.error('Lỗi khi chọn khách hàng:', error);
         message.error('Không thể chọn khách hàng. Vui lòng thử lại!');
