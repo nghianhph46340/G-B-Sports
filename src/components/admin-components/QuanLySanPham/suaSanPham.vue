@@ -1,7 +1,7 @@
 <template>
     <div class="row">
         <div class="col-md-6 border-end">
-            <h5>Thêm sản phẩm</h5>
+            <h5>Sửa sản phẩm</h5>
             <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol" layout="horizontal" ref="formRef"
                 :rules="rules">
                 <a-form-item label="Mã sản phẩm" name="ma_san_pham"
@@ -51,7 +51,7 @@
 
                 <a-form-item label="Hình ảnh" name="hinh_anh">
                     <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1"
-                        @change="handleImageChange" :before-upload="beforeUpload">
+                        @change="handleImageChange" :before-upload="beforeUpload" :customRequest="handleCustomRequest">
                         <div v-if="fileList.length < 1">
                             <plus-outlined />
                             <div style="margin-top: 8px">Upload</div>
@@ -139,45 +139,22 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <a-form-item label="Số lượng" :rules="[
-                                    { required: true, message: 'Vui lòng nhập số lượng!' },
-                                    {
-                                        validator: (_, value) => {
-                                            if (value < 1) {
-                                                return Promise.reject('Số lượng phải lớn hơn 0!');
-                                            }
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                ]">
+                                <a-form-item label="Số lượng" :validate-status="variant.soLuongValidateStatus"
+                                    :help="variant.soLuongHelp">
                                     <a-input-number v-model:value="variant.so_luong" class="w-full" :controls="false"
-                                        :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
-                                        :parser="(value) => value.replace(/,/g, '')"
-                                        placeholder="Nhập số lượng sản phẩm" />
+                                        :formatter="formatSoLuong" :parser="parseSoLuong"
+                                        placeholder="Nhập số lượng sản phẩm" @blur="validateSoLuong(variant, index)" />
                                 </a-form-item>
                             </div>
 
                             <div class="col-md-6">
-                                <a-form-item label="Giá" :rules="[
-                                    { required: true, message: 'Vui lòng nhập giá bán!' },
-                                    {
-                                        validator: (_, value) => {
-                                            if (value === undefined || value === null || value === '') {
-                                                return Promise.reject('Vui lòng nhập giá bán!');
-                                            }
-                                            if (value < 1000) {
-                                                return Promise.reject('Giá bán phải lớn hơn 1000!');
-                                            }
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                ]">
+                                <a-form-item label="Giá" :validate-status="variant.giaBanValidateStatus"
+                                    :help="variant.giaBanHelp">
                                     <a-input-number :readonly="variant.isExisting" v-model:value="variant.gia_ban"
-                                        class="w-full" :controls="false"
-                                        :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
-                                        :parser="(value) => value.replace(/,/g, '')" placeholder="Nhập giá bán sản phẩm"
+                                        class="w-full" :controls="false" :formatter="formatGiaBan" :parser="parseGiaBan"
+                                        placeholder="Nhập giá bán sản phẩm"
                                         :disabled="useCommonPrice || variant.isExisting"
-                                        @blur="formatPriceOnBlur($event, index)" />
+                                        @blur="validateGiaBan(variant, index)" />
                                 </a-form-item>
                             </div>
                         </div>
@@ -339,7 +316,7 @@ const rules = {
     ]
 };
 
-// Hàm validate tên sản phẩm không được trùng (trừ sản phẩm hiện tại)
+// Sửa hàm validateProductName để cho phép các ký tự đặc biệt
 const validateProductName = async (_, value) => {
     if (!value) return Promise.reject('Tên sản phẩm không được để trống');
 
@@ -348,9 +325,9 @@ const validateProductName = async (_, value) => {
         return Promise.reject('Tên sản phẩm không được chỉ chứa số');
     }
 
-    // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt (chỉ cho phép chữ cái, số, dấu cách, và dấu gạch ngang)
-    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(value)) {
-        return Promise.reject('Tên sản phẩm không được chứa ký tự đặc biệt');
+    // Sửa regex để cho phép thêm ký tự đặc biệt /, -, _, &, (), 
+    if (!/^[a-zA-Z0-9À-ỹ\s\-_\/&()]+$/.test(value)) {
+        return Promise.reject('Tên sản phẩm chỉ được chứa chữ cái, số và các ký tự -, _, /, &, (), không được chứa các ký tự đặc biệt khác');
     }
 
     // Lấy ID sản phẩm hiện tại từ route
@@ -414,7 +391,12 @@ const addVariant = async () => {
         hinh_anh: [],
         ngay_sua: new Date().toISOString(),
         ngay_tao: new Date().toISOString(),
-        isExisting: false // Đánh dấu đây là biến thể mới
+        isExisting: false, // Đánh dấu đây là biến thể mới
+        // Thêm các trường validate status và help
+        soLuongValidateStatus: '',
+        soLuongHelp: '',
+        giaBanValidateStatus: '',
+        giaBanHelp: ''
     });
 };
 
@@ -632,27 +614,39 @@ const onFinish = async () => {
         const allVariants = [...variants.value];
 
         // Validate từng biến thể
-        for (const variant of allVariants) {
+        for (const [index, variant] of allVariants.entries()) {
+            // Kiểm tra thông tin cơ bản
             if (!variant.id_mau_sac || !variant.id_kich_thuoc) {
-                throw new Error('Vui lòng điền đầy đủ thông tin cho tất cả biến thể');
+                throw new Error('Vui lòng điền đầy đủ thông tin màu sắc và kích thước cho tất cả biến thể');
             }
 
-            // Validate giá của biến thể
-            if (!useCommonPrice.value) {
-                if (!variant.gia_ban || convertPriceToNumber(variant.gia_ban) < 1000) {
-                    throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
-                }
+            // Validate số lượng
+            const soLuong = Number(variant.so_luong);
+            if (isNaN(soLuong) || soLuong <= 0) {
+                throw new Error(`Biến thể #${index + 1}: Số lượng phải là số dương lớn hơn 0`);
+            }
+            if (soLuong > 100000) {
+                throw new Error(`Biến thể #${index + 1}: Số lượng không được vượt quá 100.000`);
             }
 
-            // Chuyển đổi giá bán từ chuỗi có dấu phẩy sang số
-            variant.gia_ban = convertPriceToNumber(variant.gia_ban);
+            // Validate giá bán
+            const giaBan = convertPriceToNumber(variant.gia_ban);
+            if (isNaN(giaBan) || giaBan < 1000) {
+                throw new Error(`Biến thể #${index + 1}: Giá bán phải lớn hơn 1.000`);
+            }
+            if (giaBan > 100000000) {
+                throw new Error(`Biến thể #${index + 1}: Giá bán không được vượt quá 100.000.000`);
+            }
 
             // Chuyển đổi số lượng thành số
-            variant.so_luong = Number(variant.so_luong);
+            variant.so_luong = soLuong;
+
+            // Chuyển đổi giá bán từ chuỗi có dấu phẩy sang số
+            variant.gia_ban = giaBan;
 
             // Kiểm tra danh sách hình ảnh
             if (!variant.hinh_anh || variant.hinh_anh.length === 0) {
-                throw new Error(`Biến thể ${variant.id_mau_sac}-${variant.id_kich_thuoc} phải có ít nhất một hình ảnh`);
+                throw new Error(`Biến thể #${index + 1} phải có ít nhất một hình ảnh`);
             }
         }
 
@@ -813,39 +807,98 @@ watch(() => formState, async (newVal) => {
     }
 }, { deep: true });
 
-// Hàm xử lý upload ảnh
+// Hàm xử lý upload ảnh cho sản phẩm chính
 const handleImageChange = async (info) => {
     console.log('handleImageChange được gọi với:', info);
 
-    // Cập nhật fileList
-    fileList.value = info.fileList;
-
     // Xử lý khi ảnh bị xóa (status = 'removed')
     if (info.file.status === 'removed') {
-        console.log('Ảnh bị xóa:', info.file);
+        console.log('Ảnh sản phẩm bị xóa:', info.file);
+
+        // Cập nhật fileList
+        fileList.value = [];
 
         // Nếu ảnh đã được upload lên cloud (có url)
         if (info.file.url) {
             try {
-                // Trích xuất publicId từ URL
-                const urlParts = info.file.url.split('/');
-                const fileName = urlParts[urlParts.length - 1];
-                const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
+                // Lấy public_id từ URL
+                const publicId = getPublicIdFromUrl(info.file.url);
 
-                console.log('Public ID cần xóa:', publicId);
+                if (publicId) {
+                    console.log('Public ID cần xóa:', publicId);
+                    // Gọi API xóa ảnh
+                    await testService.deleteImage(publicId);
 
-                // Gọi API xóa ảnh
-                await testService.deleteImage(publicId);
+                    // Xóa URL ảnh khỏi formState
+                    formState.hinh_anh = '';
 
-                // Xóa URL ảnh khỏi formState
-                formState.hinh_anh = '';
-
-                message.success('Đã xóa ảnh thành công');
+                    message.success('Đã xóa ảnh sản phẩm thành công');
+                } else {
+                    console.error('Không thể trích xuất public_id từ URL:', info.file.url);
+                }
             } catch (error) {
-                console.error('Lỗi khi xóa ảnh:', error);
-                message.error('Không thể xóa ảnh: ' + error.message);
+                console.error('Lỗi khi xóa ảnh sản phẩm:', error);
+                message.error('Không thể xóa ảnh: ' + (error.response?.data || error.message));
             }
         }
+    }
+
+    // Xử lý khi có file mới được chọn (có originFileObj)
+    if (info.file.originFileObj && info.file.status !== 'removed') {
+        console.log('Phát hiện file mới cho sản phẩm, bắt đầu tải lên cloud:', info.file.name);
+
+        // Đánh dấu file đang tải lên
+        const currentFile = { ...info.file, status: 'uploading' };
+        fileList.value = [currentFile];
+
+        try {
+            // Gọi API tải ảnh lên cloud
+            const response = await testService.uploadImage(info.file.originFileObj);
+            console.log('Phản hồi từ Cloudinary cho ảnh sản phẩm:', response);
+
+            // Xử lý response để lấy URL
+            let imageUrl = null;
+            if (typeof response === 'string') {
+                imageUrl = response;
+            } else if (response && response.data) {
+                imageUrl = response.data;
+            }
+
+            if (imageUrl) {
+                // Cập nhật trạng thái thành công
+                const updatedFile = {
+                    ...info.file,
+                    status: 'done',
+                    url: imageUrl,
+                    response: response,
+                    name: info.file.name || 'product-image.jpg',
+                    uid: info.file.uid || '-1'
+                };
+
+                // Cập nhật fileList với file đã hoàn thành
+                fileList.value = [updatedFile];
+
+                // Cập nhật URL vào formState
+                formState.hinh_anh = imageUrl;
+
+                message.success(`${info.file.name} đã được tải lên thành công`);
+                console.log('URL ảnh sản phẩm sau khi tải lên:', formState.hinh_anh);
+            } else {
+                // Cập nhật trạng thái lỗi
+                const errorFile = { ...info.file, status: 'error' };
+                fileList.value = [errorFile];
+                message.error(`${info.file.name} tải lên thất bại: không nhận được URL`);
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải ảnh sản phẩm lên cloud:', error);
+            // Cập nhật trạng thái lỗi
+            const errorFile = { ...info.file, status: 'error' };
+            fileList.value = [errorFile];
+            message.error(`${info.file.name} tải lên thất bại: ${error.message}`);
+        }
+    } else {
+        // Đảm bảo giới hạn chỉ 1 ảnh và cập nhật fileList
+        fileList.value = info.fileList.slice(0, 1);
     }
 };
 
@@ -1126,126 +1179,6 @@ watch(() => formState, (newVal) => {
     console.log('FormState changed:', newVal);
 }, { deep: true });
 
-// Thêm các hàm validate giống như trong themSanPham
-// 1. Validate và xử lý cho giá chung
-const handleGiaChungInput = (value) => {
-    console.log('Giá chung thay đổi thành:', value);
-    // Không gọi validateGiaChung ở đây nữa để tránh nhân đôi cập nhật
-
-    // Cập nhật giá cho tất cả các biến thể nếu dùng giá chung
-    if (useCommonPrice.value && validateGiaChung(value)) {
-        variants.value.forEach((variant) => {
-            variant.gia_ban = value;
-        });
-    }
-}
-
-const validateGiaChung = (value, showMessage = false) => {
-    if (value === undefined || value === null || value === '') {
-        if (showMessage) message.warning('Giá bán chung không được để trống');
-        return false;
-    }
-
-    if (value < 1000) {
-        if (showMessage) message.warning('Giá bán chung phải lớn hơn 1000!');
-        return false;
-    }
-
-    if (value > 100000000) {
-        if (showMessage) message.warning('Giá bán chung không được vượt quá 100,000,000!');
-        return false;
-    }
-
-    return true;
-}
-
-// 2. Validate và xử lý cho giá bán của biến thể
-const handleGiaBanInput = (value, index) => {
-    console.log('Giá biến thể thay đổi thành:', value, 'tại index:', index);
-    // Không validate lặp
-}
-
-const validateGiaBanSafe = (value, index, showMessage = false) => {
-    const variant = variants.value[index];
-    if (!variant) return false;
-
-    if (value === undefined || value === null || value === '') {
-        if (showMessage) message.error('Vui lòng nhập giá bán!');
-        return false;
-    }
-
-    if (value < 1000) {
-        if (showMessage) message.error('Giá bán phải lớn hơn 1000!');
-        return false;
-    }
-
-    if (value > 100000000) {
-        if (showMessage) message.error('Giá bán không được vượt quá 100,000,000!');
-        return false;
-    }
-
-    return true;
-}
-
-const validateGiaBan = (value, index, showMessage = false) => {
-    // Nếu đang sử dụng giá chung, không validate riêng
-    if (useCommonPrice.value) return true;
-    return validateGiaBanSafe(value, index, showMessage);
-}
-
-// 3. Validate và xử lý cho số lượng biến thể
-const handleSoLuongInput = (value, index) => {
-    console.log('Số lượng biến thể thay đổi thành:', value, 'tại index:', index);
-    // Không validate lặp
-}
-
-const validateSoLuong = (value, index, showMessage = false) => {
-    const variant = variants.value[index];
-    if (!variant) return false;
-
-    if (value === undefined || value === null || value === '') {
-        if (showMessage) message.error('Vui lòng nhập số lượng!');
-        return false;
-    }
-
-    if (value < 1) {
-        if (showMessage) message.error('Số lượng phải lớn hơn 0!');
-        return false;
-    }
-
-    if (value > 100000) {
-        if (showMessage) message.error('Số lượng không được vượt quá 100,000!');
-        return false;
-    }
-
-    return true;
-}
-
-const resetForm = () => {
-    Modal.confirm({
-        title: 'Xác nhận làm mới',
-        content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
-        okText: 'Đồng ý',
-        cancelText: 'Hủy',
-        onOk: () => {
-            // Code reset ở trên
-            Object.assign(formState, {
-                ten_san_pham: '',
-                mo_ta: '',
-                gioi_tinh: undefined,
-                hinh_anh: '',
-                id_danh_muc: undefined,
-                id_thuong_hieu: undefined,
-                id_chat_lieu: undefined,
-                trang_thai: 'Hoạt động',
-                gia_nhap_chung: 0,
-                gia_ban_chung: 0
-            });
-            // ... rest of reset code
-        }
-    });
-};
-
 // Thêm các hàm format và parse mới
 const formatNumber = (value) => {
     if (value === undefined || value === null || value === '') return '';
@@ -1338,6 +1271,137 @@ const setMainImage = (file, variantIndex) => {
             message.error('Không thể cập nhật ảnh chính: ' + (error.response?.data || error.message));
         }
     }
+};
+
+// Thêm các hàm format và parse cho số lượng và giá
+const formatSoLuong = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    return `${value}`.replace(/[^\d]/g, ''); // Chỉ giữ lại các chữ số
+};
+
+const parseSoLuong = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    const parsed = value.replace(/[^\d]/g, '');
+    return parsed;
+};
+
+const formatGiaBan = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    // Chuyển đổi về chuỗi, loại bỏ ký tự không phải số, và thêm dấu phẩy
+    const numStr = `${value}`.replace(/[^\d]/g, '');
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+const parseGiaBan = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    // Loại bỏ dấu phẩy và các ký tự không phải số
+    return value.replace(/[^\d]/g, '');
+};
+
+const resetForm = () => {
+    Modal.confirm({
+        title: 'Xác nhận làm mới',
+        content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        onOk: () => {
+            // Code reset ở trên
+            Object.assign(formState, {
+                ten_san_pham: '',
+                mo_ta: '',
+                gioi_tinh: undefined,
+                hinh_anh: '',
+                id_danh_muc: undefined,
+                id_thuong_hieu: undefined,
+                id_chat_lieu: undefined,
+                trang_thai: 'Hoạt động',
+                gia_nhap_chung: 0,
+                gia_ban_chung: 0
+            });
+            // ... rest of reset code
+        }
+    });
+};
+
+// Thêm hàm validate số lượng với hiển thị thông báo lỗi
+const validateSoLuong = (variant, index) => {
+    // Reset trạng thái validate
+    variant.soLuongValidateStatus = '';
+    variant.soLuongHelp = '';
+
+    // Kiểm tra có phải là số không
+    if (!/^\d+$/.test(variant.so_luong)) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng phải là số nguyên dương!';
+        return false;
+    }
+
+    // Chuyển đổi thành số để kiểm tra giá trị
+    const numValue = Number(variant.so_luong);
+
+    // Kiểm tra giá trị
+    if (numValue <= 0) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng phải lớn hơn 0!';
+        return false;
+    }
+
+    if (numValue > 100000) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng không được vượt quá 100.000!';
+        return false;
+    }
+
+    // Nếu hợp lệ
+    variant.soLuongValidateStatus = 'success';
+    return true;
+};
+
+// Thêm hàm validate giá bán với hiển thị thông báo lỗi
+const validateGiaBan = (variant, index) => {
+    // Reset trạng thái validate
+    variant.giaBanValidateStatus = '';
+    variant.giaBanHelp = '';
+
+    // Kiểm tra có giá trị không
+    if (variant.gia_ban === undefined || variant.gia_ban === null || variant.gia_ban === '') {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Vui lòng nhập giá bán!';
+        return false;
+    }
+
+    // Chuyển đổi về số (loại bỏ dấu phẩy)
+    const numValue = convertPriceToNumber(variant.gia_ban);
+
+    // Kiểm tra định dạng số
+    if (isNaN(numValue)) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán phải là số!';
+        return false;
+    }
+
+    // Kiểm tra giá trị
+    if (numValue <= 0) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán phải lớn hơn 0!';
+        return false;
+    }
+
+    if (numValue < 1000) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán phải lớn hơn 1.000!';
+        return false;
+    }
+
+    if (numValue > 100000000) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán không được vượt quá 100.000.000!';
+        return false;
+    }
+
+    // Nếu hợp lệ
+    variant.giaBanValidateStatus = 'success';
+    return true;
 };
 </script>
 
