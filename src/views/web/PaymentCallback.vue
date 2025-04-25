@@ -1,16 +1,20 @@
 <template>
     <div class="payment-callback-container">
-        <div class="payment-status-card">
-            <div class="status-icon" :class="paymentStatus">
-                <check-circle-outlined v-if="paymentStatus === 'success'" />
-                <close-circle-outlined v-if="paymentStatus === 'failed'" />
-                <loading-outlined v-if="paymentStatus === 'processing'" />
+        <div v-if="isLoading" class="loading-container">
+            <a-spin size="large" />
+            <p class="loading-text">Đang xử lý thanh toán...</p>
+        </div>
+        <div v-else class="payment-status-card">
+            <div class="status-icon" :class="statusClass">
+                <check-circle-outlined v-if="paymentStatus === 'PAID'" />
+                <close-circle-outlined v-if="paymentStatus === 'CANCELLED'" />
+                <loading-outlined v-if="paymentStatus === 'PENDING'" />
             </div>
 
             <h1 class="status-title">{{ statusTitle }}</h1>
             <p class="status-message">{{ statusMessage }}</p>
 
-            <div class="order-info" v-if="paymentStatus === 'success'">
+            <div class="order-info" v-if="paymentStatus === 'PAID'">
                 <h3>Thông tin đơn hàng</h3>
                 <div class="info-row">
                     <span class="label">Mã đơn hàng:</span>
@@ -27,13 +31,13 @@
             </div>
 
             <div class="action-buttons">
-                <a-button type="primary" @click="goToOrderTracking" v-if="paymentStatus === 'success'">
+                <a-button type="primary" @click="goToOrderTracking" v-if="paymentStatus === 'PAID'">
                     Theo dõi đơn hàng
                 </a-button>
                 <a-button @click="goToHome">
                     Về trang chủ
                 </a-button>
-                <a-button type="primary" @click="tryAgain" v-if="paymentStatus === 'failed'">
+                <a-button type="primary" @click="tryAgain" v-if="paymentStatus === 'CANCELLED'">
                     Thử lại
                 </a-button>
             </div>
@@ -44,46 +48,59 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { message } from 'ant-design-vue';
+import { message, Spin } from 'ant-design-vue';
 import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     LoadingOutlined
 } from '@ant-design/icons-vue';
 import { banHangOnlineService } from '@/services/banHangOnlineService';
-
+import { thanhToanService } from '@/services/thanhToan';
 const router = useRouter();
 const route = useRoute();
 
 // Payment status: success, failed, processing
-const paymentStatus = ref('success');
-const orderResponse = ref(localStorage.getItem('pendingOrderCode'));
+const paymentStatus = ref('PENDING');
+const orderCode = ref('');
+const orderAmount = ref(0);
 const paymentTime = ref(new Date());
+const isLoading = ref(true);
+const dataLoaded = ref(false);
 
-// Computed properties for dynamic content
+// CSS class cho biểu tượng trạng thái
+const statusClass = computed(() => {
+    switch (paymentStatus.value) {
+        case 'PAID': return 'success';
+        case 'CANCELLED': return 'failed';
+        case 'PENDING': return 'processing';
+        default: return '';
+    }
+});
+
+// Computed properties cho nội dung động
 const statusTitle = computed(() => {
     switch (paymentStatus.value) {
-        case 'success': return 'Thanh toán thành công!';
-        case 'failed': return 'Thanh toán thất bại!';
-        case 'processing': return 'Đang xử lý thanh toán...';
+        case 'PAID': return 'Thanh toán thành công!';
+        case 'CANCELLED': return 'Thanh toán thất bại!';
+        case 'PENDING': return 'Đang xử lý thanh toán...';
         default: return 'Trạng thái thanh toán';
     }
 });
 
 const statusMessage = computed(() => {
     switch (paymentStatus.value) {
-        case 'success':
+        case 'PAID':
             return `Cảm ơn bạn đã đặt hàng. Chúng tôi đã nhận được thanh toán của bạn và đang xử lý đơn hàng. Email xác nhận đã được gửi đến địa chỉ email của bạn.`;
-        case 'failed':
+        case 'CANCELLED':
             return 'Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.';
-        case 'processing':
+        case 'PENDING':
             return 'Hệ thống đang xử lý thanh toán của bạn. Vui lòng không đóng trang này.';
         default:
             return 'Đang kiểm tra trạng thái thanh toán của bạn.';
     }
 });
 
-// Format currency
+// Format tiền tệ
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -91,7 +108,7 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
-// Format date
+// Format ngày
 const formatDate = (date) => {
     return new Intl.DateTimeFormat('vi-VN', {
         year: 'numeric',
@@ -103,7 +120,7 @@ const formatDate = (date) => {
     }).format(date);
 };
 
-// Navigation functions
+// Hàm điều hướng
 const goToHome = () => {
     router.push('/home');
 };
@@ -116,15 +133,33 @@ const tryAgain = () => {
     router.push('/thanhtoan-banhang');
 };
 
-// Process payment result
-const processPaymentResult = async () => {
+// Lấy orderCode từ localStorage
+const getOrderCodeFromLocalStorage = async () => {
     try {
         // Skip actual processing and force success state for demo
-        paymentStatus.value = 'success';
+        const responeThanhToanStr = localStorage.getItem('responseThanhToan');
+        if (responeThanhToanStr) {
+            const responeThanhToan = JSON.parse(responeThanhToanStr);
+            return responeThanhToan?.data?.orderCode;
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy orderCode từ localStorage:', error);
+    }
+    return null;
+};
 
-        // Try to get the order code from localStorage
-        const pendingOrderCode = localStorage.getItem('pendingOrderCode') || localStorage.getItem('lastOrderCode');
+// Kiểm tra dữ liệu hóa đơn đã có trong localStorage chưa
+const checkInvoiceDataInLocalStorage = () => {
+    const hoaDonStr = localStorage.getItem('hoaDon');
+    const hoaDonChiTietStr = localStorage.getItem('hoaDonChiTiet');
+    return (hoaDonStr && hoaDonChiTietStr);
+};
 
+// Tạo hóa đơn từ dữ liệu được lưu trong localStorage
+const createOrderFromLocalStorage = async () => {
+    try {
+        const hoaDonStr = localStorage.getItem('hoaDon');
+        const hoaDonChiTietStr = localStorage.getItem('hoaDonChiTiet');
         if (pendingOrderCode) {
             orderCode.value = pendingOrderCode;
         }
