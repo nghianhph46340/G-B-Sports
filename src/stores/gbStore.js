@@ -2301,37 +2301,45 @@ export const useGbStore = defineStore('gbStore', {
 
         async getImage(id, anhChinh) {
       const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh)
+      if (getImageRespone.error) {
+        toast.error('Không lấy được dữ liệu')
+        return
+      } else {
+        this.getImages = getImageRespone
+      }
+      return getImageRespone
+    },
+    //Lấy danh sách chi tiết sản phẩm theo sản phẩm
+    async getCTSPBySanPham(id) {
+      try {
+        const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
+        if (getCTSPBySanPhamRespone.error) {
+          toast.error('Không lấy được dữ liệu chi tiết sản phẩm')
+          return
+        } else {
+          // Lấy hình ảnh cho từng chi tiết sản phẩm trong một lần gọi
+          for (let i = 0; i < getCTSPBySanPhamRespone.length; i++) {
+            const ctsp = getCTSPBySanPhamRespone[i]
+            // Lấy TẤT CẢ hình ảnh (anhChinh = "")
+            const images = await sanPhamService.getImageInCTSP(ctsp.id_chi_tiet_san_pham, "")
 
-            if (getImageRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
+            if (images && Array.isArray(images) && images.length > 0) {
+              // Thêm danh sách hình ảnh đầy đủ vào chi tiết sản phẩm
+              ctsp.hinh_anh_list = images
             } else {
-                this.getImages = getImageRespone
+              ctsp.hinh_anh_list = []
             }
-            return getImageRespone
-        },
-        //Lấy danh sách chi tiết sản phẩm theo sản phẩm
-        async getCTSPBySanPham(id) {
-      const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
-            if (getCTSPBySanPhamRespone.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-            } else {
-        this.getCTSPBySanPhams = getCTSPBySanPhamRespone
-                try {
-                    const imagePromises = getCTSPBySanPhamRespone.map(async (ctsp) => {
-            const images = await this.getImage(ctsp.id_chi_tiet_san_pham, true)
-            ctsp.hinh_anh = (await images.length) > 0 ? images[0].hinh_anh : 'Không có ảnh chính' // Thêm trường hinh_anh vào object ctsp
-          })
-          this.getCTSPBySanPhams = await Promise.all(imagePromises)
+          }
+
           this.getCTSPBySanPhams = getCTSPBySanPhamRespone
-                } catch (error) {
-          console.log(error)
-                }
-            }
-        },
-        //Lấy danh sách sản phẩm
-        async getAllSP() {
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy chi tiết sản phẩm và hình ảnh:', error)
+        toast.error('Có lỗi xảy ra khi lấy dữ liệu')
+      }
+    },
+    //Lấy danh sách sản phẩm
+    async getAllSP() {
       try {
         console.log('Đang tải danh sách sản phẩm')
         const sanPhamResponse = await sanPhamService.getAllSanPham()
@@ -2374,17 +2382,36 @@ export const useGbStore = defineStore('gbStore', {
     //Thêm chi tiết sản phẩm
     async createCTSP(CTSPData) {
       try {
-        console.log('Dữ liệu CTSP gửi đi:', CTSPData)
-        const response = await sanPhamService.createCTSP(CTSPData)
-        console.log('Response từ service thêm chi tiết sản phẩm:', response)
-        return response
+        // Đảm bảo dữ liệu đúng định dạng trước khi gửi
+        const formattedData = {
+          ...CTSPData,
+          // Đảm bảo id_chi_tiet_san_pham là null nếu không có
+          id_chi_tiet_san_pham: CTSPData.id_chi_tiet_san_pham || null,
+          // Đảm bảo gia_ban là số
+          gia_ban: Number(CTSPData.gia_ban),
+          // Đảm bảo so_luong là số
+          so_luong: Number(CTSPData.so_luong),
+          // Đảm bảo trang_thai là chuỗi
+          trang_thai: CTSPData.trang_thai || 'Hoạt động',
+          // Đảm bảo hinh_anh là mảng không có phần tử rỗng
+          hinh_anh: Array.isArray(CTSPData.hinh_anh) ?
+            CTSPData.hinh_anh.filter(url => url && url.trim() !== '') : []
+        };
+
+        console.log('Dữ liệu CTSP gửi đi sau khi format:', formattedData);
+        const response = await sanPhamService.createCTSP(formattedData);
+        console.log('Response từ service thêm chi tiết sản phẩm:', response);
+        return response;
       } catch (error) {
-        console.error('Lỗi trong createCTSP:', error)
-        throw error
-            }
-        },
-        //Lấy danh sách chi tiết sản phẩm
-        async getAllCTSP() {
+        console.error('Lỗi trong createCTSP:', error);
+        if (error.response && error.response.data) {
+          console.error('Thông báo lỗi từ server:', error.response.data);
+        }
+        throw error;
+      }
+    },
+    //Lấy danh sách chi tiết sản phẩm
+    async getAllCTSP() {
       try {
         console.log('Đang tải danh sách chi tiết sản phẩm')
         const chiTietSanPhamResponse = await sanPhamService.getAllChiTietSanPham()

@@ -51,7 +51,7 @@
                             :disabled="record.trang_thai === 'Không hoạt động'" />
                     </template>
                     <template v-if="column.key === 'hinh_anh'">
-                        <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" />
+                        <a-image style="width: 40px; height: 40px;" :src="record.hinh_anh" @error="handleImageError" />
                     </template>
                     <template v-if="column.key === 'gia_ban'">
                         {{ formatCurrency(record.gia_ban) }}
@@ -83,78 +83,84 @@
         </template>
 
         <!-- Drawer for product variants -->
-        <a-drawer v-model:open="drawerVisible" title="Chi tiết biến thể sản phẩm" placement="right" :width="700"
-            :footer-style="{ textAlign: 'right' }" @close="closeVariantDrawer">
-            <template v-if="currentProduct">
-                <div class="product-info mb-4">
-                    <h3>{{ currentProduct.ten_san_pham }}</h3>
-                    <div class="d-flex gap-3 align-items-center">
-                        <a-image style="width: 60px; height: 60px;" :src="currentProduct.hinh_anh" />
-                        <div>
-                            <p><strong>Mã sản phẩm:</strong> {{ currentProduct.ma_san_pham }}</p>
-                            <p><strong>Trạng thái:</strong> {{ currentProduct.trang_thai }}</p>
+        <template v-if="drawerVisible">
+            <a-drawer v-model:open="drawerVisible" title="Chi tiết biến thể sản phẩm" placement="right" :width="700"
+                :footer-style="{ textAlign: 'right' }" @close="closeVariantDrawer">
+                <template v-if="currentProduct">
+                    <div class="product-info mb-4">
+                        <h3>{{ currentProduct.ten_san_pham }}</h3>
+                        <div class="d-flex gap-3 align-items-center">
+                            <a-image style="width: 60px; height: 60px;" :src="currentProduct.hinh_anh"
+                                @error="handleImageError" />
+                            <div>
+                                <p><strong>Mã sản phẩm:</strong> {{ currentProduct.ma_san_pham }}</p>
+                                <p><strong>Trạng thái:</strong> {{ currentProduct.trang_thai }}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <h4>Danh sách biến thể</h4>
-
-                <!-- Thêm bộ lọc trạng thái chi tiết sản phẩm -->
-                <div class="variant-status-filter mb-3">
-                    <a-radio-group v-model:value="ctspStatusFilter" @change="filterCTSPByStatus"
-                        class="custom-radio-group">
-                        <a-radio-button value="">Tất cả</a-radio-button>
-                        <a-radio-button value="Hoạt động">Hoạt động</a-radio-button>
-                        <a-radio-button value="Không hoạt động">Không hoạt động</a-radio-button>
-                    </a-radio-group>
-                    <span class="ms-3" v-if="ctspStatusFilter">
-                        <strong>Lọc theo:</strong> {{ ctspStatusFilter }}
-                        <span class="badge bg-primary ms-2">{{ filteredCTSPCount }} biến thể</span>
-                    </span>
-                </div>
-
-                <!-- Các nút chức năng khi chọn nhiều chi tiết sản phẩm -->
-                <div v-if="selectedCTSPKeys.length >= 2" class="bulk-actions mb-3 d-flex gap-2">
-                    <a-button type="primary" @click="bulkChangeStatus('Hoạt động')" class="bulk-action-btn">
-                        <CheckCircleOutlined />
-                        <span>Chuyển thành Hoạt động</span>
-                    </a-button>
-                    <a-button danger @click="bulkChangeStatus('Không hoạt động')" class="bulk-action-btn">
-                        <StopOutlined />
-                        <span>Chuyển thành Không hoạt động</span>
-                    </a-button>
-                </div>
-
-                <a-table :columns="columnsCTSP" :row-selection="{
-                    selectedRowKeys: selectedCTSPKeys,
-                    onChange: (keys, rows) => handleCTSPSelection(keys, rows, currentProduct.id_san_pham)
-                }" :data-source="filteredCTSPData" :pagination="false"
-                    :row-key="record => record.id_chi_tiet_san_pham">
-                    <template #bodyCell="{ column, record: ctspRecord }">
-                        <template v-if="column.key === 'trang_thai'">
-                            <a-switch
-                                :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
-                                size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false"
-                                @change="() => handleSwitchClickCTSP(ctspRecord.id_chi_tiet_san_pham)" />
-                        </template>
-                        <template v-if="column.key === 'gia_ban'">
-                            {{ formatCurrency(ctspRecord.gia_ban) }}
-                        </template>
-                        <template v-if="column.key === 'qrcode'">
-                            <a-tooltip title="Tải QR Code">
-                                <a-qrcode @click="showConfirmDownload(ctspRecord)" :size="60" :value="ctspRecord.id_chi_tiet_san_pham"/>
-                            </a-tooltip>
-                        </template>
-                        <template v-if="column.key === 'action'">
-                            <a-button @click="showDrawer" type="" style="color: white;"
-                                class="d-flex align-items-center btn btn-warning">
-                                <EditOutlined />Sửa
-                            </a-button>
-                        </template>
+                    <!-- Loading skeleton cho CTSP -->
+                    <template v-if="drawerLoading">
+                        <a-skeleton active :paragraph="{ rows: 5 }" />
                     </template>
-                </a-table>
-            </template>
-        </a-drawer>
+
+                    <template v-else>
+                        <h4>Danh sách biến thể</h4>
+
+                        <!-- Bộ lọc trạng thái CTSP -->
+                        <div class="variant-status-filter mb-3">
+                            <a-radio-group v-model:value="ctspStatusFilter" @change="filterCTSPByStatus"
+                                class="custom-radio-group">
+                                <a-radio-button value="">Tất cả</a-radio-button>
+                                <a-radio-button value="Hoạt động">Hoạt động</a-radio-button>
+                                <a-radio-button value="Không hoạt động">Không hoạt động</a-radio-button>
+                            </a-radio-group>
+                            <span class="ms-3" v-if="ctspStatusFilter">
+                                <strong>Lọc theo:</strong> {{ ctspStatusFilter }}
+                                <span class="badge bg-primary ms-2">{{ filteredCTSPCount }} biến thể</span>
+                            </span>
+                        </div>
+
+                        <!-- Các nút chức năng bulk action -->
+                        <div v-if="selectedCTSPKeys.length >= 2" class="bulk-actions mb-3 d-flex gap-2">
+                            <a-button type="primary" @click="bulkChangeStatus('Hoạt động')" class="bulk-action-btn">
+                                <CheckCircleOutlined />
+                                <span>Chuyển thành Hoạt động</span>
+                            </a-button>
+                            <a-button danger @click="bulkChangeStatus('Không hoạt động')" class="bulk-action-btn">
+                                <StopOutlined />
+                                <span>Chuyển thành Không hoạt động</span>
+                            </a-button>
+                        </div>
+
+                        <!-- Bảng CTSP -->
+                        <a-table :columns="columnsCTSP" :row-selection="{
+                            selectedRowKeys: selectedCTSPKeys,
+                            onChange: (keys, rows) => handleCTSPSelection(keys, rows, currentProduct.id_san_pham)
+                        }" :data-source="filteredCTSPData" :pagination="false"
+                            :row-key="record => record.id_chi_tiet_san_pham" class="ctsp-table">
+                            <template #bodyCell="{ column, record: ctspRecord }">
+                                <template v-if="column.key === 'trang_thai'">
+                                    <a-switch
+                                        :style="{ backgroundColor: ctspRecord.trang_thai === 'Hoạt động' ? '#f33b47' : '#ccc' }"
+                                        size="small" :checked="ctspRecord.trang_thai === 'Hoạt động' ? true : false"
+                                        @change="() => changeStatusCTSP(ctspRecord)" />
+                                </template>
+                                <template v-if="column.key === 'gia_ban'">
+                                    {{ formatCurrency(ctspRecord.gia_ban) }}
+                                </template>
+                                <template v-if="column.key === 'action'">
+                                    <a-button @click="showDrawer" type="" style="color: white;"
+                                        class="d-flex align-items-center btn btn-warning">
+                                        <EditOutlined />Sửa
+                                    </a-button>
+                                </template>
+                            </template>
+                        </a-table>
+                    </template>
+                </template>
+            </a-drawer>
+        </template>
 
         <!-- Existing drawer for editing product details -->
         <a-drawer v-model:open="open" class="custom-class" root-class-name="root-class-name"
@@ -295,21 +301,50 @@ const store = useGbStore();
 const drawerVisible = ref(false);
 const currentProduct = ref(null);
 
+// Thêm biến loading state cho drawer
+const drawerLoading = ref(false);
+
 // Biến lưu thời gian tải trang
 const loadTime = ref(0);
 
-// Function to show variants drawer
+// Function to show variants drawer with lazy loading
 const showVariants = async (product) => {
-    currentProduct.value = product;
-    await getCTSPForProduct(product);
     drawerVisible.value = true;
+    drawerLoading.value = true;
+    currentProduct.value = product;
+
+    try {
+        // Kiểm tra cache trước khi gọi API
+        const cacheKey = `${CTSP_CACHE_PREFIX}${product.id_san_pham}`;
+
+        if (!forceRefresh.value && isCacheValid(cacheKey)) {
+            console.log('Sử dụng cache cho CTSP');
+            const cachedData = getFromCache(cacheKey);
+            if (cachedData) {
+                productCTSPMap.value.set(product.id_san_pham, cachedData);
+                drawerLoading.value = false;
+                return;
+            }
+        }
+
+        // Nếu không có cache, gọi API để lấy CTSP cho sản phẩm cụ thể
+        console.log('Gọi API lấy CTSP cho sản phẩm:', product.id_san_pham);
+        await getCTSPForProduct(product);
+
+    } catch (error) {
+        console.error('Lỗi khi tải chi tiết sản phẩm:', error);
+        message.error('Không thể tải thông tin chi tiết sản phẩm');
+    } finally {
+        drawerLoading.value = false;
+    }
 };
 
-// Function to close variant drawer
+// Function to close variant drawer and clean up
 const closeVariantDrawer = () => {
     drawerVisible.value = false;
     currentProduct.value = null;
-    ctspStatusFilter.value = ''; // Reset bộ lọc khi đóng drawer
+    ctspStatusFilter.value = ''; // Reset bộ lọc
+    drawerLoading.value = false;
 };
 
 const changeRouter = (path) => {
@@ -338,96 +373,12 @@ function closeDrawer() {
     open.value = false;
 };
 const danhMucList = ref([]);
-const addVariant = () => {
-    variants.value.push({
-        mau_sac_id: undefined,
-        size_id: undefined,
-        so_luong: 0,
-        gia_ban: 0,
-        trang_thai: true,
-        fileList: [],
-        hinh_anh: []
-    });
-};
-
 
 const variants = ref([]);
 
-
-
-const resetForm = () => {
-    Object.keys(formState).forEach(key => {
-        formState[key] = '';
-    });
-    fileList.value = [];
-    variants.value = [];
-    variants.value = variants.value.map(variant => ({
-        ...variant,
-        fileList: [],
-        hinh_anh: []
-    }));
-};
-const removeVariant = (index) => {
-    variants.value.splice(index, 1);
-};
-const handleVariantImageChange = async (info, variantIndex) => {
-    const { fileList } = info;
-
-    // Giới hạn số lượng file
-    const limitedFileList = fileList.slice(0, 3);
-
-    // Cập nhật fileList cho biến thể
-    variants.value[variantIndex].fileList = limitedFileList;
-
-    // Xử lý các file đã upload thành công
-    const successFiles = limitedFileList.filter(file => file.status === 'done');
-    variants.value[variantIndex].hinh_anh = successFiles.map(file => file.response.url);
-
-    // Thông báo kết quả
-    const lastFile = info.file;
-    if (lastFile.status === 'done') {
-        message.success(`${lastFile.name} đã được tải lên thành công`);
-    } else if (lastFile.status === 'error') {
-        message.error(`${lastFile.name} tải lên thất bại`);
-    }
-};
-const onFinish = async (values) => {
-    loading.value = true;
-    try {
-        // Tạo sản phẩm chính
-        const response = await store.createProduct(formState);
-        const productId = response.id_san_pham;
-
-        // Tạo các biến thể CTSP với hình ảnh
-        if (variants.value.length > 0) {
-            const ctspPromises = variants.value.map(variant => {
-                return store.createCTSP({
-                    ...variant,
-                    id_san_pham: productId,
-                    hinh_anh: variant.hinh_anh
-                });
-            });
-
-            await Promise.all(ctspPromises);
-        }
-
-        message.success('Thêm sản phẩm và biến thể thành công!');
-        resetForm();
-    } catch (error) {
-        message.error('Có lỗi xảy ra khi thêm sản phẩm!');
-        console.error(error);
-    } finally {
-        loading.value = false;
-    }
-};
 const showDrawer = () => {
     open.value = true;
 }
-
-const formState = ref({});
-const fileList = ref([]);
-const loading = ref(false);
-
 // Update the columns to include options for both highest and lowest price
 const columns = [
     {
@@ -639,18 +590,8 @@ const getCTSPForProduct = async (record) => {
     const productId = record.id_san_pham;
     const cacheKey = `${CTSP_CACHE_PREFIX}${productId}`;
 
-    if (!productCTSPMap.value.has(productId)) {
-        // Kiểm tra cache trước khi gọi API
-        if (!forceRefresh.value && isCacheValid(cacheKey)) {
-            console.log(`Sử dụng cache cho CTSP của sản phẩm ${productId}`);
-            const cachedData = getFromCache(cacheKey);
-            if (cachedData) {
-                productCTSPMap.value.set(productId, cachedData);
-                return cachedData;
-            }
-        }
-
-        // Nếu không có cache hoặc cache hết hạn, gọi API
+    try {
+        // Gọi API lấy CTSP cho sản phẩm cụ thể
         await store.getCTSPBySanPham(productId);
         const ctspList = store.getCTSPBySanPhams.map(ctsp => ({
             key: ctsp.id_chi_tiet_san_pham,
@@ -668,9 +609,13 @@ const getCTSPForProduct = async (record) => {
         // Lưu vào map và cache
         productCTSPMap.value.set(productId, ctspList);
         saveToCache(cacheKey, ctspList);
-    }
 
-    return productCTSPMap.value.get(productId) || [];
+        return ctspList;
+    } catch (error) {
+        console.error('Lỗi khi lấy dữ liệu CTSP:', error);
+        message.error('Không thể lấy thông tin chi tiết sản phẩm');
+        return [];
+    }
 };
 
 const handleSwitchClick = (idSanPham, checked) => {
@@ -717,12 +662,17 @@ const changeStatusSanPham = async (id, checked) => {
             }
         }
 
+        // Thêm thông báo thành công
+        message.success('Đã cập nhật trạng thái sản phẩm thành công!');
+
         // Xóa cache khi có thay đổi
-        clearCache(PRODUCTS_CACHE_KEY);
-        clearCache(`${CTSP_CACHE_PREFIX}${id}`);
+        clearAllProductsCache();
+
+        // Tải lại dữ liệu
+        await refreshData();
     } catch (error) {
-        console.log('Lỗi khi thay đổi trạng thái:', error);
-        message.error('Có lỗi xảy ra khi thay đổi trạng thái sản phẩm');
+        console.error('Lỗi khi thay đổi trạng thái:', error);
+        message.error('Không thể cập nhật trạng thái sản phẩm!');
     }
 };
 const handleSwitchClickCTSP = (idCTSP) => {
@@ -954,7 +904,7 @@ const refreshData = async () => {
             store.getAllCL(),   // Chất liệu
             store.getAllMS(),   // Màu sắc
             store.getAllKT(),   // Kích thước
-            store.getAllCTSP(), // Chi tiết sản phẩm
+            // Chi tiết sản phẩm
         ]);
 
         console.log('Đã cập nhật dữ liệu bộ lọc');
@@ -1016,10 +966,6 @@ onMounted(async () => {
     isLoading.value = true;
 
     try {
-        // Tải chi tiết sản phẩm cho bộ lọc
-        await store.getAllCTSP();
-        console.log('Đã tải dữ liệu chi tiết sản phẩm:', store.getAllChiTietSanPham.length);
-
         // Kiểm tra xem có cần refresh cache không
         if (store.justAddedProduct || store.justUpdatedProduct) {
             // Nếu vừa thêm hoặc sửa sản phẩm, xóa toàn bộ cache
@@ -1038,6 +984,8 @@ onMounted(async () => {
                 if (cachedProducts) {
                     data.value = cachedProducts;
                     isLoading.value = false;
+                    const endTime = performance.now();
+                    loadTime.value = Math.round(endTime - startTime);
                     return;
                 }
             }
@@ -1047,24 +995,17 @@ onMounted(async () => {
         }
 
         // Xử lý dữ liệu và lưu vào cache
-        data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
-            // Get the product prices (highest and lowest)
-            const prices = await getProductPrices(item.id_san_pham);
-
-            return {
-                stt: index + 1,
-                key: item.id_san_pham,
-                id_san_pham: item.id_san_pham,
-                ma_san_pham: item.ma_san_pham,
-                ten_san_pham: item.ten_san_pham,
-                hinh_anh: item.hinh_anh,
-                chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
-                trang_thai: item.trang_thai,
-                tong_so_luong: item.tong_so_luong || 0,
-                gia_cao_nhat: prices.highest,
-                gia_thap_nhat: prices.lowest,
-                ngay_cap_nhat: item.ngay_cap_nhat || '' // Don't use current date as fallback
-            };
+        data.value = store.getAllSanPham.map((item, index) => ({
+            stt: index + 1,
+            key: item.id_san_pham,
+            id_san_pham: item.id_san_pham,
+            ma_san_pham: item.ma_san_pham,
+            ten_san_pham: item.ten_san_pham,
+            hinh_anh: item.hinh_anh,
+            chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
+            trang_thai: item.trang_thai,
+            tong_so_luong: item.tong_so_luong || 0,
+            ngay_cap_nhat: item.ngay_cap_nhat || ''
         }));
 
         // Lưu vào cache nếu có dữ liệu
@@ -1189,6 +1130,14 @@ const filteredCTSPData = computed(() => {
 // Hàm xử lý lọc trạng thái chi tiết sản phẩm
 const filterCTSPByStatus = () => {
     console.log('Lọc theo trạng thái chi tiết:', ctspStatusFilter.value);
+};
+
+// Hàm xử lý lỗi khi tải hình ảnh
+const handleImageError = (e) => {
+    const imgElement = e.target;
+    console.error('Không thể tải hình ảnh:', e.target.src);
+    imgElement.src = 'https://via.placeholder.com/150?text=No+Image'; // Đường dẫn đến hình ảnh mặc định
+    console.log('Không thể tải hình ảnh, đã thay thế bằng ảnh mặc định');
 };
 
 // Hàm thay đổi trạng thái cho nhiều chi tiết sản phẩm một lúc
@@ -1598,10 +1547,6 @@ onMounted(async () => {
     isLoading.value = true;
 
     try {
-        // Tải chi tiết sản phẩm cho bộ lọc
-        await store.getAllCTSP();
-        console.log('Đã tải dữ liệu chi tiết sản phẩm:', store.getAllChiTietSanPham.length);
-
         // Kiểm tra xem có cần refresh cache không
         if (store.justAddedProduct || store.justUpdatedProduct) {
             // Nếu vừa thêm hoặc sửa sản phẩm, xóa toàn bộ cache
@@ -1620,6 +1565,8 @@ onMounted(async () => {
                 if (cachedProducts) {
                     data.value = cachedProducts;
                     isLoading.value = false;
+                    const endTime = performance.now();
+                    loadTime.value = Math.round(endTime - startTime);
                     return;
                 }
             }
@@ -1629,24 +1576,17 @@ onMounted(async () => {
         }
 
         // Xử lý dữ liệu và lưu vào cache
-        data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
-            // Get the product prices (highest and lowest)
-            const prices = await getProductPrices(item.id_san_pham);
-
-            return {
-                stt: index + 1,
-                key: item.id_san_pham,
-                id_san_pham: item.id_san_pham,
-                ma_san_pham: item.ma_san_pham,
-                ten_san_pham: item.ten_san_pham,
-                hinh_anh: item.hinh_anh,
-                chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
-                trang_thai: item.trang_thai,
-                tong_so_luong: item.tong_so_luong || 0,
-                gia_cao_nhat: prices.highest,
-                gia_thap_nhat: prices.lowest,
-                ngay_cap_nhat: item.ngay_cap_nhat || '' // Don't use current date as fallback
-            };
+        data.value = store.getAllSanPham.map((item, index) => ({
+            stt: index + 1,
+            key: item.id_san_pham,
+            id_san_pham: item.id_san_pham,
+            ma_san_pham: item.ma_san_pham,
+            ten_san_pham: item.ten_san_pham,
+            hinh_anh: item.hinh_anh,
+            chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
+            trang_thai: item.trang_thai,
+            tong_so_luong: item.tong_so_luong || 0,
+            ngay_cap_nhat: item.ngay_cap_nhat || ''
         }));
 
         // Lưu vào cache nếu có dữ liệu

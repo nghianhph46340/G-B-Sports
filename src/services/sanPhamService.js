@@ -136,12 +136,13 @@ const createSanPhams = async (data) => {
 }
 const createCTSP = async (data) => {
   try {
-    console.log('Data CTSP gửi đi:', data)
-    const response = await axiosInstance.post(qlsp + 'saveCTSP', data)
-    return response.data
+    console.log('Data CTSP gửi đi (final):', data);
+    const response = await axiosInstance.post(qlsp + 'saveCTSP', data);
+    return response.data;
   } catch (error) {
-    console.log('Lỗi thêm chi tiết sản phẩm', error)
-    throw error
+    console.log('Chi tiết lỗi từ server:', error.response?.data || 'Không có thông tin chi tiết');
+    console.log('Lỗi thêm chi tiết sản phẩm', error);
+    throw error;
   }
 }
 
