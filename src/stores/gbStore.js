@@ -2292,13 +2292,32 @@ export const useGbStore = defineStore('gbStore', {
     //Thêm chi tiết sản phẩm
     async createCTSP(CTSPData) {
       try {
-        console.log('Dữ liệu CTSP gửi đi:', CTSPData)
-        const response = await sanPhamService.createCTSP(CTSPData)
-        console.log('Response từ service thêm chi tiết sản phẩm:', response)
-        return response
+        // Đảm bảo dữ liệu đúng định dạng trước khi gửi
+        const formattedData = {
+          ...CTSPData,
+          // Đảm bảo id_chi_tiet_san_pham là null nếu không có
+          id_chi_tiet_san_pham: CTSPData.id_chi_tiet_san_pham || null,
+          // Đảm bảo gia_ban là số
+          gia_ban: Number(CTSPData.gia_ban),
+          // Đảm bảo so_luong là số
+          so_luong: Number(CTSPData.so_luong),
+          // Đảm bảo trang_thai là chuỗi
+          trang_thai: CTSPData.trang_thai || 'Hoạt động',
+          // Đảm bảo hinh_anh là mảng không có phần tử rỗng
+          hinh_anh: Array.isArray(CTSPData.hinh_anh) ?
+            CTSPData.hinh_anh.filter(url => url && url.trim() !== '') : []
+        };
+
+        console.log('Dữ liệu CTSP gửi đi sau khi format:', formattedData);
+        const response = await sanPhamService.createCTSP(formattedData);
+        console.log('Response từ service thêm chi tiết sản phẩm:', response);
+        return response;
       } catch (error) {
-        console.error('Lỗi trong createCTSP:', error)
-        throw error
+        console.error('Lỗi trong createCTSP:', error);
+        if (error.response && error.response.data) {
+          console.error('Thông báo lỗi từ server:', error.response.data);
+        }
+        throw error;
       }
     },
     //Lấy danh sách chi tiết sản phẩm
