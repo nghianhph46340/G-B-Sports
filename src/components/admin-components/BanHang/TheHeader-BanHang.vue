@@ -130,7 +130,7 @@
 
                                     </a-space>
                                 </td>
-                                <td>{{ formatCurrency(item.gia_ban || item.gia_sau_giam) }}</td>
+                                <td>{{ formatCurrency(item.gia_ban) }}</td>
                                 <td>{{ formatCurrency(item.tong_tien) }}</td>
                                 <td>
                                     <a-button type="danger" shape="circle" size="small"
@@ -1499,6 +1499,7 @@ watch(() => activeKey.value, async (newKey) => {
             tong_tien: item.don_gia,
             so_luong_ton_goc: item.so_luong_ton || 0
         })) || [];
+        console.log("store.getAllSPHDArr: ", currentTab.items.value);
     }
     ptnh.value = currentTab.hd.phuong_thuc_nhan_hang;
     store.setCurrentHoaDonId(currentTab.hd.id_hoa_don);

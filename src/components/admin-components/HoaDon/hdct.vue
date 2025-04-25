@@ -239,13 +239,13 @@
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -517,7 +517,7 @@
                                     </a-col>
                                     <a-col :md="4" style="text-align: right;">
                                         <p>- {{formatCurrency(store.traHangs.reduce((total, traHang) => total +
-                                            traHang.tong_tien_hoan, 0)) }} VNĐ</p>
+                                            traHang.tong_tien_hoan, 0))}} VNĐ</p>
                                     </a-col>
                                 </a-row>
                             </template>
@@ -530,7 +530,7 @@
                                     <h6>{{
                                         formatCurrency((store.hoaDonDetail.tong_tien_sau_giam) -
                                             (store.traHangs.reduce((total,
-                                                traHang) => total + traHang.tong_tien_hoan, 0))) }} VNĐ</h6>
+                                                traHang) => total + traHang.tong_tien_hoan, 0)))}} VNĐ</h6>
                                 </a-col>
                             </a-row>
                         </div>
@@ -1187,10 +1187,7 @@ const cannotDecreaseOrRemoveProduct = computed(() => {
     const hinhThucThanhToan = store.hoaDonDetail?.hinh_thuc_thanh_toan;
     return hinhThucThanhToan === 'Chuyển khoản';
 });
-const cannotDecreaseOrRemoveProduct = computed(() => {
-    const hinhThucThanhToan = store.hoaDonDetail?.hinh_thuc_thanh_toan;
-    return hinhThucThanhToan === 'Chuyển khoản';
-});
+
 
 const cannotEditProduct = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
@@ -1959,9 +1956,9 @@ const printInvoice = async () => {
 const validateProductsInInvoice = async () => {
     const invalidProducts = [];
     // Nếu trạng thái hóa đơn là "Đang giao", bỏ qua kiểm tra
-    if (store.hoaDonDetail.trang_thai === 'Đã xác nhận' || store.hoaDonDetail.trang_thai === 'Chờ đóng gói' 
-    || store.hoaDonDetail.trang_thai === 'Đang giao' || store.hoaDonDetail.trang_thai === 'Hoàn thành' 
-    || store.hoaDonDetail.trang_thai === 'Đã hủy') {
+    if (store.hoaDonDetail.trang_thai === 'Đã xác nhận' || store.hoaDonDetail.trang_thai === 'Chờ đóng gói'
+        || store.hoaDonDetail.trang_thai === 'Đang giao' || store.hoaDonDetail.trang_thai === 'Hoàn thành'
+        || store.hoaDonDetail.trang_thai === 'Đã hủy') {
         return;
     }
 
@@ -2016,7 +2013,7 @@ onMounted(async () => {
     if (maHoaDon) {
         loading.value = true;
         await store.getHoaDonDetail(maHoaDon);
-        await store.getAllCTSP_HD(0, 100, '');
+        await store.getAllCTSP_HD(0, 1000, '');
         await validateProductsInInvoice();
         loading.value = false;
         console.log('trang_thai:', store.hoaDonDetail?.trang_thai);
