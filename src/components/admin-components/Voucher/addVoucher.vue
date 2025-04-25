@@ -46,7 +46,7 @@
         </div>
         <div class="col-md-6">
           <label for="soLuong" class="form-label">Số lượng</label>
-          <input type="number" class="form-control" id="soLuong" v-model="voucher.soLuong" min="0" step="1" required
+          <input type="number" class="form-control" id="soLuong" v-model="voucher.soLuong" min="1" step="1" required
                  :class="{ 'is-invalid': errors.soLuong }" @input="validateSoLuong">
           <div class="text-danger" v-if="errors.soLuong">{{ errors.soLuong }}</div>
         </div>
@@ -227,8 +227,8 @@ const validateGiaTriToiThieu = () => {
 
 const validateSoLuong = () => {
   const soLuong = parseInt(voucher.value.soLuong) || 0;
-  if (voucher.value.soLuong === null || soLuong < 0) {
-    errors.value.soLuong = 'Số lượng không được nhỏ hơn 0!';
+  if (voucher.value.soLuong === null || soLuong <= 0) {
+    errors.value.soLuong = 'Số lượng phải lớn hơn 0!';
   } else if (soLuong > 5000000) {
     errors.value.soLuong = `Số lượng không được lớn hơn ${formatCurrency(5000000)}!`;
   } else {

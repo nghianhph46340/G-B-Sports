@@ -246,8 +246,8 @@ const validateGiaTriToiThieu = () => {
 
 const validateSoLuong = () => {
   const soLuong = parseInt(voucher.value.soLuong) || 0;
-  if (voucher.value.soLuong === null || soLuong < 0) {
-    errors.value.soLuong = 'Số lượng không được nhỏ hơn 0!';
+  if (voucher.value.soLuong === null || soLuong <= 0) {
+    errors.value.soLuong = 'Số lượng phải lớn hơn 0!';
   } else if (soLuong > 5000000) {
     errors.value.soLuong = `Số lượng không được lớn hơn ${formatCurrency(5000000)}!`;
   } else {
