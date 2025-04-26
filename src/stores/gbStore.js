@@ -656,22 +656,44 @@ export const useGbStore = defineStore('gbStore', {
     },
     //Chuyển trạng thái All CTSP Hoạt động
     async changeAllCTSPHoatDong(id) {
-      const changeAllCTSPHoatDong = await sanPhamService.changeAllCTSPHoatDong(id)
-      if (changeAllCTSPHoatDong.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+      try {
+        const response = await sanPhamService.changeAllCTSPHoatDong(id)
+        console.log('Response changeAllCTSPHoatDong ở store:', response)
+        if (response && response.data) {
+          toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+          return response.data  // Trả về dữ liệu từ API
+        } else if (response && !response.error) {
+          toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+          return response  // Trường hợp response không có .data nhưng vẫn là response hợp lệ
+        } else {
+          toast.error('Không lấy được dữ liệu')
+          return null
+        }
+      } catch (error) {
+        console.error('Lỗi khi chuyển trạng thái CTSP sang Hoạt động:', error)
+        toast.error('Có lỗi xảy ra khi chuyển trạng thái')
+        return null
       }
     },
     //Chuyển trạng thái All CTSP Không Hoạt động
     async changeAllCTSPKhongHoatDong(id) {
-      const changeAllCTSPKhongHoatDong = await sanPhamService.changeAllCTSPKhongHoatDong(id)
-      if (changeAllCTSPKhongHoatDong.error) {
-        toast.error('Không lấy được dữ liệu')
-        return
-      } else {
-        toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+      try {
+        const response = await sanPhamService.changeAllCTSPKhongHoatDong(id)
+        console.log('Response changeAllCTSPKhongHoatDong ở store:', response)
+        if (response && response.data) {
+          toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+          return response.data  // Trả về dữ liệu từ API
+        } else if (response && !response.error) {
+          toast.success('Chuyển trạng thái chi tiết sản phẩm thành công')
+          return response  // Trường hợp response không có .data nhưng vẫn là response hợp lệ
+        } else {
+          toast.error('Không lấy được dữ liệu')
+          return null
+        }
+      } catch (error) {
+        console.error('Lỗi khi chuyển trạng thái CTSP sang Không Hoạt động:', error)
+        toast.error('Có lỗi xảy ra khi chuyển trạng thái')
+        return null
       }
     },
     // Add new actions for adding items

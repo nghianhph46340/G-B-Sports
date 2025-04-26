@@ -493,7 +493,7 @@ const discount = computed(() => {
 const shippingFee = computed(() => {
     // Base shipping fee - free shipping for orders over 500,000 VND
     const subTotal = Number(subtotal.value || 0);
-    let fee = subTotal > 500000 ? 0 : 30000;
+    let fee = subTotal > 500000 ? 0 : 0;
 
     // Apply shipping vouchers
     const shippingVoucher = appliedCoupons.value.find(c => c.loai === 'shipping');
@@ -1102,7 +1102,7 @@ onMounted(async () => {
         fetchCustomerData(),
         fetchCustomerAddresses(),
         fetchProvinces(),
-        fetchVouchers() // Load vouchers on mount
+        // fetchVouchers() // Load vouchers on mount
     ]);
 });
 

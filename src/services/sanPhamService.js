@@ -309,6 +309,7 @@ const exportExcel = async (productIds, fields) => {
 const changeAllCTSPHoatDong = async (id) => {
   try {
     const response = await axiosInstance.put(qlsp + 'changeAllCTSPHoatDong?id=' + id)
+    console.log('Response changeAllCTSPHoatDong:', response)
     return response.data
   } catch (error) {
     console.error('Lỗi khi cập nhật trạng thái CTSP:', error)
@@ -317,6 +318,7 @@ const changeAllCTSPHoatDong = async (id) => {
 const changeAllCTSPKhongHoatDong = async (id) => {
   try {
     const response = await axiosInstance.put(qlsp + 'changeAllCTSPKhongHoatDong?id=' + id)
+    console.log('Response changeAllCTSPKhongHoatDong:', response)
     return response.data
   } catch (error) {
     console.error('Lỗi khi cập nhật trạng thái CTSP:', error)

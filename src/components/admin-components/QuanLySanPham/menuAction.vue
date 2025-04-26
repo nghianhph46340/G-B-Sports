@@ -644,7 +644,7 @@ onMounted(async () => {
     console.log('Menu Action component mounted');
     try {
         value2.value = [0, maxPriceFromProducts.value];
-        await store.getAllCTSP();
+        // await store.getAllCTSP();
         await store.getAllDM();   // Thay thế loadDanhMuc
         await store.getAllTH();   // Thay thế loadThuongHieu
         await store.getAllCL();   // Thay thế loadChatLieu
@@ -1071,9 +1071,9 @@ const showExportModal = () => {
     // Kiểm tra và tải thêm dữ liệu chi tiết sản phẩm nếu cần
     if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
         message.info('Đang tải dữ liệu chi tiết sản phẩm...');
-        store.getAllCTSP().then(() => {
-            console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
-        });
+        // store.getAllCTSP().then(() => {
+        //     console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
+        // });
     }
 
     // Hiển thị modal
@@ -1164,7 +1164,7 @@ const handleExportExcel = async () => {
         if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
             try {
                 message.loading('Đang tải dữ liệu chi tiết sản phẩm...');
-                await store.getAllCTSP();
+                // await store.getAllCTSP();
                 console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
             } catch (error) {
                 console.error('Lỗi khi tải chi tiết sản phẩm:', error);
