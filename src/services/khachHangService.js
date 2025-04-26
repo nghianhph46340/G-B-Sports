@@ -157,13 +157,107 @@ const getUserDetail = async ({ username, id_roles }) => {
 
 const themKhachHangBH = async (data) => {
   try {
-    const response = await axiosInstance.post('/api/khach-hang/add/banhang', data)
+    const response = await axiosInstance.post('/api/khach-hang/addKHMoi', data)
     return response.data
   } catch (error) {
     console.error('Lỗi khi thêm khách hàng:', error)
     return { error: true, message: 'Có lị xảy ra khi thêm khách hàng' }
   }
 }
+
+
+// Thêm địa chỉ mới
+const addDiaChi = async (idKhachHang, diaChiData) => {
+  try {
+    const { data } = await axiosInstance.post('/api/khach-hang/dia-chi/add', {
+      idKhachHang,
+      ...diaChiData
+    })
+    return data
+  } catch (error) {
+    console.error('Lỗi khi thêm địa chỉ:', error)
+    return {
+      error: true,
+      message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm địa chỉ'
+    }
+  }
+}
+
+// Cập nhật địa chỉ
+const updateDiaChi = async (idDiaChi, diaChiData) => {
+  try {
+    const { data } = await axiosInstance.put('/api/khach-hang/dia-chi/update', {
+      idDiaChi,
+      ...diaChiData
+    })
+    return data
+  } catch (error) {
+    console.error('Lỗi khi cập nhật địa chỉ:', error)
+    return {
+      error: true,
+      message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật địa chỉ'
+    }
+  }
+}
+
+// Xóa địa chỉ
+const deleteDiaChi = async (idDiaChi) => {
+  try {
+    const { data } = await axiosInstance.delete(`/api/khach-hang/dia-chi/delete/${idDiaChi}`)
+    return data
+  } catch (error) {
+    console.error('Lỗi khi xóa địa chỉ:', error)
+    return {
+      error: true,
+      message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa địa chỉ'
+    }
+  }
+}
+
+// Đổi mật khẩu
+const changePassword = async (idKhachHang, passwordData) => {
+  try {
+    const response = await axiosInstance.post('/api/khach-hang/change-password', {
+      idKhachHang,
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi đổi mật khẩu:', error);
+
+    // Trích xuất thông báo lỗi từ phản hồi của backend
+    if (error.response && error.response.data) {
+      return {
+        error: true,
+        message: error.response.data.message || 'Có lỗi xảy ra khi đổi mật khẩu'
+      };
+    }
+
+    return {
+      error: true,
+      message: 'Có lỗi xảy ra khi đổi mật khẩu'
+    };
+  }
+}
+
+// Tạo một service mới để xử lý địa chỉ một cách riêng biệt
+const fetchDiaChiByKhachHangId = async (idKhachHang) => {
+  try {
+    const { data } = await axiosInstance.get(`/api/khach-hang/detail/${idKhachHang}`);
+    console.log('Dữ liệu chi tiết khách hàng từ API:', data);
+
+    if (data && data.diaChiList && Array.isArray(data.diaChiList)) {
+      return data.diaChiList;
+    }
+    return [];
+  } catch (error) {
+    console.error('Lỗi khi lấy địa chỉ khách hàng:', error);
+    return [];
+  }
+};
+
 
 export const khachHangService = {
   getAllKhachHang,
@@ -176,5 +270,10 @@ export const khachHangService = {
   registerKhachHang,
   login,
   getUserDetail,
-  themKhachHangBH
+  themKhachHangBH,
+  addDiaChi,
+  updateDiaChi,
+  deleteDiaChi,
+  changePassword,
+  fetchDiaChiByKhachHangId
 }

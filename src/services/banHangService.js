@@ -148,9 +148,9 @@ const getHoaDonByIdHoaDon = async(idHD) => {
     }
 }
 
-const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt) => {
+const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt, email) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `addKhHD?idHD=${idHoaDon}&idKH=${idKhachHang}&diaChi=${diaChi}&tenKhachHang=${tenKhachHang}&soDienThoai=${sdt}`);
+        const { data } = await axiosInstance.post(banHang + `addKhHD?idHD=${idHoaDon}&idKH=${idKhachHang}&diaChi=${diaChi}&tenKhachHang=${tenKhachHang}&soDienThoai=${sdt}&email=${email}`);
         return data;
     } catch (error) {
         console.error('Lỗi API thêm khách hàng hoá đơn:', error);
@@ -158,9 +158,9 @@ const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt) => {
     }
 }
 
-const setTrangThaiNhanHang = async(idHoaDon, phuongThucNhanHang) => {
+const setTrangThaiNhanHang = async(idHoaDon, phuongThucNhanHang, phiVanChuyen) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `setTrangThaiNhanHang?idHD=${idHoaDon}&phuongThucNhanHang=${phuongThucNhanHang}`);
+        const { data } = await axiosInstance.post(banHang + `setTrangThaiNhanHang?idHD=${idHoaDon}&phuongThucNhanHang=${phuongThucNhanHang}&phiVanChuyen=${phiVanChuyen}`);
         return data;
     } catch (error) {
         console.error('Lỗi API set trang thai nhan hang:', error);
@@ -174,6 +174,16 @@ const thanhToanMomo = async(idHoaDon) => {
         return data;
     } catch (error) {
         console.error('Lỗi API thanh toán momo:', error);
+        return { error: true };
+    }
+}
+
+const tinhPhiShip = async(pickProvince, pickDistrict, province, district, weight, tongTienHoaDon) => {
+    try {
+        const { data } = await axiosInstance.get(`api/ghtk/fee?pickProvince=${pickProvince}&pickDistrict=${pickDistrict}&province=${province}&district=${district}&weight=${weight}&value=${tongTienHoaDon}`);
+        return data.fee;
+    } catch (error) {
+        console.error('Lỗi API tính phí ship:', error);
         return { error: true };
     }
 }
@@ -194,5 +204,6 @@ export const banHangService = {
     addKhHD,
     setTrangThaiNhanHang,
     thanhToanMomo,
-    setSPHD
+    setSPHD,
+    tinhPhiShip
 }

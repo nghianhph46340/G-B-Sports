@@ -9,7 +9,7 @@
         <a-row :gutter="16">
           <a-col :span="8">
             <a-form-item label="Mã khách hàng">
-              <a-input v-model:value="formData.maKhachHang" readonly />
+              <a-input v-model:value="formData.maKhachHang" disabled />
             </a-form-item>
           </a-col>
           <a-col :span="8">
@@ -40,7 +40,7 @@
           </a-col>
           <a-col :span="8">
             <a-form-item label="Email" :validate-status="errors.email ? 'error' : ''" :help="errors.email">
-              <a-input v-model:value="formData.email" placeholder="Nhập email" readonly />
+              <a-input v-model:value="formData.email" placeholder="Nhập email" disabled />
             </a-form-item>
           </a-col>
         </a-row>
@@ -154,64 +154,110 @@ const validateForm = () => {
   });
   errors.diaChiErrors = formData.diaChiList.map(() => ({}));
 
-  if (!formData.tenKhachHang.trim()) {
-    errors.tenKhachHang = 'Vui lòng nhập tên khách hàng';
+  // Chuẩn hóa các trường văn bản
+  formData.tenKhachHang = formData.tenKhachHang?.replace(/\s+/g, ' ').trim() || '';
+  formData.soDienThoai = formData.soDienThoai?.replace(/\s+/g, '').trim() || '';
+  formData.email = formData.email?.replace(/\s+/g, '').trim() || '';
+
+  // Validate họ tên (từ backend: NotBlank, Size max 100, Pattern chỉ chữ cái)
+  if (!formData.tenKhachHang) {
+    errors.tenKhachHang = 'Tên khách hàng không được để trống';
+    isValid = false;
+  } else if (!/^[a-zA-Z\s\u00C0-\u1EF9]+$/.test(formData.tenKhachHang)) {
+    errors.tenKhachHang = 'Họ tên chỉ được chứa chữ cái';
+    isValid = false;
+  } else if (formData.tenKhachHang.length > 100) {
+    errors.tenKhachHang = 'Tên khách hàng không được vượt quá 100 ký tự';
+    isValid = false;
+  }
+  else if (formData.tenKhachHang.length < 2) {
+    errors.tenKhachHang = 'Tên khách hàng không được nhỏ hơn 2 ký tự';
     isValid = false;
   }
 
+  // Validate giới tính (từ backend: NotNull)
   if (formData.gioiTinh === null) {
     errors.gioiTinh = 'Vui lòng chọn giới tính';
     isValid = false;
   }
 
+  // Validate ngày sinh (từ backend: NotNull, PastOrPresent, tuổi >= 14)
   if (!formData.ngaySinh) {
-    errors.ngaySinh = 'Vui lòng nhập ngày sinh';
+    errors.ngaySinh = 'Ngày sinh không được để trống';
     isValid = false;
   } else {
     const ngaySinh = new Date(formData.ngaySinh);
     const now = new Date();
-    const tuoi = now.getFullYear() - ngaySinh.getFullYear();
-    if (tuoi < 13) {
-      errors.ngaySinh = 'Khách hàng phải đủ 13 tuổi';
+    if (ngaySinh > now) {
+      errors.ngaySinh = 'Ngày sinh không được là ngày trong tương lai';
       isValid = false;
+    } else {
+      const tuoi = now.getFullYear() - ngaySinh.getFullYear();
+      if (tuoi < 14) {
+        errors.ngaySinh = 'Khách hàng phải từ 14 tuổi trở lên';
+        isValid = false;
+      }
     }
   }
 
-  if (!formData.soDienThoai.trim()) {
-    errors.soDienThoai = 'Vui lòng nhập số điện thoại';
+  // Validate số điện thoại (từ backend: NotBlank, Pattern 0\d{9})
+  if (!formData.soDienThoai) {
+    errors.soDienThoai = 'Số điện thoại không được để trống';
     isValid = false;
   } else if (!validatePhoneNumber(formData.soDienThoai)) {
-    errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
+    errors.soDienThoai = 'Số điện thoại phải bắt đầu bằng 0 và đúng 10 chữ số (VD: 0912345678)';
     isValid = false;
   }
 
-  if (!formData.email.trim()) {
-    errors.email = 'Vui lòng nhập email';
+  // Validate email (từ backend: NotBlank, Email, Size max 100)
+  if (!formData.email) {
+    errors.email = 'Email không được để trống';
     isValid = false;
   } else if (!validateEmail(formData.email)) {
     errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
     isValid = false;
+  } else if (formData.email.length > 100) {
+    errors.email = 'Email không được vượt quá 100 ký tự';
+    isValid = false;
   }
 
-  formData.diaChiList.forEach((diaChi, index) => {
-    if (!diaChi.tinhThanhPho) {
-      errors.diaChiErrors[index].tinhThanhPho = 'Vui lòng chọn tỉnh/thành phố';
-      isValid = false;
-    }
-    if (!diaChi.quanHuyen && diaChi.tinhThanhPho) {
-      errors.diaChiErrors[index].quanHuyen = 'Vui lòng chọn quận/huyện';
-      isValid = false;
-    }
-    if (!diaChi.xaPhuong && diaChi.quanHuyen) {
-      errors.diaChiErrors[index].xaPhuong = 'Vui lòng chọn phường/xã';
-      isValid = false;
-    }
-    if (!diaChi.soNha.trim()) {
-      errors.diaChiErrors[index].soNha = 'Vui lòng nhập số nhà, tên đường';
-      isValid = false;
-    }
-  });
+  // Validate địa chỉ (từ backend: NotBlank cho tất cả các trường, soNha max 255, Pattern chỉ chữ và số)
+  if (formData.diaChiList.length === 0) {
+    errors.diaChiErrors.push({ general: 'Phải có ít nhất một địa chỉ' });
+    isValid = false;
+  } else {
+    formData.diaChiList.forEach((diaChi, index) => {
+      diaChi.soNha = diaChi.soNha?.replace(/\s+/g, ' ').trim() || '';
+      diaChi.tinhThanhPho = diaChi.tinhThanhPho?.replace(/\s+/g, ' ').trim() || '';
+      diaChi.quanHuyen = diaChi.quanHuyen?.replace(/\s+/g, ' ').trim() || '';
+      diaChi.xaPhuong = diaChi.xaPhuong?.replace(/\s+/g, ' ').trim() || '';
 
+      if (!diaChi.tinhThanhPho) {
+        errors.diaChiErrors[index].tinhThanhPho = 'Tỉnh/Thành phố không được để trống';
+        isValid = false;
+      }
+      if (!diaChi.quanHuyen) {
+        errors.diaChiErrors[index].quanHuyen = 'Quận/Huyện không được để trống';
+        isValid = false;
+      }
+      if (!diaChi.xaPhuong) {
+        errors.diaChiErrors[index].xaPhuong = 'Phường/Xã không được để trống';
+        isValid = false;
+      }
+      if (!diaChi.soNha) {
+        errors.diaChiErrors[index].soNha = 'Số nhà, tên đường không được để trống';
+        isValid = false;
+      } else if (!/^[a-zA-Z0-9\s\u00C0-\u1EF9]+$/.test(diaChi.soNha)) {
+        errors.diaChiErrors[index].soNha = 'Số nhà, tên đường chỉ được chứa chữ cái và số';
+        isValid = false;
+      } else if (diaChi.soNha.length > 255) {
+        errors.diaChiErrors[index].soNha = 'Số nhà, tên đường không được vượt quá 255 ký tự';
+        isValid = false;
+      }
+    });
+  }
+
+  // Đảm bảo có ít nhất một địa chỉ mặc định
   if (!formData.diaChiList.some(d => d.diaChiMacDinh) && formData.diaChiList.length > 0) {
     formData.diaChiList[0].diaChiMacDinh = true;
   }
@@ -220,13 +266,14 @@ const validateForm = () => {
 };
 
 const validatePhoneNumber = (phone) => {
+  const cleanedPhone = phone.replace(/\s+/g, '');
   const regex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
-  return regex.test(phone);
+  return regex.test(cleanedPhone);
 };
 
 const validateEmail = (email) => {
   const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  return regex.test(email) && email.length <= 100;
+  return regex.test(email);
 };
 
 const loadProvinces = async () => {
@@ -324,11 +371,9 @@ const handleDefaultChange = (index) => {
 };
 
 const resetForm = () => {
-  // Lưu lại giá trị maKhachHang và email trước khi reset
   const currentMaKhachHang = formData.maKhachHang;
   const currentEmail = formData.email;
 
-  // Reset toàn bộ trạng thái, giữ lại maKhachHang và email
   Object.assign(formData, {
     idKhachHang: null,
     maKhachHang: currentMaKhachHang,
@@ -443,6 +488,7 @@ const confirmSubmitForm = async () => {
           autoClose: 2000,
           position: 'top-right'
         });
+
         setTimeout(() => {
           router.push('/admin/quanlykhachhang');
         }, 2000);

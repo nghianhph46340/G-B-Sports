@@ -219,7 +219,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -271,12 +271,14 @@
                                 <a-radio :value="index" class="address-radio">
                                     <div class="address-content">
                                         <p class="address-name">{{ customer.ho_ten }}
-                                            <span v-if="address.dia_chi_mac_dinh === 'true'" class="default-tag">[Mặc định]</span>
+                                            <span v-if="address.dia_chi_mac_dinh === 'true'" class="default-tag">[Mặc
+                                                định]</span>
                                         </p>
                                         <p class="address-phone">{{ customer.so_dien_thoai }}</p>
                                         <p class="address-email">{{ customer.email }}</p>
                                         <p class="address-full">
-                                            {{ address.so_nha }}, {{ address.xa_phuong }}, {{ address.quan_huyen }}, {{ address.tinh_thanh_pho }}
+                                            {{ address.so_nha }}, {{ address.xa_phuong }}, {{ address.quan_huyen }}, {{
+                                                address.tinh_thanh_pho }}
                                         </p>
                                     </div>
                                 </a-radio>
@@ -491,7 +493,7 @@ const discount = computed(() => {
 const shippingFee = computed(() => {
     // Base shipping fee - free shipping for orders over 500,000 VND
     const subTotal = Number(subtotal.value || 0);
-    let fee = subTotal > 500000 ? 0 : 30000;
+    let fee = subTotal > 500000 ? 0 : 0;
 
     // Apply shipping vouchers
     const shippingVoucher = appliedCoupons.value.find(c => c.loai === 'shipping');
@@ -549,16 +551,16 @@ const fetchCustomerAddresses = async () => {
         if (store.danhSachDiaChi && store.danhSachDiaChi.length > 0) {
             // Tìm index của địa chỉ mặc định
             const defaultAddressIndex = store.danhSachDiaChi.findIndex(addr => addr.dia_chi_mac_dinh === 'true');
-            
+
             // Nếu có địa chỉ mặc định, chọn nó. Nếu không, chọn địa chỉ đầu tiên
             const selectedIndex = defaultAddressIndex !== -1 ? defaultAddressIndex : 0;
-            
+
             // Set selectedAddressId để chọn radio button
             selectedAddressId.value = selectedIndex;
-            
+
             // Lấy địa chỉ được chọn
             const selectedAddr = store.danhSachDiaChi[selectedIndex];
-            
+
             // Cập nhật thông tin địa chỉ vào form
             if (selectedAddr) {
                 customer.value = {
@@ -910,22 +912,27 @@ const placeOrder = async () => {
             if (selectedOnlineMethod.value === 'payos') {
                 try {
                     // Tạo hóa đơn trong hệ thống trước khi chuyển hướng thanh toán
-                    const response = await banHangOnlineService.createOrder(hoaDon);
-                    const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
-                    console.log('Response từ server:', response);
-                    console.log('Response chi tiết từ server:', responseChiTiet);
+                    localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
+                    localStorage.setItem('hoaDonChiTiet', JSON.stringify(orderData.hoaDonChiTiet));
+                    // const response = await banHangOnlineService.createOrder(hoaDon);
+                    // const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                    // console.log('Response từ server:', response);
+                    // console.log('Response chi tiết từ server:', responseChiTiet);
 
-                    // Lưu mã hóa đơn vào localStorage để kiểm tra sau khi thanh toán
-                    if (response && response.ma_hoa_don) {
-                        localStorage.setItem('pendingOrderCode', hoaDon);
-                    }
+                    // // Lưu mã hóa đơn vào localStorage để kiểm tra sau khi thanh toán
+                    // if (response && response.ma_hoa_don) {
+                    //     localStorage.setItem('pendingOrderCode', JSON.stringify(hoaDon));
+                    // }
+
 
                     // Đặt URL callback để xử lý sau khi thanh toán
                     const returnUrl = window.location.origin + '/payment-callback';
                     orderData.payment_info.returnUrl = returnUrl;
 
                     // Chuyển đến trang thanh toán PayOS
-                    await thanhToanService.handlePayOSPayment(orderData.payment_info);
+                    const responseThanhToan = await thanhToanService.handlePayOSPayment(orderData.payment_info);
+                    console.log('Response từ payos:', responseThanhToan);
+                    localStorage.setItem('responseThanhToan', JSON.stringify(responseThanhToan));
 
                     // Lưu ý: Code sau đây sẽ không chạy ngay lập tức vì người dùng sẽ bị chuyển hướng
                     // Xử lý callback sẽ được thực hiện ở trang payment-callback
@@ -1095,7 +1102,7 @@ onMounted(async () => {
         fetchCustomerData(),
         fetchCustomerAddresses(),
         fetchProvinces(),
-        fetchVouchers() // Load vouchers on mount
+        // fetchVouchers() // Load vouchers on mount
     ]);
 });
 
@@ -1106,17 +1113,17 @@ const allVouchers = ref([]);
 
 // Fetch vouchers from store
 const fetchVouchers = async () => {
-    try {
-        const response = await store.getAllVouchers();
-        if (response && response.content) {
-            allVouchers.value = response.content;
-            filterValidVouchers();
-            console.log('Loaded vouchers:', allVouchers.value);
-        }
-    } catch (error) {
-        console.error('Error loading vouchers:', error);
-        message.error('Không thể tải danh sách voucher');
-    }
+    // try {
+    //     const response = await store.getAllVouchers();
+    //     if (response && response.content) {
+    //         allVouchers.value = response.content;
+    //         filterValidVouchers();
+    //         console.log('Loaded vouchers:', allVouchers.value);
+    //     }
+    // } catch (error) {
+    //     console.error('Error loading vouchers:', error);
+    //     message.error('Không thể tải danh sách voucher');
+    // }
 };
 
 // Filter valid vouchers based on current order and date
@@ -1242,10 +1249,10 @@ const selectVoucher = (voucher) => {
 watch(selectedAddressId, (newIndex) => {
     if (typeof newIndex === 'number' && store.danhSachDiaChi && store.danhSachDiaChi[newIndex]) {
         const selectedAddr = store.danhSachDiaChi[newIndex];
-        
+
         if (selectedAddr) {
             console.log('Đã tìm thấy địa chỉ được chọn:', selectedAddr);
-            
+
             // Cập nhật thông tin địa chỉ vào form
             customer.value = {
                 ...customer.value, // Giữ nguyên thông tin cá nhân hiện tại
@@ -1254,7 +1261,7 @@ watch(selectedAddressId, (newIndex) => {
                 xa_phuong: selectedAddr.xa_phuong,
                 so_nha: selectedAddr.so_nha
             };
-            
+
             console.log('Đã cập nhật form với thông tin mới:', customer.value);
         }
     }

@@ -1,12 +1,12 @@
 <template>
     <div>
         <div class="header-section">
-            <h2>Thêm khách hàng</h2>
-            <button class="btn btn-secondary btn-sm" @click="router.push('/admin/quanlykhachhang')">Quay lại</button>
+            <h2>Thông tin khách hàng</h2>
         </div>
         <form @submit.prevent="themKhachHang" @reset.prevent="resetForm">
             <a-form :model="formData" :label-col="{ span: 24 }" :wrapper-col="{ span: 24 }">
-                <a-row :gutter="16">
+                <!-- Thông tin cơ bản -->
+                <a-row :gutter="12">
                     <a-col :span="8">
                         <a-form-item label="Họ tên khách hàng" :validate-status="errors.tenKhachHang ? 'error' : ''"
                             :help="errors.tenKhachHang">
@@ -28,8 +28,8 @@
                     </a-col>
                 </a-row>
 
+                <!-- Danh sách địa chỉ -->
                 <div v-for="(diaChi, index) in formData.diaChiList" :key="index" class="address-section">
-                    <h3>Địa chỉ {{ index + 1 }}</h3>
                     <a-row :gutter="16">
                         <a-col :span="6">
                             <a-form-item label="Tỉnh/Thành phố"
@@ -79,13 +79,6 @@
                                 <a-input v-model:value="diaChi.soNha" placeholder="Số nhà, tên đường..." />
                             </a-form-item>
                         </a-col>
-
-                        <a-col :span="1">
-                            <a-form-item label="Mặc định">
-                                <a-checkbox v-model:checked="diaChi.diaChiMacDinh"
-                                    @change="handleDefaultChange(index)" />
-                            </a-form-item>
-                        </a-col>
                     </a-row>
                     <button type="button" class="btn btn-danger" @click="xoaDiaChi(index)"
                         v-if="formData.diaChiList.length > 1">
@@ -93,12 +86,12 @@
                     </button>
                 </div>
 
-                <hr>
-                <button type="button" class="btn btn-primary" @click="themDiaChi">+ Thêm địa chỉ khác</button>
-
+                <!-- Nút hành động -->
                 <div class="mt-4">
-                    <button type="btn buttonADD" class="btn btn-warning me-2" @click="confirmThemKhachHang">+ Tạo tài
-                        khoản</button>
+                    <button type="button" class="btn btn-warning me-2" @click="confirmThemKhachHang">Thêm khách
+                        mới</button>
+                    <button type="button" class="btn btn-warning me-2" @click="luuThongTinKhachHang">Lưu thông tin khách
+                        hàng</button>
                     <button type="button" class="btn btn-secondary" @click="resetForm">Làm mới</button>
                 </div>
             </a-form>
@@ -107,13 +100,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
-import { useRouter } from 'vue-router';
 
 const gbStore = useGbStore();
-const router = useRouter();
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
@@ -146,32 +137,44 @@ const errors = reactive({
 
 const validateForm = () => {
     let isValid = true;
+
+    // Reset lỗi
     Object.keys(errors).forEach(key => {
         if (key !== 'diaChiErrors') errors[key] = '';
     });
     errors.diaChiErrors = formData.diaChiList.map(() => ({}));
 
+    // Kiểm tra tên khách hàng
+    const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/; // Chỉ cho phép chữ cái và khoảng trắng
     if (!formData.tenKhachHang.trim()) {
         errors.tenKhachHang = 'Vui lòng nhập tên khách hàng';
         isValid = false;
+    } else if (!nameRegex.test(formData.tenKhachHang)) {
+        errors.tenKhachHang = 'Tên không được chứa ký tự đặc biệt';
+        isValid = false;
     }
 
+    // Kiểm tra số điện thoại
+    const phoneRegex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
     if (!formData.soDienThoai.trim()) {
         errors.soDienThoai = 'Vui lòng nhập số điện thoại';
         isValid = false;
-    } else if (!validatePhoneNumber(formData.soDienThoai)) {
+    } else if (!phoneRegex.test(formData.soDienThoai)) {
         errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
         isValid = false;
     }
 
+    // Kiểm tra email
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
     if (!formData.email.trim()) {
         errors.email = 'Vui lòng nhập email';
         isValid = false;
-    } else if (!validateEmail(formData.email)) {
+    } else if (!emailRegex.test(formData.email)) {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
         isValid = false;
     }
 
+    // Kiểm tra danh sách địa chỉ
     formData.diaChiList.forEach((diaChi, index) => {
         if (!diaChi.tinhThanhPho) {
             errors.diaChiErrors[index].tinhThanhPho = 'Vui lòng chọn tỉnh/thành phố';
@@ -191,21 +194,7 @@ const validateForm = () => {
         }
     });
 
-    if (!formData.diaChiList.some(d => d.diaChiMacDinh) && formData.diaChiList.length > 0) {
-        formData.diaChiList[0].diaChiMacDinh = true;
-    }
-
     return isValid;
-};
-
-const validatePhoneNumber = (phone) => {
-    const regex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
-    return regex.test(phone);
-};
-
-const validateEmail = (email) => {
-    const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-    return regex.test(email) && email.length <= 100;
 };
 
 const loadProvinces = async () => {
@@ -244,19 +233,6 @@ const handleDistrictChange = async (index) => {
             console.error('Lỗi khi tải phường/xã:', error);
         }
     }
-};
-
-const themDiaChi = () => {
-    formData.diaChiList.push({
-        soNha: '',
-        xaPhuong: '',
-        quanHuyen: '',
-        tinhThanhPho: '',
-        diaChiMacDinh: false
-    });
-    districts.value.push([]);
-    wards.value.push([]);
-    errors.diaChiErrors.push({});
 };
 
 const xoaDiaChi = (index) => {
@@ -313,9 +289,6 @@ const themKhachHang = async () => {
     }
 
     const dataToSend = { ...formData };
-    if (dataToSend.ngaySinh) {
-        dataToSend.ngaySinh = new Date(dataToSend.ngaySinh).toISOString();
-    }
 
     try {
         const result = await gbStore.themKhachHangBH(dataToSend);
@@ -339,17 +312,169 @@ const themKhachHang = async () => {
         }
     }
 };
+const luuThongTin = async () => {
+    if (!validateForm()) {
+        toast.error('Vui lòng điền đầy đủ và chính xác thông tin!');
+        return;
+    }
+
+    const idHoaDon = gbStore.getCurrentHoaDonId()
+    console.log('idHoaDon', idHoaDon)
+    const diaChiList = formData.diaChiList.map(diaChi => {
+        return `${diaChi.soNha}, ${diaChi.xaPhuong}, ${diaChi.quanHuyen}, ${diaChi.tinhThanhPho}`;
+    });
+
+    console.log('Địa chỉ gộp:', diaChiList);
+
+    // Thực hiện logic lưu thông tin (ví dụ: gửi dữ liệu đến API)
+    const dataToSend = {
+        ...formData,
+        diaChiList, // Thêm chuỗi địa chỉ gộp vào dữ liệu gửi đi
+        idHoaDon,  // Thêm ID hóa đơn
+    };
+
+    console.log('Dữ liệu gửi đi:', dataToSend);
+
+    console.log('Lưu thông tin khách hàng:', idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
+
+    gbStore.addKHHD(idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
+
+    toast.success('Lưu thông tin khách hàng thành công!', {
+        autoClose: 2000,
+        position: 'top-right'
+    });
+
+};
+
 const confirmThemKhachHang = () => {
     if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
         themKhachHang();
     }
 };
 
+const luuThongTinKhachHang = () => {
+    if (confirm('Bạn có chắc chắn muốn lưu thông tin khách hàng này không?')) {
+        luuThongTin();
+    }
+};
+
+const tachDiaChi = (diaChiDayDu) => {
+    const result = {
+        soNha: '',
+        xaPhuong: '',
+        quanHuyen: '',
+        tinhThanhPho: ''
+    };
+
+    if (!diaChiDayDu) return result;
+
+    const parts = diaChiDayDu.split(',').map(p => p.trim());
+
+    // Giả định định dạng là: "số nhà, xã/phường, quận/huyện, tỉnh/thành phố"
+    if (parts.length >= 4) {
+        result.soNha = parts[0];
+        result.xaPhuong = timTenGanDung(parts[1], 'ward');
+        result.quanHuyen = timTenGanDung(parts[2], 'district');
+        result.tinhThanhPho = timTenGanDung(parts[3], 'province');
+    }
+
+    return result;
+};
+
+const timTenGanDung = (tenTuClient, cap) => {
+    const normalize = str => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    const normalizedInput = normalize(tenTuClient);
+
+    let danhSach = [];
+    if (cap === 'province') {
+        danhSach = provinces.value || [];
+    } else if (cap === 'district') {
+        danhSach = districts.value[0] || []; // chỉ lấy theo index 0 (vì lúc này chưa phân index)
+    } else if (cap === 'ward') {
+        danhSach = wards.value[0] || [];
+    }
+
+    const matched = danhSach.find(item => normalize(item.name).includes(normalizedInput));
+    return matched ? matched.name : tenTuClient;
+};
+
+const props = defineProps({
+    triggerUpdate: Number,
+});
+
+
 onMounted(async () => {
+    await initializeLocationData();
+
+    const checkKH = localStorage.getItem('chonKH');
+    if (checkKH === 'true') {
+        await loadKhachHangTuLocalStorage();
+
+        await handleAllAddressLevels();
+    }
+});
+
+watch(() => props.triggerUpdate, async () => {
+    if (localStorage.getItem('chonKH') === 'true') {
+        await loadKhachHangTuLocalStorage();
+        await handleAllAddressLevels();
+        localStorage.setItem('chonKH', 'false');
+    }
+}, { immediate: true });
+
+
+
+const initializeLocationData = async () => {
     await loadProvinces();
     districts.value = [[]];
     wards.value = [[]];
-});
+};
+
+const loadKhachHangTuLocalStorage = async () => {
+    const khachHangData = localStorage.getItem('khachHangBH');
+    if (!khachHangData) return;
+
+    try {
+        const khachHang = JSON.parse(khachHangData);
+        formData.tenKhachHang = khachHang.tenKhachHang || '';
+        formData.soDienThoai = khachHang.soDienThoai || '';
+        formData.email = khachHang.email || '';
+
+        if (khachHang.diaChi) {
+            const diaChi = tachDiaChi(khachHang.diaChi);
+            formData.diaChiList = [{
+                soNha: diaChi.soNha || '',
+                xaPhuong: diaChi.xaPhuong || '',
+                quanHuyen: diaChi.quanHuyen || '',
+                tinhThanhPho: diaChi.tinhThanhPho || '',
+                diaChiMacDinh: true
+            }];
+        }
+    } catch (err) {
+        console.error('Lỗi khi đọc khách hàng:', err);
+    }
+};
+
+const handleAllAddressLevels = async () => {
+    if (formData.diaChiList.length === 0) return;
+
+    for (let index = 0; index < formData.diaChiList.length; index++) {
+        const diaChi = formData.diaChiList[index];
+        console.log(`Đang xử lý địa chỉ tại index ${index}:`, diaChi);
+
+        // Gọi API tỉnh
+        await handleProvinceChange(index);
+        formData.diaChiList[index].quanHuyen = timTenGanDung(diaChi.quanHuyen, 'district');
+
+        // Gọi API huyện
+        await handleDistrictChange(index);
+        formData.diaChiList[index].xaPhuong = timTenGanDung(diaChi.xaPhuong, 'ward');
+    }
+};
+
+
+
 </script>
 
 <style scoped>
