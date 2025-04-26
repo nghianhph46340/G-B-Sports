@@ -218,20 +218,30 @@
             <a-row :gutter="16">
                 <a-col :md="24">
                     <div class="info-box">
-                        <h5>Thông tin đơn hàng</h5>
+                        <a-row>
+                            <a-col :span="12">
+                                <h5>Thông tin đơn hàng</h5>
+                            </a-col>
+                            <a-col :span="12" style="text-align: right;" ><span :class="{
+                                'status-online': store.hoaDonDetail.loai_hoa_don === 'Online',
+                                'status-offline': store.hoaDonDetail.loai_hoa_don === 'Offline'
+                            }">{{ store.hoaDonDetail.loai_hoa_don }}
+                                </span>
+                            </a-col>
+                        </a-row>
                         <hr>
                         <a-row :gutter="16">
                             <a-col :span="12">
                                 <p>Mã hóa đơn: {{ store.hoaDonDetail.ma_hoa_don || 'N/A' }}</p>
                                 <p>Trạng thái: {{ store.hoaDonDetail.trang_thai || 'N/A' }}</p>
                                 <p>Phương thức thanh toán: {{ store.hoaDonDetail.hinh_thuc_thanh_toan || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                             <a-col :span="12">
                                 <p>Ngày tạo: {{ formatDateTime(store.hoaDonDetail.ngay_tao) }}</p>
                                 <p>Nhân viên tiếp nhận: {{ store.hoaDonDetail.ten_nhan_vien || 'Chưa xác định' }}</p>
                                 <p>Hình thức nhận hàng: {{ store.hoaDonDetail.phuong_thuc_nhan_hang || 'Chưa xác định'
-                                }}</p>
+                                    }}</p>
                             </a-col>
                         </a-row>
                     </div>
@@ -349,7 +359,8 @@
                             </a-row>
                             <!-- Dòng text thanh toán thêm -->
                             <a-row
-                                v-if="store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0">
+                                v-if="store.hoaDonDetail?.loai_hoa_don === 'Online' && store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0
+                                    || store.hoaDonDetail?.loai_hoa_don === 'Offline' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && store.chiTietHoaDons[0]?.phu_thu > 0">
                                 <a-col :md="16"></a-col>
                                 <a-col :md="4" style="text-align: left;">
                                     <p style="color: #f5222d;">Đã thanh toán: </p>
@@ -360,7 +371,8 @@
                                 </a-col>
                             </a-row>
                             <a-row
-                                v-if="store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0">
+                                v-if="store.hoaDonDetail?.loai_hoa_don === 'Online' && store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0
+                                    || store.hoaDonDetail?.loai_hoa_don === 'Offline' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && store.chiTietHoaDons[0]?.phu_thu > 0">
                                 <a-col :md="12"></a-col>
                                 <a-col :md="12" style="text-align: left;">
                                     <p style="color: #f5222d;">Vui lòng thanh toán thêm {{
@@ -580,14 +592,14 @@
                 :title="popupType === 'decrease' ? 'Giảm số lượng' : 'Tăng số lượng'" :footer="null">
                 <div class="popup-input">
                     <label>
-                        <span v-if="shouldCalculateSoLuongTon">Số lượng
+                        <span v-if="shouldCalculateSoLuongTon">Số lượng sản phẩm
                             (Khả dụng: {{ popupType === 'decrease' ? currentProduct.so_luong :
                                 calculateSoLuongTon(currentProduct)
                             }})
                         </span>
-                        <span v-else>Số lượng
-                            (Tổng: {{ popupType === 'decrease' ? currentProduct.so_luong :
-                                currentProduct.so_luong_con_lai }})
+                        <span v-else>Số lượng sản phẩm
+                            (Khả dụng: {{ popupType === 'decrease' ? currentProduct.so_luong :
+                                currentProduct.so_luong_con_lai || 0 }})
                         </span>
                     </label>
                     <label style="width: 100px;">Số lượng:</label>
@@ -649,12 +661,12 @@ const productColumns = [
 const productPopupColumns = [
     { title: 'STT', key: 'stt', width: '2%' },
     { title: 'Hình ảnh', dataIndex: 'hinh_anh', key: 'hinh_anh', width: '10%' },
-    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham', width: '20%' },
+    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham', width: '20%', sorter: (a, b) => a.ten_san_pham.localeCompare(b.ten_san_pham), sortDirections: ['ascend', 'descend'], },
     { title: 'Danh mục', dataIndex: 'ten_danh_muc', key: 'ten_danh_muc', width: '15%' },
     { title: 'Màu sắc', dataIndex: 'ten_mau', key: 'ten_mau', width: '8%' },
     { title: 'Size', dataIndex: 'gia_tri', key: 'gia_tri', width: '7%' },
-    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: '8%' },
-    { title: 'Giá bán(VNĐ)', key: 'gia_ban', width: '10%' },
+    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: '8%', sorter: (a, b) => a.so_luong - b.so_luong, sortDirections: ['ascend', 'descend'], },
+    { title: 'Giá bán(VNĐ)', key: 'gia_ban', width: '10%', sorter: (a, b) => a.gia_ban - b.gia_ban, sortDirections: ['ascend', 'descend'], },
     // { title: 'Trạng thái', dataIndex: 'trang_thai', key: 'trang_thai', width: '8%' },
     { title: 'Số lượng mua', key: 'so_luong_mua', width: '20%' },
 ];
@@ -891,11 +903,18 @@ const handleHuyenChange = async (value) => {
     }
 };
 const validateCustomerInfo = () => {
+    const hoTen = editedCustomer.value.hoTen.trim();
     // Kiểm tra các trường bắt buộc không được để trống
-    if (!editedCustomer.value.hoTen) {
+    if (!hoTen) {
         message.error('Vui lòng nhập tên người nhận!');
         return false;
-    } else if (editedCustomer.value.hoTen.length > 60) {
+    } else if (!/^[\p{L}]+([\s][\p{L}]+)*$/u.test(hoTen)) {
+        message.error('Tên người nhận không hợp lệ!');
+        return false;
+    } else if (hoTen.length < 4) {
+        message.error('Tên người nhận phải có ít nhất 4 ký tự!');
+        return false;
+    } else if (hoTen.length > 60) {
         message.error('Tên người nhận không được vượt quá 60 ký tự!');
         return false;
     }
@@ -1311,27 +1330,31 @@ const removeProduct = async (item, index) => {
         toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm!');
         return;
     }
-    if (confirm(`Bạn có chắc muốn xóa sản phẩm "${item.ten_san_pham}" khỏi hóa đơn không?`)) {
-        try {
-            const response = await store.removeProductFromInvoice(
-                store.hoaDonDetail.ma_hoa_don,
-                item.id_chi_tiet_san_pham,
-                item.so_luong
-            );
-
-            if (response.error) {
-                toast.error('Xóa sản phẩm khỏi hóa đơn thất bại');
-                return;
+    // Hiển thị modal xác nhận xóa
+    AModal.confirm({
+        title: 'Xác nhận xóa sản phẩm',
+        content: `Bạn có chắc chắn muốn xóa sản phẩm "${item.ten_san_pham}" khỏi hóa đơn không?`,
+        onOk: async () => {
+            try {
+                const response = await store.removeProductFromInvoice(
+                    store.hoaDonDetail.ma_hoa_don,
+                    item.id_chi_tiet_san_pham,
+                    item.so_luong
+                );
+                if (response.error) {
+                    toast.error('Xóa sản phẩm khỏi hóa đơn thất bại');
+                    return;
+                }
+                // Xóa sản phẩm khỏi danh sách
+                store.chiTietHoaDons.splice(index, 1);
+                await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
+                toast.success('Xóa sản phẩm khỏi hóa đơn thành công');
+            } catch (error) {
+                console.error('Lỗi khi xóa sản phẩm:', error);
+                toast.error('Có lỗi xảy ra khi xóa sản phẩm');
             }
-
-            store.chiTietHoaDons.splice(index, 1);
-            await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
-            toast.success('Xóa sản phẩm khỏi hóa đơn thành công');
-        } catch (error) {
-            console.error('Lỗi khi xóa sản phẩm:', error);
-            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
-        }
-    }
+        },
+    });
 };
 
 const showStatusModal = ref(false);
@@ -1474,6 +1497,10 @@ const showIncreasePopup = async (index) => {
 
     if (!store.listCTSP_HD || store.listCTSP_HD.length === 0) {
         await store.getAllCTSP_HD(0, 5, '');
+    }
+    if (currentProduct.value.so_luong_con_lai === null) {
+        message.error('Sản phẩm này đã hết hàng hoặc đã ngừng bán. Không thể thêm sản phẩm nữa!')
+        return;
     }
 
     showQuantityPopup.value = true;
@@ -1673,7 +1700,7 @@ const printInvoice = async () => {
         y = 118; // nếu không có địa chỉ, dòng sản phẩm bắt đầu ngay sau tên khách hàng
     }
     // Danh sách sản phẩm
-    
+
     doc.setFontSize(10);
     doc.setFont("Roboto", "bold");
     doc.text("Thông tin sản phẩm", 20, y);
@@ -1751,7 +1778,8 @@ const printInvoice = async () => {
     doc.text(`Thành tiền:`, 115, y, { align: "left" });
     doc.text(`${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 190, y, { align: "right" });
     // Thêm dòng Vui lòng thanh toán thêm
-    if (store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0) {
+    if (store.hoaDonDetail?.loai_hoa_don === 'Online' && store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0
+        || store.hoaDonDetail?.loai_hoa_don === 'Offline' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && store.chiTietHoaDons[0]?.phu_thu > 0) {
         y += 6;
         doc.setFont("Roboto", "normal");
         doc.setTextColor(255, 0, 0);
@@ -1774,8 +1802,11 @@ const printInvoice = async () => {
 };
 const validateProductsInInvoice = async () => {
     const invalidProducts = [];
-    // Nếu trạng thái hóa đơn là "Đang giao", bỏ qua kiểm tra
-    if (store.hoaDonDetail.trang_thai === 'Đã xác nhận' || store.hoaDonDetail.trang_thai === 'Chờ đóng gói' || store.hoaDonDetail.trang_thai === 'Đang giao' || store.hoaDonDetail.trang_thai === 'Hoàn thành' || store.hoaDonDetail.trang_thai === 'Đã hủy') {
+    // Lấy trạng thái trước đó (bỏ qua "Đã cập nhật")
+    const previousStatus = getPreviousStatus();
+
+    // Nếu trạng thái trước đó là "Đang giao", "Hoàn thành", hoặc "Đã hủy", bỏ qua kiểm tra
+    if (['Đã xác nhận', 'Chờ đóng gói', 'Đang giao', 'Hoàn thành', 'Đã hủy', 'Trả hàng'].includes(previousStatus)) {
         return;
     }
 
@@ -1823,6 +1854,17 @@ const validateProductsInInvoice = async () => {
             );
         });
     }
+};
+const getPreviousStatus = () => {
+    if (!store.trangThaiHistory || store.trangThaiHistory.length === 0) return null;
+
+    // Lọc bỏ các trạng thái "Đã cập nhật" và sắp xếp theo thời gian
+    const filteredHistory = store.trangThaiHistory
+        .filter(status => status.trang_thai !== 'Đã cập nhật')
+        .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen));
+
+    // Lấy trạng thái gần nhất
+    return filteredHistory.length > 0 ? filteredHistory[0].trang_thai : null;
 };
 
 onMounted(async () => {
@@ -2742,6 +2784,33 @@ const getUpdatePosition = (update) => {
         font-size: 12px;
         /* Kích thước chữ nhỏ hơn */
     }
+}
+
+.status-online {
+    display: inline-block;
+    padding: 4px 8px;
+    border: 2px solid #007bff;
+    /* Màu xanh dương */
+    border-radius: 12px;
+    color: #007bff;
+    font-weight: bold;
+    text-align: center;
+    background-color: rgba(0, 123, 255, 0.1);
+    /* Nền xanh nhạt */
+}
+
+/* Trạng thái Offline */
+.status-offline {
+    display: inline-block;
+    padding: 4px 8px;
+    border: 2px solid #28a745;
+    /* Màu xanh lá */
+    border-radius: 12px;
+    color: #28a745;
+    font-weight: bold;
+    text-align: center;
+    background-color: rgba(40, 167, 69, 0.1);
+    /* Nền xanh lá nhạt */
 }
 
 /* ------------------------------------------------------------------------------ */
