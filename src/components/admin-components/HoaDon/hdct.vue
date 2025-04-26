@@ -1592,6 +1592,7 @@ const printInvoice = () => {
     doc.line(20, y, 190, y);
     // Tổng tiền
     y += 10;
+    if (store.hoaDonDetail.trang_thai?.toLowerCase() !== 'trả hàng'){
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
     doc.text(`Tổng tiền hàng: ${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 20, y);
@@ -1605,7 +1606,78 @@ const printInvoice = () => {
     y += 6;
     doc.setFont("Roboto", "bold");
     doc.text(`Thành tiền: ${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 20, y);
+    }
     // Chân trang
+       // Nếu trạng thái là "Trả hàng", thêm danh sách sản phẩm hoàn trả
+       if (store.hoaDonDetail.trang_thai?.toLowerCase() === 'trả hàng' && store.chiTietTraHangs.length > 0) {
+        // Vẽ đường kẻ ngang sau danh sách sản phẩm
+        doc.setLineWidth(0.2);
+        doc.line(20, y, 190, y);
+        // Tiêu đề danh sách sản phẩm hoàn trả
+        y += 10;
+        doc.setFontSize(12);
+        doc.setFont("Roboto", "bold");
+        doc.text("Sản phẩm hoàn trả", 20, y);
+        // Tiêu đề bảng
+        y += 10;
+        doc.setFontSize(10);
+        doc.setFont("Roboto", "bold");
+        doc.text("Số lượng", 100, y, { align: "center" });
+        doc.text("Đơn giá", 130, y, { align: "center" });
+        doc.text("Tổng tiền hoàn", 170, y, { align: "center" });
+        // Vẽ đường kẻ ngang dưới tiêu đề bảng
+        y += 2;
+        doc.setLineWidth(0.2);
+        doc.line(20, y, 190, y);
+        // Danh sách sản phẩm hoàn trả
+        y += 6;
+        doc.setFontSize(10);
+        doc.setFont("Roboto", "normal");
+        store.chiTietTraHangs.forEach((item, index) => {
+            // Tên sản phẩm
+            const productName = `${index + 1}. ${item.ten_san_pham} (${item.ten_mau_sac} - ${item.kich_thuoc})`;
+            const productLines = doc.splitTextToSize(productName, 80); // Chia nhỏ nếu tên quá dài
+            doc.text(productLines, 20, y);
+            // Số lượng
+            doc.text(`${item.so_luong}`, 100, y, { align: "center" });
+            // Đơn giá
+            doc.text(`${formatCurrency(item.don_gia)} VNĐ`, 130, y, { align: "center" });
+            // Tổng tiền hoàn
+            doc.text(`${formatCurrency(item.tien_hoan)} VNĐ`, 170, y, { align: "center" });
+            // Tăng y dựa trên số dòng của tên sản phẩm
+            y += productLines.length * 6 + 4;
+        });
+    
+    // Vẽ đường kẻ ngang sau danh sách sản phẩm
+    doc.setLineWidth(0.2);
+    doc.line(20, y, 190, y);
+    // Tổng tiền
+    y += 10;
+    doc.setFontSize(12);
+    doc.setFont("Roboto", "normal");
+    doc.text(`Tổng tiền hàng: ${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 20, y);
+    y += 6;
+    const giamGia = (store.hoaDonDetail.tong_tien_truoc_giam || 0) +
+        (store.hoaDonDetail.phi_van_chuyen || 0) -
+        (store.hoaDonDetail.tong_tien_sau_giam || 0);
+    doc.text(`Giảm giá: ${formatCurrency(giamGia)} VNĐ`, 20, y);
+    y += 6;
+    doc.text(`Phí vận chuyển: ${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 20, y);
+    if (store.hoaDonDetail.trang_thai?.toLowerCase() === 'trả hàng') {
+        y += 6;
+        doc.text(`Tổng tiền khách đã thanh toán: ${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 20, y);
+        y += 6;
+        const tongTienHoan = store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0);
+        doc.text(`Tổng tiền hoàn trả lại khách: ${formatCurrency(tongTienHoan)} VNĐ`, 20, y);
+    }
+    y += 6;
+    doc.setFont("Roboto", "bold");
+    const thanhTien = store.hoaDonDetail.trang_thai?.toLowerCase() === 'trả hàng'
+        ? (store.hoaDonDetail.tong_tien_sau_giam - store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0))
+        : store.hoaDonDetail.tong_tien_sau_giam;
+    doc.text(`Thành tiền: ${formatCurrency(thanhTien)} VNĐ`, 20, y);
+    // Chân trang
+}
     y += 10;
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
