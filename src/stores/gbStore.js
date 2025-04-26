@@ -604,24 +604,42 @@ export const useGbStore = defineStore('gbStore', {
     //Cập nhật trạng thái sản phẩm
     async changeStatusSanPham(id) {
       try {
-        // Cập nhật ngay lập tức UI trước khi gọi API
-        const sanPham = this.getAllSanPham.find((sanPham) => sanPham.id_san_pham === id)
-        if (sanPham) {
-          sanPham.trang_thai = sanPham.trang_thai === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động'
+        // Tìm và lưu trạng thái ban đầu
+        const sanPham = this.getAllSanPham.find((sp) => sp.id_san_pham === id);
+        if (!sanPham) {
+          throw new Error('Không tìm thấy sản phẩm');
         }
-        // Gọi API nhưng không chờ phản hồi để tránh lag
-        sanPhamService.changeStatusSanPham(id).then((response) => {
-          if (response.error) {
-            toast.error('Có lỗi xảy ra')
-            sanPham.trang_thai =
-              sanPham.trang_thai === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động'
-          } else {
-            toast.success('Chuyển trạng thái thành công')
-          }
-        })
+
+        // Lưu trạng thái ban đầu
+        const oldStatus = sanPham.trang_thai;
+
+        // Cập nhật tức thì UI (optimistic update)
+        const newStatus = oldStatus === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động';
+        sanPham.trang_thai = newStatus;
+
+        // Gọi API
+        const response = await sanPhamService.changeStatusSanPham(id);
+
+        // Xử lý response
+        if (response.error) {
+          // Nếu lỗi, hoàn tác UI
+          sanPham.trang_thai = oldStatus;
+          toast.error('Có lỗi xảy ra khi cập nhật trạng thái');
+          return { success: false, message: 'Có lỗi xảy ra' };
+        }
+
+        // Trả về kết quả từ API nếu thành công
+        toast.success('Chuyển trạng thái thành công');
+        return {
+          success: true,
+          data: response,
+          message: 'Chuyển trạng thái thành công',
+          newStatus: sanPham.trang_thai
+        };
       } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra')
+        console.error('Lỗi khi chuyển trạng thái sản phẩm:', error);
+        toast.error('Có lỗi xảy ra');
+        return { success: false, message: error.message };
       }
     },
     async getCTSPBySanPhamFull(idSanPham) {

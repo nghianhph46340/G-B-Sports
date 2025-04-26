@@ -546,51 +546,64 @@ const getCTSPForProduct = async (product) => {
 
 const changeStatusSanPham = async (id, checked) => {
     try {
-        await store.changeStatusSanPham(id);
+        // Hiển thị thông báo đang xử lý
+        const messageKey = `status-change-${id}`;
+        message.loading({ content: 'Đang cập nhật trạng thái...', key: messageKey });
 
-        // Cập nhật trạng thái cho sản phẩm chính
-        const newStatus = checked ? 'Hoạt động' : 'Không hoạt động';
-        data.value = data.value.map(item => {
-            if (item.id_san_pham === id) {
-                return {
-                    ...item,
-                    trang_thai: newStatus
-                };
-            }
-            return item;
-        });
+        // Lưu lại trạng thái gốc trước khi cập nhật
+        const originalData = [...data.value];
 
-        // Cập nhật trạng thái cho tất cả chi tiết sản phẩm liên quan
-        if (productCTSPMap.value.has(id)) {
-            const ctspList = productCTSPMap.value.get(id);
-            if (ctspList && ctspList.length > 0) {
-                const updatedCtspList = ctspList.map(ctsp => ({
-                    ...ctsp,
-                    trang_thai: newStatus
-                }));
-                productCTSPMap.value.set(id, updatedCtspList);
+        // Gọi API thông qua store
+        const result = await store.changeStatusSanPham(id);
 
-                // Nếu sản phẩm đang hiển thị trong drawer thì cập nhật hiển thị
-                if (currentProduct.value && currentProduct.value.id_san_pham === id) {
-                    currentProduct.value = {
-                        ...currentProduct.value,
-                        trang_thai: newStatus
-                    };
+        if (result.success) {
+            // Hiển thị thông báo thành công
+            message.success({
+                content: result.message,
+                key: messageKey,
+                duration: 2
+            });
+
+            // Đảm bảo UI đã được cập nhật chính xác theo response
+            // Tìm và cập nhật sản phẩm trong danh sách hiển thị
+            data.value = data.value.map(item => {
+                if (item.id_san_pham === id) {
+                    return { ...item, trang_thai: result.newStatus };
                 }
+                return item;
+            });
+
+            // Cập nhật cache nếu có
+            const productsCache = getFromCache(PRODUCTS_CACHE_KEY);
+            if (productsCache) {
+                const updatedCache = productsCache.map(p => {
+                    if (p.id_san_pham === id) {
+                        return { ...p, trang_thai: result.newStatus };
+                    }
+                    return p;
+                });
+                saveToCache(PRODUCTS_CACHE_KEY, updatedCache);
             }
+
+            // Nếu CTSP đã được tải cho sản phẩm này, cần cập nhật chúng
+            if (productCTSPMap.value.has(id)) {
+                // Lấy và tải lại chi tiết sản phẩm để đảm bảo đồng bộ dữ liệu
+                await getCTSPForProduct({ id_san_pham: id });
+            }
+        } else {
+            // Hiển thị thông báo lỗi
+            message.error({
+                content: result.message || 'Không thể cập nhật trạng thái',
+                key: messageKey,
+                duration: 2
+            });
+
+            // Khôi phục dữ liệu ban đầu trong trường hợp lỗi
+            data.value = originalData;
         }
-
-        // Thêm thông báo thành công
-        message.success('Đã cập nhật trạng thái sản phẩm thành công!');
-
-        // Xóa cache khi có thay đổi
-        clearAllProductsCache();
-
-        // Tải lại dữ liệu
-        await refreshData();
     } catch (error) {
         console.error('Lỗi khi thay đổi trạng thái:', error);
-        message.error('Không thể cập nhật trạng thái sản phẩm!');
+        message.error('Có lỗi xảy ra khi thay đổi trạng thái');
     }
 };
 const changeStatusCTSP = async (ctspRecord) => {
