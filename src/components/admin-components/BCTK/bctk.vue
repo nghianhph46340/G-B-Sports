@@ -3,11 +3,9 @@
         <div class="row">
             <h4 class="col-md-6 d-flex justify-content-start">📑 Thống kê doanh thu</h4>
             <div class="filter-section col-md-6 d-flex justify-content-end gap-3 mb-4">
-                <!-- Date Range Picker -->
-                <template v-if="selectedFilter === 'tuy-chon'">
-                    <a-range-picker v-model:value="dateRange" @change="handleDateChange"
-                        :placeholder="['Ngày bắt đầu', 'Ngày kết thúc']" :locale="locale" />
-                </template>
+                <!-- Date Range Picker luôn hiển thị -->
+                <a-range-picker v-model:value="dateRange" @change="handleDateChange"
+                    :placeholder="['Ngày bắt đầu', 'Ngày kết thúc']" :locale="locale" />
                 <!-- Filter Select -->
                 <a-select v-model:value="selectedFilter" show-search placeholder="Chọn thời gian cần thống kê"
                     style="width: 250px;" :options="options" :filter-option="filterOption"
@@ -45,7 +43,7 @@
                     <div class="card-body row">
                         <div class="col-md-3" style="font-size: 3rem;">🏷️</div>
                         <div class="col-md-8">
-                            <h5 class="card-title">Tổng sản phẩm</h5>
+                            <h5 class="card-title">Số sản phẩm đã bán</h5>
                             <p class="card-text">{{ thongKe.tongSanPham }}</p>
                         </div>
                     </div>
@@ -71,7 +69,7 @@
                     </div>
                 </div>
                 <div class="chart-body">
-                    <apexchart type="line" height="400" :options="chartOptions" :series="series"></apexchart>
+                    <apexchart type="bar" height="400" :options="chartOptions" :series="series"></apexchart>
                 </div>
             </div>
             <div class="col-md-4 mt-4">
@@ -87,23 +85,21 @@
         </div>
 
         <div class="row">
-            <!-- Top 3 sản phẩm bán chạy -->
+            <!-- Top 5 sản phẩm bán chạy -->
             <div class="col-md-6">
                 <a-card :bordered="false">
                     <template #title>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span>Top 3 sản phẩm bán chạy</span>
-                            <div class="filter-section d-flex gap-3 ">
-                                <!-- Date Range Picker cho sản phẩm bán chạy -->
-                                <template v-if="sellingFilter === 'tuy-chon'">
-                                    <a-range-picker v-model:value="sellingDateRange" @change="handleSellingDateChange"
-                                        :placeholder="['Start date', 'End date']" :locale="locale"
-                                        style="margin-left: 10px;" />
-                                </template>
+                            <span>Top 5 sản phẩm bán chạy</span>
+                            <div class="filter-section d-flex gap-3">
+                                <!-- Date Range Picker luôn hiển thị -->
+                                <a-range-picker v-model:value="sellingDateRange" @change="handleSellingDateChange"
+                                    :placeholder="['Start date', 'End date']" :locale="locale"
+                                    style="margin-left: 10px;" />
                                 <!-- Filter Select cho sản phẩm bán chạy -->
                                 <a-select v-model:value="sellingFilter" show-search placeholder="Chọn thời gian"
-                                    style="width: 120px;" :options="options" :filter-option="filterOption"
-                                    @change="handleSellingFilterChange"></a-select>
+                                    style="width: 120px;margin-right: 0.5px;" :options="options"
+                                    :filter-option="filterOption" @change="handleSellingFilterChange"></a-select>
                             </div>
                         </div>
                     </template>
@@ -123,27 +119,15 @@
                 </a-card>
             </div>
 
-            <!-- Top 3 sản phẩm bán chậm -->
+            <!-- Những sản phẩm sắp hết hàng -->
             <div class="col-md-6">
                 <a-card :bordered="false">
                     <template #title>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span>Top 3 sản phẩm bán chậm</span>
-                            <div class="filter-section d-flex gap-3">
-                                <!-- Date Range Picker cho sản phẩm bán chậm -->
-                                <template v-if="slowFilter === 'tuy-chon'">
-                                    <a-range-picker v-model:value="slowDateRange" @change="handleSlowDateChange"
-                                        :placeholder="['Start date', 'End date']" :locale="locale"
-                                        style="margin-left: 10px;" />
-                                </template>
-                                <!-- Filter Select cho sản phẩm bán chậm -->
-                                <a-select v-model:value="slowFilter" show-search placeholder="Chọn thời gian"
-                                    style="width: 120px;" :options="options" :filter-option="filterOption"
-                                    @change="handleSlowFilterChange"></a-select>
-                            </div>
+                            <span>Những sản phẩm sắp hết hàng</span>
                         </div>
                     </template>
-                    <a-table :columns="columns" :data-source="gbStore.topSanPhamBanCham" :pagination="false"
+                    <a-table :columns="columns" :data-source="gbStore.topSanPhamSapHetHang" :pagination="false"
                         size="small">
                         <template #bodyCell="{ column, text, index }">
                             <template v-if="column.key === 'stt'">
@@ -208,7 +192,7 @@ const columns = [
 // Dữ liệu mẫu - thay thế bằng dữ liệu thực từ API
 const topSellingProducts = ref([]);
 
-const topSlowProducts = ref([]);
+const topSanPhamSapHetHang = ref([]);
 
 
 // Hàm lấy màu cho tag
@@ -259,22 +243,24 @@ const filterOption = (input, option) => {
     return option.label.toLowerCase().includes(input.toLowerCase());
 };
 
-// Xử lý khi thay đổi filter
+// Xử lý khi thay đổi filter cho thống kê doanh thu
 const handleFilterChange = async (value) => {
     console.log('Filter được chọn:', value);
     selectedFilter.value = value;
-    if (value === 'tuy-chon') {
-        dateRange.value = null; // Reset date range
-    } else {
+    if (value !== 'tuy-chon') {
+        // Reset date range khi chọn filter khác tùy chọn
+        dateRange.value = null;
         console.log('Gửi request với filter:', value);
         await gbStore.getSoLieu(value);
     }
 };
 
-// Xử lý khi thay đổi ngày
+// Xử lý khi thay đổi ngày cho thống kê doanh thu
 const handleDateChange = async (dates) => {
-    console.log('Selected dates:', dates);
     if (dates && dates[0] && dates[1]) {
+        // Tự động set selectedFilter thành 'tuy-chon'
+        selectedFilter.value = 'tuy-chon';
+
         const startDate = dates[0].format('YYYY-MM-DD');
         const endDate = dates[1].format('YYYY-MM-DD');
         console.log('Gửi request với ngày:', { startDate, endDate });
@@ -301,13 +287,12 @@ const series = ref([{
 
 const chartOptions = ref({
     chart: {
-        type: 'line',
+        type: 'bar',
         zoom: { enabled: false },
         toolbar: { show: false }
     },
     stroke: {
-        curve: 'smooth',
-        width: 3
+        width: 0
     },
     grid: {
         borderColor: '#f1f1f1',
@@ -334,16 +319,35 @@ const chartOptions = ref({
     },
     colors: ['#0ea5e9'],
     fill: {
-        type: 'gradient',
-        gradient: {
-            shade: 'light',
-            type: 'vertical',
-            shadeIntensity: 0.5,
-            opacityFrom: 0.7,
-            opacityTo: 0.2,
+        opacity: 1
+    },
+    dataLabels: {
+        enabled: true,
+        formatter: function (value) {
+            if (chartType.value === 'revenue') {
+                return new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND',
+                    maximumFractionDigits: 0
+                }).format(value);
+            }
+            return value.toFixed(0);
+        },
+        style: {
+            fontSize: '12px',
+            colors: ['#333']
+        },
+        offsetY: -20
+    },
+    plotOptions: {
+        bar: {
+            borderRadius: 4,
+            columnWidth: '50%',
+            dataLabels: {
+                position: 'top'
+            }
         }
     },
-    dataLabels: { enabled: false },
     tooltip: {
         theme: 'light',
         y: {
@@ -526,57 +530,30 @@ watch([timeUnit, chartType], async ([newTimeUnit, newChartType], [oldTimeUnit, o
 const sellingFilter = ref('nam-nay');
 const sellingDateRange = ref();
 
-// State cho bộ lọc sản phẩm bán chậm
-const slowFilter = ref('nam-nay');
-const slowDateRange = ref();
-
-//tạm comment
-// Xử lý khi thay đổi filter sản phẩm bán chạy
-// const handleSellingFilterChange = async (value) => {
-//     console.log('Filter sản phẩm bán chạy:', value);
-//     sellingFilter.value = value;
-//     if (value === 'tuy-chon') {
-//         sellingDateRange.value = null; // Reset date range
-//     } else {
-//         console.log('Gửi request với filter:', value);
-//         await gbStore.getTopSanPhamBanChay(value);
-//         topSellingProducts.value = gbStore.topSanPhamBanChay;
-//     }
-// };
-
-// Xử lý khi thay đổi filter sản phẩm bán chạy
+// Xử lý khi thay đổi filter cho sản phẩm bán chạy
 const handleSellingFilterChange = async (value) => {
     try {
         console.log('Selected filter:', value);
         sellingFilter.value = value;
 
-        if (value === 'tuy-chon') {
+        if (value !== 'tuy-chon') {
+            // Reset date range khi chọn filter khác tùy chọn
             sellingDateRange.value = null;
-            return;
+            await gbStore.getTopSanPhamBanChay(value);
+            console.log('Dữ liệu sau khi cập nhật:', gbStore.topSanPhamBanChay);
         }
-
-        await gbStore.getTopSanPhamBanChay(value);
-        console.log('Dữ liệu sau khi cập nhật:', gbStore.topSanPhamBanChay);
     } catch (error) {
         console.error('Filter change error:', error);
     }
 };
 
 // Xử lý khi thay đổi ngày cho sản phẩm bán chạy
-// const handleSellingDateChange = async (dates) => {
-//     console.log('Selected dates for selling products:', dates);
-//     if (dates && dates[0] && dates[1]) {
-//         const startDate = dates[0].format('YYYY-MM-DD');
-//         const endDate = dates[1].format('YYYY-MM-DD');
-//         console.log('Gửi request với ngày:', { startDate, endDate });
-//         await gbStore.getTopSanPhamBanChay('tuy-chon', startDate, endDate);
-//         topSellingProducts.value = gbStore.topSanPhamBanChay;
-//     }
-// };
-//thử nghiệm
 const handleSellingDateChange = async (dates) => {
     try {
         if (!dates || !dates[0] || !dates[1]) return;
+
+        // Tự động set sellingFilter thành 'tuy-chon'
+        sellingFilter.value = 'tuy-chon';
 
         const startDate = dates[0].format('YYYY-MM-DD');
         const endDate = dates[1].format('YYYY-MM-DD');
@@ -585,39 +562,6 @@ const handleSellingDateChange = async (dates) => {
         console.log('Dữ liệu sau khi cập nhật date range:', gbStore.topSanPhamBanChay);
     } catch (error) {
         console.error('Date change error:', error);
-    }
-};
-
-// Xử lý khi thay đổi filter sản phẩm bán chậm
-const handleSlowFilterChange = async (value) => {
-    try {
-        console.log('Selected filter (Bán chậm):', value);
-        slowFilter.value = value;
-
-        if (value === 'tuy-chon') {
-            slowDateRange.value = null;
-            return;
-        }
-
-        await gbStore.getTopSanPhamBanCham(value);
-        console.log('Dữ liệu sau khi cập nhật (Bán chậm):', gbStore.topSanPhamBanCham);
-    } catch (error) {
-        console.error('Filter change error (Bán chậm):', error);
-    }
-};
-
-// Xử lý khi thay đổi ngày cho sản phẩm bán chậm
-const handleSlowDateChange = async (dates) => {
-    try {
-        if (!dates || !dates[0] || !dates[1]) return;
-
-        const startDate = dates[0].format('YYYY-MM-DD');
-        const endDate = dates[1].format('YYYY-MM-DD');
-
-        await gbStore.getTopSanPhamBanCham('tuy-chon', startDate, endDate);
-        console.log('Dữ liệu sau khi cập nhật date range (Bán chậm):', gbStore.topSanPhamBanCham);
-    } catch (error) {
-        console.error('Date change error (Bán chậm):', error);
     }
 };
 
@@ -650,12 +594,12 @@ onMounted(async () => {
             fetchChartData('month'),
             gbStore.fetchTiLeTrangThai(),
             gbStore.getTopSanPhamBanChay('nam-nay'),
-            gbStore.getTopSanPhamBanCham('nam-nay')
+            gbStore.getTopSanPhamSapHetHang()
         ]);
 
         // Cập nhật dữ liệu
         topSellingProducts.value = gbStore.topSanPhamBanChay;
-        topSlowProducts.value = gbStore.topSanPhamBanCham;
+        topSanPhamSapHetHang.value = gbStore.topSanPhamSapHetHang;
     } catch (error) {
         console.error('Lỗi trong onMounted:', error);
     }
@@ -671,7 +615,7 @@ const getTopRank = (index) => {
         case 3:
             return '🥉 3';
         default:
-            return `${index}`;
+            return `🏅 ${index}`;  // Thêm emoji medal cho các số khác
     }
 };
 
@@ -870,5 +814,42 @@ const chartOptionTiLeTrangThai = computed(() => ({
 
 #orderStatusChart {
     min-height: 380px;
+}
+
+/* Thêm vào phần <style scoped> */
+:deep(.ant-tag) {
+    min-width: 50px;
+    text-align: center;
+    padding: 0 8px;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 22px;
+    border-radius: 4px;
+}
+
+/* Style cho top 5 */
+:deep(.ant-tag-gold) {
+    background: linear-gradient(135deg, #FFD700 0%, #FFC000 100%);
+    color: #000;
+    border: none;
+}
+
+:deep(.ant-tag-silver) {
+    background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%);
+    color: #000;
+    border: none;
+}
+
+:deep([color="#cd7f32"]) {
+    background: linear-gradient(135deg, #CD7F32 0%, #B8732D 100%);
+    color: #000;
+    border: none;
+}
+
+/* Style cho các số từ 4 trở đi */
+:deep(.ant-tag-default) {
+    background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+    color: #000;
+    border: 1px solid #d9d9d9;
 }
 </style>

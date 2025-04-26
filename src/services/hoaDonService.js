@@ -1,6 +1,6 @@
 import axiosInstance from "@/config/axiosConfig";
 
-const qlhd = 'qlhd/'; // Base path cho hóa đơn
+const qlhd = 'admin/qlhd/'; // Base path cho hóa đơn
 
 // Lấy danh sách hóa đơn với phân trang
 const getAllHoaDon = async (page = 0, size = 5) => {
@@ -212,13 +212,23 @@ const updateHinhThucTTHoaDon = async (idHD, hinhThucThanhToan) => {
 // Lấy chi tiết hóa đơn và thông tin trả hàng
 const getHoaDonDetails = async (maHoaDon) => {
     try {
-        const { data } = await axiosInstance.get(qlhd + `${maHoaDon}/chi-tiet-tra-hang`);
-        return data;
+      const { data } = await axiosInstance.get(qlhd + `${maHoaDon}/chi-tiet-tra-hang`);
+  
+      // Nếu backend trả về `thanh_cong: false` thì ném lỗi để xử lý nhất quán
+      if (!data.thanh_cong) {
+        throw new Error(data.thong_bao || 'Không tìm thấy đơn hàng');
+      }
+  
+      return data;
     } catch (error) {
-        console.error('Lỗi API lấy chi tiết hóa đơn và trả hàng:', error);
-        return { error: true, message: error.response?.data?.thong_bao || 'Lỗi khi lấy chi tiết hóa đơn' };
+      console.error('Lỗi API lấy chi tiết hóa đơn và trả hàng:', error);
+  
+      // Ưu tiên lấy message từ backend
+      const thongBao = error.response?.data?.thong_bao || error.message || 'Lỗi không xác định';
+      throw new Error(thongBao);  // để đồng nhất với catch phía trên
     }
-};
+  };
+  
 
 // Xử lý trả hàng
 const processReturn = async (returnData) => {

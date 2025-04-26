@@ -53,9 +53,9 @@ const getAllSPHD = async(idHoaDon) => {
     }
 }
 
-const addSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
+const addSPHD = async(idHoaDon, idCTSP, soLuong) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `addSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}&giaBan=${giaBan}`);
+        const { data } = await axiosInstance.post(banHang + `addSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}`);
         return data;
     } catch (error) {
         console.error('Lỗi API thêm sp hoá đơn:', error);
@@ -74,9 +74,9 @@ const themSPHDMoi = async (idHoaDon, idCTSP, soLuong, giaBan) => {
     }
 };
 
-const giamSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
+const giamSPHD = async(idHoaDon, idCTSP, soLuong) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `giamSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}&giaBan=${giaBan}`);
+        const { data } = await axiosInstance.post(banHang + `giamSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuong=${soLuong}`);
         return data;
     } catch (error) {
         console.error('Lỗi API giảm sp hoá đơn:', error);
@@ -84,11 +84,24 @@ const giamSPHD = async(idHoaDon, idCTSP, soLuong, giaBan) => {
     }
 }
 
+const setSPHD = async(idHoaDon, idCTSP, soLuong) => {
+    try {
+        const { data } = await axiosInstance.post(banHang + `setSPHD?idHoaDon=${idHoaDon}&idCTSP=${idCTSP}&soLuongMoi=${soLuong}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API set sp hoá đơn:', error);
+        return { error: true };
+    }
+}
+
 const xoaSPHD = async (idHoaDon, idCTSP) => {
     try {
-        const response = await axiosInstance.delete(
-            banHang + `xoaSPHD?idHoaDon=${idHoaDon}&idChiTietSanPham=${idCTSP}`
-        );
+        const response = await axiosInstance.delete(banHang + 'xoaSPHD', {
+            params: {
+                idHoaDon,
+                idChiTietSanPham: idCTSP
+            }
+        });
         return response.data;
     } catch (error) {
         if (error.response) {
@@ -103,6 +116,7 @@ const xoaSPHD = async (idHoaDon, idCTSP) => {
         }
     }
 };
+
 
 const trangThaiDonHang = async(idHoaDon) => {
     try {
@@ -134,9 +148,9 @@ const getHoaDonByIdHoaDon = async(idHD) => {
     }
 }
 
-const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt) => {
+const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt, email) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `addKhHD?idHD=${idHoaDon}&idKH=${idKhachHang}&diaChi=${diaChi}&tenKhachHang=${tenKhachHang}&soDienThoai=${sdt}`);
+        const { data } = await axiosInstance.post(banHang + `addKhHD?idHD=${idHoaDon}&idKH=${idKhachHang}&diaChi=${diaChi}&tenKhachHang=${tenKhachHang}&soDienThoai=${sdt}&email=${email}`);
         return data;
     } catch (error) {
         console.error('Lỗi API thêm khách hàng hoá đơn:', error);
@@ -144,9 +158,9 @@ const addKhHD = async(idHoaDon, idKhachHang, diaChi, tenKhachHang, sdt) => {
     }
 }
 
-const setTrangThaiNhanHang = async(idHoaDon, phuongThucNhanHang) => {
+const setTrangThaiNhanHang = async(idHoaDon, phuongThucNhanHang, phiVanChuyen) => {
     try {
-        const { data } = await axiosInstance.post(banHang + `setTrangThaiNhanHang?idHD=${idHoaDon}&phuongThucNhanHang=${phuongThucNhanHang}`);
+        const { data } = await axiosInstance.post(banHang + `setTrangThaiNhanHang?idHD=${idHoaDon}&phuongThucNhanHang=${phuongThucNhanHang}&phiVanChuyen=${phiVanChuyen}`);
         return data;
     } catch (error) {
         console.error('Lỗi API set trang thai nhan hang:', error);
@@ -160,6 +174,16 @@ const thanhToanMomo = async(idHoaDon) => {
         return data;
     } catch (error) {
         console.error('Lỗi API thanh toán momo:', error);
+        return { error: true };
+    }
+}
+
+const tinhPhiShip = async(pickProvince, pickDistrict, province, district, weight, tongTienHoaDon) => {
+    try {
+        const { data } = await axiosInstance.get(`api/ghtk/fee?pickProvince=${pickProvince}&pickDistrict=${pickDistrict}&province=${province}&district=${district}&weight=${weight}&value=${tongTienHoaDon}`);
+        return data.fee;
+    } catch (error) {
+        console.error('Lỗi API tính phí ship:', error);
         return { error: true };
     }
 }
@@ -179,5 +203,7 @@ export const banHangService = {
     getHoaDonByIdHoaDon,
     addKhHD,
     setTrangThaiNhanHang,
-    thanhToanMomo
+    thanhToanMomo,
+    setSPHD,
+    tinhPhiShip
 }

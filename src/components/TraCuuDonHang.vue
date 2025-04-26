@@ -47,8 +47,9 @@
                     <div class="order-header">
                         <div class="order-info">
                             <h2>Thông tin đơn hàng #{{ thongTinHoaDon.ma_hoa_don }}</h2>
-                            <p v-if="thongTinHoaDon.ma_hoa_don">Ngày đặt hàng: {{ dinhDangNgay(thongTinHoaDon.ngay_tao)
-                                }}
+                            <p v-if="thongTinHoaDon.ma_hoa_don">Ngày đặt hàng: {{
+                                dinhDangNgayGio(thongTinHoaDon.ngay_tao)
+                            }}
                             </p>
                         </div>
                         <div :class="['order-status', `status-${currentStatus?.code || 'pending'}`]">
@@ -70,7 +71,7 @@
                                 </div>
                                 <div class="step-content">
                                     <p class="step-name">{{ status.name }}</p>
-                                    <p v-if="status.date" class="step-date">{{ dinhDangNgay(status.date) }}</p>
+                                    <p v-if="status.date" class="step-date">{{ dinhDangNgayGio(status.date) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -144,7 +145,7 @@
                             <a-button v-if="coTheHuyDonHang" type="danger" @click="hienThiXacNhanHuy">
                                 Hủy đơn hàng
                             </a-button>
-                            <a-button type="primary">
+                            <a-button type="primary" @click="inHoaDon">
                                 <printer-outlined /> In đơn hàng
                             </a-button>
                             <a-button>
@@ -153,6 +154,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Component in hóa đơn (ẩn mặc định) -->
+            <div style="display: none;">
+                <print-invoice ref="printInvoiceRef" :hoa-don="thongTinHoaDon"
+                    :hoa-don-chi-tiet="thongTinHoaDonChiTiet" />
             </div>
 
             <!-- FAQ Section -->
@@ -206,6 +213,7 @@ import {
 } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { banHangOnlineService } from '@/services/banHangOnlineService';
+import PrintInvoice from './PrintInvoice.vue';
 
 // Biến lưu mã tra cứu
 const trackingCode = ref('');
@@ -297,6 +305,7 @@ const coTheHuyDonHang = computed(() => {
 const hienThiKetQuaTimKiem = async () => {
     try {
         dangTai.value = true;
+        isLoading.value = true;
 
         // Gọi API và kiểm tra response
         const thongTinHoaDonResponse = await banHangOnlineService.getThongTinHoaDon(trackingCode.value);
@@ -319,9 +328,11 @@ const hienThiKetQuaTimKiem = async () => {
         // Kiểm tra mã hóa đơn
         if (trackingCode.value === thongTinHoaDon.value.ma_hoa_don) {
             timThayDonHang.value = true;
+            dataLoaded.value = true;
             message.success('Tìm thấy thông tin đơn hàng!');
         } else {
             timThayDonHang.value = false;
+            dataLoaded.value = false;
             message.error('Không tìm thấy đơn hàng với mã bạn đã nhập!');
         }
     } catch (error) {
@@ -329,6 +340,7 @@ const hienThiKetQuaTimKiem = async () => {
         message.error('Có lỗi xảy ra khi tìm kiếm đơn hàng');
     } finally {
         dangTai.value = false;
+        isLoading.value = false;
     }
 };
 
@@ -386,9 +398,13 @@ const layViTriTrangThai = (maTrangThai) => {
 const kiemTraTrangThaiDangHoatDong = (maTrangThai) => {
     if (!currentStatus.value) return false;
 
-    if (currentStatus.value.code === 'cancelled' && maTrangThai === 'cancelled') {
-        return true;
+    // Nếu đơn hàng đã hủy
+    if (currentStatus.value.code === 'cancelled') {
+        // Chỉ trạng thái "Đã hủy" là active
+        return maTrangThai === 'cancelled';
     }
+
+    // Nếu không hủy, kiểm tra xem trạng thái có khớp với trạng thái hiện tại không
     return maTrangThai === currentStatus.value.code;
 };
 
@@ -396,10 +412,21 @@ const kiemTraTrangThaiDangHoatDong = (maTrangThai) => {
 const kiemTraTrangThaiDaHoanThanh = (maTrangThai) => {
     if (!currentStatus.value) return false;
 
+    // Nếu đơn hàng đã hủy
     if (currentStatus.value.code === 'cancelled') {
-        return maTrangThai === 'pending'; // Chỉ trạng thái chờ xác nhận được đánh dấu hoàn thành khi đã hủy
+        // Đối với đơn hàng đã hủy, chỉ các trạng thái đã thực sự xảy ra (có date) mới được đánh dấu là đã hoàn thành
+        // trừ trạng thái "Đã hủy" (vì nó đang active)
+        if (maTrangThai === 'cancelled') return false;
+
+        // Tìm trạng thái trong danh sách 
+        const allStatuses = getTimelineData.value;
+        const statusObj = allStatuses.find(s => s.code === maTrangThai);
+
+        // Nếu trạng thái này có ngày tháng, tức là đã xảy ra
+        return statusObj && statusObj.date !== null;
     }
 
+    // Nếu không phải hủy, so sánh vị trí trong quy trình
     const viTriTrangThaiHienTai = layViTriTrangThai(currentStatus.value.code);
     const viTriTrangThaiKiemTra = layViTriTrangThai(maTrangThai);
 
@@ -435,6 +462,20 @@ const dinhDangNgay = (ngay) => {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
+    });
+};
+
+// Định dạng ngày giờ đầy đủ
+const dinhDangNgayGio = (ngay) => {
+    if (!ngay) return '';
+    return new Date(ngay).toLocaleString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
     });
 };
 
@@ -523,25 +564,95 @@ const getTimelineData = computed(() => {
         { code: 'completed', name: 'Hoàn thành', date: null, icon: layBieuTuongTrangThai('completed') }
     ];
 
-    // Cập nhật ngày cho các trạng thái đã đạt được
+    // Object để lưu trữ và sắp xếp dữ liệu theo từng trạng thái
+    const statusRecords = {};
+
+    // Kiểm tra xem có trạng thái hủy không
+    let hasCancelledStatus = false;
+    let cancelledDate = null;
+
+    // Phân loại dữ liệu theo trạng thái
     thongTinTimeLine.value.forEach(item => {
         const statusCode = mapTrangThaiToCode(item.trang_thai);
-        const statusIndex = allStatuses.findIndex(s => s.code === statusCode);
-        if (statusIndex >= 0) {
-            allStatuses[statusIndex].date = item.ngay_tao || item.ngay_chuyen;
+        // Ưu tiên ngay_chuyen, nếu không có thì dùng ngay_tao
+        const date = item.ngay_chuyen || item.ngay_tao;
+
+        if (!date) return;
+
+        // Kiểm tra nếu là trạng thái hủy
+        if (statusCode === 'cancelled') {
+            hasCancelledStatus = true;
+            cancelledDate = new Date(date);
+            return;
+        }
+
+        if (!statusRecords[statusCode]) {
+            statusRecords[statusCode] = [];
+        }
+
+        statusRecords[statusCode].push({
+            date: new Date(date),
+            record: item
+        });
+    });
+
+    // Sắp xếp và cập nhật ngày cho các trạng thái
+    Object.keys(statusRecords).forEach(statusCode => {
+        const records = statusRecords[statusCode];
+        if (records && records.length > 0) {
+            // Sắp xếp theo ngày tăng dần
+            records.sort((a, b) => a.date - b.date);
+
+            // Tìm và cập nhật trạng thái tương ứng
+            const statusIndex = allStatuses.findIndex(s => s.code === statusCode);
+            if (statusIndex >= 0) {
+                // Sử dụng ngày của bản ghi đầu tiên (sớm nhất)
+                allStatuses[statusIndex].date = records[0].date;
+            }
         }
     });
 
-    // Xử lý trường hợp đặc biệt cho "cancelled"
-    if (currentStatus.value && currentStatus.value.code === 'cancelled') {
-        return [
-            allStatuses[0], // Chờ xác nhận
-            { code: 'cancelled', name: 'Đã hủy', date: currentStatus.value.date, icon: layBieuTuongTrangThai('cancelled') }
-        ];
+    // Kiểm tra Chờ xác nhận trước
+    if (!allStatuses[0].date && thongTinHoaDon.value.ngay_tao) {
+        allStatuses[0].date = new Date(thongTinHoaDon.value.ngay_tao);
+    }
+
+    // Nếu đơn hàng bị hủy, thêm trạng thái hủy vào cuối timeline
+    if (hasCancelledStatus || (currentStatus.value && currentStatus.value.code === 'cancelled')) {
+        // Tìm ngày hủy đơn, sử dụng cancelledDate nếu đã tìm thấy, nếu không sử dụng từ currentStatus
+        const finalCancelledDate = cancelledDate ||
+            (currentStatus.value && currentStatus.value.code === 'cancelled' ?
+                new Date(currentStatus.value.date) : new Date());
+
+        // Tạo bản sao của allStatuses để tránh thay đổi mảng gốc
+        const result = [...allStatuses];
+
+        // Thêm trạng thái hủy vào cuối
+        result.push({
+            code: 'cancelled',
+            name: 'Đã hủy',
+            date: finalCancelledDate,
+            icon: layBieuTuongTrangThai('cancelled')
+        });
+
+        return result;
     }
 
     return allStatuses;
 });
+
+const isLoading = ref(true);
+const dataLoaded = ref(false);
+const printInvoiceRef = ref(null);
+
+// Hàm xử lý in hóa đơn
+const inHoaDon = () => {
+    if (printInvoiceRef.value) {
+        printInvoiceRef.value.inHoaDon();
+    } else {
+        message.error('Không thể tạo hóa đơn. Vui lòng thử lại sau.');
+    }
+};
 </script>
 
 <style scoped>
@@ -1211,6 +1322,10 @@ const getTimelineData = computed(() => {
 .order-actions .ant-btn-primary {
     background: linear-gradient(135deg, #3f6ad8, #25b0ed);
     border: none;
+}
+
+.order-actions .ant-btn-primary:hover {
+    background: linear-gradient(135deg, #25b0ed, #3f6ad8);
 }
 
 .order-actions .ant-btn-danger {

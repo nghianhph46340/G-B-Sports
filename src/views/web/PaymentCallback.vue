@@ -1,16 +1,20 @@
 <template>
     <div class="payment-callback-container">
-        <div class="payment-status-card">
-            <div class="status-icon" :class="paymentStatus">
-                <check-circle-outlined v-if="paymentStatus === 'success'" />
-                <close-circle-outlined v-if="paymentStatus === 'failed'" />
-                <loading-outlined v-if="paymentStatus === 'processing'" />
+        <div v-if="isLoading" class="loading-container">
+            <a-spin size="large" />
+            <p class="loading-text">Đang xử lý thanh toán...</p>
+        </div>
+        <div v-else class="payment-status-card">
+            <div class="status-icon" :class="statusClass">
+                <check-circle-outlined v-if="paymentStatus === 'PAID'" />
+                <close-circle-outlined v-if="paymentStatus === 'CANCELLED'" />
+                <loading-outlined v-if="paymentStatus === 'PENDING'" />
             </div>
 
             <h1 class="status-title">{{ statusTitle }}</h1>
             <p class="status-message">{{ statusMessage }}</p>
 
-            <div class="order-info" v-if="paymentStatus === 'success'">
+            <div class="order-info" v-if="paymentStatus === 'PAID'">
                 <h3>Thông tin đơn hàng</h3>
                 <div class="info-row">
                     <span class="label">Mã đơn hàng:</span>
@@ -27,13 +31,13 @@
             </div>
 
             <div class="action-buttons">
-                <a-button type="primary" @click="goToOrderTracking" v-if="paymentStatus === 'success'">
+                <a-button type="primary" @click="goToOrderTracking" v-if="paymentStatus === 'PAID'">
                     Theo dõi đơn hàng
                 </a-button>
                 <a-button @click="goToHome">
                     Về trang chủ
                 </a-button>
-                <a-button type="primary" @click="tryAgain" v-if="paymentStatus === 'failed'">
+                <a-button type="primary" @click="tryAgain" v-if="paymentStatus === 'CANCELLED'">
                     Thử lại
                 </a-button>
             </div>
@@ -44,47 +48,60 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { message } from 'ant-design-vue';
+import { message, Spin } from 'ant-design-vue';
 import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     LoadingOutlined
 } from '@ant-design/icons-vue';
 import { banHangOnlineService } from '@/services/banHangOnlineService';
+import { thanhToanService } from '@/services/thanhToan';
 
 const router = useRouter();
 const route = useRoute();
 
-// Payment status: success, failed, processing
-const paymentStatus = ref('success');
-const orderCode = ref(localStorage.getItem('pendingOrderCode') || localStorage.getItem('lastOrderCode') || 'GB-123456789');
-const orderAmount = ref(localStorage.getItem('orderAmount') || 500000);
+// Khai báo các biến
+const paymentStatus = ref('PENDING');
+const orderCode = ref('');
+const orderAmount = ref(0);
 const paymentTime = ref(new Date());
+const isLoading = ref(true);
+const dataLoaded = ref(false);
 
-// Computed properties for dynamic content
+// CSS class cho biểu tượng trạng thái
+const statusClass = computed(() => {
+    switch (paymentStatus.value) {
+        case 'PAID': return 'success';
+        case 'CANCELLED': return 'failed';
+        case 'PENDING': return 'processing';
+        default: return '';
+    }
+});
+
+// Computed properties cho nội dung động
 const statusTitle = computed(() => {
     switch (paymentStatus.value) {
-        case 'success': return 'Thanh toán thành công!';
-        case 'failed': return 'Thanh toán thất bại!';
-        case 'processing': return 'Đang xử lý thanh toán...';
+        case 'PAID': return 'Thanh toán thành công!';
+        case 'CANCELLED': return 'Thanh toán thất bại!';
+        case 'PENDING': return 'Đang xử lý thanh toán...';
         default: return 'Trạng thái thanh toán';
     }
 });
 
 const statusMessage = computed(() => {
     switch (paymentStatus.value) {
-        case 'success':
+        case 'PAID':
             return `Cảm ơn bạn đã đặt hàng. Chúng tôi đã nhận được thanh toán của bạn và đang xử lý đơn hàng. Email xác nhận đã được gửi đến địa chỉ email của bạn.`;
-        case 'failed':
+        case 'CANCELLED':
             return 'Có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.';
-        case 'processing':
+        case 'PENDING':
             return 'Hệ thống đang xử lý thanh toán của bạn. Vui lòng không đóng trang này.';
         default:
             return 'Đang kiểm tra trạng thái thanh toán của bạn.';
     }
 });
 
-// Format currency
+// Format tiền tệ
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -92,7 +109,7 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
-// Format date
+// Format ngày
 const formatDate = (date) => {
     return new Intl.DateTimeFormat('vi-VN', {
         year: 'numeric',
@@ -104,7 +121,7 @@ const formatDate = (date) => {
     }).format(date);
 };
 
-// Navigation functions
+// Hàm điều hướng
 const goToHome = () => {
     router.push('/home');
 };
@@ -117,192 +134,226 @@ const tryAgain = () => {
     router.push('/thanhtoan-banhang');
 };
 
-// Process payment result
-const processPaymentResult = async () => {
+// Lấy orderCode từ localStorage
+const getOrderCodeFromLocalStorage = () => {
     try {
-        // Skip actual processing and force success state for demo
-        paymentStatus.value = 'success';
-
-        // Try to get the order code from localStorage
-        const pendingOrderCode = localStorage.getItem('pendingOrderCode') || localStorage.getItem('lastOrderCode');
-
-        if (pendingOrderCode) {
-            orderCode.value = pendingOrderCode;
-        }
-
-        // Simulate amount and payment time
-        orderAmount.value = localStorage.getItem('orderAmount') || 500000;
-        paymentTime.value = new Date();
-
-        // Display success message
-        message.success('Thanh toán thành công! Đơn hàng của bạn đã được xác nhận. Chúng tôi đã gửi email xác nhận cho bạn.');
-
-        // Optionally update order status through API
-        try {
-            if (pendingOrderCode) {
-                const updateResult = await banHangOnlineService.updateOrderStatus({
-                    ma_hoa_don: pendingOrderCode,
-                    trang_thai: 'Đã xác nhận',
-                    trang_thai_thanh_toan: 'Đã thanh toán'
-                });
-
-                console.log('Kết quả cập nhật trạng thái:', updateResult);
-
-                // Clear localStorage
-                localStorage.removeItem('pendingOrderCode');
-                localStorage.removeItem('lastOrderCode');
-            }
-        } catch (updateError) {
-            console.error('Lỗi khi cập nhật trạng thái đơn hàng:', updateError);
+        const responeThanhToanStr = localStorage.getItem('responseThanhToan');
+        if (responeThanhToanStr) {
+            const responeThanhToan = JSON.parse(responeThanhToanStr);
+            return responeThanhToan?.data?.orderCode;
         }
     } catch (error) {
-        console.error('Lỗi khi xử lý kết quả thanh toán:', error);
+        console.error('Lỗi khi lấy orderCode từ localStorage:', error);
+    }
+    return null;
+};
+
+// Kiểm tra dữ liệu hóa đơn đã có trong localStorage chưa
+const checkInvoiceDataInLocalStorage = () => {
+    const hoaDonStr = localStorage.getItem('hoaDon');
+    const hoaDonChiTietStr = localStorage.getItem('hoaDonChiTiet');
+    return (hoaDonStr && hoaDonChiTietStr);
+};
+
+// Tạo hóa đơn từ dữ liệu được lưu trong localStorage
+const createOrderFromLocalStorage = async () => {
+    try {
+        const hoaDonStr = localStorage.getItem('hoaDon');
+        const hoaDonChiTietStr = localStorage.getItem('hoaDonChiTiet');
+
+        if (!hoaDonStr || !hoaDonChiTietStr) {
+            console.error('Không tìm thấy dữ liệu hóa đơn trong localStorage');
+            return null;
+        }
+
+        const hoaDon = JSON.parse(hoaDonStr);
+        const hoaDonChiTiet = JSON.parse(hoaDonChiTietStr);
+
+        console.log('Dữ liệu hóa đơn:', hoaDon);
+        console.log('Dữ liệu hóa đơn chi tiết:', hoaDonChiTiet);
+
+        // Gọi API tạo hóa đơn
+        const response = await banHangOnlineService.createOrder(hoaDon);
+        console.log('Kết quả tạo hóa đơn:', response);
+
+        // Gọi API tạo hóa đơn chi tiết
+        const responseChiTiet = await banHangOnlineService.createOrderChiTiet(hoaDonChiTiet);
+        console.log('Kết quả tạo hóa đơn chi tiết:', responseChiTiet);
+
+        // Xóa dữ liệu từ localStorage sau khi đã tạo hóa đơn
+        localStorage.removeItem('hoaDon');
+        localStorage.removeItem('hoaDonChiTiet');
+
+        if (response && response.ma_hoa_don) {
+            orderCode.value = response.ma_hoa_don;
+            return response;
+        }
+    } catch (error) {
+        console.error('Lỗi khi tạo hóa đơn:', error);
+        message.error('Có lỗi xảy ra khi tạo hóa đơn. Vui lòng thử lại sau.');
+    }
+    return null;
+};
+
+// Kiểm tra trạng thái thanh toán
+const checkPaymentStatus = async () => {
+    try {
+        isLoading.value = true;
+
+        // Kiểm tra xem có dữ liệu hóa đơn trong localStorage không
+        if (!checkInvoiceDataInLocalStorage()) {
+            console.error('Không tìm thấy dữ liệu hóa đơn trong localStorage');
+            paymentStatus.value = 'CANCELLED';
+            message.error('Không tìm thấy thông tin đơn hàng. Vui lòng thử lại.');
+            isLoading.value = false;
+            return;
+        }
+
+        const orderCodeValue = getOrderCodeFromLocalStorage();
+
+        if (!orderCodeValue) {
+            console.error('Không tìm thấy mã đơn hàng');
+            paymentStatus.value = 'CANCELLED';
+            isLoading.value = false;
+            return;
+        }
+
+        // Gọi API kiểm tra trạng thái thanh toán
+        const result = await thanhToanService.checkStatusPayment(orderCodeValue);
+        console.log('Kết quả kiểm tra trạng thái thanh toán:', result);
+
+        if (result && result.error === 0) {
+            paymentStatus.value = result.status;
+
+            if (result.status === 'PAID') {
+                // Nếu thanh toán thành công, tạo hóa đơn
+                const orderResult = await createOrderFromLocalStorage();
+
+                if (orderResult) {
+                    // Lấy thông tin từ kết quả tạo hóa đơn
+                    orderAmount.value = orderResult.tong_tien_sau_giam || 0;
+                    message.success('Thanh toán thành công! Đơn hàng của bạn đã được xác nhận.');
+                    dataLoaded.value = true;
+                } else {
+                    message.warning('Thanh toán thành công nhưng không thể tạo hóa đơn.');
+                }
+            } else if (result.status === 'CANCELLED') {
+                message.error('Thanh toán đã bị hủy.');
+            }
+        } else {
+            paymentStatus.value = 'CANCELLED';
+            message.error(result?.message || 'Có lỗi xảy ra khi kiểm tra trạng thái thanh toán.');
+        }
+    } catch (error) {
+        console.error('Lỗi khi kiểm tra trạng thái thanh toán:', error);
+        paymentStatus.value = 'CANCELLED';
+        message.error('Có lỗi xảy ra khi kiểm tra trạng thái thanh toán.');
+    } finally {
+        isLoading.value = false;
     }
 };
 
-onMounted(() => {
-    // Process payment immediately without delay
-    processPaymentResult();
+onMounted(async () => {
+    await checkPaymentStatus();
 });
 </script>
 
 <style scoped>
 .payment-callback-container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 50px auto;
-    padding: 0 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+.loading-text {
+    margin-top: 16px;
+    font-size: 16px;
+    color: #666;
 }
 
 .payment-status-card {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     padding: 40px;
     text-align: center;
     max-width: 600px;
-    margin: 0 auto;
-    animation: fadeInUp 0.5s ease;
+    width: 100%;
 }
 
 .status-icon {
-    font-size: 80px;
-    margin-bottom: 30px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
+    font-size: 72px;
+    margin-bottom: 24px;
 }
 
 .status-icon.success {
     color: #52c41a;
-    background-color: #f6ffed;
-    border: 4px solid #b7eb8f;
-    animation: pulse 2s infinite;
 }
 
 .status-icon.failed {
-    color: #f5222d;
-    background-color: #fff1f0;
-    border: 4px solid #ffa39e;
+    color: #ff4d4f;
 }
 
 .status-icon.processing {
     color: #1890ff;
-    background-color: #e6f7ff;
-    border: 4px solid #91d5ff;
-    animation: spin 1.5s linear infinite;
 }
 
 .status-title {
     font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: #2b3940;
+    margin-bottom: 16px;
+    color: #333;
 }
 
 .status-message {
     font-size: 16px;
-    line-height: 1.6;
-    color: #6c757d;
-    margin-bottom: 30px;
+    color: #666;
+    margin-bottom: 32px;
 }
 
 .order-info {
-    background-color: #f9fafc;
+    margin: 32px 0;
+    text-align: left;
+    background-color: #f9f9f9;
     padding: 20px;
     border-radius: 8px;
-    margin-bottom: 30px;
-    text-align: left;
 }
 
 .order-info h3 {
-    font-size: 18px;
-    margin-bottom: 15px;
-    color: #2b3940;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+    margin-bottom: 16px;
+    color: #333;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .label {
-    color: #6c757d;
+    color: #666;
     font-weight: 500;
 }
 
 .value {
     font-weight: 600;
-    color: #2b3940;
+    color: #333;
 }
 
 .action-buttons {
     display: flex;
-    gap: 15px;
     justify-content: center;
-    flex-wrap: wrap;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.4);
-    }
-
-    70% {
-        box-shadow: 0 0 0 15px rgba(82, 196, 26, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(82, 196, 26, 0);
-    }
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
+    gap: 16px;
+    margin-top: 32px;
 }
 </style>

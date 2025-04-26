@@ -59,6 +59,14 @@ const changeStatusSanPham = async (id) => {
     console.log(error)
   }
 }
+const changeStatusCTSP = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeStatusCTSP?id=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 // Hàm cập nhật trạng thái cho tất cả chi tiết sản phẩm theo sản phẩm chính
 const updateCTSPStatusBySanPham = async (id, status) => {
@@ -297,7 +305,154 @@ const exportExcel = async (productIds, fields) => {
     throw error;
   }
 }
+const changeAllCTSPHoatDong = async (id) => {
+  try {
+    const response = await axiosInstance.put(qlsp + 'changeAllCTSPHoatDong?id=' + id)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái CTSP:', error)
+  }
+}
+const changeAllCTSPKhongHoatDong = async (id) => {
+  try {
+    const response = await axiosInstance.put(qlsp + 'changeAllCTSPKhongHoatDong?id=' + id)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái CTSP:', error)
+  }
+}
 
+// Add new service methods for adding items
+const addDanhMuc = async (danhMucData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addDanhMuc?tenDanhMuc=' + danhMucData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addDanhMuc:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm danh mục' };
+  }
+};
+
+const addThuongHieu = async (thuongHieuData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addThuongHieu?tenThuongHieu=' + thuongHieuData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addThuongHieu:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm thương hiệu' };
+  }
+};
+
+const addChatLieu = async (chatLieuData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addChatLieu?tenChatLieu=' + chatLieuData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addChatLieu:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm chất liệu' };
+  }
+};
+
+const addMauSac = async (mauSacData) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addMauSac?tenMauSac=' + mauSacData);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addMauSac:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm màu sắc' };
+  }
+};
+
+const addKichThuoc = async (giaTri, donVi) => {
+  try {
+    const response = await axiosInstance.post(qlsp + 'addSize?giaTri=' + giaTri + '&donVi=' + donVi);
+    return response.data;
+  } catch (error) {
+    console.error('Error in addKichThuoc:', error);
+    return { error: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi thêm kích thước' };
+  }
+};
+//Thuộc tính
+const changeTrangThaiChatLieu = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiChatLieu?idChatLieu=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiMauSac = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiMauSac?idMauSac=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiThuongHieu = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiThuongHieu?idThuongHieu=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiDanhMuc = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiDanhMuc?idDanhMuc=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const changeTrangThaiKichThuoc = async (id) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'changeTrangThaiKichThuoc?idKichThuoc=' + id)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateChatLieu = async (chatLieuData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateChatLieu', chatLieuData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateMauSac = async (mauSacData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateMauSac', mauSacData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateThuongHieu = async (thuongHieuData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateThuongHieu', thuongHieuData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateDanhMuc = async (danhMucData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateDanhMuc', danhMucData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
+const updateKichThuoc = async (kichThuocData) => {
+  try {
+    const { data } = await axiosInstance.put(qlsp + 'updateKichThuoc', kichThuocData)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -324,4 +479,22 @@ export const sanPhamService = {
   getAllCTSPKM,
   searchSanPham,
   exportExcel,
+  changeStatusCTSP,
+  changeAllCTSPHoatDong,
+  changeAllCTSPKhongHoatDong,
+  addDanhMuc,
+  addThuongHieu,
+  addChatLieu,
+  addMauSac,
+  addKichThuoc,
+  changeTrangThaiChatLieu,
+  changeTrangThaiMauSac,
+  changeTrangThaiThuongHieu,
+  changeTrangThaiDanhMuc,
+  changeTrangThaiKichThuoc,
+  updateChatLieu,
+  updateMauSac,
+  updateThuongHieu,
+  updateDanhMuc,
+  updateKichThuoc
 }

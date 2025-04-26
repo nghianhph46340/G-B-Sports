@@ -1,7 +1,8 @@
 <template>
     <div class="mb-4 d-flex justify-content-between">
         <div class="d-flex gap-2 flex-wrap">
-            <template v-if="!store.checkRouter.includes('/quanlysanpham/add')">
+            <template
+                v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
                 <a-button type="" @click="showFilter" class="d-flex align-items-center btn-filter">
                     <FilterOutlined class="icon-filler" />
                     <span class="button-text">Bộ lọc</span>
@@ -91,7 +92,7 @@
                         <!-- Bộ lọc Giá -->
                         <div class="filter-group">
                             <div class="filter-title">Giá</div>
-                            <a-slider v-model:value="value2" range :min="0" :max="10000000" :step="100000"
+                            <a-slider v-model:value="value2" range :min="0" :max="maxPriceFromProducts" :step="100000"
                                 :tipFormatter="value => `${value.toLocaleString('vi-VN')} đ`" />
                             <div class="price-range">
                                 <span>{{ value2[0].toLocaleString('vi-VN') }} đ</span>
@@ -111,15 +112,16 @@
 
                 <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
                     style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select>
-                <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
-                    style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select>
+                <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
+                    style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select> -->
 
-                <a-button type="" class="d-flex align-items-center btn-filter" @click="showExportModal">
+                <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter" @click="showExportModal" :disabled="disabledByRoles">
                     <ExportOutlined class="icon-filler" />
                     <span class="button-text">Xuất excel</span>
                 </a-button>
             </template>
-            <a-button type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
+            <!-- Nhập excel button always visible -->
+            <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
                 <ImportOutlined class="icon-filler" />
                 <span class="button-text">Nhập excel</span>
             </a-button>
@@ -236,7 +238,6 @@
                                 <th>Chất liệu</th>
                                 <th>Màu sắc</th>
                                 <th>Kích thước</th>
-                                <th>Trạng thái</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -269,11 +270,7 @@
                                     {{ (item.kichThuoc.gia_tri) ?
                                         (item.kichThuoc.gia_tri + ' ' + item.kichThuoc.don_vi) : '(Thiếu dữ liệu)' }}
                                 </td>
-                                <td>
-                                    <a-tag :color="item.trang_thai ? 'green' : 'red'">
-                                        {{ item.trang_thai ? 'Hoạt động' : 'Không hoạt động' }}
-                                    </a-tag>
-                                </td>
+
                             </tr>
                         </tbody>
                     </table>
@@ -304,20 +301,14 @@
                 </template>
             </a-modal>
         </div>
-        <template v-if="!store.checkRouter.includes('quanlysanpham/add')">
-            <a-button type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
+        <template
+            v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
+            <a-button v-if="store.id_roles !== 3" type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
                 class="d-flex align-items-center">
                 <PlusOutlined />
                 <span class="button-text">Thêm sản phẩm</span>
             </a-button>
         </template>
-    </div>
-
-    <div class="menu-container d-flex" v-if="filteredCount"
-        style="margin-left:30px; margin-top: 10px; margin-bottom: 10px">
-        <span style="font-weight: 500;">
-            Hiển thị: {{ filteredCount }} sản phẩm
-        </span>
     </div>
 
     <a-modal v-model:open="exportModalVisible" title="Xuất Excel" width="700px">
@@ -364,7 +355,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onBeforeUnmount } from 'vue';
 import * as XLSX from 'xlsx';
 import {
     FilterOutlined,
@@ -388,10 +379,118 @@ import { message } from 'ant-design-vue';
 import { Upload } from 'ant-design-vue';
 import { storeToRefs } from 'pinia';
 
+// Định nghĩa các events
+const emit = defineEmits(['refresh-data']);
+
 const route = useRoute();
 const store = useGbStore();
 const visible = ref(false);
 const value = ref('Hoạt động');
+
+// Function to update store.checkRouter based on the current route
+const updateCheckRouter = () => {
+    store.getPath(route.path);
+    store.getRoutePresent(route.path);
+    console.log('Current path:', route.path);
+    console.log('Updated store.checkRouter:', store.checkRouter);
+};
+
+// Thêm hàm loadFilterData để tải lại dữ liệu cho bộ lọc
+const loadFilterData = async () => {
+    console.log('Đang tải lại dữ liệu cho bộ lọc...');
+    try {
+        await Promise.all([
+            store.getAllDM(),   // Danh mục
+            store.getAllTH(),   // Thương hiệu
+            store.getAllCL(),   // Chất liệu
+            store.getAllMS(),   // Màu sắc
+            store.getAllKT(),   // Kích thước
+        ]);
+        console.log('Đã tải lại dữ liệu cho bộ lọc thành công');
+        store.needFilterRefresh = false;
+    } catch (error) {
+        console.error('Lỗi khi tải lại dữ liệu cho bộ lọc:', error);
+    }
+};
+
+// Thêm hàm để xử lý sự kiện filter-data-updated
+const handleFilterDataUpdated = () => {
+    console.log('Đã nhận sự kiện filter-data-updated');
+    loadFilterData().then(() => {
+        // Kiểm tra xem có thuộc tính mới để thêm vào bộ lọc không
+        checkAndSelectNewAttributes();
+    });
+};
+
+// Thêm hàm mới để kiểm tra và chọn các thuộc tính mới
+const checkAndSelectNewAttributes = () => {
+    // Lấy thuộc tính mới từ localStorage nếu có
+    const lastAddedAttributes = localStorage.getItem('lastAddedAttributes');
+    if (lastAddedAttributes) {
+        try {
+            const attributes = JSON.parse(lastAddedAttributes);
+            console.log('Đã tìm thấy thuộc tính mới cần chọn:', attributes);
+
+            // Thêm thuộc tính mới vào các lựa chọn
+            if (attributes.danhMuc) {
+                valueDanhMuc.value = [...valueDanhMuc.value, attributes.danhMuc];
+            }
+            if (attributes.thuongHieu) {
+                valueThuongHieu.value = [...valueThuongHieu.value, attributes.thuongHieu];
+            }
+            if (attributes.chatLieu) {
+                valueChatLieu.value = [...valueChatLieu.value, attributes.chatLieu];
+            }
+            if (attributes.mauSac) {
+                valueMauSac.value = [...valueMauSac.value, attributes.mauSac];
+            }
+            if (attributes.kichThuoc) {
+                valueSize.value = [...valueSize.value, attributes.kichThuoc];
+            }
+
+            // Xóa khỏi localStorage sau khi sử dụng
+            localStorage.removeItem('lastAddedAttributes');
+
+            console.log('Đã cập nhật các giá trị đã chọn trong bộ lọc:');
+            console.log('- Danh mục:', valueDanhMuc.value);
+            console.log('- Thương hiệu:', valueThuongHieu.value);
+            console.log('- Chất liệu:', valueChatLieu.value);
+            console.log('- Màu sắc:', valueMauSac.value);
+            console.log('- Kích thước:', valueSize.value);
+        } catch (error) {
+            console.error('Lỗi khi xử lý thuộc tính mới:', error);
+        }
+    }
+};
+
+// Watch for route changes to handle browser back button
+watch(() => route.path, (newPath) => {
+    console.log('Route changed to:', newPath);
+    updateCheckRouter();
+}, { immediate: true });
+
+// Watch cho needFilterRefresh để tải lại dữ liệu khi cần
+watch(() => store.needFilterRefresh, (newValue) => {
+    if (newValue) {
+        console.log('Phát hiện needFilterRefresh = true, tải lại dữ liệu bộ lọc');
+        loadFilterData();
+    }
+});
+
+// Computed property để lấy giá bán lớn nhất
+const maxPriceFromProducts = computed(() => {
+    if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
+        return 10000000; // Giá trị mặc định nếu chưa có dữ liệu
+    }
+
+    // Tìm giá bán lớn nhất trong danh sách chi tiết sản phẩm
+    const maxPrice = Math.max(...store.getAllChiTietSanPham.map(item =>
+        item.gia_ban ? Number(item.gia_ban) : 0
+    ));
+
+    // Làm tròn đến hàng trăm nghìn gần nhất và thêm khoảng dư
+    return Math.ceil(maxPrice / 100000) * 100000 + 100000;
+});
 
 // Sử dụng mảng để lưu nhiều giá trị
 const valueDanhMuc = ref([]);
@@ -400,6 +499,11 @@ const valueChatLieu = ref([]);
 const valueMauSac = ref([]);
 const valueSize = ref([]);
 const value2 = ref([0, 10000000]);
+
+// Cập nhật value2 khi maxPriceFromProducts thay đổi
+watch(() => maxPriceFromProducts.value, (newMaxPrice) => {
+    value2.value = [0, newMaxPrice];
+}, { immediate: true });
 
 const xemTheo = ref('0');
 
@@ -441,21 +545,21 @@ watch(() => store.getFilteredProducts, (newValue) => {
 
 const listSort = ref([
     { value: '1', label: 'Sắp xếp theo' },
-    { value: '2', label: 'Tên tăng dần' },
-    { value: '3', label: 'Tên giảm dần' },
-    { value: '4', label: 'Giá tăng dần' },
-    { value: '5', label: 'Giá giảm dần' },
-    { value: '6', label: 'Mới nhất' },
-    { value: '7', label: 'Cũ nhất' },
+    { value: '2', label: 'Mã sản phẩm tăng dần' },
+    { value: '3', label: 'Mã sản phẩm giảm dần' },
+    { value: '4', label: 'Tên tăng dần' },
+    { value: '5', label: 'Tên giảm dần' },
+    { value: '6', label: 'Số lượng tăng dần' },
+    { value: '7', label: 'Số lượng giảm dần' },
 ]);
 
-const listXemTheo = ref([
-    { value: '0', label: 'Tất cả sản phẩm' },
-    { value: '1', label: '5 sản phẩm' },
-    { value: '2', label: '10 sản phẩm' },
-    { value: '3', label: '15 sản phẩm' },
-    { value: '4', label: '20 sản phẩm' },
-])
+// const listXemTheo = ref([
+//     { value: '0', label: 'Tất cả sản phẩm' },
+//     { value: '1', label: '5 sản phẩm' },
+//     { value: '2', label: '10 sản phẩm' },
+//     { value: '3', label: '15 sản phẩm' },
+//     { value: '4', label: '20 sản phẩm' },
+// ])
 const luuBien = ref('1');
 const openModalImportExcel = ref(false);
 const fileList = ref([]);
@@ -480,10 +584,17 @@ const onClose = () => {
 
 const router = useRouter();
 const changeRouter = (routers) => {
+    // Make sure to update the store before navigation
     store.getPath(routers);
     store.getRoutePresent(route.path);
+    store.getIndex(routers); // Make sure to call getIndex to update menu selection
+
+    // Log for debugging
+    console.log('Navigating to:', routers);
+    console.log('Updated store.checkRouter:', store.checkRouter);
+
+    // Navigate
     router.push(routers);
-    console.log(store.checkRouter);
 };
 
 // Hàm kiểm tra và tải dữ liệu cho bộ lọc
@@ -528,35 +639,34 @@ const checkAndLoadFilterData = async () => {
     }
 };
 
-// Hàm tải dữ liệu ban đầu
-const loadInitialData = async () => {
+// Tải dữ liệu ban đầu
+onMounted(async () => {
+    console.log('Menu Action component mounted');
     try {
-        console.log('Đang tải dữ liệu ban đầu...');
+        value2.value = [0, maxPriceFromProducts.value];
+        await store.getAllCTSP();
+        await store.getAllDM();   // Thay thế loadDanhMuc
+        await store.getAllTH();   // Thay thế loadThuongHieu
+        await store.getAllCL();   // Thay thế loadChatLieu
+        await store.getAllMS();   // Thay thế loadMauSac
+        await store.getAllKT();   // Thay thế loadKichThuoc
 
-        // Tải dữ liệu sản phẩm nếu chưa có
-        if (store.getAllSanPham.length === 0) {
-            await store.getAllSP();
-            console.log('Đã tải:', store.getAllSanPham.length, 'sản phẩm');
+        // Đăng ký sự kiện lắng nghe filter-data-updated
+        window.addEventListener('filter-data-updated', handleFilterDataUpdated);
+
+        // Kiểm tra nếu cần refresh bộ lọc
+        if (store.needFilterRefresh) {
+            loadFilterData();
         }
-
-        // Tải dữ liệu chi tiết sản phẩm nếu chưa có
-        if (store.getAllChiTietSanPham.length === 0) {
-            await store.getAllCTSP();
-            console.log('Đã tải:', store.getAllChiTietSanPham.length, 'chi tiết sản phẩm');
-        }
-
-        // Tải các dữ liệu cho bộ lọc
-        await checkAndLoadFilterData();
-
-        console.log('Hoàn tất tải dữ liệu ban đầu');
     } catch (error) {
         console.error('Lỗi khi tải dữ liệu ban đầu:', error);
-        message.error('Có lỗi khi tải dữ liệu, vui lòng thử lại');
+        message.error('Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau!');
     }
-};
+});
 
-onMounted(async () => {
-    await loadInitialData();
+// Hủy đăng ký sự kiện khi component bị hủy
+onBeforeUnmount(() => {
+    window.removeEventListener('filter-data-updated', handleFilterDataUpdated);
 });
 
 const filterProducts = () => {
@@ -711,6 +821,129 @@ const handleImportExcel = async (event) => {
     validateAndPreview();
 };
 
+// Thêm hàm validateExcelData để kiểm tra dữ liệu ở frontend
+const validateExcelData = (data) => {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        return {
+            isValid: false,
+            message: 'Không có dữ liệu trong file Excel',
+            data: []
+        };
+    }
+
+    // Chuẩn hóa dữ liệu
+    const normalizedData = data.map(row => {
+        // Tạo cấu trúc dữ liệu giống như backend trả về để dễ xử lý
+        return {
+            sanPham: {
+                ten_san_pham: (row['Tên sản phẩm'] || '').trim(),
+                danhMuc: {
+                    ten_danh_muc: (row['Danh mục'] || '').trim()
+                },
+                thuongHieu: {
+                    ten_thuong_hieu: (row['Thương hiệu'] || '').trim()
+                },
+                chatLieu: {
+                    ten_chat_lieu: (row['Chất liệu'] || '').trim()
+                }
+            },
+            gia_ban: parseFloat(row['Giá bán']) || 0,
+            so_luong: parseInt(row['Số lượng']) || 0,
+            mauSac: {
+                ma_mau_sac: (row['Màu sắc'] || '').trim(),
+                ten_mau_sac: (row['Màu sắc'] || '').trim()
+            },
+            kichThuoc: {
+                gia_tri: (row['Giá trị kích thước'] || '').trim().split(' ')[0] || '',
+                don_vi: (row['Đơn vị'] || '').trim()
+            },
+            // trang_thai: row['Trạng thái'] === 'Hoạt động' || row['Trạng thái'] === true
+        };
+    });
+
+    // Kiểm tra dữ liệu có hợp lệ không
+    let hasErrors = false;
+    normalizedData.forEach(item => {
+        if (!item.sanPham.ten_san_pham ||
+            !item.sanPham.danhMuc.ten_danh_muc ||
+            !item.sanPham.thuongHieu.ten_thuong_hieu ||
+            !item.sanPham.chatLieu.ten_chat_lieu ||
+            item.gia_ban <= 0 ||
+            item.so_luong <= 0 ||
+            !item.mauSac.ma_mau_sac ||
+            !item.kichThuoc.gia_tri) {
+            hasErrors = true;
+        }
+    });
+
+    return {
+        isValid: !hasErrors,
+        message: hasErrors ? 'File Excel có dữ liệu không hợp lệ' : 'Dữ liệu hợp lệ',
+        data: normalizedData
+    };
+};
+
+// Cập nhật hàm validateAndPreview để sử dụng validate ở frontend
+const validateAndPreview = async () => {
+    if (!selectedFile.value) {
+        message.error('Vui lòng chọn file Excel!');
+        return;
+    }
+
+    importValidating.value = true;
+    importError.value = '';
+
+    try {
+        // Đọc file Excel bằng XLSX
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const data = e.target.result;
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const excelData = XLSX.utils.sheet_to_json(firstSheet, { header: 2 });
+
+                console.log('Dữ liệu Excel đọc được:', excelData);
+
+                // Validate dữ liệu ở frontend
+                const validation = validateExcelData(excelData);
+
+                if (validation.data.length > 0) {
+                    importExcelData.value = validation.data;
+                    importExcelModal.value = true;
+                    openModalImportExcel.value = false;
+
+                    // Hiển thị cảnh báo nếu có lỗi
+                    if (!validation.isValid) {
+                        message.warning('File Excel có một số dòng dữ liệu không hợp lệ');
+                    }
+                } else {
+                    importError.value = 'Không tìm thấy dữ liệu trong file Excel hoặc định dạng không hợp lệ';
+                }
+            } catch (error) {
+                console.error('Lỗi khi xử lý file Excel:', error);
+                importError.value = 'Không thể đọc file Excel: ' + error.message;
+            } finally {
+                importValidating.value = false;
+            }
+        };
+
+        reader.onerror = (error) => {
+            console.error('Lỗi khi đọc file:', error);
+            importError.value = 'Không thể đọc file Excel';
+            importValidating.value = false;
+        };
+
+        reader.readAsArrayBuffer(selectedFile.value);
+    } catch (error) {
+        console.error('Lỗi khi validate Excel:', error);
+        importError.value = 'Không thể đọc file Excel: ' + error.message;
+        importValidating.value = false;
+    }
+};
+
+// Cập nhật hàm saveExcelImport để chỉ gửi dữ liệu hợp lệ lên server
 const saveExcelImport = async () => {
     uploadLoading.value = true;
     try {
@@ -737,6 +970,12 @@ const saveExcelImport = async () => {
         });
         console.log('Phân loại sản phẩm theo danh mục:', categoryCounts);
 
+        if (dataToSave.length === 0) {
+            message.error('Không có dữ liệu hợp lệ để lưu!');
+            uploadLoading.value = false;
+            return;
+        }
+
         const result = await store.saveExcelImport(dataToSave);
         console.log('Kết quả lưu dữ liệu:', result);
 
@@ -744,9 +983,42 @@ const saveExcelImport = async () => {
             message.success(`Đã lưu thành công ${dataToSave.length} sản phẩm!`);
             importExcelModal.value = false;
 
+            // Cập nhật store
+            console.log('Bắt đầu tải dữ liệu sản phẩm mới nhất...');
             await store.getAllSanPhamNgaySua();
+            console.log('Dữ liệu sản phẩm mới nhất đã được tải:', store.getAllSanPham?.length || 0);
             store.justAddedProduct = true;
-            router.push('/admin/quanlysanpham');
+
+            // Cập nhật dữ liệu bộ lọc để bao gồm các giá trị mới
+            message.loading({ content: 'Đang cập nhật dữ liệu bộ lọc...', key: 'updateFilter' });
+
+            // Tải lại toàn bộ dữ liệu lọc
+            await Promise.all([
+                store.getAllDM(),   // Danh mục
+                store.getAllTH(),   // Thương hiệu
+                store.getAllCL(),   // Chất liệu
+                store.getAllMS(),   // Màu sắc
+                store.getAllKT(),   // Kích thước
+            ]);
+
+            console.log('Đã cập nhật dữ liệu bộ lọc sau khi import Excel');
+            message.success({ content: 'Dữ liệu bộ lọc đã được cập nhật', key: 'updateFilter', duration: 2 });
+
+            // Xóa cache sản phẩm nếu có
+            try {
+                localStorage.removeItem('cached_products');
+                console.log('Đã xóa cache sản phẩm');
+            } catch (e) {
+                console.error('Lỗi khi xóa cache:', e);
+            }
+
+            // Emit event để thông báo component cha làm mới dữ liệu
+            emit('refresh-data');
+
+            // Chuyển hướng trang với setTimeout để đảm bảo dữ liệu đã được cập nhật
+            setTimeout(() => {
+                router.push('/admin/quanlysanpham');
+            }, 300);
         }
     } catch (error) {
         console.error('Lỗi khi lưu dữ liệu:', error);
@@ -1042,6 +1314,7 @@ const updateSelectedRows = (rows) => {
 
 // Expose để component cha có thể gọi
 defineExpose({
+    checkAndLoadFilterData,
     updateSelectedRows
 });
 
@@ -1130,43 +1403,6 @@ const closeImportModal = () => {
     }
 };
 
-// Kiểm tra và xem trước dữ liệu
-const validateAndPreview = async () => {
-    if (!selectedFile.value) {
-        message.error('Vui lòng chọn file Excel!');
-        return;
-    }
-
-    importValidating.value = true;
-    importError.value = '';
-
-    try {
-        const result = await store.importExcel(selectedFile.value);
-
-        if (result && result.length > 0) {
-            // Log dữ liệu từ file Excel
-            console.log('Dữ liệu từ file Excel:', result);
-            console.log('Tổng số dòng dữ liệu:', result.length);
-
-            // Log chi tiết hơn về một dòng dữ liệu mẫu
-            if (result.length > 0) {
-                console.log('Cấu trúc dữ liệu mẫu (dòng đầu tiên):', result[0]);
-            }
-
-            importExcelData.value = result;
-            importExcelModal.value = true;
-            openModalImportExcel.value = false;
-        } else {
-            importError.value = 'Không tìm thấy dữ liệu trong file Excel hoặc định dạng không hợp lệ';
-        }
-    } catch (error) {
-        console.error('Lỗi khi validate Excel:', error);
-        importError.value = 'Không thể đọc file Excel: ' + (error.response?.data?.message || error.message || 'Lỗi không xác định');
-    } finally {
-        importValidating.value = false;
-    }
-};
-
 // Đếm số dòng hợp lệ
 const countValidRows = () => {
     if (!importExcelData.value || importExcelData.value.length === 0) return 0;
@@ -1237,6 +1473,21 @@ const handleSelectAllFields = (e) => {
 watch(() => [...exportFields.value.map(f => f.selected)], (newVal) => {
     selectAllFields.value = newVal.every(v => v === true);
 }, { deep: true });
+
+const disabledByRoles = computed(() => store.id_roles === 3);
+// Watch for sorting option changes
+watch(() => luuBien.value, (newValue) => {
+    if (newValue !== '1') {
+        console.log('Sorting option changed to:', newValue);
+        // Dispatch a custom event that can be caught by the table component
+        const sortEvent = new CustomEvent('sort-option-changed', {
+            detail: {
+                option: newValue
+            }
+        });
+        window.dispatchEvent(sortEvent);
+    }
+});
 </script>
 
 <style scoped>

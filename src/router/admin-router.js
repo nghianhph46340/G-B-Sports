@@ -7,12 +7,12 @@ const admin = [
       {
         path: '',
         name: 'admin-home',
-        component: () => import('@/views/admin/BanHang/admin.vue'),
+        component: () => import('@/views/admin/BCTK/BCTK.vue'),
       },
       {
-        path: 'baocaothongke',
-        name: 'admin-bao-cao-thong-ke',
-        component: () => import('@/views/admin/BCTK/BCTK.vue'),
+        path: 'banhang',
+        name: 'admin-ban-hang',
+        component: () => import('@/views/admin/BanHang/admin.vue'),
       },
       {
         path: 'quanlysanpham',
@@ -122,7 +122,7 @@ const admin = [
         name: 'admin-quan-ly-khach-hang-update',
         component: () => import('@/views/admin/KhachHang/suaKH.vue'),
       },
-      
+      // Sau khi sửa
       // Sau khi sửa
       {
         path: 'traHang',
@@ -134,6 +134,11 @@ const admin = [
         name: 'admin-quan-ly-khach-hang-detail',
         component: () =>
           import('@/components/admin-components/QuanLyKhachHang/KhachHangDetail.vue'),
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/components/admin-components/Profile/NhanVien.vue'),
       },
     ],
   },

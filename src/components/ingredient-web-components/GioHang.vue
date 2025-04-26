@@ -61,7 +61,7 @@
                                     <h3 class="product-name">{{ item.name }}</h3>
                                     <div class="product-variant" v-if="item.color || item.size">
                                         <span v-if="item.color">Màu: {{ item.color }}</span>
-                                        <span v-if="item.size">Size: {{ item.size }}</span>
+                                        <span v-if="item.size">Size: {{ item.gia_tri+item.don_vi}}</span>
                                     </div>
                                     <div class="product-price">
                                         <span class="current-price">{{ formatCurrency(item.price) }}</span>
@@ -143,23 +143,30 @@ import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRoute } from 'vue-router';
+import { banHangOnlineService } from '@/services/banHangOnlineService';
+import { toast } from 'vue3-toastify';
 
 const route = useRoute();
 const router = useRouter();
 const store = useGbStore();
 const cartItems = ref([]);
 const selectedItems = ref([]);
+const idKhachHang = ref(null);
+const gioHang = ref([]);
 
 // Tải giỏ hàng từ localStorage
 const loadCartFromLocalStorage = () => {
     try {
-        const savedCart = localStorage.getItem('gb-sport-cart');
-        if (savedCart) {
-            cartItems.value = JSON.parse(savedCart);
-            console.log('Đã tải giỏ hàng:', cartItems.value.length, 'sản phẩm');
-        } else {
-            cartItems.value = [];
-            console.log('Không có sản phẩm trong giỏ hàng');
+        // Chỉ dùng localStorage khi không đăng nhập
+        if (!sessionStorage.getItem('id_khach_hang')) {
+            const savedCart = localStorage.getItem('gb-sport-cart');
+            if (savedCart) {
+                cartItems.value = JSON.parse(savedCart);
+                console.log('Đã tải giỏ hàng từ localStorage:', cartItems.value.length, 'sản phẩm');
+            } else {
+                cartItems.value = [];
+                console.log('Không có sản phẩm trong giỏ hàng');
+            }
         }
     } catch (error) {
         console.error('Lỗi khi tải giỏ hàng:', error);
@@ -222,7 +229,7 @@ const isAllSelected = computed(() => {
 });
 
 // Cập nhật số lượng sản phẩm
-const updateQuantity = (index, change) => {
+const updateQuantity = async (index, change) => {
     const item = cartItems.value[index];
     const newQuantity = item.quantity + change;
 
@@ -235,22 +242,77 @@ const updateQuantity = (index, change) => {
         return;
     }
 
-    item.quantity = newQuantity;
-    saveCartToLocalStorage();
-    message.success('Đã cập nhật số lượng sản phẩm');
+    try {
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        if (userDetailsStr) {
+            // Xử lý cho khách hàng đã đăng nhập
+            const userDetails = JSON.parse(userDetailsStr);
+            
+            if (change < 0) { // Nếu là giảm số lượng
+                await store.xoaSoLuongSPGH(
+                    userDetails.idKhachHang,
+                    item.id,
+                    Math.abs(change) // Chuyển số âm thành dương
+                );
+            }else{
+                await store.getGioHangByIdKH(
+                    userDetails.idKhachHang,
+                    item.id,
+                    change // Số lượng cần thêm
+                );
+            }
+            
+            // Cập nhật UI sau khi API thành công
+            item.quantity = newQuantity;
+            message.success('Đã cập nhật số lượng sản phẩm');
+        } else {
+            // Giữ nguyên logic cũ cho khách hàng chưa đăng nhập
+            item.quantity = newQuantity;
+            saveCartToLocalStorage();
+            message.success('Đã cập nhật số lượng sản phẩm');
+        }
+    } catch (error) {
+        console.error('Lỗi khi cập nhật số lượng:', error);
+        message.error('Có lỗi xảy ra khi cập nhật số lượng');
+    }
 };
 
 // Xóa sản phẩm khỏi giỏ hàng
-const removeItem = (index) => {
-    cartItems.value.splice(index, 1);
-
-    // Cập nhật lại danh sách sản phẩm đã chọn
-    selectedItems.value = selectedItems.value
-        .filter(i => i !== index)
-        .map(i => i > index ? i - 1 : i);
-
-    saveCartToLocalStorage();
-    message.success('Đã xóa sản phẩm khỏi giỏ hàng');
+const removeItem = async (index) => {
+    try {
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        if (userDetailsStr) {
+            // Xử lý cho khách hàng đã đăng nhập
+            const userDetails = JSON.parse(userDetailsStr);
+            const item = cartItems.value[index];
+            
+            // Gọi API xóa với toàn bộ số lượng của sản phẩm
+            await store.xoaSoLuongSPGH(
+                userDetails.idKhachHang,
+                item.id,
+                item.quantity
+            );
+            
+            // Sau khi xóa thành công, cập nhật UI
+            cartItems.value.splice(index, 1);
+            selectedItems.value = selectedItems.value
+                .filter(i => i !== index)
+                .map(i => i > index ? i - 1 : i);
+                
+            message.success('Đã xóa sản phẩm khỏi giỏ hàng');
+        } else {
+            // Giữ nguyên logic cũ cho khách hàng chưa đăng nhập
+            cartItems.value.splice(index, 1);
+            selectedItems.value = selectedItems.value
+                .filter(i => i !== index)
+                .map(i => i > index ? i - 1 : i);
+            saveCartToLocalStorage();
+            message.success('Đã xóa sản phẩm khỏi giỏ hàng');
+        }
+    } catch (error) {
+        console.error('Lỗi khi xóa sản phẩm:', error);
+        message.error('Có lỗi xảy ra khi xóa sản phẩm');
+    }
 };
 
 // Điều hướng đến trang sản phẩm
@@ -297,118 +359,118 @@ const proceedToCheckout = () => {
 };
 
 // Xóa các sản phẩm đã chọn
-const removeSelectedItems = () => {
+const removeSelectedItems = async () => {
     if (selectedItems.value.length === 0) {
         message.warning('Vui lòng chọn ít nhất một sản phẩm để xóa');
         return;
     }
 
-    // Sắp xếp theo thứ tự giảm dần để xóa từ cuối lên
-    const sortedIndexes = [...selectedItems.value].sort((a, b) => b - a);
-
-    for (const index of sortedIndexes) {
-        cartItems.value.splice(index, 1);
+    try {
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        if (userDetailsStr) {
+            // Xử lý cho khách hàng đã đăng nhập
+            const userDetails = JSON.parse(userDetailsStr);
+            
+            // Sắp xếp theo thứ tự giảm dần để xóa từ cuối lên
+            const sortedIndexes = [...selectedItems.value].sort((a, b) => b - a);
+            
+            // Xóa từng sản phẩm đã chọn
+            for (const index of sortedIndexes) {
+                const item = cartItems.value[index];
+                await store.xoaSoLuongSPGH(
+                    userDetails.idKhachHang,
+                    item.id,
+                    item.quantity
+                );
+                cartItems.value.splice(index, 1);
+            }
+            
+            selectedItems.value = [];
+            message.success('Đã xóa các sản phẩm đã chọn khỏi giỏ hàng');
+        } else {
+            // Giữ nguyên logic cũ cho khách hàng chưa đăng nhập
+            const sortedIndexes = [...selectedItems.value].sort((a, b) => b - a);
+            for (const index of sortedIndexes) {
+                cartItems.value.splice(index, 1);
+            }
+            selectedItems.value = [];
+            saveCartToLocalStorage();
+            message.success('Đã xóa các sản phẩm đã chọn khỏi giỏ hàng');
+        }
+    } catch (error) {
+        console.error('Lỗi khi xóa các sản phẩm đã chọn:', error);
+        message.error('Có lỗi xảy ra khi xóa sản phẩm');
     }
-
-    selectedItems.value = [];
-    saveCartToLocalStorage();
-    message.success('Đã xóa các sản phẩm đã chọn khỏi giỏ hàng');
 };
 
 // Lấy hình ảnh sản phẩm từ danh sách sản phẩm dựa vào ID chi tiết sản phẩm
 const getProductImage = (item) => {
     try {
-        console.log('DEBUG - Item trong giỏ hàng:', item);
+        // Kiểm tra trước nếu item đã có đường dẫn ảnh hợp lệ
+        if (item.hinh_anh) {
+            return item.hinh_anh;
+        }
 
-        // In ra chi tiết thuộc tính image trong cart item
-        console.log('DEBUG - Thuộc tính image của item:', item.image);
-        if (item.image && item.image.url) {
-            console.log('DEBUG - item.image có URL:', item.image.url);
+        // Nếu item.image là URL string
+        if (typeof item.image === 'string') {
+            return item.image;
+        }
+
+        // Nếu item.image là object có url
+        if (item.image && typeof item.image === 'object' && item.image.url) {
             return item.image.url;
         }
 
-        // Kiểm tra xem có danh sách sản phẩm trong store không
+        // Tìm kiếm trong danh sách sản phẩm từ store
         if (store.getAllSanPham && store.getAllSanPham.length > 0) {
-            console.log('DEBUG - Số lượng sản phẩm trong store:', store.getAllSanPham.length);
-
-            // In ra cấu trúc của một vài sản phẩm đầu tiên để debug
-            console.log('DEBUG - Cấu trúc sản phẩm mẫu từ store:',
-                JSON.stringify(store.getAllSanPham[0], null, 2));
-
-            // Lấy id sản phẩm từ chi tiết sản phẩm trong giỏ hàng
-            const productId = item.id;
-            console.log('DEBUG - ID sản phẩm cần tìm:', productId);
-
-            // In ra tất cả các ID của sản phẩm trong store
-            console.log('DEBUG - Danh sách ID sản phẩm trong store:',
-                store.getAllSanPham.map(p => ({ id: p.id, id_san_pham: p.id_san_pham })));
-
-            if (productId) {
-                // Tìm kiếm sản phẩm theo điều kiện linh hoạt hơn
-                const productDetail = store.getAllSanPham.find(p => {
-                    // So sánh cả dạng số và chuỗi
-                    return (
-                        String(p.id_san_pham) === String(productId) ||
-                        String(p.id) === String(productId)
+            // Tìm theo ID chi tiết sản phẩm
+            const productDetail = store.getAllSanPham.find(p => {
+                // Tìm trong chi tiết sản phẩm
+                if (p.chiTietSanPham && Array.isArray(p.chiTietSanPham)) {
+                    return p.chiTietSanPham.some(ct => 
+                        ct.id === item.id || 
+                        ct.id === item.id_chi_tiet_san_pham
                     );
-                });
+                }
+                return false;
+            });
 
-                console.log('DEBUG - Tìm thấy sản phẩm theo ID:', productDetail ? 'Có' : 'Không');
+            if (productDetail) {
+                // Tìm chi tiết sản phẩm cụ thể
+                const ctsp = productDetail.chiTietSanPham.find(ct => 
+                    ct.id === item.id || 
+                    ct.id === item.id_chi_tiet_san_pham
+                );
 
-                if (productDetail) {
-                    console.log('DEBUG - Chi tiết sản phẩm tìm thấy:', productDetail);
+                if (ctsp && ctsp.hinh_anh) {
+                    return ctsp.hinh_anh;
+                }
 
-                    // Nếu có hình ảnh sản phẩm, sử dụng nó
-                    if (productDetail.hinh_anh) {
-                        console.log('DEBUG - Sử dụng hình ảnh chính của sản phẩm:', productDetail.hinh_anh);
-                        return productDetail.hinh_anh;
+                // Nếu không có ảnh trong CTSP, dùng ảnh của sản phẩm chính
+                if (productDetail.hinh_anh) {
+                    return productDetail.hinh_anh;
+                }
+
+                // Kiểm tra mảng hình ảnh
+                if (productDetail.hinh_anhs && productDetail.hinh_anhs.length > 0) {
+                    if (typeof productDetail.hinh_anhs[0] === 'object' && productDetail.hinh_anhs[0].url) {
+                        return productDetail.hinh_anhs[0].url;
                     }
-
-                    // Kiểm tra nếu sản phẩm có danh sách hình ảnh
-                    if (productDetail.hinh_anhs && productDetail.hinh_anhs.length > 0) {
-                        console.log('DEBUG - Sử dụng hình ảnh đầu tiên từ danh sách:', productDetail.hinh_anhs[0]);
-                        // Kiểm tra xem hinh_anhs[0] có phải là object hay không
-                        if (typeof productDetail.hinh_anhs[0] === 'object' && productDetail.hinh_anhs[0].url) {
-                            return productDetail.hinh_anhs[0].url;
-                        }
-                        return productDetail.hinh_anhs[0];
-                    }
-
-                    // Kiểm tra chi tiết sản phẩm
-                    if (productDetail.chiTietSanPham && productDetail.chiTietSanPham.length > 0) {
-                        console.log('DEBUG - Số lượng chi tiết sản phẩm:', productDetail.chiTietSanPham.length);
-
-                        // Tìm chi tiết sản phẩm cụ thể
-                        const ctsp = productDetail.chiTietSanPham.find(
-                            ct => ct.id === item.id || ct.id === item.id_chi_tiet_san_pham
-                        );
-
-                        console.log('DEBUG - Tìm thấy chi tiết sản phẩm:', ctsp ? 'Có' : 'Không');
-                        if (ctsp) {
-                            console.log('DEBUG - Chi tiết sản phẩm:', ctsp);
-                        }
-
-                        if (ctsp && ctsp.hinh_anh) {
-                            console.log('DEBUG - Sử dụng hình ảnh của chi tiết sản phẩm:', ctsp.hinh_anh);
-                            return ctsp.hinh_anh;
-                        }
-                    }
+                    return productDetail.hinh_anhs[0];
                 }
             }
 
-            // Tìm kiếm thông qua tên sản phẩm nếu không tìm thấy theo ID
+            // Tìm theo tên sản phẩm nếu không tìm thấy theo ID
             if (item.name) {
-                console.log('DEBUG - Tìm kiếm theo tên sản phẩm:', item.name);
                 const productByName = store.getAllSanPham.find(p =>
-                    p.ten_san_pham && p.ten_san_pham.toLowerCase() === item.name.toLowerCase()
+                    p.ten_san_pham && 
+                    p.ten_san_pham.toLowerCase() === item.name.toLowerCase()
                 );
 
                 if (productByName) {
-                    console.log('DEBUG - Tìm thấy sản phẩm theo tên:', productByName);
                     if (productByName.hinh_anh) {
                         return productByName.hinh_anh;
                     }
-
                     if (productByName.hinh_anhs && productByName.hinh_anhs.length > 0) {
                         if (typeof productByName.hinh_anhs[0] === 'object' && productByName.hinh_anhs[0].url) {
                             return productByName.hinh_anhs[0].url;
@@ -417,35 +479,13 @@ const getProductImage = (item) => {
                     }
                 }
             }
-
-            // Nếu không tìm thấy theo id_san_pham, tìm theo id chi tiết sản phẩm
-            console.log('DEBUG - Tìm kiếm theo ID chi tiết sản phẩm:', item.id || item.id_chi_tiet_san_pham);
-
-            // Kiểm tra nếu item.image là object với url
-            if (item.image && typeof item.image === 'object') {
-                console.log('DEBUG - Kiểm tra cấu trúc item.image:', item.image);
-                if (item.image.url) {
-                    console.log('DEBUG - Sử dụng URL từ item.image.url:', item.image.url);
-                    return item.image.url;
-                }
-            }
-        } else {
-            console.log('DEBUG - Không có dữ liệu sản phẩm trong store hoặc chưa được tải');
         }
 
-        // Nếu không tìm thấy, sử dụng hình ảnh mặc định từ item
-        console.log('DEBUG - Sử dụng hình ảnh mặc định:', item.image);
-
-        // Kiểm tra nếu image là object với url
-        if (item.image && typeof item.image === 'object' && item.image.url) {
-            return item.image.url;
-        }
-
-        return item.image || item.hinh_anh || 'https://via.placeholder.com/80x80';
+        // Nếu không tìm thấy ảnh, trả về ảnh mặc định
+        return 'https://via.placeholder.com/80x80';
     } catch (error) {
-        console.error('DEBUG - Lỗi khi lấy hình ảnh sản phẩm:', error);
-        // Trả về hình ảnh mặc định nếu có lỗi
-        return item.image || item.hinh_anh || 'https://via.placeholder.com/80x80';
+        console.error('Lỗi khi lấy hình ảnh sản phẩm:', error);
+        return 'https://via.placeholder.com/80x80';
     }
 };
 
@@ -455,7 +495,7 @@ const loadProductsIfNeeded = async () => {
         // Kiểm tra xem store đã có danh sách sản phẩm chưa
         if (!store.getAllSanPham || store.getAllSanPham.length === 0) {
             console.log('DEBUG - Tải danh sách sản phẩm cho giỏ hàng');
-            await store.fetchAllSanPham();
+            await store.getAllSP();
             console.log('DEBUG - Đã tải xong danh sách sản phẩm, số lượng:',
                 store.getAllSanPham ? store.getAllSanPham.length : 0);
 
@@ -487,10 +527,63 @@ const debugCartStructure = () => {
     }
 };
 
+// Cập nhật hàm getGioHang để gán dữ liệu vào cartItems
+const getGioHang = async () => {
+    try {
+        // Lấy userDetails từ sessionStorage
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+        console.log('userDetails string:', userDetailsStr);
+        
+        if (userDetailsStr) {
+            const userDetails = JSON.parse(userDetailsStr);
+            console.log('userDetails parsed:', userDetails);
+            
+            if (userDetails && userDetails.idKhachHang) {
+                idKhachHang.value = userDetails.idKhachHang;
+                console.log('Đang gọi API với idKhachHang:', idKhachHang.value);
+                
+                try {
+                    const response = await banHangOnlineService.getGioHang(idKhachHang.value);
+                    gioHang.value = response;
+                    
+                    // Chuyển đổi dữ liệu từ API sang định dạng cartItems
+                    if (response && Array.isArray(response)) {
+                        cartItems.value = response.map(item => ({
+                            id: item.id_chi_tiet_san_pham,
+                            name: item.ten_san_pham,
+                            price: item.gia_ban || 0,
+                            originalPrice: item.gia_goc || 0,
+                            quantity: item.so_luong || 1,
+                            maxQuantity: item.so_luong_ton || 10,
+                            image: item.hinh_anh,
+                            color: item.ten_mau_sac,
+                            size: item.ten_kich_thuoc
+                        }));
+                        console.log('cartItems:thu: ', cartItems.value);
+                        console.log('Đã tải giỏ hàng từ tài khoản:', cartItems.value.length, 'sản phẩm');
+                    }
+                } catch (error) {
+                    console.error('Lỗi API getGioHang:', error);
+                    loadCartFromLocalStorage();
+                }
+            } else {
+                console.log('Không tìm thấy idKhachHang trong userDetails');
+                loadCartFromLocalStorage();
+            }
+        } else {
+            console.log('Không có userDetails trong sessionStorage');
+            loadCartFromLocalStorage();
+        }
+    } catch (error) {
+        console.error('Lỗi trong getGioHang:', error);
+        loadCartFromLocalStorage();
+    }
+};
+
 // Mở rộng hàm onMounted để tải cả danh sách sản phẩm và debug
 onMounted(async () => {
     console.log('DEBUG - Component GioHang mounted');
-    loadCartFromLocalStorage();
+    await getGioHang(); // Ưu tiên load giỏ hàng từ tài khoản trước
     debugCartStructure();
     await loadProductsIfNeeded();
     await store.getAllSP();

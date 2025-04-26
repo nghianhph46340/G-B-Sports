@@ -20,22 +20,16 @@
                     <TheHeaderSearchModal />
                 </div>
                 <div class="nav-icons col-sm-3 d-flex justify-content-evenly align-items-center">
-                    <div @click="chuyenTrang('/login-register/login')" class="nav-item text-center"
-                        @mouseenter="animateIcon('user')">
-                        <div class="icon-container">
-                            <User class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'user' }" />
-                        </div>
-                        <span class="nav-text">{{ !store.changeLanguage.nguoiDung ? 'Đăng nhập' :
-                            store.changeLanguage.nguoiDung }}</span>
-                    </div>
-                    <div class="nav-item text-center" @mouseenter="animateIcon('store')">
+                    <div class="nav-item text-center" @click="chuyenTrang('/cuaHang')"
+                        @mouseenter="animateIcon('store')">
                         <div class="icon-container">
                             <Store class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'store' }" />
                         </div>
                         <span class="nav-text">{{ !store.changeLanguage.cuaHang ? 'Cửa hàng' :
                             store.changeLanguage.cuaHang }}</span>
                     </div>
-                    <div class="nav-item text-center" @mouseenter="animateIcon('support')">
+                    <div class="nav-item text-center" @click="chuyenTrang('/hoTro')"
+                        @mouseenter="animateIcon('support')">
                         <div class="icon-container">
                             <MessageCircleQuestion class="nav-icon"
                                 :class="{ 'icon-animated': animatedIcon === 'support' }" />
@@ -52,6 +46,30 @@
                         <span class="nav-text">{{ !store.changeLanguage.gioHang ? 'Giỏ hàng' :
                             store.changeLanguage.gioHang }}</span>
                     </div>
+                    <div class="nav-item text-center user-nav-item" @mouseenter="animateIcon('user')"
+                        @click="toggleUserMenu">
+                        <div class="icon-container">
+                            <User class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'user' }" />
+                        </div>
+                        <span class="nav-text">{{ displayName ? displayName : 'Đăng nhập' }}</span>
+
+                        <!-- User dropdown menu -->
+                        <div v-if="store.isLoggedIn && showMenu" class="user-dropdown">
+                            <div class="dropdown-item" @click.stop="navigateTo('/khachhang')">
+                                <UserCircle class="dropdown-icon" />
+                                <span>Hồ sơ của tôi</span>
+                            </div>
+                            <div class="dropdown-item" @click.stop="navigateTo('/khachhang?tab=orders')">
+                                <ShoppingBag class="dropdown-icon" />
+                                <span>Đơn mua</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item logout" @click.stop="handleLogout">
+                                <LogOut class="dropdown-icon" />
+                                <span>Đăng xuất</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -59,19 +77,25 @@
 </template>
 
 <script setup>
-import { Search } from 'lucide-vue-next';
-import { User } from 'lucide-vue-next';
-import { Store } from 'lucide-vue-next';
-import { MessageCircleQuestion } from 'lucide-vue-next';
-import { ShoppingCart } from 'lucide-vue-next';
+import { Search, User, Store, MessageCircleQuestion, ShoppingCart, UserCircle, ShoppingBag, LogOut } from 'lucide-vue-next';
 import { useGbStore } from '@/stores/gbStore';
 import TheHeaderSearchModal from './TheHeaderSearchModal.vue';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
+import { banHangOnlineService } from '@/services/banHangOnlineService';
+
 const store = useGbStore();
 const animatedIcon = ref(null);
 const cartItemCount = ref(0); // Số lượng sản phẩm trong giỏ hàng
 const router = useRouter();
+const showMenu = ref(false);
+
+const displayName = computed(() => {
+    if (store.isLoggedIn && store.userDetails) {
+        return store.userDetails.tenKhachHang;
+    }
+    return store.changeLanguage.nguoiDung || 'Đăng nhập';
+});
 
 const chuyenTrang = (path) => {
     router.push(path);
@@ -84,53 +108,99 @@ const animateIcon = (iconName) => {
     }, 500);
 };
 
-// Hàm tải giỏ hàng từ localStorage và cập nhật số lượng
-const updateCartCount = () => {
+// Sử dụng toggle menu thay vì hover
+const toggleUserMenu = () => {
+    if (!store.isLoggedIn) {
+        chuyenTrang('/login-register/login');
+    } else {
+        showMenu.value = !showMenu.value;
+    }
+};
+
+// Sửa lại hàm xử lý đăng xuất
+const handleLogout = () => {
+    showMenu.value = false;
+    store.logoutKH();
+
+    // Cách 1: Sử dụng window.location để làm mới hoàn toàn trang
+    window.location.href = '/home';
+
+    // HOẶC Cách 2: Sử dụng router của Vue, nhưng có thể cần reload sau đó
+    // router.push('/home');
+    // setTimeout(() => window.location.reload(), 100);
+};
+
+// Thêm hàm để đóng menu khi click bên ngoài
+const closeMenuOnOutsideClick = (event) => {
+    if (showMenu.value && !event.target.closest('.user-nav-item')) {
+        showMenu.value = false;
+    }
+};
+
+// Hàm tải giỏ hàng và cập nhật số lượng
+const updateCartCount = async () => {
     try {
+        // Kiểm tra xem khách hàng đã đăng nhập chưa
+        const userDetailsStr = sessionStorage.getItem('userDetails');
+
+        if (userDetailsStr) {
+            const userDetails = JSON.parse(userDetailsStr);
+
+            if (userDetails && userDetails.idKhachHang) {
+                // Nếu đã đăng nhập, lấy giỏ hàng từ API
+                const response = await banHangOnlineService.getGioHang(userDetails.idKhachHang);
+
+                if (response && Array.isArray(response)) {
+                    // Tính tổng số lượng sản phẩm từ API
+                    cartItemCount.value = response.reduce((total, item) => total + (item.so_luong || 1), 0);
+                    console.log('Số lượng sản phẩm trong giỏ hàng của KH đã đăng nhập:', cartItemCount.value);
+                } else {
+                    cartItemCount.value = 0;
+                }
+                return; // Kết thúc hàm sau khi đã xử lý KH đăng nhập
+            }
+        }
+
+        // Nếu không đăng nhập hoặc không có idKhachHang, lấy từ localStorage
         const savedCart = localStorage.getItem('gb-sport-cart');
         if (savedCart) {
             const cartItems = JSON.parse(savedCart);
-            // Tính tổng số lượng sản phẩm trong giỏ hàng
             cartItemCount.value = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
         } else {
             cartItemCount.value = 0;
         }
     } catch (error) {
-        console.error('Lỗi khi tải giỏ hàng từ localStorage:', error);
+        console.error('Lỗi khi cập nhật số lượng giỏ hàng:', error);
         cartItemCount.value = 0;
     }
 };
 
-// Lắng nghe sự kiện storage change để cập nhật giỏ hàng khi có thay đổi
-const handleStorageChange = (event) => {
-    if (event.key === 'gb-sport-cart') {
-        updateCartCount();
-    }
+// Thêm hàm mới cho việc điều hướng từ dropdown
+const navigateTo = (path) => {
+    showMenu.value = false; // Đóng dropdown
+    chuyenTrang(path); // Chuyển trang
 };
 
-// Khởi tạo khi component được tạo
-onMounted(() => {
-    // Tải giỏ hàng ban đầu
-    updateCartCount();
+// Cập nhật lại onMounted để thêm listener document.click
+onMounted(async () => {
+    await updateCartCount();
 
-    // Lắng nghe sự kiện storage change
-    window.addEventListener('storage', handleStorageChange);
-
-    // Lắng nghe sự kiện custom để cập nhật giỏ hàng
+    // Lắng nghe sự kiện 'cart-updated' nếu có
     window.addEventListener('cart-updated', updateCartCount);
+
+    // Thêm lắng nghe click bên ngoài để đóng dropdown
+    document.addEventListener('click', closeMenuOnOutsideClick);
 });
 
 // Làm sạch listener khi component bị hủy
-const beforeUnmount = () => {
-    window.removeEventListener('storage', handleStorageChange);
+onBeforeUnmount(() => {
     window.removeEventListener('cart-updated', updateCartCount);
-};
+    document.removeEventListener('click', closeMenuOnOutsideClick);
+    clearInterval(checkCartInterval);
+});
 
 // Kiểm tra giỏ hàng định kỳ để đảm bảo hiển thị chính xác
 const checkCartInterval = setInterval(updateCartCount, 5000);
-beforeUnmount(() => {
-    clearInterval(checkCartInterval);
-});
 </script>
 
 <style scoped>
@@ -315,5 +385,69 @@ beforeUnmount(() => {
     50% {
         transform: translateY(-3px);
     }
+}
+
+.user-nav-item {
+    position: relative;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 180px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 5px;
+    z-index: 1031;
+    overflow: hidden;
+    animation: dropdown-fade 0.2s ease;
+}
+
+@keyframes dropdown-fade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 13px;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+}
+
+.dropdown-icon {
+    width: 18px;
+    height: 18px;
+    color: #555;
+    margin-right: 12px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 5px 0;
+}
+
+.logout {
+    color: #ff3a3a;
+}
+
+.logout .dropdown-icon {
+    color: #ff3a3a;
 }
 </style>

@@ -53,3 +53,22 @@ npm install date-fns date-fns-tz
 
 #excel
 npm install xlsx
+
+#chat
+npm install sockjs-client @stomp/stompjs @ant-design/icons-vue
+
+#qrcode
+npm install vue-qrcode-reader
+
+npm install jsqr
+
+npm install jsqr --save
+
+#xem list qr code
+npm list | findstr "qrcode"
+#list html2pdf
+npm list html2pdf.js
+
+npm install html2pdf.js --save
+#Qrcode
+npm install html5-qrcode
