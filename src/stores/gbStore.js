@@ -2901,7 +2901,137 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
 
+    // Thêm vào sau hàm changeAllCTSPKhongHoatDong
+    async updateCTSPStatus(ctspId, newStatus) {
+      try {
+        // Gọi API thay đổi trạng thái dựa vào trạng thái mới
+        let response;
+        if (newStatus === 'Hoạt động') {
+          response = await this.changeAllCTSPHoatDong(ctspId);
+        } else {
+          response = await this.changeAllCTSPKhongHoatDong(ctspId);
+        }
 
+        // Lấy dữ liệu từ response
+        const responseData = response?.data || response;
+
+        if (!responseData) {
+          throw new Error('Không nhận được dữ liệu từ API');
+        }
+
+        // Nếu response có chứa thông tin sản phẩm cha, cập nhật trạng thái sản phẩm cha trong store
+        if (responseData.sanPham && responseData.sanPham.id_san_pham && responseData.sanPham.trang_thai) {
+          const parentId = responseData.sanPham.id_san_pham;
+          const newParentStatus = responseData.sanPham.trang_thai;
+
+          // Tìm và cập nhật sản phẩm trong store
+          const productIndex = this.getAllSanPham.findIndex(item => item.id_san_pham === parentId);
+          if (productIndex !== -1) {
+            // Cập nhật trạng thái cho sản phẩm trong store để đảm bảo UI đồng bộ
+            this.getAllSanPham[productIndex].trang_thai = newParentStatus;
+            console.log(`Đã cập nhật trạng thái sản phẩm ${parentId} trong store thành ${newParentStatus}`);
+          }
+        }
+
+        // Trả về dữ liệu đã được cập nhật
+        return {
+          success: true,
+          data: responseData,
+          message: `Đã chuyển trạng thái thành ${responseData.trang_thai}`
+        };
+      } catch (error) {
+        console.error('Lỗi khi cập nhật trạng thái CTSP:', error);
+        return {
+          success: false,
+          message: error.message || 'Có lỗi xảy ra khi cập nhật trạng thái'
+        };
+      }
+    },
+
+    async bulkUpdateCTSPStatus(selectedCtspIds, newStatus) {
+      try {
+        let successCount = 0;
+        let errorCount = 0;
+
+        // Sử dụng Set để theo dõi các ID sản phẩm cha đã được cập nhật
+        const updatedParentIds = new Set();
+        // Map để lưu trạng thái cuối cùng của mỗi sản phẩm cha
+        const parentStatusMap = new Map();
+
+        // Xử lý từng chi tiết sản phẩm
+        for (const ctspId of selectedCtspIds) {
+          try {
+            // Gọi API thông qua hàm đã tạo trước đó
+            let response;
+            if (newStatus === 'Hoạt động') {
+              response = await this.changeAllCTSPHoatDong(ctspId);
+            } else {
+              response = await this.changeAllCTSPKhongHoatDong(ctspId);
+            }
+
+            console.log(`Response từ API cho CTSP ${ctspId}:`, response);
+
+            // Kiểm tra response
+            if (response) {
+              const ctspData = response.data || response;
+
+              // Kiểm tra trạng thái
+              if (ctspData && ctspData.trang_thai === newStatus) {
+                successCount++;
+
+                // Cập nhật sản phẩm cha trong store nếu có thông tin
+                if (ctspData.sanPham && ctspData.sanPham.id_san_pham && ctspData.sanPham.trang_thai) {
+                  const parentId = ctspData.sanPham.id_san_pham;
+                  const newParentStatus = ctspData.sanPham.trang_thai;
+
+                  // Thêm ID sản phẩm cha vào danh sách đã cập nhật
+                  updatedParentIds.add(parentId);
+                  // Lưu trạng thái mới nhất của sản phẩm cha
+                  parentStatusMap.set(parentId, newParentStatus);
+
+                  // Tìm và cập nhật sản phẩm trong store
+                  const productIndex = this.getAllSanPham.findIndex(item => item.id_san_pham === parentId);
+                  if (productIndex !== -1) {
+                    this.getAllSanPham[productIndex].trang_thai = newParentStatus;
+                    console.log(`Đã cập nhật trạng thái sản phẩm ${parentId} trong store thành ${newParentStatus}`);
+                  }
+                }
+              } else {
+                errorCount++;
+              }
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            errorCount++;
+            console.error(`Lỗi khi thay đổi trạng thái CTSP ${ctspId}:`, error);
+          }
+        }
+
+        // Chuyển đổi Set và Map thành mảng để trả về
+        const updatedParents = Array.from(updatedParentIds).map(parentId => ({
+          id: parentId,
+          status: parentStatusMap.get(parentId)
+        }));
+
+        // Trả về kết quả chi tiết hơn
+        return {
+          success: successCount > 0,
+          successCount,
+          errorCount,
+          totalProcessed: selectedCtspIds.length,
+          parentStatusUpdated: updatedParents.length > 0,
+          updatedParents: updatedParents,
+          message: `Đã chuyển ${successCount}/${selectedCtspIds.length} biến thể thành ${newStatus}`
+        };
+      } catch (error) {
+        console.error('Lỗi khi cập nhật hàng loạt trạng thái CTSP:', error);
+        return {
+          success: false,
+          message: error.message || 'Có lỗi xảy ra khi cập nhật trạng thái hàng loạt'
+        };
+      }
+    },
   },
 
   persist: {
