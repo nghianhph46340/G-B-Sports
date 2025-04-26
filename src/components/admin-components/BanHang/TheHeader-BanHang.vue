@@ -738,8 +738,8 @@ const addToBill = async (product) => {
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
             kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban,
-            tong_tien: item.don_gia,
+            gia_ban: item.don_gia,
+            tong_tien: item.don_gia * item.so_luong,
             so_luong_ton_goc: item.so_luong_ton || 0
         }));
         console.log("currentTab.items.value");
@@ -823,8 +823,8 @@ const updateItemTotal = async (item) => {
                 mau_sac: hd.ten_mau_sac || hd.mau_sac || null,
                 kich_thuoc: hd.gia_tri || null,
                 so_luong: hd.so_luong,
-                gia_ban: hd.gia_ban,
-                tong_tien: hd.don_gia,
+                gia_ban: hd.don_gia,
+                tong_tien: hd.don_gia * hd.so_luong,
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
@@ -870,8 +870,8 @@ const removeFromBill = async (productId) => {
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
             kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban,
-            tong_tien: item.don_gia,
+            gia_ban: item.don_gia,
+            tong_tien: item.don_gia * item.so_luong,
             so_luong_ton_goc: item.so_luong_ton || 0,
         }));
 
@@ -1495,8 +1495,8 @@ watch(() => activeKey.value, async (newKey) => {
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
             kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban,
-            tong_tien: item.don_gia,
+            gia_ban: item.don_gia,
+            tong_tien: item.don_gia * item.so_luong,
             so_luong_ton_goc: item.so_luong_ton || 0
         })) || [];
         console.log("store.getAllSPHDArr: ", currentTab.items.value);

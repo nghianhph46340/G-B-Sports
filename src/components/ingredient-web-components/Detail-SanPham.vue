@@ -439,6 +439,11 @@
             </div>
         </a-modal>
 
+        <!-- lềnh thêm mới -->
+        <div v-if="isFavoritedVariant" class="favorited-variant-badge">
+        Đây là sản phẩm yêu thích của bạn với màu sắc và kích thước này
+        </div>
+
         <!-- Modal thêm bình luận mới -->
         <a-modal v-model:open="addReviewVisible" :footer="null" :mask-closable="true" :width="600" centered
             class="add-review-modal">
@@ -546,40 +551,44 @@ const imagesByColor = ref(new Map());
 const allImages = ref([]);
 
 // Cập nhật hàm fetchProductDetail để tạo map hình ảnh theo màu
+// lềnh sửa hàm
 const fetchProductDetail = async (id) => {
-    try {
-        // Gọi API để lấy chi tiết sản phẩm từ store
-        await store.getCTSPBySanPhamFull(id);
+  try {
+    isFavoritedVariant.value = false; // Reset trạng thái
+    await store.getCTSPBySanPhamFull(id);
 
-        // Cập nhật dữ liệu chi tiết sản phẩm
-        if (store.cTSPBySanPhamFull && store.cTSPBySanPhamFull.length > 0) {
-            productDetails.value = store.cTSPBySanPhamFull;
+    if (store.cTSPBySanPhamFull && store.cTSPBySanPhamFull.length > 0) {
+      productDetails.value = store.cTSPBySanPhamFull;
+      selectedVariant.value = productDetails.value[0];
+      organizeImagesByColor();
+      updateProductFromVariant(selectedVariant.value);
+      initializeColorAndSizeOptions();
 
-            // Lấy chi tiết sản phẩm đầu tiên làm mặc định
-            selectedVariant.value = productDetails.value[0];
-
-            // Gộp tất cả hình ảnh và tổ chức theo màu sắc
-            organizeImagesByColor();
-
-            // Cập nhật thông tin sản phẩm từ variant đầu tiên
-            updateProductFromVariant(selectedVariant.value);
-
-            // Khởi tạo danh sách màu sắc và kích thước
-            initializeColorAndSizeOptions();
-
-            // Fetch reviews for this product
-            if (selectedVariant.value && selectedVariant.value.id_chi_tiet_san_pham) {
-                fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
-            }
-
-            console.log('Đã load chi tiết sản phẩm:', productDetails.value);
-        } else {
-            message.error('Không tìm thấy thông tin sản phẩm');
+      // Kiểm tra tham số variant
+      const route = useRoute();
+      const variantId = route.query.variant;
+      if (variantId) {
+        const variant = productDetails.value.find(v => v.id_chi_tiet_san_pham == variantId);
+        if (variant) {
+          selectedColor.value = variant.id_mau_sac;
+          selectedColorName.value = variant.ten_mau_sac;
+          selectedSize.value = variant.id_kich_thuoc;
+          selectedSizeName.value = variant.gia_tri;
+          selectedVariant.value = variant;
+          isFavoritedVariant.value = true;
         }
-    } catch (error) {
-        console.error('Lỗi khi lấy thông tin sản phẩm:', error);
-        message.error('Đã xảy ra lỗi khi tải thông tin sản phẩm');
+      }
+
+      if (selectedVariant.value && selectedVariant.value.id_chi_tiet_san_pham) {
+        fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
+      }
+    } else {
+      message.error('Không tìm thấy thông tin sản phẩm');
     }
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin sản phẩm:', error);
+    message.error('Đã xảy ra lỗi khi tải thông tin sản phẩm');
+  }
 };
 
 const cartItemCount = ref(0);
@@ -1019,6 +1028,13 @@ const increaseQuantity = () => {
     }
 };
 
+// lềnh thêm mới
+watch(selectedVariant, () => {
+  if (selectedVariant.value) {
+    checkWishlistStatus();
+  }
+});
+
 // Theo dõi thay đổi của ID sản phẩm
 watch(productId, (newId) => {
     if (newId) {
@@ -1032,6 +1048,8 @@ const showFullscreen = ref(false);
 const zoomActive = ref(false);
 const zoomPosition = ref({ x: 0, y: 0 });
 const zoomVisible = ref(false);
+// thêm dòng mới lềnh
+const isFavoritedVariant = ref(false);
 
 // Tính toán hình ảnh hiện tại
 const currentImage = computed(() => {
@@ -4249,5 +4267,15 @@ onMounted(() => {
     height: 40px;
     font-size: 16px;
     border-radius: 8px;
+}
+
+/* lềnh thêm mới */
+.favorited-variant-badge {
+  background-color: #e53935;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 </style>
