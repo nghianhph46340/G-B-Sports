@@ -131,12 +131,14 @@ const pageSize = ref(5);
 const valueTrangThaiDonHang = ref('Tất cả');
 const trangThaiDonHangOptions = ref([
     { label: 'Chờ xác nhận', value: 'Chờ xác nhận' },
-    { label: 'Đã cập nhật', value: 'Đã cập nhật' },
+    // { label: 'Đã cập nhật', value: 'Đã cập nhật' },
     { label: 'Đã xác nhận', value: 'Đã xác nhận' },
     { label: 'Chờ đóng gói', value: 'Chờ đóng gói' },
     { label: 'Đang giao', value: 'Đang giao' },
     { label: 'Hoàn thành', value: 'Hoàn thành' },
-    { label: 'Đã hủy', value: 'Đã hủy' }
+    { label: 'Đã hủy', value: 'Đã hủy' },
+    { label: 'Trả hàng', value: 'Trả hàng' }
+
 ]);
 const filterOption = (input, option) => {
     return option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
