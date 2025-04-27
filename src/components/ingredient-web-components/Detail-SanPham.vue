@@ -4,7 +4,7 @@
         <div class="breadcrumb-container">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="#">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="/home">Trang chủ</a></li>
                     <li class="breadcrumb-item"><a href="#">Sản phẩm</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Chi tiết sản phẩm</li>
                 </ol>
@@ -2386,7 +2386,7 @@ onMounted(() => {
 }
 
 .breadcrumb-item {
-    display: inline-block;
+    display: inline-block;  
     font-size: 14px;
 }
 
@@ -2397,7 +2397,7 @@ onMounted(() => {
 }
 
 .breadcrumb-item a {
-    color: #007bff;
+    color: #f80f0fe5;
     text-decoration: none;
 }
 

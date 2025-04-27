@@ -9,7 +9,7 @@
                     <!-- Hàng đầu tiên: 5 danh mục -->
                     <div class="col-6 col-md-4 col-lg">
                         <div class="category-item">
-                            <div class="category-content">
+                            <div class="category-content" @click.prevent="handleSidebarClick('Áo')" >
                                 <div class="category-image">
                                     <img src="../../images/danhMucSanPham/DanhMucAoNganTay.png" alt="Áo ngắn tay">
                                     <div class="category-overlay">
@@ -20,17 +20,16 @@
                                     </div>
                                 </div>
                                 <div class="category-name">
-                                    <span>Áo ngắn tay</span>
+                                    <span>Áo</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-6 col-md-4 col-lg">
                         <div class="category-item">
-                            <div class="category-content">
+                            <div class="category-content" @click.prevent="handleSidebarClick('Quần')">
                                 <div class="category-image">
-                                    <img src="../../images/danhMucSanPham/DanhMucAo.png" alt="Áo dài tay">
+                                    <img  src="../../images/danhMucSanPham/DanhMucQuan.png" alt="Quần dài">
                                     <div class="category-overlay">
                                         <div class="overlay-content">
                                             <i class="fas fa-eye"></i>
@@ -39,75 +38,14 @@
                                     </div>
                                 </div>
                                 <div class="category-name">
-                                    <span>Áo dài tay</span>
+                                    <span>Quần</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <div class="col-6 col-md-4 col-lg">
                         <div class="category-item">
-                            <div class="category-content">
-                                <div class="category-image">
-                                    <img src="../../images/danhMucSanPham/DanhMucQuan.png" alt="Quần dài">
-                                    <div class="category-overlay">
-                                        <div class="overlay-content">
-                                            <i class="fas fa-eye"></i>
-                                            <span>Xem ngay</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="category-name">
-                                    <span>Quần dài</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-6 col-md-4 col-lg">
-                        <div class="category-item">
-                            <div class="category-content">
-                                <div class="category-image">
-                                    <img src="../../images/danhMucSanPham/DanhMucQuanNgan.png" alt="Quần ngắn">
-                                    <div class="category-overlay">
-                                        <div class="overlay-content">
-                                            <i class="fas fa-eye"></i>
-                                            <span>Xem ngay</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="category-name">
-                                    <span>Quần ngắn</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-6 col-md-4 col-lg">
-                        <div class="category-item">
-                            <div class="category-content">
-                                <div class="category-image">
-                                    <img src="../../images/danhMucSanPham/DanhMucDoBoi.png" alt="Đồ bơi">
-                                    <div class="category-overlay">
-                                        <div class="overlay-content">
-                                            <i class="fas fa-eye"></i>
-                                            <span>Xem ngay</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="category-name">
-                                    <span>Đồ bơi</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hàng thứ hai: 2 danh mục căn giữa -->
-                <div class="row g-3 mt-2 justify-content-center">
-                    <div class="col-6 col-md-4 col-lg-2">
-                        <div class="category-item">
-                            <div class="category-content">
+                            <div class="category-content" @click.prevent="handleSidebarClick('Giày')">
                                 <div class="category-image">
                                     <img src="../../images/danhMucSanPham/DanhMucGiay.png" alt="Giày thể thao">
                                     <div class="category-overlay">
@@ -118,17 +56,16 @@
                                     </div>
                                 </div>
                                 <div class="category-name">
-                                    <span>Giày thể thao</span>
+                                    <span>Giày</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="col-6 col-md-4 col-lg-2">
+                    <div class="col-6 col-md-4 col-lg">
                         <div class="category-item">
-                            <div class="category-content">
+                            <div class="category-content" @click.prevent="handleSidebarClick('Tất')" >
                                 <div class="category-image">
-                                    <img src="../../images/danhMucSanPham/DanhMucAoNganTay.png" alt="Phụ kiện thể thao">
+                                    <img src="../../images/danhMucSanPham/DanhMucTat.png" alt="Giày thể thao">
                                     <div class="category-overlay">
                                         <div class="overlay-content">
                                             <i class="fas fa-eye"></i>
@@ -137,7 +74,7 @@
                                     </div>
                                 </div>
                                 <div class="category-name">
-                                    <span>Phụ kiện</span>
+                                    <span>Tất</span>
                                 </div>
                             </div>
                         </div>
@@ -152,10 +89,21 @@
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ref, onMounted } from 'vue';
 import { useIntersectionObserver } from '@vueuse/core';
-
+import { useGbStore } from '../../stores/gbStore';
+import { useRouter } from 'vue-router';
+const store = useGbStore();
+const router = useRouter();
+const isLoading = ref(false);
 const sectionRef = ref(null);
 const isVisible = ref(false);
-
+// Truyền 1 hoặc nhiều keyword (dạng mảng hoặc chuỗi)
+async function handleSidebarClick(keywords) {
+  console.log('Click danh mục:', keywords);
+  isLoading.value = true;
+  await store.getSanPhamByTenSP(keywords);
+  isLoading.value = false;
+  router.push({ name: 'danhSachSanPham', query: { filter: keywords } });
+}
 // Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
 onMounted(() => {
     const { stop } = useIntersectionObserver(

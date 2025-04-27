@@ -454,6 +454,30 @@ const updateKichThuoc = async (kichThuocData) => {
     console.log(error)
   }
 }
+const getSanPhamByTenSP = async (tenSanPham) => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'getSanPhamByTenSP?tenSanPham=' + tenSanPham)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm',
+    }
+  }
+}
+const getSanPhamByTenDM  = async (tenDanhMuc) => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'getSanPhamByTenDM?tenDanhMuc=' + tenDanhMuc)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm',
+    }
+  }
+}
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -497,5 +521,7 @@ export const sanPhamService = {
   updateMauSac,
   updateThuongHieu,
   updateDanhMuc,
-  updateKichThuoc
+  updateKichThuoc,
+  getSanPhamByTenSP,
+  getSanPhamByTenDM
 }

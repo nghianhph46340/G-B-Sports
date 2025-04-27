@@ -2,7 +2,7 @@
     <div class="san-pham-ban-chay" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container p-0">
             <div class="section-header">
-                <h4 class="section-title">Sản phẩm bán chạy</h4>
+                <h4 class="section-title">Sản phẩm bán HOT nhất</h4>
                 <div class="section-divider"></div>
             </div>
 
@@ -26,11 +26,13 @@
                                     </div>
                                     <div class="product-overlay" :class="{ 'active': activeProduct === product.id }">
                                         <div class="overlay-buttons">
-                                            <button class="overlay-btn view-btn">
+                                            <router-link
+                                                :to="{ name: 'sanPhamDetail-BanHang', params: { id: product.id } }"
+                                                class="overlay-btn view-btn">
                                                 <eye-outlined />
                                                 <span>Xem</span>
-                                            </button>
-                                            <button class="overlay-btn cart-btn">
+                                            </router-link>
+                                            <button class="overlay-btn cart-btn" @click="showProductDetail(product)">
                                                 <shopping-cart-outlined />
                                                 <span>Thêm</span>
                                             </button>
@@ -61,27 +63,132 @@
             </div>
         </div>
     </div>
+    
+    <!-- Product Detail Modal -->
+    <a-modal v-model:visible="modalVisible" :title="selectedProduct?.name" width="800px" :footer="null"
+        @cancel="handleModalCancel" :zIndex="9999" :maskStyle="{ zIndex: 9998 }" :wrapStyle="{ zIndex: 9999 }" centered
+        :style="{ top: '20px' }">
+        <div class="product-detail-modal">
+            <div class="product-detail-content">
+                <div class="product-images">
+                    <div class="main-image">
+                        <img :src="selectedProduct?.image" :alt="selectedProduct?.name">
+                    </div>
+                    <div class="thumbnail-images" v-if="selectedProduct?.variants">
+                        <img v-for="(variant, index) in selectedProduct.variants" :key="index" :src="variant.image"
+                            :alt="variant.name" @click="selectedProduct.image = variant.image">
+                    </div>
+                </div>
+                <div class="product-info-detail">
+                    <div class="price-section">
+                        <span class="current-price">{{ selectedProduct?.price }}</span>
+                        <span class="old-price" v-if="selectedProduct?.oldPrice">{{ selectedProduct?.oldPrice }}</span>
+                        <span class="discount-badge" v-if="selectedProduct?.discount">{{ selectedProduct?.discount
+                        }}</span>
+                    </div>
+                    <div class="brand-section">
+                        <span class="brand-label">Thương hiệu:</span>
+                        <span class="brand-value">{{ selectedProduct?.brand }}</span>
+                    </div>
+                    <div class="rating-section">
+                        <div class="rating">
+                            <star-filled />
+                            <span>{{ selectedProduct?.rating }} ({{ selectedProduct?.reviews }})</span>
+                        </div>
+                    </div>
+                    <div class="description-section">
+                        <h4>Mô tả sản phẩm</h4>
+                        <p>{{ selectedProduct?.description || 'Chưa có mô tả chi tiết' }}</p>
+                    </div>
+                    <div class="variants-section">
+                        <div class="color-variants">
+                            <h4>Màu sắc</h4>
+                            <div class="color-options">
+                                <div v-for="(color, index) in selectedProduct?.colors" :key="index" class="color-option"
+                                    :class="{ 'selected': selectedColor === color }" :style="{ backgroundColor: color }"
+                                    @click="selectedColor = color">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="size-variants">
+                            <h4>Kích thước</h4>
+                            <div class="size-options">
+                                <div v-for="(size, index) in selectedProduct?.sizes" :key="index" class="size-option"
+                                    :class="{ 'selected': selectedSize === size }" @click="selectedSize = size">
+                                    {{ size }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quantity-section">
+                        <h4>Số lượng</h4>
+                        <div class="quantity-controls">
+                            <a-button @click="decreaseQuantity" :disabled="quantity <= 1">
+                                <minus-outlined />
+                            </a-button>
+                            <span class="quantity-value">{{ quantity }}</span>
+                            <a-button @click="increaseQuantity" :disabled="quantity >= selectedProduct?.stock">
+                                <plus-outlined />
+                            </a-button>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <a-button type="primary" size="large" @click="addToCart" :disabled="!isValidSelection">
+                            Thêm vào giỏ hàng
+                        </a-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </a-modal>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useIntersectionObserver } from '@vueuse/core';
 import {
     EyeOutlined,
     ShoppingCartOutlined,
     StarFilled,
     LeftOutlined,
-    RightOutlined
+    RightOutlined,
+    MinusOutlined,
+    PlusOutlined
 } from '@ant-design/icons-vue';
-import { useIntersectionObserver } from '@vueuse/core';
+import { useGbStore } from '@/stores/gbStore';
+import { message } from 'ant-design-vue';
 
 // Tham chiếu đến carousel
+const store = useGbStore();
 const carousel = ref(null);
 const sectionRef = ref(null);
-const showArrows = ref(false);
 const isVisible = ref(false);
+const showArrows = ref(false);
 
 // Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
-onMounted(() => {
+onMounted(async () => {
+    await store.getSanPhamBySP('áo,quần');
+    // Chuyển đổi dữ liệu từ API sang định dạng phù hợp với template
+    if (store.listSanPhamBanHang && store.listSanPhamBanHang.length > 0) {
+        bestSellingProducts.value = store.listSanPhamBanHang.map(item => ({
+            id: item.id_san_pham || item.id,
+            image: item.hinh_anh || 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
+            price: `${item.gia_khuyen_mai_cao_nhat?.toLocaleString()}₫` || '0₫',
+            oldPrice: item.gia_max > item.gia_khuyen_mai_cao_nhat ? `${item.gia_max.toLocaleString()}₫` : null,
+            discountPercent: item.gia_max && item.gia_khuyen_mai_cao_nhat ?
+                Math.round(((item.gia_max - item.gia_khuyen_mai_cao_nhat) / item.gia_max) * 100) : 0,
+            discount: item.gia_max && item.gia_khuyen_mai_cao_nhat ?
+                `-${Math.round(((item.gia_max - item.gia_khuyen_mai_cao_nhat) / item.gia_max) * 100)}%` : null,
+            name: item.ten_san_pham || 'Sản phẩm không tên',
+            brand: item.ten_thuong_hieu || 'Chưa có thương hiệu',
+            rating: item.danh_gia || 0,
+            reviews: item.so_luong_danh_gia || 0
+        }));
+        console.log('Dữ liệu quần đã chuyển đổi:', bestSellingProducts.value);
+    } else {
+        console.log('Không có dữ liệu quần từ API');
+    }
+
     const { stop } = useIntersectionObserver(
         sectionRef,
         ([{ isIntersecting }]) => {
@@ -108,104 +215,7 @@ const prevSlide = () => {
 };
 
 // Sản phẩm mẫu
-const bestSellingProducts = ref([
-    {
-        id: 1,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '999.000₫',
-        oldPrice: '2.000.000₫',
-        discount: '-50%',
-        discountPercent: 50,
-        name: 'Áo khoác nỉ leo núi nam giữ ấm - MH100 xanh lá',
-        brand: 'ADIDAS',
-        rating: '4.9',
-        reviews: '1.2k'
-    },
-    {
-        id: 2,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '850.000₫',
-        oldPrice: '1.700.000₫',
-        discount: '-50%',
-        discountPercent: 50,
-        name: 'Giày chạy bộ nam Ultra Boost 21',
-        brand: 'NIKE',
-        rating: '4.8',
-        reviews: '956'
-    },
-    {
-        id: 3,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '450.000₫',
-        oldPrice: '600.000₫',
-        discount: '-25%',
-        discountPercent: 25,
-        name: 'Quần short thể thao nam dáng regular',
-        brand: 'PUMA',
-        rating: '4.7',
-        reviews: '723'
-    },
-    {
-        id: 4,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '399.000₫',
-        oldPrice: '599.000₫',
-        discount: '-33%',
-        discountPercent: 33,
-        name: 'Áo thun thể thao nữ thoáng khí',
-        brand: 'UNDER ARMOUR',
-        rating: '4.6',
-        reviews: '512'
-    },
-    {
-        id: 5,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '1.200.000₫',
-        oldPrice: '1.500.000₫',
-        discount: '-20%',
-        discountPercent: 20,
-        name: 'Giày bóng đá sân cỏ nhân tạo Predator',
-        brand: 'ADIDAS',
-        rating: '4.9',
-        reviews: '1.5k'
-    },
-    {
-        id: 6,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '750.000₫',
-        oldPrice: '1.500.000₫',
-        discount: '-50%',
-        discountPercent: 50,
-        name: 'Áo khoác gió chống nước unisex',
-        brand: 'THE NORTH FACE',
-        rating: '4.8',
-        reviews: '876'
-    },
-    {
-        id: 7,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '299.000₫',
-        oldPrice: '399.000₫',
-        discount: '-25%',
-        discountPercent: 25,
-        name: 'Áo thun thể thao nam thoáng khí',
-        brand: 'NIKE',
-        rating: '4.7',
-        reviews: '632'
-    },
-    {
-        id: 8,
-        image: 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg',
-        price: '550.000₫',
-        oldPrice: '750.000₫',
-        discount: '-27%',
-        discountPercent: 27,
-        name: 'Quần legging tập gym nữ co giãn cao cấp',
-        brand: 'UNDER ARMOUR',
-        rating: '4.9',
-        reviews: '1.1k'
-    }
-]);
+const bestSellingProducts = ref([]);
 
 // Chia sản phẩm thành các slide, mỗi slide 5 sản phẩm
 // Nếu slide cuối không đủ 5 sản phẩm, lấy thêm từ đầu danh sách
@@ -221,7 +231,7 @@ const productSlides = computed(() => {
         // Lấy thêm sản phẩm từ đầu danh sách
         const extraProducts = products.slice(0, extraNeeded).map(product => ({
             ...product,
-            id: product.id + 1000 // Thêm id mới để tránh trùng lặp
+            id: product.id // Thêm id mới để tránh trùng lặp
         }));
         products.push(...extraProducts);
     }
@@ -236,6 +246,71 @@ const productSlides = computed(() => {
 
 const activeProduct = ref(null);
 
+// Modal state
+const modalVisible = ref(false);
+const selectedProduct = ref(null);
+const selectedColor = ref(null);
+const selectedSize = ref(null);
+const quantity = ref(1);
+
+// Methods
+const showProductDetail = (product) => {
+    selectedProduct.value = {
+        ...product,
+        colors: ['#000000', '#FF0000', '#0000FF'], // Màu sắc mẫu
+        sizes: ['S', 'M', 'L', 'XL', 'XXL'], // Kích thước mẫu
+        stock: 10, // Số lượng tồn kho mẫu
+        description: 'Quần thể thao chất liệu thun co giãn, thoáng khí, thấm hút mồ hôi tốt. Thiết kế đơn giản, dễ phối đồ, phù hợp cho các hoạt động thể thao và mặc hàng ngày.'
+    };
+    modalVisible.value = true;
+};
+
+const handleModalCancel = () => {
+    modalVisible.value = false;
+    selectedProduct.value = null;
+    selectedColor.value = null;
+    selectedSize.value = null;
+    quantity.value = 1;
+};
+
+const decreaseQuantity = () => {
+    if (quantity.value > 1) {
+        quantity.value--;
+    }
+};
+
+const increaseQuantity = () => {
+    if (quantity.value < selectedProduct.value?.stock) {
+        quantity.value++;
+    }
+};
+
+const isValidSelection = computed(() => {
+    return selectedColor.value && selectedSize.value;
+});
+
+const addToCart = () => {
+    if (!isValidSelection.value) {
+        message.warning('Vui lòng chọn màu sắc và kích thước');
+        return;
+    }
+
+    const cartItem = {
+        id: selectedProduct.value.id,
+        ten_san_pham: selectedProduct.value.name,
+        hinh_anh: selectedProduct.value.image,
+        gia: parseInt(selectedProduct.value.price.replace(/[^\d]/g, '')),
+        so_luong: quantity.value,
+        so_luong_ton: selectedProduct.value.stock,
+        ten_mau_sac: selectedColor.value,
+        ten_kich_thuoc: selectedSize.value,
+        selected: true
+    };
+
+    store.addToCart(cartItem);
+    message.success('Đã thêm sản phẩm vào giỏ hàng');
+    handleModalCancel();
+};
 </script>
 
 <style scoped>

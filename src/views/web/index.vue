@@ -5,7 +5,6 @@
         <BoSuuTapHot />
         <DanhMucSanPham />
         <SanPhamBanChay />
-        <MonTheThaoPhoBien />
         <SanPhamMoiChoTatCa />
         <AoTheThaoBanChay />
         <QuanTheThaoBanChay />
@@ -18,7 +17,6 @@
 <script>
 import TheBaner from '@/components/TheBaner.vue';
 import SanPhamBanChay from '@/components/ingredient-web-components/SanPhamBanChay.vue';
-import MonTheThaoPhoBien from '@/components/ingredient-web-components/MonTheThaoPhoBien.vue';
 import BoSuuTapHot from '@/components/ingredient-web-components/BoSuuTapHot.vue';
 import SanPhamMoiChoTatCa from '@/components/ingredient-web-components/SanPhamMoiChoTatCa.vue';
 import AoTheThaoBanChay from '@/components/ingredient-web-components/AoTheThaoBanChay.vue';
@@ -36,7 +34,6 @@ export default {
         QuanTheThaoBanChay,
         GiayVaPhuKienBanChay,
         SanPhamBanChay,
-        MonTheThaoPhoBien,
         BoSuuTapHot,
         SanPhamMoiChoTatCa,
         DanhMucSanPham,
