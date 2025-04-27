@@ -836,26 +836,26 @@ const validateExcelData = (data) => {
         // Tạo cấu trúc dữ liệu giống như backend trả về để dễ xử lý
         return {
             sanPham: {
-                ten_san_pham: (row['Tên sản phẩm'] || '').trim(),
+                ten_san_pham: (row['Tên sản phẩm'] || '').toString().trim(),
                 danhMuc: {
-                    ten_danh_muc: (row['Danh mục'] || '').trim()
+                    ten_danh_muc: (row['Danh mục'] || '').toString().trim()
                 },
                 thuongHieu: {
-                    ten_thuong_hieu: (row['Thương hiệu'] || '').trim()
+                    ten_thuong_hieu: (row['Thương hiệu'] || '').toString().trim()
                 },
                 chatLieu: {
-                    ten_chat_lieu: (row['Chất liệu'] || '').trim()
+                    ten_chat_lieu: (row['Chất liệu'] || '').toString().trim()
                 }
             },
             gia_ban: parseFloat(row['Giá bán']) || 0,
             so_luong: parseInt(row['Số lượng']) || 0,
             mauSac: {
-                ma_mau_sac: (row['Màu sắc'] || '').trim(),
-                ten_mau_sac: (row['Màu sắc'] || '').trim()
+                ma_mau_sac: (row['Màu sắc'] || '').toString().trim(),
+                ten_mau_sac: (row['Màu sắc'] || '').toString().trim()
             },
             kichThuoc: {
-                gia_tri: (row['Giá trị kích thước'] || '').trim().split(' ')[0] || '',
-                don_vi: (row['Đơn vị'] || '').trim()
+                gia_tri: String(row['Giá trị kích thước'] || '').trim().split(' ')[0] || '',
+                don_vi: (row['Đơn vị'] || '').toString().trim()
             },
             // trang_thai: row['Trạng thái'] === 'Hoạt động' || row['Trạng thái'] === true
         };
