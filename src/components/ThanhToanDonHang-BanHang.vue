@@ -219,7 +219,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -351,6 +351,7 @@ import {
 } from '@ant-design/icons-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { banHangOnlineService } from '@/services/banHangOnlineService';
+import { banHangService } from '@/services/banHangService';
 
 const router = useRouter();
 const route = useRoute();
@@ -490,20 +491,31 @@ const discount = computed(() => {
     return Number(calculateDiscount() || 0);
 });
 
-const shippingFee = computed(() => {
-    // Base shipping fee - free shipping for orders over 500,000 VND
-    const subTotal = Number(subtotal.value || 0);
-    let fee = subTotal > 500000 ? 0 : 0;
+const shippingFee = ref(0);
 
-    // Apply shipping vouchers
-    const shippingVoucher = appliedCoupons.value.find(c => c.loai === 'shipping');
-    if (shippingVoucher) {
-        const voucherValue = Number(shippingVoucher.gia_tri || 0);
-        fee = Math.max(0, fee - voucherValue);
+const calculateShippingFee = async () => {
+    try {
+        
+        console.log("khách hàng hahahahaha", customer.value)
+        const kh = customer.value
+
+        const result = await banHangService.tinhPhiShip(
+            "Hà Nội", // pickProvince
+            "Nam Từ Liêm", // pickDistrict
+            kh.tinh_thanh_pho,
+            kh.quan_huyen,
+            500,
+            subtotal.value
+        );
+
+        console.log("Phi ship", result.value);
+
+        shippingFee.value = result.fee;
+    } catch (error) {
+        console.error('Lỗi khi tính phí vận chuyển:', error);
+        shippingFee.value = 0; // Gán giá trị mặc định nếu có lỗi
     }
-
-    return fee;
-});
+};
 
 const grandTotal = computed(() => {
     const subTotal = Number(subtotal.value || 0);
@@ -1097,6 +1109,8 @@ onMounted(async () => {
         }
     }
 
+    calculateShippingFee();
+
     // Fetch initial data
     await Promise.all([
         fetchCustomerData(),
@@ -1266,6 +1280,16 @@ watch(selectedAddressId, (newIndex) => {
         }
     }
 });
+
+
+watch(
+    customer,
+    () => {
+        calculateShippingFee();
+        console.log("Có vào tính phí ship");
+    },
+    { deep: true } // Theo dõi sâu để phát hiện thay đổi trong các thuộc tính con
+);
 
 // Address deletion
 const confirmDeleteAddress = (address) => {

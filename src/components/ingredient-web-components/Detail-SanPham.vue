@@ -238,7 +238,8 @@
                             </a-button>
                             <p class="login-to-review" v-else>
                                 <a-alert type="info" show-icon>
-                                    <template #message>Vui lòng <a @click="navigateToLogin">đăng nhập</a> để viết đánh giá</template>
+                                    <template #message>Vui lòng <a @click="navigateToLogin">đăng nhập</a> để viết đánh
+                                        giá</template>
                                 </a-alert>
                             </p>
                         </div>
@@ -257,7 +258,8 @@
                                 <div class="review-actions">
                                     <div class="review-rating">
                                         <star-filled v-for="i in review.danh_gia" :key="'review-star-' + i" />
-                                        <star-outlined v-for="i in (5 - review.danh_gia)" :key="'review-empty-star-' + i" />
+                                        <star-outlined v-for="i in (5 - review.danh_gia)"
+                                            :key="'review-empty-star-' + i" />
                                     </div>
                                     <div class="review-buttons" v-if="isOwnReview(review)">
                                         <a-button type="text" size="small" @click="editReview(review)">
@@ -418,55 +420,49 @@
         </a-modal>
 
         <!-- Modal chỉnh sửa đánh giá -->
-        <a-modal
-          v-model:open="editReviewVisible"
-          :footer="null"
-          :mask-closable="true"
-          :width="600"
-          centered
-          class="edit-review-modal"
-        >
-          <div class="edit-review">
-            <h3>Chỉnh sửa đánh giá</h3>
-            <a-form layout="vertical">
-              <a-form-item label="Đánh giá">
-                <a-rate v-model:value="editReviewForm.rating" />
-              </a-form-item>
-              <a-form-item label="Nội dung">
-                <a-textarea v-model:value="editReviewForm.content" rows="4" />
-              </a-form-item>
-              <div class="edit-review-actions">
-                <a-button @click="cancelEditReview">Hủy</a-button>
-                <a-button type="primary" @click="saveEditedReview">Lưu</a-button>
-              </div>
-            </a-form>
-          </div>
+        <a-modal v-model:open="editReviewVisible" :footer="null" :mask-closable="true" :width="600" centered
+            class="edit-review-modal">
+            <div class="edit-review">
+                <h3>Chỉnh sửa đánh giá</h3>
+                <a-form layout="vertical">
+                    <a-form-item label="Đánh giá">
+                        <a-rate v-model:value="editReviewForm.rating" />
+                    </a-form-item>
+                    <a-form-item label="Nội dung">
+                        <a-textarea v-model:value="editReviewForm.content" rows="4" />
+                    </a-form-item>
+                    <div class="edit-review-actions">
+                        <a-button @click="cancelEditReview">Hủy</a-button>
+                        <a-button type="primary" @click="saveEditedReview">Lưu</a-button>
+                    </div>
+                </a-form>
+            </div>
         </a-modal>
 
+        <!-- lềnh thêm mới -->
+        <div v-if="isFavoritedVariant" class="favorited-variant-badge">
+        Đây là sản phẩm yêu thích của bạn với màu sắc và kích thước này
+        </div>
+
         <!-- Modal thêm bình luận mới -->
-        <a-modal
-          v-model:open="addReviewVisible"
-          :footer="null"
-          :mask-closable="true"
-          :width="600"
-          centered
-          class="add-review-modal"
-        >
-          <div class="add-review">
-            <h3>Thêm bình luận mới</h3>
-            <a-form layout="vertical">
-              <a-form-item label="Đánh giá sao">
-                <a-rate v-model:value="newReviewForm.rating" />
-              </a-form-item>
-              <a-form-item label="Nội dung bình luận">
-                <a-textarea v-model:value="newReviewForm.content" rows="4" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..." />
-              </a-form-item>
-              <div class="add-review-actions">
-                <a-button @click="cancelAddReview">Hủy</a-button>
-                <a-button type="primary" @click="submitNewReview">Gửi bình luận</a-button>
-              </div>
-            </a-form>
-          </div>
+        <a-modal v-model:open="addReviewVisible" :footer="null" :mask-closable="true" :width="600" centered
+            class="add-review-modal">
+            <div class="add-review">
+                <h3>Thêm bình luận mới</h3>
+                <a-form layout="vertical">
+                    <a-form-item label="Đánh giá sao">
+                        <a-rate v-model:value="newReviewForm.rating" />
+                    </a-form-item>
+                    <a-form-item label="Nội dung bình luận">
+                        <a-textarea v-model:value="newReviewForm.content" rows="4"
+                            placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..." />
+                    </a-form-item>
+                    <div class="add-review-actions">
+                        <a-button @click="cancelAddReview">Hủy</a-button>
+                        <a-button type="primary" @click="submitNewReview">Gửi bình luận</a-button>
+                    </div>
+                </a-form>
+            </div>
         </a-modal>
         <a-modal
           v-model:visible="showAddedToCartModal"
@@ -555,40 +551,44 @@ const imagesByColor = ref(new Map());
 const allImages = ref([]);
 
 // Cập nhật hàm fetchProductDetail để tạo map hình ảnh theo màu
+// lềnh sửa hàm
 const fetchProductDetail = async (id) => {
-    try {
-        // Gọi API để lấy chi tiết sản phẩm từ store
-        await store.getCTSPBySanPhamFull(id);
+  try {
+    isFavoritedVariant.value = false; // Reset trạng thái
+    await store.getCTSPBySanPhamFull(id);
 
-        // Cập nhật dữ liệu chi tiết sản phẩm
-        if (store.cTSPBySanPhamFull && store.cTSPBySanPhamFull.length > 0) {
-            productDetails.value = store.cTSPBySanPhamFull;
+    if (store.cTSPBySanPhamFull && store.cTSPBySanPhamFull.length > 0) {
+      productDetails.value = store.cTSPBySanPhamFull;
+      selectedVariant.value = productDetails.value[0];
+      organizeImagesByColor();
+      updateProductFromVariant(selectedVariant.value);
+      initializeColorAndSizeOptions();
 
-            // Lấy chi tiết sản phẩm đầu tiên làm mặc định
-            selectedVariant.value = productDetails.value[0];
-
-            // Gộp tất cả hình ảnh và tổ chức theo màu sắc
-            organizeImagesByColor();
-
-            // Cập nhật thông tin sản phẩm từ variant đầu tiên
-            updateProductFromVariant(selectedVariant.value);
-
-            // Khởi tạo danh sách màu sắc và kích thước
-            initializeColorAndSizeOptions();
-
-            // Fetch reviews for this product
-            if (selectedVariant.value && selectedVariant.value.id_chi_tiet_san_pham) {
-                fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
-            }
-
-            console.log('Đã load chi tiết sản phẩm:', productDetails.value);
-        } else {
-            message.error('Không tìm thấy thông tin sản phẩm');
+      // Kiểm tra tham số variant
+      const route = useRoute();
+      const variantId = route.query.variant;
+      if (variantId) {
+        const variant = productDetails.value.find(v => v.id_chi_tiet_san_pham == variantId);
+        if (variant) {
+          selectedColor.value = variant.id_mau_sac;
+          selectedColorName.value = variant.ten_mau_sac;
+          selectedSize.value = variant.id_kich_thuoc;
+          selectedSizeName.value = variant.gia_tri;
+          selectedVariant.value = variant;
+          isFavoritedVariant.value = true;
         }
-    } catch (error) {
-        console.error('Lỗi khi lấy thông tin sản phẩm:', error);
-        message.error('Đã xảy ra lỗi khi tải thông tin sản phẩm');
+      }
+
+      if (selectedVariant.value && selectedVariant.value.id_chi_tiet_san_pham) {
+        fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
+      }
+    } else {
+      message.error('Không tìm thấy thông tin sản phẩm');
     }
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin sản phẩm:', error);
+    message.error('Đã xảy ra lỗi khi tải thông tin sản phẩm');
+  }
 };
 
 const cartItemCount = ref(0);
@@ -1028,6 +1028,13 @@ const increaseQuantity = () => {
     }
 };
 
+// lềnh thêm mới
+watch(selectedVariant, () => {
+  if (selectedVariant.value) {
+    checkWishlistStatus();
+  }
+});
+
 // Theo dõi thay đổi của ID sản phẩm
 watch(productId, (newId) => {
     if (newId) {
@@ -1041,6 +1048,8 @@ const showFullscreen = ref(false);
 const zoomActive = ref(false);
 const zoomPosition = ref({ x: 0, y: 0 });
 const zoomVisible = ref(false);
+// thêm dòng mới lềnh
+const isFavoritedVariant = ref(false);
 
 // Tính toán hình ảnh hiện tại
 const currentImage = computed(() => {
@@ -1843,14 +1852,14 @@ const viewCart = () => {
 
 // Thêm phương thức tăng số lượt yêu thích
 const increaseFavoriteCount = (isAdded, newCount) => {
-  // Update the product's favorite count to the new value from the API
-  if (newCount !== undefined) {
-    if (!product.value.so_luot_yeu_thich) {
-      product.value.so_luot_yeu_thich = 0;
+    // Update the product's favorite count to the new value from the API
+    if (newCount !== undefined) {
+        if (!product.value.so_luot_yeu_thich) {
+            product.value.so_luot_yeu_thich = 0;
+        }
+        product.value.so_luot_yeu_thich = newCount;
+        console.log('Updated product favorite count to:', newCount);
     }
-    product.value.so_luot_yeu_thich = newCount;
-    console.log('Updated product favorite count to:', newCount);
-  }
 };
 
 // Thêm phương thức để chuyển đến trang chi tiết sản phẩm
@@ -2136,11 +2145,29 @@ const submitNewReview = async () => {
         const hasReviewed = checkIfUserAlreadyReviewed();
         console.log("Đã bình luận:", hasReviewed);
 
+        const canReview = await reviewService.checkCanReviewProduct(
+            store.userDetails.idKhachHang,
+            selectedVariant.value.id_chi_tiet_san_pham
+        )
+
         if (hasReviewed) {
             const antd = await import('ant-design-vue');
             antd.Modal.error({
                 title: 'Không thể bình luận',
                 content: 'Bạn đã bình luận sản phẩm này rồi. Mỗi người dùng chỉ có thể bình luận một lần.',
+                okText: 'Đã hiểu',
+                centered: true
+            });
+            addReviewVisible.value = false;
+            return;
+        }
+
+        // Kiểm tra xem người dùng có thể bình luận hay không
+        if (!canReview) {
+            const antd = await import('ant-design-vue');
+            antd.Modal.error({
+                title: 'Không thể bình luận',
+                content: 'Bạn không thể bình luận sản phẩm này. Vì bạn chưa mua sản phẩm này hoặc đơn hàng chưa giao thành công.',
                 okText: 'Đã hiểu',
                 centered: true
             });
@@ -4139,7 +4166,8 @@ onMounted(() => {
 
 :deep(.ant-rate) {
     font-size: 26px;
-    z-index: 1001; /* Tăng z-index để đảm bảo có thể chọn được */
+    z-index: 1001;
+    /* Tăng z-index để đảm bảo có thể chọn được */
     position: relative;
 }
 
@@ -4211,7 +4239,7 @@ onMounted(() => {
 :deep(.custom-warning-modal .ant-modal-content) {
     padding: 30px 20px;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 :deep(.custom-warning-modal .ant-modal-confirm-body-wrapper) {
@@ -4239,5 +4267,15 @@ onMounted(() => {
     height: 40px;
     font-size: 16px;
     border-radius: 8px;
+}
+
+/* lềnh thêm mới */
+.favorited-variant-badge {
+  background-color: #e53935;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 </style>

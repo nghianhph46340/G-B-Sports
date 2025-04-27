@@ -44,6 +44,17 @@ const getFavoriteCount = async (idChiTietSanPham) => {
   }
 }
 
+// Lấy số lượng sản phẩm yêu thích của một khách hàng
+const getCustomerFavoritesCount = async (idKhachHang) => {
+  try {
+    const response = await axiosInstance.get(`/api/favorites/customer-count?idKhachHang=${idKhachHang}`)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy số lượng sản phẩm yêu thích của khách hàng:', error)
+    throw error
+  }
+}
+
 // Đồng bộ danh sách yêu thích từ localStorage lên server
 const syncFavoritesToServer = async (idKhachHang) => {
   try {
@@ -66,11 +77,24 @@ const syncFavoritesToServer = async (idKhachHang) => {
   }
 }
 
+// Lấy danh sách ID sản phẩm yêu thích của một khách hàng
+const getFavoriteProductIds = async (idKhachHang) => {
+  try {
+    const response = await axiosInstance.get(`/api/favorites/product-ids?idKhachHang=${idKhachHang}`)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách ID sản phẩm yêu thích:', error)
+    return []
+  }
+}
+
 // Export các functions
 export const favoriteService = {
   addToFavorite,
   removeFromFavorite,
   checkFavoriteStatus,
   getFavoriteCount,
+  getCustomerFavoritesCount,
+  getFavoriteProductIds,
   syncFavoritesToServer
 }

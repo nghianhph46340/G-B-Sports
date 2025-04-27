@@ -37,6 +37,11 @@
                     <AccountBookOutlined />
                     <span>Hóa đơn</span>
                 </a-menu-item>
+                
+                <a-menu-item key="9" @click="changeRoute('/admin/traHang');">
+                    <AccountBookOutlined />
+                    <span>Trả hàng tại quầy</span>
+                </a-menu-item>
                 <a-sub-menu v-if="store.id_roles !== 3" key="sub2">
                     <template #title>
                         <span>

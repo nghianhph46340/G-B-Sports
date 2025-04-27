@@ -71,6 +71,15 @@ const getCTHD = async (maHoaDon) => {
         return { error: true };
     }
 };
+const getCTTH = async (maHoaDon) => {
+    try {
+        const { data } = await axiosInstance.get(qlhd + `ctth?id=${maHoaDon}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API lấy chi tiết hóa đơn:', error);
+        return { error: true };
+    }
+};
 // Thay đổi trạng thái hóa đơn
 const changeTrangThai = async (maHoaDon, newTrangThai, nhanVienDoi, noiDungDoi) => {
     try {
@@ -199,6 +208,50 @@ const updateHinhThucTTHoaDon = async (idHD, hinhThucThanhToan) => {
         return { error: true };
     }
 };
+// === THÊM HÀM MỚI (KHÔNG SỬA HÀM CŨ) ===
+// Lấy chi tiết hóa đơn và thông tin trả hàng
+const getHoaDonDetails = async (maHoaDon) => {
+    try {
+      const { data } = await axiosInstance.get(qlhd + `${maHoaDon}/chi-tiet-tra-hang`);
+  
+      // Nếu backend trả về `thanh_cong: false` thì ném lỗi để xử lý nhất quán
+      if (!data.thanh_cong) {
+        throw new Error(data.thong_bao || 'Không tìm thấy đơn hàng');
+      }
+  
+      return data;
+    } catch (error) {
+      console.error('Lỗi API lấy chi tiết hóa đơn và trả hàng:', error);
+  
+      // Ưu tiên lấy message từ backend
+      const thongBao = error.response?.data?.thong_bao || error.message || 'Lỗi không xác định';
+      throw new Error(thongBao);  // để đồng nhất với catch phía trên
+    }
+  };
+  
+
+// Xử lý trả hàng
+const processReturn = async (returnData) => {
+    try {
+        const payload = {
+            ma_hoa_don: returnData.ma_hoa_don,
+            danh_sach_san_pham: returnData.products.map(p => ({
+                id_chi_tiet_san_pham: p.id_chi_tiet_san_pham,
+                so_luong: p.so_luong,
+                so_tien_hoan: p.refund_amount
+            })),
+            ly_do: returnData.reason,
+            ghi_chu: returnData.note,
+            nhan_vien: returnData.staff,
+            tong_tien_hoan: returnData.total_refunded
+        };
+        const { data } = await axiosInstance.post(qlhd + 'tra-hang', payload);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API xử lý trả hàng:', error);
+        return { error: true, message: error.response?.data?.thong_bao || 'Lỗi khi xử lý trả hàng' };
+    }
+};
 
 export const hoaDonService = {
     getAllHoaDon,
@@ -216,5 +269,8 @@ export const hoaDonService = {
     removeProductFromInvoice,
     updateProductQuantity,
     quayLaiTrangThai,
-    updateHinhThucTTHoaDon
+    updateHinhThucTTHoaDon,
+    getHoaDonDetails, // Thêm hàm mới
+    processReturn ,// Thêm hàm mới
+    getCTTH
 };
