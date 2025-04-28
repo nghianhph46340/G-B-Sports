@@ -123,7 +123,8 @@
                                   <ul class="list-disc pl-5 space-y-2">
                                       <li>Sản phẩm còn <strong>nguyên tem, mác, chưa qua sử dụng hoặc giặt ủi</strong>.</li>
                                       <li>Sản phẩm bị <strong>lỗi do nhà sản xuất</strong> hoặc <strong>giao sai mẫu, size, màu sắc</strong>.</li>
-                                      <li>Yêu cầu trả hàng được gửi <strong>trong vòng 07 ngày</strong> kể từ ngày nhận hàng.</li>
+                                      <li>Yêu cầu trả hàng được gửi <strong>trong vòng 14 ngày</strong> kể từ ngày nhận hàng.</li>
+     
                                   </ul>
                               </a-col>
                               <a-col :span="12">

@@ -39,7 +39,7 @@
                 </a-menu-item>
                 
                 <a-menu-item key="9" @click="changeRoute('/admin/traHang');">
-                    <AccountBookOutlined />
+                    <RollbackOutlined />
                     <span>Trả hàng tại quầy</span>
                 </a-menu-item>
                 <a-sub-menu v-if="store.id_roles !== 3" key="sub2">
@@ -94,7 +94,7 @@
 <script setup>
 
 import { computed, onMounted, ref, watch } from 'vue';
-import { HomeOutlined, AreaChartOutlined, UserOutlined, ReconciliationOutlined, MenuUnfoldOutlined, MenuFoldOutlined, LaptopOutlined, LogoutOutlined, AccountBookOutlined } from '@ant-design/icons-vue';
+import { HomeOutlined, AreaChartOutlined, UserOutlined, ReconciliationOutlined, MenuUnfoldOutlined, MenuFoldOutlined, LaptopOutlined, LogoutOutlined, AccountBookOutlined, RollbackOutlined  } from '@ant-design/icons-vue';
 import { useRouter } from 'vue-router';
 import TheAvatarAdmin from './TheAvatar-Admin.vue';
 import TheSearchAdmin from './TheSearch-Admin.vue';

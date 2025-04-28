@@ -136,8 +136,8 @@
                         </a-tab-pane>
                         <a-tab-pane key="return" tab="Đổi trả">
                             <a-collapse accordion>
-                                <a-collapse-panel header="Chính sách đổi trả như thế nào?" key="1">
-                                    <p>G&B SPORTS áp dụng chính sách đổi trả trong vòng 15 ngày kể từ ngày nhận hàng,
+                                <a-collapse-panel header="Chính sách trả hàng như thế nào?" key="1">
+                                    <p>G&B SPORTS áp dụng chính sách đổi trả trong vòng 14 ngày kể từ ngày nhận hàng,
                                         với các điều kiện sau:</p>
                                     <ul>
                                         <li>Sản phẩm còn nguyên tem mác, chưa qua sử dụng</li>
@@ -145,7 +145,8 @@
                                         <li>Có hóa đơn mua hàng hoặc phiếu giao hàng</li>
                                     </ul>
                                     <p>Chúng tôi không hỗ trợ đổi trả cho các sản phẩm đã qua sử dụng, đã giặt là hoặc
-                                        có dấu hiệu hư hỏng do người dùng.</p>
+                                        có dấu hiệu hư hỏng do người dùng và khách hàng trả hàng do lý do cá nhân như 
+                                        không thích, không hợp style...</p>
                                 </a-collapse-panel>
                                 <a-collapse-panel header="Làm thế nào để đổi hoặc trả sản phẩm?" key="2">
                                     <p>Để đổi hoặc trả sản phẩm, bạn vui lòng:</p>
@@ -153,8 +154,8 @@
                                         <li>Liên hệ với chúng tôi qua số điện thoại 0987 654 321 hoặc email
                                             info@gbsports.com</li>
                                         <li>Cung cấp thông tin đơn hàng và lý do đổi/trả</li>
-                                        <li>Nhận hướng dẫn về cách thức gửi lại sản phẩm</li>
-                                        <li>Đóng gói sản phẩm cẩn thận và gửi lại theo hướng dẫn</li>
+                                        <li>Nhận hướng dẫn về cách thức hoàn trả sản phẩm</li>
+                                       
                                     </ol>
                                     <p>Sau khi nhận được sản phẩm, chúng tôi sẽ kiểm tra và xử lý yêu cầu đổi/trả của
                                         bạn trong vòng 3-5 ngày làm việc.</p>
