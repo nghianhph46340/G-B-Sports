@@ -493,6 +493,11 @@ const subtotal = computed(() => {
 
 // Calculate discount based on applied vouchers
 const calculateDiscount = () => {
+    // Kiểm tra đăng nhập - nếu chưa đăng nhập thì không áp dụng voucher
+    if (!sessionStorage.getItem('isLoggedIn') || sessionStorage.getItem('isLoggedIn') !== 'true') {
+        return 0;
+    }
+
     let totalDiscount = 0;
     const subTotal = Number(subtotal.value || 0);
 
@@ -855,8 +860,10 @@ const calculateOrderTotals = () => {
         hoaDon: {
             trang_thai: 'Hoàn thành',
             voucher: {
-                id: appliedCoupons.value.length > 0 ? appliedCoupons.value[0].id : 0
+                id: sessionStorage.getItem('userDetails') ?
+                    appliedCoupons.value.length > 0 ? appliedCoupons.value[0].id : 0 : 0
             },
+            isChuyen: false,
             khachHang: {
                 idKhachHang: sessionStorage.getItem('userDetails') ? JSON.parse(sessionStorage.getItem('userDetails')).idKhachHang : 0,
             },
@@ -957,6 +964,8 @@ const placeOrder = async () => {
                     // if (response && response.ma_hoa_don) {
                     //     localStorage.setItem('pendingOrderCode', hoaDon);
                     // }
+                    hoaDon.isChuyen = true;
+                    console.log('Hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
                     localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
                     localStorage.setItem('hoaDonChiTiet', JSON.stringify(orderData.hoaDonChiTiet));
 
@@ -979,11 +988,20 @@ const placeOrder = async () => {
             } else if (selectedOnlineMethod.value === 'vnpay') {
                 // Redirect to VNPAY payment gateway
                 message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
-                const response = await banHangOnlineService.createOrder1(hoaDon);
+
+                // Gán isChuyen = true cho hoaDon
+                hoaDon.isChuyen = true;
+
+                // Log hóa đơn sau khi đã thay đổi để kiểm tra
+                console.log('Hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
+
+                const response = await banHangOnlineService.createOrder(hoaDon);
                 const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);
-                localStorage.setItem('hoaDon', hoaDon);
+
+                // Lưu hóa đơn đã được cập nhật vào localStorage
+                localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
 
 
                 // Đặt URL callback để xử lý sau khi thanh toán
