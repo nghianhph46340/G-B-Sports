@@ -604,41 +604,61 @@ export const useGbStore = defineStore('gbStore', {
     //Cập nhật trạng thái sản phẩm
     async changeStatusSanPham(id) {
       try {
-        // Tìm và lưu trạng thái ban đầu
+        console.log(`[changeStatusSanPham] Bắt đầu xử lý cho sản phẩm ID: ${id}`);
+
+        // Bước 1: Tìm và lưu trạng thái ban đầu
+        await this.getAllSP();
         const sanPham = this.getAllSanPham.find((sp) => sp.id_san_pham === id);
         if (!sanPham) {
+          console.error(`[changeStatusSanPham] Không tìm thấy sản phẩm với ID: ${id}`);
+          toast.error('Không tìm thấy sản phẩm');
           throw new Error('Không tìm thấy sản phẩm');
         }
 
-        // Lưu trạng thái ban đầu
+        // Bước 2: Lưu trạng thái ban đầu
         const oldStatus = sanPham.trang_thai;
+        console.log(`[changeStatusSanPham] Trạng thái hiện tại của sản phẩm ID ${id}: ${oldStatus}`);
 
-        // Cập nhật tức thì UI (optimistic update)
-        const newStatus = oldStatus === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động';
-        sanPham.trang_thai = newStatus;
-
-        // Gọi API
+        // Bước 3: Gọi API để chuyển đổi trạng thái
+        console.log(`[changeStatusSanPham] Gọi API chuyển đổi trạng thái cho sản phẩm ID ${id}`);
         const response = await sanPhamService.changeStatusSanPham(id);
 
-        // Xử lý response
+        // Bước 4: Lấy và kiểm tra response từ API
+        console.log(`[changeStatusSanPham] Response từ API:`, response);
+
         if (response.error) {
-          // Nếu lỗi, hoàn tác UI
-          sanPham.trang_thai = oldStatus;
+          console.error(`[changeStatusSanPham] API trả về lỗi:`, response.error);
           toast.error('Có lỗi xảy ra khi cập nhật trạng thái');
           return { success: false, message: 'Có lỗi xảy ra' };
         }
 
-        // Trả về kết quả từ API nếu thành công
-        toast.success('Chuyển trạng thái thành công');
+        // Bước 5: So sánh trạng thái mới từ response với trạng thái cũ
+        const apiNewStatus = response.trang_thai || (oldStatus === 'Hoạt động' ? 'Không hoạt động' : 'Hoạt động');
+        console.log(`[changeStatusSanPham] Trạng thái mới từ API: ${apiNewStatus}`);
+        console.log(`[changeStatusSanPham] So sánh trạng thái: cũ=${oldStatus}, mới=${apiNewStatus}`);
+
+        // Bước 6: Cập nhật trạng thái trên UI dựa trên kết quả API
+        if (oldStatus !== apiNewStatus) {
+          console.log(`[changeStatusSanPham] Cập nhật trạng thái UI từ ${oldStatus} thành ${apiNewStatus}`);
+          sanPham.trang_thai = apiNewStatus;
+          toast.success(`Đã chuyển trạng thái thành ${apiNewStatus}`);
+        } else {
+          console.log(`[changeStatusSanPham] Không cần cập nhật UI vì trạng thái không thay đổi`);
+          toast.info('Trạng thái không thay đổi');
+        }
+
+        // Trả về kết quả từ API
+        console.log(`[changeStatusSanPham] Hoàn tất xử lý chuyển trạng thái sản phẩm ID ${id}`);
         return {
           success: true,
           data: response,
-          message: 'Chuyển trạng thái thành công',
-          newStatus: sanPham.trang_thai
+          oldStatus: oldStatus,
+          newStatus: apiNewStatus,
+          message: `Cập nhật trạng thái thành công: ${apiNewStatus}`
         };
       } catch (error) {
-        console.error('Lỗi khi chuyển trạng thái sản phẩm:', error);
-        toast.error('Có lỗi xảy ra');
+        console.error(`[changeStatusSanPham] Lỗi khi chuyển trạng thái sản phẩm:`, error);
+        toast.error('Có lỗi xảy ra khi xử lý');
         return { success: false, message: error.message };
       }
     },
@@ -2187,6 +2207,20 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     //================= Kết thúc khuyến mãi =================///
+    //------------------- Bán hàng online -------------------//
+    async getVoucherByGiaTruyen(giaTruyen) {
+      try {
+        // Đảm bảo giaTruyen là số
+        const giaTriSo = Number(giaTruyen)
+        console.log('Giá trị truyền vào API:', giaTriSo)
+        const response = await banHangOnlineService.voucherByGiaTruyen(giaTriSo)
+        return response
+      } catch (error) {
+        console.error('Lỗi khi lấy voucher theo giá truyền:', error)
+        toast.error('Có lỗi xảy ra khi lấy voucher theo giá truyền')
+        return []
+      }
+    },
     getPath(path) {
       this.checkRouter = '';
       // Ensure consistent path format (always with leading slash)

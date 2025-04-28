@@ -164,7 +164,7 @@
                                     <div class="online-content">
                                         <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
                                             alt="Momo" class="online-logo" />
-                                        <span>Ví Momo</span>
+                                        <span>Ví MoMo</span>
                                     </div>
                                 </a-radio>
                             </div>
@@ -210,7 +210,8 @@
                         </div>
                     </div>
 
-                    <div class="coupon-section">
+                    <!-- Phần voucher chỉ hiển thị khi khách hàng đã đăng nhập -->
+                    <div class="coupon-section" v-if="isLoggedIn">
                         <a-button type="primary" @click="showVoucherModal" class="select-voucher-btn" block>
                             <gift-outlined /> Chọn voucher
                         </a-button>
@@ -233,6 +234,13 @@
                                 </a-button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Thông báo về voucher khi chưa đăng nhập -->
+                    <div class="coupon-login-notice" v-if="!isLoggedIn">
+                        <p class="notice-text"><a href="/login-register/login"
+                                class="nav-link text-decoration-underline">Đăng nhập</a> để sử dụng
+                            voucher giảm giá</p>
                     </div>
 
                     <div class="order-summary">
@@ -295,37 +303,62 @@
 
 
         <!-- Voucher Modal -->
-        <a-modal v-model:visible="voucherModalVisible" title="Chọn voucher" :footer="null" class="voucher-modal"
-            :zIndex="1050" :mask-closable="false">
+        <a-modal v-model:visible="voucherModalVisible" title="Chọn voucher giảm giá" :footer="null"
+            class="voucher-modal" :zIndex="1050" :mask-closable="false" v-if="isLoggedIn">
+            <div class="voucher-header">
+                <h3 class="voucher-header-title">Chọn voucher phù hợp nhất với đơn hàng của bạn</h3>
+                <p class="voucher-header-desc">Chúng tôi đã sắp xếp các voucher theo mức giảm giá tốt nhất</p>
+                <div class="applied-voucher-banner" v-if="appliedCoupons.length > 0">
+                    <div class="banner-content">
+                        <check-circle-outlined class="banner-icon" />
+                        <span>{{ getAppliedVoucherInfo() }}</span>
+                    </div>
+                    <a-button type="text" danger class="remove-btn-small"
+                        @click="appliedCoupons = []; message.success('Đã bỏ áp dụng voucher');">
+                        <close-outlined />
+                    </a-button>
+                </div>
+            </div>
             <div class="voucher-list">
-                <div v-for="(voucher, index) in availableVouchers" :key="index" class="voucher-item"
-                    :class="{ 'disabled': !isVoucherValid(voucher), 'selected': isVoucherSelected(voucher) }"
-                    @click="selectVoucher(voucher)">
+                <div v-for="(voucher, index) in displayVouchers" :key="index" class="voucher-item" :class="{
+                    'disabled': !isVoucherValid(voucher),
+                    'selected': isVoucherSelected(voucher),
+                    'not-selected': !isVoucherSelected(voucher) && appliedCoupons.length > 0
+                }" @click="selectVoucher(voucher)">
                     <div class="voucher-left">
                         <div class="voucher-badge">
                             <span class="voucher-type">{{ voucher.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ' }}</span>
                         </div>
                     </div>
                     <div class="voucher-content">
-                        <p class="voucher-value">{{ voucher.loai === 'percent' ? `Giảm ${voucher.gia_tri}%` :
-                            formatCurrency(voucher.gia_tri) }}</p>
+                        <p class="voucher-value">
+                            {{ voucher.loai === 'percent' ? `${voucher.gia_tri}%` : formatCurrency(voucher.gia_tri) }}
+                            <span class="voucher-currency">đ</span>
+                        </p>
                         <p class="voucher-code">{{ voucher.ma }}</p>
                         <p class="voucher-desc">{{ voucher.mo_ta }}</p>
                         <p class="voucher-condition" v-if="voucher.dieu_kien > 0">
-                            Đơn tối thiểu {{ formatCurrency(voucher.dieu_kien) }}
+                            Đơn tối thiểu {{ formatCurrency(voucher.dieu_kien) }} đ
                         </p>
-                        <p class="voucher-expiry">HSD: 31/12/2023</p>
+                        <p class="voucher-expiry">HSD: {{ formatDateVN(voucher.ngay_het_han || "2023-12-31") }}</p>
                     </div>
                     <div class="voucher-right">
                         <a-button :type="isVoucherSelected(voucher) ? 'default' : 'primary'"
-                            :disabled="!isVoucherValid(voucher)" @click.stop="toggleVoucher(voucher)">
+                            :disabled="!isVoucherValid(voucher)" @click.stop="toggleVoucher(voucher)"
+                            :class="{ 'apply-btn': !isVoucherSelected(voucher), 'remove-btn': isVoucherSelected(voucher) }">
                             {{ isVoucherSelected(voucher) ? 'Bỏ chọn' : 'Áp dụng' }}
                         </a-button>
                     </div>
+                    <div v-if="index === 0" class="best-saving-tag">TIẾT KIỆM NHẤT</div>
                 </div>
             </div>
+            <div class="voucher-empty" v-if="availableVouchers.length === 0">
+                <img src="https://deo.shopeemobile.com/shopee/shopee-pcmall-live-sg/cart/9bdd8040b334d31946f49e36beaf32db.png"
+                    alt="Không có voucher" class="empty-img">
+                <p>Không có voucher phù hợp với đơn hàng của bạn</p>
+            </div>
             <div class="voucher-actions">
-                <a-button @click="voucherModalVisible = false">Đóng</a-button>
+                <a-button type="primary" @click="voucherModalVisible = false">Xác nhận</a-button>
             </div>
         </a-modal>
 
@@ -822,7 +855,10 @@ const calculateOrderTotals = () => {
         hoaDon: {
             trang_thai: 'Hoàn thành',
             voucher: {
-                id: 1
+                id: appliedCoupons.value.length > 0 ? appliedCoupons.value[0].id : 0
+            },
+            khachHang: {
+                idKhachHang: sessionStorage.getItem('userDetails') ? JSON.parse(sessionStorage.getItem('userDetails')).idKhachHang : 0,
             },
             sdt_nguoi_nhan: customer.value.so_dien_thoai,
             dia_chi: customer.value.so_nha + ', ' + customer.value.xa_phuong + ', ' + customer.value.quan_huyen + ', ' + customer.value.tinh_thanh_pho,
@@ -1053,57 +1089,108 @@ const formatDateVN = (dateString) => {
 
 // Initialize data on component mount
 onMounted(async () => {
-    // Kiểm tra xem có sản phẩm mua ngay từ store không
-    if (store.checkoutItems && store.checkoutItems.length > 0) {
-        console.log('Đã nhận sản phẩm mua ngay từ store:', store.checkoutItems);
+    // Lấy dữ liệu sản phẩm từ store
+    orderItems.value = store.checkoutItems || [];
+    console.log('Order items từ store:', orderItems.value);
 
-        // Xử lý và chuẩn hóa dữ liệu đơn hàng
-        orderItems.value = store.checkoutItems.map(item => {
-            // Đảm bảo các giá trị số đều được chuyển đổi đúng định dạng
-            const processedItem = {
-                ...item,
-                // Sử dụng gia hoặc price tùy theo field có sẵn
-                gia: Number(item.gia || item.price || 0),
-                price: Number(item.gia || item.price || 0),
-                so_luong: Number(item.so_luong || item.quantity || 1),
-                quantity: Number(item.so_luong || item.quantity || 1)
-            };
+    // Đảm bảo rằng orderItems đã được tải và subtotal đã được tính toán
+    await nextTick();
 
-            console.log('Đã xử lý sản phẩm:', processedItem);
-            return processedItem;
-        });
-    }
-    // Hoặc kiểm tra nếu có dữ liệu query từ route
-    else if (route.query.data) {
-        try {
-            const productData = JSON.parse(atob(route.query.data));
-            console.log('Đã nhận dữ liệu sản phẩm từ query params:', productData);
+    // Tính toán subtotal
+    const tongTien = orderItems.value.reduce((total, item) => {
+        return total + (Number(item.gia || 0) * Number(item.so_luong || 1));
+    }, 0);
 
-            // Xử lý và chuẩn hóa dữ liệu đơn hàng
-            const processedData = Array.isArray(productData) ? productData : [productData];
-            orderItems.value = processedData.map(item => {
-                return {
-                    ...item,
-                    // Đảm bảo các giá trị số đều được chuyển đổi đúng định dạng
-                    gia: Number(item.gia || item.price || 0),
-                    price: Number(item.gia || item.price || 0),
-                    so_luong: Number(item.so_luong || item.quantity || 1),
-                    quantity: Number(item.so_luong || item.quantity || 1)
-                };
-            });
-        } catch (error) {
-            console.error('Lỗi khi phân tích dữ liệu sản phẩm:', error);
-            message.error('Không thể đọc thông tin sản phẩm');
+    console.log('Tổng tiền đơn hàng:', tongTien);
+
+    try {
+        // Gọi API lấy voucher
+        const voucherResponse = await store.getVoucherByGiaTruyen(tongTien);
+        console.log('Voucher phù hợp:', voucherResponse);
+
+        // Lưu vào biến availableVouchers để hiển thị
+        if (voucherResponse && Array.isArray(voucherResponse)) {
+            // Sắp xếp voucher theo số tiền giảm giảm dần (nhiều nhất lên đầu)
+            availableVouchers.value = voucherResponse.sort((a, b) => {
+                // Đảm bảo so_tien_giam là số
+                const aValue = Number(a.so_tien_giam) || 0;
+                const bValue = Number(b.so_tien_giam) || 0;
+                return bValue - aValue;
+            }).map(voucher => ({
+                id: voucher.id_voucher,
+                ma: voucher.ma_voucher,
+                ten: voucher.ten_voucher,
+                mo_ta: voucher.mo_ta,
+                loai: voucher.kieu_giam_gia === 'Phần trăm' ? 'percent' : 'fixed',
+                gia_tri: voucher.gia_tri_giam,
+                dieu_kien: voucher.gia_tri_toi_thieu,
+                gia_tri_toi_da: voucher.gia_tri_toi_da,
+                ngay_bat_dau: voucher.ngay_tao,
+                ngay_het_han: voucher.ngay_het_han,
+                trang_thai: voucher.trang_thai,
+                so_luong: voucher.so_luong,
+                so_tien_giam: Number(voucher.so_tien_giam) || 0,
+                gia_sau_giam: Number(voucher.gia_sau_giam) || 0
+            }));
+
+            console.log('Vouchers đã sắp xếp:', availableVouchers.value);
+
+            // Tự động áp dụng voucher tốt nhất nếu có voucher hợp lệ
+            if (availableVouchers.value.length > 0 && isVoucherValid(availableVouchers.value[0])) {
+                // Xóa các voucher đã áp dụng trước để tránh trùng lặp
+                appliedCoupons.value = [];
+                // Áp dụng voucher tốt nhất
+                appliedCoupons.value.push(availableVouchers.value[0]);
+                message.success(`Đã tự động áp dụng voucher ${availableVouchers.value[0].ma} giảm ${formatCurrency(availableVouchers.value[0].so_tien_giam)}`);
+            }
         }
+    } catch (error) {
+        console.error('Lỗi khi lấy voucher:', error);
     }
 
-    // Fetch initial data
+    // Thực hiện các tác vụ khác...
     await Promise.all([
         fetchCustomerData(),
         fetchCustomerAddresses(),
-        fetchProvinces(),
-        // fetchVouchers() // Load vouchers on mount
+        fetchProvinces()
     ]);
+});
+
+// Computed property để xác định voucher giảm nhiều nhất
+const bestSavingVoucherId = computed(() => {
+    if (availableVouchers.value.length === 0) return null;
+
+    // Tìm voucher có số tiền giảm cao nhất
+    let maxSavingVoucher = availableVouchers.value[0];
+    for (const voucher of availableVouchers.value) {
+        if ((Number(voucher.so_tien_giam) || 0) > (Number(maxSavingVoucher.so_tien_giam) || 0)) {
+            maxSavingVoucher = voucher;
+        }
+    }
+
+    return maxSavingVoucher.id;
+});
+
+// Tính toán availableVouchers với voucher đã chọn được đưa lên đầu
+const sortedVouchers = computed(() => {
+    if (availableVouchers.value.length === 0) return [];
+
+    // Tạo bản sao mảng để không ảnh hưởng đến mảng gốc
+    const sorted = [...availableVouchers.value];
+
+    // Nếu có voucher đã được chọn, đưa nó lên đầu tiên
+    if (appliedCoupons.value.length > 0) {
+        const selectedVoucherId = appliedCoupons.value[0].id;
+        const selectedIndex = sorted.findIndex(v => v.id === selectedVoucherId);
+
+        if (selectedIndex > -1) {
+            // Đưa voucher đã chọn lên đầu danh sách
+            const selectedVoucher = sorted.splice(selectedIndex, 1)[0];
+            sorted.unshift(selectedVoucher);
+        }
+    }
+
+    return sorted;
 });
 
 // Voucher management
@@ -1176,8 +1263,35 @@ watch(subtotal, () => {
 
 // Show voucher selection modal
 const showVoucherModal = async () => {
-    // Reload vouchers to ensure we have the latest data
-    await fetchVouchers();
+    if (!isLoggedIn.value) {
+        message.info('Vui lòng đăng nhập để sử dụng voucher');
+        return;
+    }
+
+    // Tính lại subtotal và lấy voucher mới
+    const tongTien = subtotal.value;
+    try {
+        const voucherResponse = await store.getVoucherByGiaTruyen(tongTien);
+        if (voucherResponse && Array.isArray(voucherResponse)) {
+            availableVouchers.value = voucherResponse.map(voucher => ({
+                id: voucher.id_voucher,
+                ma: voucher.ma_voucher,
+                ten: voucher.ten_voucher,
+                mo_ta: voucher.mo_ta,
+                loai: voucher.kieu_giam_gia === 'Phần trăm' ? 'percent' : 'fixed',
+                gia_tri: voucher.gia_tri_giam,
+                dieu_kien: voucher.gia_tri_toi_thieu,
+                gia_tri_toi_da: voucher.gia_tri_toi_da,
+                ngay_bat_dau: voucher.ngay_tao,
+                ngay_het_han: voucher.ngay_het_han,
+                trang_thai: voucher.trang_thai,
+                so_luong: voucher.so_luong
+            }));
+        }
+    } catch (error) {
+        console.error('Lỗi khi lấy voucher:', error);
+    }
+
     voucherModalVisible.value = true;
 };
 
@@ -1213,20 +1327,30 @@ const isVoucherSelected = (voucher) => {
     return appliedCoupons.value.some(c => c.ma === voucher.ma);
 };
 
+// Hiển thị thông tin voucher đang áp dụng
+const getAppliedVoucherInfo = () => {
+    if (appliedCoupons.value.length > 0) {
+        const voucher = appliedCoupons.value[0];
+        const tienGiam = Number(voucher.so_tien_giam) || 0;
+        return `Đang áp dụng: ${voucher.ma} - ${formatCurrency(tienGiam)}`;
+    }
+    return "Chưa áp dụng voucher nào";
+};
+
 // Toggle voucher selection
 const toggleVoucher = (voucher) => {
     if (isVoucherSelected(voucher)) {
         // Remove voucher
-        const index = appliedCoupons.value.findIndex(c => c.ma === voucher.ma);
-        if (index !== -1) {
-            appliedCoupons.value.splice(index, 1);
-            message.success('Đã bỏ áp dụng mã giảm giá');
-        }
+        appliedCoupons.value = [];
+        message.success('Đã bỏ áp dụng mã giảm giá');
     } else {
         // Add voucher if valid
         if (isVoucherValid(voucher)) {
+            // Xóa tất cả voucher đã áp dụng trước đó
+            appliedCoupons.value = [];
+            // Thêm voucher mới
             appliedCoupons.value.push(voucher);
-            message.success('Áp dụng mã giảm giá thành công');
+            message.success(`Đã áp dụng mã giảm giá ${voucher.ma}`);
 
             // Update discount calculations
             calculateOrderTotals();
@@ -1312,6 +1436,38 @@ const selectedAddress = computed(() => {
 });
 
 // Trong phần script, thêm các hàm xử lý thanh toán ZaloPay
+
+// Thêm watch để lấy danh sách voucher khi tổng tiền thay đổi
+watch(subtotal, async (newValue) => {
+    if (newValue > 0) {
+        try {
+            const voucherResponse = await store.getVoucherByGiaTruyen(newValue);
+            if (voucherResponse && Array.isArray(voucherResponse)) {
+                availableVouchers.value = voucherResponse.map(voucher => ({
+                    id: voucher.id_voucher,
+                    ma: voucher.ma_voucher,
+                    ten: voucher.ten_voucher,
+                    mo_ta: voucher.mo_ta,
+                    loai: voucher.kieu_giam_gia === 'Phần trăm' ? 'percent' : 'fixed',
+                    gia_tri: voucher.gia_tri_giam,
+                    dieu_kien: voucher.gia_tri_toi_thieu,
+                    gia_tri_toi_da: voucher.gia_tri_toi_da,
+                    ngay_bat_dau: voucher.ngay_tao,
+                    ngay_het_han: voucher.ngay_het_han,
+                    trang_thai: voucher.trang_thai,
+                    so_luong: voucher.so_luong
+                }));
+            }
+        } catch (error) {
+            console.error('Lỗi khi cập nhật voucher theo giá mới:', error);
+        }
+    }
+});
+
+// Tính toán danh sách voucher hiển thị - giữ nguyên thứ tự từ API
+const displayVouchers = computed(() => {
+    return availableVouchers.value;
+});
 
 </script>
 
@@ -1770,6 +1926,22 @@ const selectedAddress = computed(() => {
     margin-bottom: 20px;
 }
 
+/* Thông báo đăng nhập để sử dụng voucher */
+.coupon-login-notice {
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    background-color: #f6ffed;
+    border: 1px dashed #b7eb8f;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.notice-text {
+    color: #52c41a;
+    font-size: 14px;
+    margin: 0;
+}
+
 .applied-coupons {
     margin-top: 15px;
 }
@@ -1837,110 +2009,222 @@ const selectedAddress = computed(() => {
 }
 
 /* Voucher modal styling */
+.voucher-modal {
+    :deep(.ant-modal-content) {
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+
+    :deep(.ant-modal-header) {
+        background: linear-gradient(135deg, #1890ff, #096dd9);
+        border-bottom: none;
+        padding: 16px 24px;
+    }
+
+    :deep(.ant-modal-title) {
+        color: white;
+        font-weight: 600;
+        font-size: 18px;
+    }
+
+    :deep(.ant-modal-body) {
+        padding: 24px;
+    }
+
+    :deep(.ant-modal-close) {
+        color: white;
+    }
+
+    :deep(.ant-modal-close:hover) {
+        color: rgba(255, 255, 255, 0.85);
+    }
+}
+
+.voucher-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.voucher-header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.voucher-header-desc {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 0;
+}
+
 .voucher-list {
     max-height: 400px;
     overflow-y: auto;
+    padding: 0 5px;
 }
 
 .voucher-item {
     display: flex;
     margin-bottom: 15px;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
     background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .voucher-item:hover {
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px) scale(1.01);
+}
+
+/* Voucher không được chọn (khi có voucher khác được chọn) */
+.voucher-item.not-selected {
+    opacity: 0.7;
+    filter: grayscale(0.4);
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.voucher-item.not-selected:hover {
+    opacity: 0.9;
+    filter: grayscale(0.2);
+    transform: translateY(-2px) scale(0.99);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .voucher-item.disabled {
-    opacity: 0.7;
+    opacity: 0.6;
+    filter: grayscale(0.8);
     cursor: not-allowed;
 }
 
 .voucher-item.selected {
-    border-color: #1890ff;
-    background-color: #e6f7ff;
+    border: 2px solid #52c41a;
+    background: linear-gradient(to right, rgba(246, 255, 237, 0.8), rgba(255, 255, 255, 0.9));
+    animation: selected-pulse 2s infinite alternate;
+    opacity: 1 !important;
+    filter: none !important;
+    transform: scale(1.02) !important;
+    z-index: 2;
+}
+
+@keyframes selected-pulse {
+    0% {
+        box-shadow: 0 0 10px rgba(82, 196, 26, 0.3);
+    }
+
+    100% {
+        box-shadow: 0 0 20px rgba(82, 196, 26, 0.8);
+    }
 }
 
 .voucher-left {
-    width: 80px;
+    width: 110px;
     position: relative;
-}
-
-.voucher-badge {
-    height: 100%;
-    background-color: #1890ff;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 12px 5px;
-    text-align: center;
-    text-transform: uppercase;
-    position: relative;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-right: 2px dashed rgba(255, 255, 255, 0.8);
+    overflow: hidden;
 }
 
-.voucher-badge::after {
+.voucher-left::before {
     content: "";
     position: absolute;
-    right: -8px;
     top: 0;
-    bottom: 0;
-    width: 16px;
-    background-image: radial-gradient(circle at 0 50%, transparent 8px, #1890ff 8px);
-    background-size: 16px 16px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.1) 75%, transparent 75%, transparent);
+    background-size: 8px 8px;
+    animation: moveBackground 20s linear infinite;
+}
+
+@keyframes moveBackground {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 50px 50px;
+    }
+}
+
+.voucher-left::after {
+    content: "";
+    position: absolute;
+    right: -10px;
+    height: 100%;
+    width: 20px;
+    background-image: radial-gradient(circle at 0 50%, transparent 10px, rgba(255, 255, 255, 0.1) 10px);
+    background-size: 20px 20px;
     background-repeat: repeat-y;
 }
 
-.voucher-item.disabled .voucher-badge {
-    background-color: #bfbfbf;
-}
-
-.voucher-item.selected .voucher-badge {
-    background-color: #52c41a;
+.voucher-badge {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 10px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    position: relative;
+    z-index: 2;
 }
 
 .voucher-content {
-    padding: 15px;
+    padding: 15px 20px;
     flex: 1;
+    position: relative;
+    background: linear-gradient(to right, rgba(255, 248, 225, 0.2), transparent);
 }
 
 .voucher-value {
     font-weight: 700;
-    font-size: 16px;
-    color: #1890ff;
+    font-size: 24px;
+    color: #FF9800;
     margin-bottom: 5px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: baseline;
 }
 
-.voucher-item.selected .voucher-value {
-    color: #52c41a;
+.voucher-currency {
+    font-size: 18px;
+    font-weight: normal;
+    margin-left: 2px;
+    color: #FF9800;
 }
 
 .voucher-code {
     font-weight: 600;
     margin-bottom: 5px;
     color: #333;
+    font-size: 15px;
 }
 
 .voucher-desc {
-    font-size: 13px;
+    font-size: 14px;
     color: #666;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .voucher-condition {
-    font-size: 12px;
+    font-size: 13px;
     color: #ff4d4f;
     margin-bottom: 5px;
+    font-weight: 500;
 }
 
 .voucher-expiry {
@@ -1955,14 +2239,158 @@ const selectedAddress = computed(() => {
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: rgba(250, 250, 250, 0.5);
 }
 
-.voucher-actions {
+.apply-btn {
+    background: linear-gradient(135deg, #52c41a, #389e0d);
+    border-color: #389e0d;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 2px 6px rgba(56, 158, 13, 0.3);
+}
+
+.apply-btn:hover {
+    background: linear-gradient(135deg, #73d13d, #52c41a);
+    border-color: #52c41a;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(56, 158, 13, 0.4);
+}
+
+.remove-btn {
+    background: #f5f5f5;
+    border-color: #d9d9d9;
+    color: #666;
+}
+
+.remove-btn:hover {
+    color: #ff4d4f;
+    border-color: #ff4d4f;
+    background: rgba(255, 77, 79, 0.05);
+}
+
+/* Hiệu ứng đặc biệt cho voucher tiết kiệm nhất (phần tử đầu tiên) */
+.voucher-item:first-child {
+    box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+    border: 2px solid #ff9800;
+    z-index: 1;
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+.best-saving-tag {
+    position: absolute;
+    top: 15px;
+    right: -35px;
+    background: linear-gradient(135deg, #ff5722, #ff9800);
+    color: white;
+    padding: 5px 35px;
+    font-size: 10px;
+    font-weight: bold;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 3;
+    width: 140px;
+    text-align: center;
+}
+
+.voucher-item:first-child .voucher-left {
+    background: linear-gradient(135deg, #FF9800, #FF5722);
+    animation: colorShift 3s infinite alternate;
+    border-right: 2px dashed white;
+}
+
+@keyframes colorShift {
+    0% {
+        background: linear-gradient(135deg, #FF9800, #FF5722);
+    }
+
+    50% {
+        background: linear-gradient(135deg, #FF5722, #F44336);
+    }
+
+    100% {
+        background: linear-gradient(135deg, #F44336, #FF9800);
+    }
+}
+
+.voucher-item:first-child .voucher-badge {
+    font-size: 17px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.voucher-item:first-child .voucher-content {
+    background: linear-gradient(to right, rgba(255, 243, 224, 0.5), rgba(255, 236, 179, 0.2));
+}
+
+.voucher-item:first-child .voucher-value {
+    font-size: 26px;
+    color: #FF5722;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.voucher-item:first-child .voucher-currency {
+    color: #FF5722;
+    font-size: 20px;
+}
+
+.voucher-item:first-child:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+}
+
+.applied-voucher-banner {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to right, #f6ffed, #e6f7ff);
+    border: 1px solid #b7eb8f;
+    border-radius: 8px;
+    padding: 12px 18px;
     margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+    0% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    100% {
+        box-shadow: 0 4px 15px rgba(82, 196, 26, 0.15);
+    }
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+}
+
+.banner-icon {
+    color: #52c41a;
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+.remove-btn-small {
+    color: #ff4d4f;
+    padding: 0 8px;
+    font-size: 16px;
+    height: 28px;
+    width: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.remove-btn-small:hover {
+    background-color: rgba(255, 77, 79, 0.15);
+    color: #ff7875;
+    transform: rotate(90deg);
 }
 
 /* Order summary */
@@ -2307,5 +2735,366 @@ const selectedAddress = computed(() => {
 
 .section-header .section-title::after {
     display: none;
+}
+
+.voucher-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.voucher-header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.voucher-header-desc {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 0;
+}
+
+.voucher-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0 5px;
+}
+
+.actual-discount {
+    font-size: 14px;
+    color: #ff4d4f;
+    font-weight: normal;
+    margin-left: 5px;
+}
+
+.voucher-item:first-child .actual-discount {
+    color: #ff4500;
+    font-weight: bold;
+}
+
+.apply-btn {
+    background: linear-gradient(135deg, #52c41a, #389e0d);
+    border-color: #389e0d;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 2px 6px rgba(56, 158, 13, 0.3);
+}
+
+.apply-btn:hover {
+    background: linear-gradient(135deg, #73d13d, #52c41a);
+    border-color: #52c41a;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(56, 158, 13, 0.4);
+}
+
+.remove-btn {
+    background: #f5f5f5;
+    border-color: #d9d9d9;
+    color: #666;
+}
+
+.remove-btn:hover {
+    color: #ff4d4f;
+    border-color: #ff4d4f;
+    background: rgba(255, 77, 79, 0.05);
+}
+
+.voucher-empty {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.empty-img {
+    width: 120px;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+.voucher-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.applied-voucher-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to right, #f6ffed, #e6f7ff);
+    border: 1px solid #b7eb8f;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-top: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+}
+
+.banner-icon {
+    color: #52c41a;
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+.remove-btn-small {
+    color: #ff4d4f;
+    padding: 0 8px;
+    font-size: 16px;
+    height: 24px;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-btn-small:hover {
+    background-color: rgba(255, 77, 79, 0.1);
+    color: #ff7875;
+}
+
+.voucher-left {
+    width: 100px;
+    position: relative;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-right: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+.voucher-left::before {
+    content: "";
+    position: absolute;
+    right: -8px;
+    height: 100%;
+    width: 16px;
+    background-image: radial-gradient(circle at 0 50%, transparent 8px, rgba(255, 255, 255, 0.1) 8px);
+    background-size: 16px 16px;
+    background-repeat: repeat-y;
+}
+
+.voucher-badge {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 5px;
+    width: 100%;
+}
+
+.voucher-item {
+    display: flex;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid #f0f0f0;
+}
+
+.voucher-item:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+}
+
+.voucher-value {
+    font-weight: 700;
+    font-size: 20px;
+    color: #FF9800;
+    margin-bottom: 5px;
+}
+
+.voucher-currency {
+    font-size: 16px;
+    font-weight: normal;
+}
+
+/* Hiệu ứng đặc biệt cho voucher tốt nhất */
+.voucher-item:first-child {
+    border: 1px solid #FF9800;
+    box-shadow: 0 5px 15px rgba(255, 153, 0, 0.2);
+}
+
+.voucher-item:first-child::after {
+    content: "TIẾT KIỆM NHẤT";
+    position: absolute;
+    top: 10px;
+    right: -35px;
+    background: linear-gradient(135deg, #ff5722, #ff9800);
+    color: white;
+    padding: 5px 35px;
+    font-size: 10px;
+    font-weight: bold;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.applied-voucher-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f6ffed;
+    border: 1px solid #b7eb8f;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-top: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.best-saving-tag {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: #ff4d4f;
+    color: white;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 50%;
+}
+
+/* CSS cho phần địa chỉ */
+.address-info {
+    margin-bottom: 30px;
+}
+
+.address-info .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    padding-bottom: 12px;
+    position: relative;
+    color: #333;
+}
+
+.address-info .section-title::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 60px;
+    background: #1890ff;
+    border-radius: 3px;
+}
+
+.address-list {
+    position: relative;
+    padding-left: 15px;
+}
+
+.address-list::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #e8e8e8;
+    height: 100%;
+}
+
+.address-item {
+    position: relative;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.address-item::before {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 15px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #1890ff;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #1890ff;
+    z-index: 2;
+}
+
+.address-radio {
+    width: 100%;
+    margin: 0;
+}
+
+.address-content {
+    border-radius: 10px;
+    overflow: hidden;
+    padding: 20px;
+    background-color: #e6f7ff;
+    border: 1px solid #91d5ff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.address-radio:has(:checked) .address-content {
+    background-color: #f0f9ff;
+    border-color: #69c0ff;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+}
+
+.address-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0050b3;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.default-tag {
+    margin-left: 8px;
+    font-size: 12px;
+    background-color: #52c41a;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+}
+
+.address-phone {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.address-email {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.address-full {
+    font-size: 14px;
+    line-height: 1.5;
+    padding-top: 8px;
+    margin-bottom: 0;
+    border-top: 1px dashed #d9d9d9;
+    color: #666;
+}
+
+.empty-address-message {
+    padding: 15px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px dashed #d9d9d9;
 }
 </style>
