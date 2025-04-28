@@ -63,3 +63,12 @@ npm install vue-qrcode-reader
 npm install jsqr
 
 npm install jsqr --save
+
+#xem list qr code
+npm list | findstr "qrcode"
+#list html2pdf
+npm list html2pdf.js
+
+npm install html2pdf.js --save
+#Qrcode
+npm install html5-qrcode

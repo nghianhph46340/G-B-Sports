@@ -70,12 +70,12 @@
 
                 <!-- Form quên mật khẩu -->
                 <form v-else @submit.prevent="handleResetPassword" class="login-form">
-                    <div class="form-group">
+                    <div class="form-group" v-if="!isTokenValid">
                         <label for="forgot-email">
                             <i class="fas fa-envelope"></i> Email
                         </label>
                         <input type="email" id="forgot-email" v-model="forgotEmail" class="form-control"
-                            placeholder="Nhập email của bạn" required :disabled="isEmailChecked" />
+                            placeholder="Nhập email của bạn" required :disabled="!isTokenValid" />
                     </div>
 
                     <div class="form-group">
@@ -84,7 +84,7 @@
                         </label>
                         <div class="password-input">
                             <input :type="showNewPassword ? 'text' : 'password'" id="new-password" v-model="newPassword"
-                                class="form-control" placeholder="Nhập mật khẩu mới" :disabled="!isEmailChecked"
+                                class="form-control" placeholder="Nhập mật khẩu mới" :disabled="!isTokenValid"
                                 required />
                             <span class="password-toggle" @click="toggleNewPassword">
                                 <EyeInvisibleOutlined v-if="!showNewPassword" />
@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons-vue';
@@ -146,10 +146,36 @@ const confirmPassword = ref('');
 const showNewPassword = ref(false);
 const showConfirmPassword = ref(false);
 const isEmailChecked = ref(false);
+const isTokenValid = ref(false);
 const resetToken = ref('');
 
 // Khôi phục trạng thái đăng nhập khi component được tạo
 gbStore.restoreLoginState();
+
+// Kiểm tra token từ query parameter khi component được mounted
+onMounted(async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    resetToken.value = urlParams.get('token');
+
+    if (resetToken.value) {
+        showForgotPassword.value = true; // Mở form quên mật khẩu
+        isEmailChecked.value = true; // Giả lập đã kiểm tra email
+
+        try {
+            isLoading.value = true;
+            const response = await axiosInstance.get(`api/khach-hang/reset-password?token=${resetToken.value}`);
+            if (response.data.successMessage) {
+                isTokenValid.value = true;
+                toast.success(response.data.successMessage);
+            }
+        } catch (error) {
+            isTokenValid.value = false;
+            toast.error(error.response?.data?.error || 'Token không hợp lệ!');
+        } finally {
+            isLoading.value = false;
+        }
+    }
+});
 
 const chuyenTrang = (path) => {
     router.push(path);
@@ -175,11 +201,23 @@ const toggleForgotPassword = () => {
         newPassword.value = '';
         confirmPassword.value = '';
         isEmailChecked.value = false;
+        isTokenValid.value = false;
         resetToken.value = '';
+        router.replace({ query: {} }); // Xóa token trong URL
     }
 };
 
 const handleLogin = async () => {
+    // Kiểm tra đầu vào
+    if (!email.value || !password.value) {
+        toast.error('Vui lòng nhập đầy đủ email và mật khẩu!');
+        return;
+    }
+
+    if (password.value.includes(' ')) {
+        toast.error('Mật khẩu không được chứa khoảng trắng!');
+        return;
+    }
     try {
         isLoading.value = true;
         const loginData = {
@@ -217,15 +255,26 @@ const handleResetPassword = async () => {
 
     // Bước 1: Kiểm tra email
     if (!isEmailChecked.value) {
+        if (!forgotEmail.value) {
+            toast.error('Vui lòng nhập email!');
+            isLoading.value = false;
+            return;
+        }
+        // if (forgotEmail.value.includes(' ')) {
+        //     toast.error('Email không được chứa khoảng trắng!');
+        //     isLoading.value = false;
+        //     return;
+        // }
         try {
             const response = await axiosInstance.post('api/khach-hang/forgot-password', {
                 email: forgotEmail.value
             });
 
             if (response.data.successMessage) {
-                resetToken.value = response.data.resetToken;
+                // resetToken.value = response.data.resetToken;
                 isEmailChecked.value = true;
-                toast.success('Email hợp lệ, vui lòng nhập mật khẩu mới.');
+                toast.success(response.data.successMessage);
+                // toast.success('Email hợp lệ, vui lòng nhập mật khẩu mới.');
             }
         } catch (error) {
             toast.error(error.response?.data?.error || 'Có lỗi xảy ra khi kiểm tra email!');
@@ -236,6 +285,31 @@ const handleResetPassword = async () => {
     }
 
     // Bước 2: Xác nhận đặt lại mật khẩu
+    if (!isTokenValid.value) {
+        toast.error('Vui lòng kiểm tra gmail để xác nhận đặt lại mật khẩu!');
+        isLoading.value = false;
+        return;
+    }
+    if (!newPassword.value || !confirmPassword.value) {
+        toast.error('Vui lòng nhập đầy đủ mật khẩu mới và xác nhận!');
+        isLoading.value = false;
+        return;
+    }
+    if (newPassword.value.includes(' ')) {
+        toast.error('Mật khẩu mới không được chứa khoảng trắng!');
+        isLoading.value = false;
+        return;
+    }
+    if (newPassword.value.length < 6) {
+        toast.error('Mật khẩu mới phải có ít nhất 6 ký tự!');
+        isLoading.value = false;
+        return;
+    }
+    if (newPassword.value.length > 20) {
+        toast.error('Mật khẩu mới không được vượt quá 20 ký tự!');
+        isLoading.value = false;
+        return;
+    }
     if (newPassword.value !== confirmPassword.value) {
         toast.error('Mật khẩu mới và mật khẩu xác nhận không khớp!');
         isLoading.value = false;

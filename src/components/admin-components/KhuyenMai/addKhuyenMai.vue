@@ -11,20 +11,40 @@
           <div class="col-lg-4 bg-light p-4 rounded">
             <div class="mb-3">
               <label for="maKhuyenMai" class="form-label">Mã khuyến mãi</label>
-              <input type="text" class="form-control" id="maKhuyenMai" v-model="khuyenMai.maKhuyenMai" required
-                :class="{ 'is-invalid': errors.maKhuyenMai }" @input="validateMaKhuyenMai" />
+              <input
+                type="text"
+                class="form-control"
+                id="maKhuyenMai"
+                v-model="khuyenMai.maKhuyenMai"
+                required
+                :class="{ 'is-invalid': errors.maKhuyenMai }"
+                @input="handleMaKhuyenMaiInput"
+              />
               <div class="text-danger" v-if="errors.maKhuyenMai">{{ errors.maKhuyenMai }}</div>
             </div>
             <div class="mb-3">
               <label for="tenKhuyenMai" class="form-label">Tên khuyến mãi</label>
-              <input type="text" class="form-control" id="tenKhuyenMai" v-model="khuyenMai.tenKhuyenMai" required
-                :class="{ 'is-invalid': errors.tenKhuyenMai }" @input="validateTenKhuyenMai" />
+              <input
+                type="text"
+                class="form-control"
+                id="tenKhuyenMai"
+                v-model="khuyenMai.tenKhuyenMai"
+                required
+                :class="{ 'is-invalid': errors.tenKhuyenMai }"
+                @input="validateTenKhuyenMai"
+              />
               <div class="text-danger" v-if="errors.tenKhuyenMai">{{ errors.tenKhuyenMai }}</div>
             </div>
             <div class="mb-3">
               <label for="kieuGiamGia" class="form-label">Kiểu giảm giá</label>
-              <select class="form-select" id="kieuGiamGia" v-model="khuyenMai.kieuGiamGia" required
-                :class="{ 'is-invalid': errors.kieuGiamGia }" @change="validateKieuGiamGia">
+              <select
+                class="form-select"
+                id="kieuGiamGia"
+                v-model="khuyenMai.kieuGiamGia"
+                required
+                :class="{ 'is-invalid': errors.kieuGiamGia }"
+                @change="validateKieuGiamGia"
+              >
                 <option value="" disabled>Chọn kiểu</option>
                 <option value="Phần trăm">Phần trăm</option>
                 <option value="Tiền mặt">Tiền mặt</option>
@@ -33,38 +53,86 @@
             </div>
             <div class="mb-3">
               <label for="giaTriGiam" class="form-label">Giá trị giảm</label>
-              <input type="number" step="1" class="form-control" id="giaTriGiam" v-model="khuyenMai.giaTriGiam" min="0"
-                required :class="{ 'is-invalid': errors.giaTriGiam }" @input="validateGiaTriGiam" />
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="giaTriGiam"
+                  v-model="displayGiaTriGiam"
+                  required
+                  :class="{ 'is-invalid': errors.giaTriGiam }"
+                  @input="handleGiaTriGiamInput"
+                />
+                <span class="input-group-text">{{ khuyenMai.kieuGiamGia === 'Phần trăm' ? '%' : '₫' }}</span>
+              </div>
               <div class="text-danger" v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</div>
             </div>
             <div class="mb-3">
               <label for="giaTriToiDa" class="form-label">Giá trị tối đa</label>
-              <input type="number" step="1" class="form-control" id="giaTriToiDa" v-model="khuyenMai.giaTriToiDa"
-                min="0" :disabled="khuyenMai.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }"
-                @input="validateGiaTriToiDa" />
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="giaTriToiDa"
+                  v-model="displayGiaTriToiDa"
+                  :disabled="khuyenMai.kieuGiamGia === 'Tiền mặt'"
+                  :class="{ 'is-invalid': errors.giaTriToiDa }"
+                  @input="handleGiaTriToiDaInput"
+                />
+                <span class="input-group-text">₫</span>
+              </div>
               <div class="text-danger" v-if="errors.giaTriToiDa">{{ errors.giaTriToiDa }}</div>
             </div>
             <div class="mb-3">
               <label for="ngayBatDau" class="form-label">Ngày bắt đầu</label>
-              <input type="datetime-local" class="form-control" id="ngayBatDau" v-model="khuyenMai.ngayBatDau" required
-                :class="{ 'is-invalid': errors.ngayBatDau }" @input="validateDates" />
+              <input
+                type="datetime-local"
+                class="form-control"
+                id="ngayBatDau"
+                v-model="khuyenMai.ngayBatDau"
+                required
+                :class="{ 'is-invalid': errors.ngayBatDau }"
+                @input="validateDates"
+              />
               <div class="text-danger" v-if="errors.ngayBatDau">{{ errors.ngayBatDau }}</div>
             </div>
             <div class="mb-3">
               <label for="ngayHetHan" class="form-label">Ngày kết thúc</label>
-              <input type="datetime-local" class="form-control" id="ngayHetHan" v-model="khuyenMai.ngayHetHan" required
-                :class="{ 'is-invalid': errors.ngayHetHan }" @input="validateDates" />
+              <input
+                type="datetime-local"
+                class="form-control"
+                id="ngayHetHan"
+                v-model="khuyenMai.ngayHetHan"
+                required
+                :class="{ 'is-invalid': errors.ngayHetHan }"
+                @input="validateDates"
+              />
               <div class="text-danger" v-if="errors.ngayHetHan">{{ errors.ngayHetHan }}</div>
             </div>
             <div class="mb-3">
               <label for="moTa" class="form-label">Mô tả</label>
-              <textarea class="form-control" id="moTa" v-model="khuyenMai.moTa" rows="3"></textarea>
+              <textarea
+                class="form-control"
+                id="moTa"
+                v-model="khuyenMai.moTa"
+                rows="3"
+              ></textarea>
             </div>
             <div class="d-flex justify-content-center gap-3 mt-4">
-              <button type="submit" class="btn btn-primary"
-                :disabled="hasErrors || selectedChiTietSanPhamIds.length === 0">Lưu</button>
-              <button type="button" class="btn btn-secondary" @click="router.push('/admin/quanlykhuyenmai')">Quay
-                lại</button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="hasErrors || selectedChiTietSanPhamIds.length === 0"
+              >
+                Lưu
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                @click="router.push('/admin/quanlykhuyenmai')"
+              >
+                Quay lại
+              </button>
             </div>
           </div>
 
@@ -99,8 +167,13 @@
                     </tr>
                     <tr v-for="(sanPham, index) in sanPhamList" :key="sanPham.id_san_pham">
                       <td>
-                        <input class="form-check-input sanPhamCheckbox" type="checkbox" :value="sanPham.id_san_pham"
-                          v-model="selectedSanPhamIds" @change="refreshChiTietSanPham" />
+                        <input
+                          class="form-check-input sanPhamCheckbox"
+                          type="checkbox"
+                          :value="sanPham.id_san_pham"
+                          v-model="selectedSanPhamIds"
+                          @change="refreshChiTietSanPham"
+                        />
                       </td>
                       <td>{{ index + 1 }}</td>
                       <td>{{ sanPham.ma_san_pham }}</td>
@@ -118,8 +191,7 @@
                 <table class="table table-bordered">
                   <thead class="co">
                     <tr>
-                      <th><input class="form-check-input" type="checkbox" @change="toggleSelectAllChiTietSanPham" />
-                      </th>
+                      <th><input class="form-check-input" type="checkbox" @change="toggleSelectAllChiTietSanPham" /></th>
                       <th>STT</th>
                       <th>Mã sản phẩm</th>
                       <th>Tên sản phẩm</th>
@@ -135,8 +207,12 @@
                     </tr>
                     <tr v-for="(item, index) in chiTietSanPhamList" :key="item.id_chi_tiet_san_pham">
                       <td>
-                        <input class="form-check-input chiTietSanPhamCheckbox" type="checkbox"
-                          :value="item.id_chi_tiet_san_pham" v-model="selectedChiTietSanPhamIds" />
+                        <input
+                          class="form-check-input chiTietSanPhamCheckbox"
+                          type="checkbox"
+                          :value="item.id_chi_tiet_san_pham"
+                          v-model="selectedChiTietSanPhamIds"
+                        />
                       </td>
                       <td>{{ index + 1 }}</td>
                       <td>{{ item.sanPham.ma_san_pham }}</td>
@@ -194,6 +270,55 @@ const selectedSanPhamIds = ref([]);
 const chiTietSanPhamList = ref([]);
 const selectedChiTietSanPhamIds = ref([]);
 
+// Display values for formatted inputs
+const displayGiaTriGiam = ref('');
+const displayGiaTriToiDa = ref('');
+
+// Format number with VND currency and dot separators
+const formatNumber = (number, includeCurrency = true) => {
+  if (!number && number !== 0) return '0';
+  const formatted = new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0
+  }).format(number);
+  return includeCurrency ? `${formatted} ₫` : formatted;
+};
+
+// Parse input to remove formatting
+const parseInput = (value) => {
+  if (!value) return null;
+  return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+};
+
+// Format input to add dots
+const formatInput = (value) => {
+  if (!value && value !== 0) return '';
+  const num = parseFloat(value);
+  if (isNaN(num)) return '';
+  return new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0
+  }).format(num);
+};
+
+// Handle input for giaTriGiam
+const handleGiaTriGiamInput = (event) => {
+  const rawValue = event.target.value.replace(/\./g, '');
+  const parsedValue = parseInput(rawValue);
+  khuyenMai.value.giaTriGiam = parsedValue;
+  displayGiaTriGiam.value = formatInput(parsedValue);
+  validateGiaTriGiam();
+};
+
+// Handle input for giaTriToiDa
+const handleGiaTriToiDaInput = (event) => {
+  const rawValue = event.target.value.replace(/\./g, '');
+  const parsedValue = parseInput(rawValue);
+  khuyenMai.value.giaTriToiDa = parsedValue;
+  displayGiaTriToiDa.value = formatInput(parsedValue);
+  validateGiaTriToiDa();
+};
+
 // Validation functions
 const validateMaKhuyenMai = () => {
   if (!khuyenMai.value.maKhuyenMai || khuyenMai.value.maKhuyenMai.trim() === '') {
@@ -221,11 +346,11 @@ const validateKieuGiamGia = () => {
 };
 
 const validateGiaTriGiam = () => {
-  const giaTri = parseFloat(khuyenMai.value.giaTriGiam);
-  if (isNaN(giaTri) || giaTri <= 0) {
+  const giaTri = khuyenMai.value.giaTriGiam;
+  if (giaTri === null || isNaN(giaTri) || giaTri <= 0) {
     errors.value.giaTriGiam = 'Giá trị giảm phải là số lớn hơn 0!';
   } else if (giaTri > 5000000) {
-    errors.value.giaTriGiam = 'Giá trị giảm không được lớn hơn 5,000,000!';
+    errors.value.giaTriGiam = `Giá trị giảm không được lớn hơn ${formatNumber(5000000)}!`;
   } else if (khuyenMai.value.kieuGiamGia === 'Phần trăm' && giaTri > 100) {
     errors.value.giaTriGiam = 'Giá trị giảm không được vượt quá 100 khi chọn Phần trăm!';
   } else {
@@ -234,19 +359,21 @@ const validateGiaTriGiam = () => {
 
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = giaTri;
+    displayGiaTriToiDa.value = formatInput(giaTri);
     validateGiaTriToiDa();
   }
 };
 
 const validateGiaTriToiDa = () => {
-  const giaTriToiDa = parseFloat(khuyenMai.value.giaTriToiDa);
+  const giaTriToiDa = khuyenMai.value.giaTriToiDa;
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatInput(khuyenMai.value.giaTriGiam);
     errors.value.giaTriToiDa = '';
-  } else if (isNaN(giaTriToiDa) || giaTriToiDa <= 0) {
+  } else if (giaTriToiDa === null || isNaN(giaTriToiDa) || giaTriToiDa <= 0) {
     errors.value.giaTriToiDa = 'Giá trị tối đa phải là số lớn hơn 0!';
   } else if (giaTriToiDa > 5000000) {
-    errors.value.giaTriToiDa = 'Giá trị tối đa không được lớn hơn 5,000,000!';
+    errors.value.giaTriToiDa = `Giá trị tối đa không được lớn hơn ${formatNumber(5000000)}!`;
   } else {
     errors.value.giaTriToiDa = '';
   }
@@ -268,6 +395,16 @@ const validateDates = () => {
   }
 };
 
+// Handle maKhuyenMai input to remove spaces
+const handleMaKhuyenMaiInput = () => {
+  const originalValue = khuyenMai.value.maKhuyenMai;
+  khuyenMai.value.maKhuyenMai = khuyenMai.value.maKhuyenMai.replace(/\s/g, '');
+  if (originalValue !== khuyenMai.value.maKhuyenMai) {
+    toast.error('Mã khuyến mãi không được chứa khoảng cách!', { autoClose: 1000 });
+  }
+  validateMaKhuyenMai();
+};
+
 // Computed to check for errors
 const hasErrors = computed(() => {
   return Object.values(errors.value).some(error => error !== '');
@@ -277,15 +414,23 @@ const hasErrors = computed(() => {
 watch(() => khuyenMai.value.kieuGiamGia, () => {
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
     khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatInput(khuyenMai.value.giaTriGiam);
   }
   validateKieuGiamGia();
 });
 
-watch(() => khuyenMai.value.giaTriGiam, () => {
+watch(() => khuyenMai.value.giaTriGiam, (newValue) => {
   if (khuyenMai.value.kieuGiamGia === 'Tiền mặt') {
-    khuyenMai.value.giaTriToiDa = khuyenMai.value.giaTriGiam;
+    khuyenMai.value.giaTriToiDa = newValue;
+    displayGiaTriToiDa.value = formatInput(newValue);
   }
+  displayGiaTriGiam.value = formatInput(newValue);
   validateGiaTriGiam();
+});
+
+watch(() => khuyenMai.value.giaTriToiDa, (newValue) => {
+  displayGiaTriToiDa.value = formatInput(newValue);
+  validateGiaTriToiDa();
 });
 
 // Debounce function
@@ -354,11 +499,6 @@ const toggleSelectAllChiTietSanPham = (event) => {
   } else {
     selectedChiTietSanPhamIds.value = [];
   }
-};
-
-const formatNumber = (number) => {
-  if (!number) return '0';
-  return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(number);
 };
 
 // Submit form
@@ -470,7 +610,12 @@ onMounted(() => {
 }
 
 .scrollable-table {
-  max-height: 300px; /* Giới hạn chiều cao để hiển thị thanh cuộn */
-  overflow-y: auto; /* Thêm thanh cuộn dọc */
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
 }
 </style>

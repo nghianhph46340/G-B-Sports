@@ -37,6 +37,11 @@
                     <AccountBookOutlined />
                     <span>Hóa đơn</span>
                 </a-menu-item>
+                
+                <a-menu-item key="9" @click="changeRoute('/admin/traHang');">
+                    <AccountBookOutlined />
+                    <span>Trả hàng tại quầy</span>
+                </a-menu-item>
                 <a-sub-menu v-if="store.id_roles !== 3" key="sub2">
                     <template #title>
                         <span>
@@ -57,9 +62,9 @@
                     <a-menu-item key="12" @click="changeRoute('/admin/quanlyvoucher');">Voucher</a-menu-item>
                     <a-menu-item key="13" @click="changeRoute('/admin/quanlykhuyenmai');">Khuyến mãi</a-menu-item>
                 </a-sub-menu>
-                <a-menu-item key="14">
+                <a-menu-item key="14" @click="store.logout()">
                     <LogoutOutlined />
-                    <span @click="store.logout()">Đăng xuất</span>
+                    <span>Đăng xuất</span>
                 </a-menu-item>
             </a-menu>
         </a-layout-sider>

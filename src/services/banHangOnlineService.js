@@ -56,6 +56,16 @@ const voucherByGiaTruyen = async (giaTruyen) => {
         return { error: true };
     }
 }
+// Thêm giỏ hàng cho khách hàng có tài khoản
+const themGioHangByIdKH = async (idKH, idCTSP, soLuong) => {
+    const response = await axiosInstance.post('/gioHangWeb/themGHByIdKH?idKH=' + idKH + '&idCTSP=' + idCTSP + '&soLuong=' + soLuong);
+    return response.data;
+}
+// Xoá số lượng sản phẩm trong giỏ hàng
+const xoaSoLuongSPGH = async (idKH, idCTSP, soLuong) => {
+    const response = await axiosInstance.delete('/gioHangWeb/deleteGHByIdKH?idKH=' + idKH + '&idCTSP=' + idCTSP + '&soLuong=' + soLuong);
+    return response.data;
+}
 export const banHangOnlineService = {
     createOrder,
     createOrderChiTiet,
@@ -66,6 +76,8 @@ export const banHangOnlineService = {
     createOrder1,
     getGioHang,
     getDanhSachDiaChi,
-    voucherByGiaTruyen
+    voucherByGiaTruyen,
+    themGioHangByIdKH,
+    xoaSoLuongSPGH
 }
 

@@ -1,4 +1,4 @@
-<!-- src/views/admin/Voucher/AddVoucher.vue -->
+```vue
 <template>
   <div class="container-fluid">
     <h3 class="fw-bold mb-4" style="color: #f33b47;">Thêm Voucher</h3>
@@ -7,13 +7,13 @@
         <div class="col-md-6">
           <label for="maVoucher" class="form-label">Mã Voucher</label>
           <input type="text" class="form-control" id="maVoucher" v-model="voucher.maVoucher" required
-                 :class="{ 'is-invalid': errors.maVoucher }" @input="validateMaVoucher">
+                 :class="{ 'is-invalid': errors.maVoucher }" @input="handleMaVoucherInput">
           <div class="text-danger" v-if="errors.maVoucher">{{ errors.maVoucher }}</div>
         </div>
         <div class="col-md-6">
           <label for="tenVoucher" class="form-label">Tên Voucher</label>
           <input type="text" class="form-control" id="tenVoucher" v-model="voucher.tenVoucher" required
-                 :class="{ 'is-invalid': errors.tenVoucher }" @input="validateTenVoucher">
+                 :class="{ 'is-invalid': errors.tenVoucher }" @input="handleTenVoucherInput">
           <div class="text-danger" v-if="errors.tenVoucher">{{ errors.tenVoucher }}</div>
         </div>
         <div class="col-md-6">
@@ -28,14 +28,20 @@
         </div>
         <div class="col-md-6">
           <label for="giaTriGiam" class="form-label">Giá trị giảm</label>
-          <input type="number" class="form-control" id="giaTriGiam" v-model="voucher.giaTriGiam" min="0" step="1" required
-                 :class="{ 'is-invalid': errors.giaTriGiam }" @input="validateGiaTriGiam">
+          <div class="input-group">
+            <input type="text" class="form-control" id="giaTriGiam" v-model="displayGiaTriGiam" required
+                   :class="{ 'is-invalid': errors.giaTriGiam }" @input="handleCurrencyInput('giaTriGiam', $event)">
+            <span class="input-group-text">{{ voucher.kieuGiamGia === 'Phần trăm' ? '%' : '₫' }}</span>
+          </div>
           <div class="text-danger" v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</div>
         </div>
         <div class="col-md-6">
           <label for="giaTriToiThieu" class="form-label">Giá trị tối thiểu</label>
-          <input type="number" class="form-control" id="giaTriToiThieu" v-model="voucher.giaTriToiThieu" min="0" step="1"
-                 :class="{ 'is-invalid': errors.giaTriToiThieu }" @input="validateGiaTriToiThieu">
+          <div class="input-group">
+            <input type="text" class="form-control" id="giaTriToiThieu" v-model="displayGiaTriToiThieu"
+                   :class="{ 'is-invalid': errors.giaTriToiThieu }" @input="handleCurrencyInput('giaTriToiThieu', $event)">
+            <span class="input-group-text">₫</span>
+          </div>
           <div class="text-danger" v-if="errors.giaTriToiThieu">{{ errors.giaTriToiThieu }}</div>
         </div>
         <div class="col-md-6">
@@ -46,8 +52,12 @@
         </div>
         <div class="col-md-6">
           <label for="giaTriToiDa" class="form-label">Giá trị tối đa</label>
-          <input type="number" class="form-control" id="giaTriToiDa" v-model="voucher.giaTriToiDa" min="0" step="1" required
-                 :disabled="voucher.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }" @input="validateGiaTriToiDa">
+          <div class="input-group">
+            <input type="text" class="form-control" id="giaTriToiDa" v-model="displayGiaTriToiDa" required
+                   :disabled="voucher.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }"
+                   @input="handleCurrencyInput('giaTriToiDa', $event)">
+            <span class="input-group-text">₫</span>
+          </div>
           <div class="text-danger" v-if="errors.giaTriToiDa">{{ errors.giaTriToiDa }}</div>
         </div>
         <div class="col-md-6">
@@ -78,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
@@ -87,176 +97,273 @@ const router = useRouter();
 const store = useGbStore();
 
 const voucher = ref({
-maVoucher: '',
-tenVoucher: '',
-giaTriGiam: null,
-giaTriToiThieu: null,
-soLuong: null,
-kieuGiamGia: '',
-giaTriToiDa: null,
-ngayBatDau: null,
-ngayHetHan: null,
-moTa: '',
+  maVoucher: '',
+  tenVoucher: '',
+  giaTriGiam: null,
+  giaTriToiThieu: null,
+  soLuong: null,
+  kieuGiamGia: '',
+  giaTriToiDa: null,
+  ngayBatDau: null,
+  ngayHetHan: null,
+  moTa: '',
 });
 
 const errors = ref({
-maVoucher: '',
-tenVoucher: '',
-giaTriGiam: '',
-giaTriToiThieu: '',
-soLuong: '',
-kieuGiamGia: '',
-giaTriToiDa: '',
-ngayBatDau: '',
-ngayHetHan: '',
+  maVoucher: '',
+  tenVoucher: '',
+  giaTriGiam: '',
+  giaTriToiThieu: '',
+  soLuong: '',
+  kieuGiamGia: '',
+  giaTriToiDa: '',
+  ngayBatDau: '',
+  ngayHetHan: '',
 });
 
+// Display values for formatted inputs
+const displayGiaTriGiam = ref('');
+const displayGiaTriToiThieu = ref('');
+const displayGiaTriToiDa = ref('');
+
+// Format number to VND currency (e.g., 1000000 -> 1.000.000)
+const formatCurrency = (value, includeCurrency = false) => {
+  if (value === null || value === '' || isNaN(value)) return '';
+  const formatted = new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0
+  }).format(value);
+  return includeCurrency ? `${formatted} ₫` : formatted;
+};
+
+// Parse currency input (e.g., "1.000.000" -> 1000000)
+const parseCurrency = (value) => {
+  if (!value) return null;
+  return parseFloat(value.replace(/\./g, '').replace(',', '.')) || null;
+};
+
+// Handle currency input for giaTriGiam, giaTriToiThieu, giaTriToiDa
+const handleCurrencyInput = (field, event) => {
+  const rawValue = event.target.value.replace(/\./g, '');
+  const parsedValue = parseCurrency(rawValue);
+  voucher.value[field] = parsedValue;
+  if (field === 'giaTriGiam') {
+    displayGiaTriGiam.value = formatCurrency(parsedValue);
+    validateGiaTriGiam();
+  }
+  if (field === 'giaTriToiThieu') {
+    displayGiaTriToiThieu.value = formatCurrency(parsedValue);
+    validateGiaTriToiThieu();
+  }
+  if (field === 'giaTriToiDa') {
+    displayGiaTriToiDa.value = formatCurrency(parsedValue);
+    validateGiaTriToiDa();
+  }
+};
+
+// Handle maVoucher input to prevent spaces
+const handleMaVoucherInput = () => {
+  const originalValue = voucher.value.maVoucher;
+  voucher.value.maVoucher = voucher.value.maVoucher.replace(/\s/g, '');
+  if (originalValue !== voucher.value.maVoucher) {
+    toast.error('Mã voucher không được chứa khoảng cách!', { autoClose: 1000 });
+  }
+  validateMaVoucher();
+};
+
+// Handle tenVoucher input to trim only
+const handleTenVoucherInput = () => {
+  voucher.value.tenVoucher = voucher.value.tenVoucher.trim();
+  validateTenVoucher();
+};
+
 const validateMaVoucher = () => {
-if (!voucher.value.maVoucher || voucher.value.maVoucher.trim() === '') {
-  errors.value.maVoucher = 'Mã voucher không được để trống!';
-} else {
-  errors.value.maVoucher = '';
-}
+  if (!voucher.value.maVoucher) {
+    errors.value.maVoucher = 'Mã voucher không được để trống!';
+  } else if (!/^[a-zA-Z0-9]+$/.test(voucher.value.maVoucher)) {
+    errors.value.maVoucher = 'Mã voucher chỉ được chứa chữ cái và số!';
+  } else {
+    errors.value.maVoucher = '';
+  }
 };
 
 const validateTenVoucher = () => {
-if (!voucher.value.tenVoucher || voucher.value.tenVoucher.trim() === '') {
-  errors.value.tenVoucher = 'Tên voucher không được để trống!';
-} else {
-  errors.value.tenVoucher = '';
-}
+  if (!voucher.value.tenVoucher) {
+    errors.value.tenVoucher = 'Tên voucher không được để trống!';
+  } else {
+    errors.value.tenVoucher = '';
+  }
 };
 
 const validateGiaTriGiam = () => {
-const giaTri = parseFloat(voucher.value.giaTriGiam) || 0;
-if (!voucher.value.giaTriGiam || giaTri <= 0) {
-  errors.value.giaTriGiam = 'Giá trị giảm phải lớn hơn 0!';
-} else if (giaTri > 5000000) {
-  errors.value.giaTriGiam = 'Giá trị giảm không được lớn hơn 5,000,000!';
-} else if (voucher.value.kieuGiamGia === 'Phần trăm' && giaTri > 100) {
-  errors.value.giaTriGiam = 'Giá trị giảm không được vượt quá 100 khi chọn Phần trăm!';
-} else {
-  errors.value.giaTriGiam = '';
-}
+  const giaTri = voucher.value.giaTriGiam;
+  if (giaTri === null || isNaN(giaTri) || giaTri <= 0) {
+    errors.value.giaTriGiam = 'Giá trị giảm phải lớn hơn 0!';
+  } else if (giaTri > 5000000) {
+    errors.value.giaTriGiam = `Giá trị giảm không được lớn hơn ${formatCurrency(5000000, true)}!`;
+  } else if (voucher.value.kieuGiamGia === 'Phần trăm' && giaTri > 100) {
+    errors.value.giaTriGiam = 'Giá trị giảm không được vượt quá 100 khi chọn Phần trăm!';
+  } else {
+    errors.value.giaTriGiam = '';
+  }
 
-if (voucher.value.kieuGiamGia === 'Tiền mặt') {
-  voucher.value.giaTriToiDa = giaTri;
-  validateGiaTriToiDa();
-}
+  if (voucher.value.kieuGiamGia === 'Tiền mặt') {
+    voucher.value.giaTriToiDa = giaTri;
+    displayGiaTriToiDa.value = formatCurrency(giaTri);
+    validateGiaTriToiDa();
+  }
 };
 
 const validateGiaTriToiThieu = () => {
-const giaTri = parseFloat(voucher.value.giaTriToiThieu) || 0;
-if (giaTri < 0) {
-  errors.value.giaTriToiThieu = 'Giá trị tối thiểu không được nhỏ hơn 0!';
-} else if (giaTri > 5000000) {
-  errors.value.giaTriToiThieu = 'Giá trị tối thiểu không được lớn hơn 5,000,000!';
-} else {
-  errors.value.giaTriToiThieu = '';
-}
+  const giaTri = voucher.value.giaTriToiThieu || 0;
+  if (giaTri < 0) {
+    errors.value.giaTriToiThieu = 'Giá trị tối thiểu không được nhỏ hơn 0!';
+  } else if (giaTri > 5000000) {
+    errors.value.giaTriToiThieu = `Giá trị tối thiểu không được lớn hơn ${formatCurrency(5000000, true)}!`;
+  } else {
+    errors.value.giaTriToiThieu = '';
+  }
 };
 
 const validateSoLuong = () => {
-const soLuong = parseInt(voucher.value.soLuong) || 0;
-if (!voucher.value.soLuong || soLuong < 0) {
-  errors.value.soLuong = 'Số lượng không được nhỏ hơn 0!';
-} else if (soLuong > 5000000) {
-  errors.value.soLuong = 'Số lượng không được lớn hơn 5,000,000!';
-} else {
-  errors.value.soLuong = '';
-}
+  const soLuong = parseInt(voucher.value.soLuong) || 0;
+  if (voucher.value.soLuong === null || soLuong < 0) {
+    errors.value.soLuong = 'Số lượng không được nhỏ hơn 0!';
+  } else if (soLuong > 5000000) {
+    errors.value.soLuong = `Số lượng không được lớn hơn ${formatCurrency(5000000)}!`;
+  } else {
+    errors.value.soLuong = '';
+  }
 };
 
 const validateGiaTriToiDa = () => {
-const giaTri = parseFloat(voucher.value.giaTriToiDa) || 0;
-if (giaTri < 0) {
-  errors.value.giaTriToiDa = 'Giá trị tối đa không được nhỏ hơn 0!';
-} else if (giaTri > 5000000) {
-  errors.value.giaTriToiDa = 'Giá trị tối đa không được lớn hơn 5,000,000!';
-} else {
-  errors.value.giaTriToiDa = '';
-}
+  const giaTri = voucher.value.giaTriToiDa || 0;
+  if (voucher.value.kieuGiamGia === 'Tiền mặt') {
+    voucher.value.giaTriToiDa = voucher.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatCurrency(voucher.value.giaTriGiam);
+    errors.value.giaTriToiDa = '';
+  } else if (giaTri <= 0) {
+    errors.value.giaTriToiDa = 'Giá trị tối đa phải lớn hơn 0!';
+  } else if (giaTri > 5000000) {
+    errors.value.giaTriToiDa = `Giá trị tối đa không được lớn hơn ${formatCurrency(5000000, true)}!`;
+  } else {
+    errors.value.giaTriToiDa = '';
+  }
 };
 
 const validateKieuGiamGia = () => {
-if (!voucher.value.kieuGiamGia || voucher.value.kieuGiamGia.trim() === '') {
-  errors.value.kieuGiamGia = 'Kiểu giảm giá không được để trống!';
-} else {
-  errors.value.kieuGiamGia = '';
-  validateGiaTriGiam();
-}
+  if (!voucher.value.kieuGiamGia || voucher.value.kieuGiamGia.trim() === '') {
+    errors.value.kieuGiamGia = 'Kiểu giảm giá không được để trống!';
+  } else {
+    errors.value.kieuGiamGia = '';
+    validateGiaTriGiam();
+  }
 };
 
 const validateDates = () => {
-if (!voucher.value.ngayBatDau) {
-  errors.value.ngayBatDau = 'Ngày bắt đầu không được để trống!';
-} else {
-  errors.value.ngayBatDau = '';
-}
+  if (!voucher.value.ngayBatDau) {
+    errors.value.ngayBatDau = 'Ngày bắt đầu không được để trống!';
+  } else {
+    errors.value.ngayBatDau = '';
+  }
 
-if (!voucher.value.ngayHetHan) {
-  errors.value.ngayHetHan = 'Ngày kết thúc không được để trống!';
-} else if (voucher.value.ngayBatDau && new Date(voucher.value.ngayHetHan) < new Date(voucher.value.ngayBatDau)) {
-  errors.value.ngayHetHan = 'Ngày kết thúc phải sau ngày bắt đầu!';
-} else {
-  errors.value.ngayHetHan = '';
-}
+  if (!voucher.value.ngayHetHan) {
+    errors.value.ngayHetHan = 'Ngày kết thúc không được để trống!';
+  } else if (voucher.value.ngayBatDau && new Date(voucher.value.ngayHetHan) < new Date(voucher.value.ngayBatDau)) {
+    errors.value.ngayHetHan = 'Ngày kết thúc phải sau ngày bắt đầu!';
+  } else {
+    errors.value.ngayHetHan = '';
+  }
 };
 
 const hasErrors = computed(() => {
-return Object.values(errors.value).some(error => error !== '');
+  return Object.values(errors.value).some(error => error !== '');
+});
+
+// Watch kieuGiamGia and giaTriGiam to sync giaTriToiDa
+watch(() => voucher.value.kieuGiamGia, () => {
+  if (voucher.value.kieuGiamGia === 'Tiền mặt') {
+    voucher.value.giaTriToiDa = voucher.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatCurrency(voucher.value.giaTriGiam);
+  }
+  validateKieuGiamGia();
+});
+
+watch(() => voucher.value.giaTriGiam, (newValue) => {
+  displayGiaTriGiam.value = formatCurrency(newValue);
+  if (voucher.value.kieuGiamGia === 'Tiền mặt') {
+    voucher.value.giaTriToiDa = newValue;
+    displayGiaTriToiDa.value = formatCurrency(newValue);
+  }
+  validateGiaTriGiam();
+});
+
+watch(() => voucher.value.giaTriToiThieu, (newValue) => {
+  displayGiaTriToiThieu.value = formatCurrency(newValue);
+  validateGiaTriToiThieu();
+});
+
+watch(() => voucher.value.giaTriToiDa, (newValue) => {
+  displayGiaTriToiDa.value = formatCurrency(newValue);
+  validateGiaTriToiDa();
 });
 
 const submitForm = async () => {
-validateMaVoucher();
-validateTenVoucher();
-validateGiaTriGiam();
-validateGiaTriToiThieu();
-validateSoLuong();
-validateKieuGiamGia();
-validateGiaTriToiDa();
-validateDates();
+  validateMaVoucher();
+  validateTenVoucher();
+  validateGiaTriGiam();
+  validateGiaTriToiThieu();
+  validateSoLuong();
+  validateKieuGiamGia();
+  validateGiaTriToiDa();
+  validateDates();
 
-if (hasErrors.value) {
-  toast.error('Vui lòng sửa các lỗi trước khi lưu!', { autoClose: 1000 });
-  return;
-}
-
-try {
-  const response = await store.addVoucher(voucher.value);
-  if (response === 'Thêm voucher thành công!') {
-    toast.success(response, {
-      autoClose: 1000,
-      onClose: () => router.push('/admin/quanlyvoucher'),
-    });
-  } else {
-    toast.error(response, { autoClose: 1000 });
+  if (hasErrors.value) {
+    toast.error('Vui lòng sửa các lỗi trước khi lưu!', { autoClose: 1000 });
+    return;
   }
-} catch (error) {
-  console.error('Lỗi khi thêm voucher:', error);
-  toast.error('Có lỗi xảy ra khi thêm voucher', { autoClose: 1000 });
-}
+
+  try {
+    const response = await store.addVoucher(voucher.value);
+    if (response === 'Thêm voucher thành công!') {
+      toast.success(response, {
+        autoClose: 1000,
+        onClose: () => router.push('/admin/quanlyvoucher'),
+      });
+    } else {
+      toast.error(response, { autoClose: 1000 });
+    }
+  } catch (error) {
+    console.error('Lỗi khi thêm voucher:', error);
+    toast.error('Có lỗi xảy ra khi thêm voucher', { autoClose: 1000 });
+  }
 };
 </script>
 
 <style scoped>
 .btn-primary {
-background-color: #d02c39;
-border-color: #d02c39;
-font-weight: bold;
+  background-color: #d02c39;
+  border-color: #d02c39;
+  font-weight: bold;
 }
 
 .btn-primary:hover {
-background-color: #f33b47;
-border-color: #f33b47;
+  background-color: #f33b47;
+  border-color: #f33b47;
 }
 
 .is-invalid {
-border-color: #dc3545;
+  border-color: #dc3545;
 }
 
 .text-danger {
-font-size: 0.875em;
-margin-top: 0.25rem;
+  font-size: 0.875em;
+  margin-top: 0.25rem;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
 }
 </style>
+```
