@@ -149,6 +149,12 @@
                                 <template v-if="column.key === 'gia_ban'">
                                     {{ formatCurrency(ctspRecord.gia_ban) }}
                                 </template>
+                                <template v-if="column.key === 'qrcode'">
+                                    <a-tooltip title="Tải QR Code">
+                                        <a-qrcode @click="showConfirmDownload(ctspRecord)" :size="60"
+                                            :value="ctspRecord.id_chi_tiet_san_pham.toString()" />
+                                    </a-tooltip>
+                                </template>
                                 <template v-if="column.key === 'action'">
                                     <a-button @click="showDrawer" type="" style="color: white;"
                                         class="d-flex align-items-center btn btn-warning">
