@@ -2,12 +2,12 @@
     <div class="danh-muc-container my-4" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Danh mục sản phẩm</h2>
+                <h2 class="section-title">Phân loại sản phẩm</h2>
                 <div class="section-divider">
                 </div>
                 <div class="row g-3 mt-2">
-                    <!-- Hàng đầu tiên: 5 danh mục -->
-                    <div class="col-6 col-md-4 col-lg">
+                    <div class="col-md-2"></div>
+                    <div class="col-md-4">
                         <div class="category-item">
                             <div class="category-content" @click.prevent="handleSidebarClick('Áo')" >
                                 <div class="category-image">
@@ -25,7 +25,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4 col-lg">
+                    <div class=" col-md-4">
                         <div class="category-item">
                             <div class="category-content" @click.prevent="handleSidebarClick('Quần')">
                                 <div class="category-image">
@@ -43,42 +43,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-4 col-lg">
-                        <div class="category-item">
-                            <div class="category-content" @click.prevent="handleSidebarClick('Giày')">
-                                <div class="category-image">
-                                    <img src="../../images/danhMucSanPham/DanhMucGiay.png" alt="Giày thể thao">
-                                    <div class="category-overlay">
-                                        <div class="overlay-content">
-                                            <i class="fas fa-eye"></i>
-                                            <span>Xem ngay</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="category-name">
-                                    <span>Giày</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-4 col-lg">
-                        <div class="category-item">
-                            <div class="category-content" @click.prevent="handleSidebarClick('Tất')" >
-                                <div class="category-image">
-                                    <img src="../../images/danhMucSanPham/DanhMucTat.png" alt="Giày thể thao">
-                                    <div class="category-overlay">
-                                        <div class="overlay-content">
-                                            <i class="fas fa-eye"></i>
-                                            <span>Xem ngay</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="category-name">
-                                    <span>Tất</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="col-md-2"></div>
                 </div>
             </div>
         </div>

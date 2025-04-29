@@ -512,7 +512,7 @@
         
       </div>
     </a-modal>
-  </div>
+    </div>
 </template>
 
 <script setup>

@@ -571,6 +571,7 @@ export const useGbStore = defineStore('gbStore', {
         return
       } else {
         this.sanPhamById = sanPhamByIds
+        console.log('API trả về:', this.sanPhamById);
             }
         },
         //Lấy danh sách danh mục
@@ -697,7 +698,7 @@ export const useGbStore = defineStore('gbStore', {
         return
       } else {
         this.cTSPBySanPhamFull = cTSPBySanPhamFull
-        console.log(this.cTSPBySanPhamFull)
+        console.log('hehe: ',this.cTSPBySanPhamFull)
       }
     },
     async getAllSanPhamNgaySua() {
@@ -1006,7 +1007,7 @@ export const useGbStore = defineStore('gbStore', {
           console.log('Dữ liệu từ getCTHD:', response.chiTietHoaDons); // Kiểm tra dữ liệu
           if (response.error) {
               toast.error(response.message || 'Không lấy được chi tiết hóa đơn');
-              return;
+                    return;
           }
   
           this.hoaDonDetail = response.hoaDon || {};
@@ -1023,7 +1024,7 @@ export const useGbStore = defineStore('gbStore', {
           this.trangThaiHistory = response.trangThaiHistory || [];
           this.chiTietTraHangs = response1.chiTietTraHangs || [];
           this.traHangs = response1.traHangs || [];
-      } catch (error) {
+            } catch (error) {
           console.error('Lỗi trong getHoaDonDetail:', error);
           toast.error('Có lỗi xảy ra khi lấy chi tiết hóa đơn');
       }
@@ -2363,22 +2364,22 @@ export const useGbStore = defineStore('gbStore', {
 
         async getImage(id, anhChinh) {
       const getImageRespone = await sanPhamService.getImageInCTSP(id, anhChinh)
-      if (getImageRespone.error) {
+            if (getImageRespone.error) {
         toast.error('Không lấy được dữ liệu')
         return
-      } else {
-        this.getImages = getImageRespone
-      }
-      return getImageRespone
-    },
-    //Lấy danh sách chi tiết sản phẩm theo sản phẩm
-    async getCTSPBySanPham(id) {
+            } else {
+                this.getImages = getImageRespone
+            }
+            return getImageRespone
+        },
+        //Lấy danh sách chi tiết sản phẩm theo sản phẩm
+        async getCTSPBySanPham(id) {
       try {
         const getCTSPBySanPhamRespone = await sanPhamService.getCTSPBySanPham(id)
-        if (getCTSPBySanPhamRespone.error) {
+            if (getCTSPBySanPhamRespone.error) {
           toast.error('Không lấy được dữ liệu chi tiết sản phẩm')
           return
-        } else {
+            } else {
           // Lấy hình ảnh cho từng chi tiết sản phẩm trong một lần gọi
           for (let i = 0; i < getCTSPBySanPhamRespone.length; i++) {
             const ctsp = getCTSPBySanPhamRespone[i]
@@ -2399,9 +2400,9 @@ export const useGbStore = defineStore('gbStore', {
         console.error('Lỗi khi lấy chi tiết sản phẩm và hình ảnh:', error)
         toast.error('Có lỗi xảy ra khi lấy dữ liệu')
       }
-    },
-    //Lấy danh sách sản phẩm
-    async getAllSP() {
+        },
+        //Lấy danh sách sản phẩm
+        async getAllSP() {
       try {
         console.log('Đang tải danh sách sản phẩm')
         const sanPhamResponse = await sanPhamService.getAllSanPham()
@@ -2470,10 +2471,10 @@ export const useGbStore = defineStore('gbStore', {
           console.error('Thông báo lỗi từ server:', error.response.data);
         }
         throw error;
-      }
-    },
-    //Lấy danh sách chi tiết sản phẩm
-    async getAllCTSP() {
+            }
+        },
+        //Lấy danh sách chi tiết sản phẩm
+        async getAllCTSP() {
       try {
         console.log('Đang tải danh sách chi tiết sản phẩm')
         const chiTietSanPhamResponse = await sanPhamService.getAllChiTietSanPham()
@@ -3098,12 +3099,12 @@ export const useGbStore = defineStore('gbStore', {
       toast.error('Có lỗi xảy ra khi xử lý trả hàng');
       throw error;
     }
-  }
-},
-  persist: {
-    enabled: true,
-    strategies: [
-      {
+        }
+    },
+    persist: {
+        enabled: true,
+        strategies: [
+            {
         key: 'gbStore',
         storage: localStorage,
         paths: ['checkRouter', 'indexMenu', 'language', 'checkNoitification'],

@@ -167,7 +167,7 @@ const showArrows = ref(false);
 
 // Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
 onMounted(async () => {
-    await store.getSanPhamBySP('áo,quần');
+    await store.getSanPhamBySP('quần,áo');
     // Chuyển đổi dữ liệu từ API sang định dạng phù hợp với template
     if (store.listSanPhamBanHang && store.listSanPhamBanHang.length > 0) {
         bestSellingProducts.value = store.listSanPhamBanHang.map(item => ({
@@ -316,14 +316,16 @@ const addToCart = () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-.san-pham-ban-chay {
+.best-selling-products {
     padding: 2rem 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f8f9fa;
     opacity: 0;
     transform: translateY(30px);
     transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
-.san-pham-ban-chay.visible {
+.best-selling-products.visible {
     opacity: 1;
     transform: translateY(0);
 }
@@ -331,7 +333,7 @@ const addToCart = () => {
 .container {
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0 15px;
+
 }
 
 .section-header {
@@ -362,25 +364,60 @@ const addToCart = () => {
 }
 
 .product-card {
+    position: relative;
     flex: 0 0 20%;
     max-width: 20%;
     padding: 15px;
-    transition: all 0.3s ease;
     border-radius: 8px;
     margin-bottom: 20px;
+    background-color: #fff;
+    cursor: pointer;
     opacity: 0;
     transform: translateY(20px);
-    transition: all 0.5s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+}
+
+@media (max-width: 1200px) {
+    .product-card {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+}
+
+@media (max-width: 992px) {
+    .product-card {
+        flex: 0 0 33.333%;
+        max-width: 33.333%;
+    }
+}
+
+@media (max-width: 768px) {
+    .product-card {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 576px) {
+    .product-card {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
 }
 
 .visible .product-card {
     opacity: 1;
     transform: translateY(0);
+}
+
+.visible .product-card:hover {
+    transform: translateY(-10px);
 }
 
 .visible .product-card:nth-child(1) {
@@ -465,15 +502,16 @@ const addToCart = () => {
     color: #333;
     cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.overlay-btn span {
-    margin-left: 5px;
+    text-decoration: none;
 }
 
 .overlay-btn:hover {
     background: #3a86ff;
     color: white;
+}
+
+.overlay-btn span {
+    margin-left: 5px;
 }
 
 .product-info {
@@ -608,5 +646,233 @@ const addToCart = () => {
 :deep(.ant-carousel .slick-dots li.slick-active button) {
     background: #3a86ff;
     opacity: 1;
+}
+
+/* Modal styles */
+.product-detail-modal {
+    padding: 20px;
+    position: relative;
+    z-index: 10000;
+}
+
+:deep(.ant-modal) {
+    z-index: 9999 !important;
+    padding-top: 20px !important;
+}
+
+:deep(.ant-modal-mask) {
+    z-index: 9998 !important;
+}
+
+:deep(.ant-modal-wrap) {
+    z-index: 9999 !important;
+}
+
+:deep(.ant-modal-content) {
+    position: relative;
+    z-index: 10000;
+    margin-top: 0 !important;
+}
+
+:deep(.ant-modal-header) {
+    position: relative;
+    z-index: 10000;
+}
+
+:deep(.ant-modal-body) {
+    position: relative;
+    z-index: 10000;
+}
+
+.product-detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.product-images {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.main-image {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.main-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-images {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 5px 0;
+}
+
+.thumbnail-images img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+}
+
+.thumbnail-images img:hover {
+    opacity: 0.8;
+}
+
+.product-info-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.price-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.current-price {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+.old-price {
+    font-size: 16px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-label {
+    color: #666;
+}
+
+.brand-value {
+    font-weight: 500;
+    color: #333;
+}
+
+.rating-section {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating :deep(svg) {
+    color: #ffc107;
+}
+
+.description-section h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.description-section p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.variants-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.color-variants h4,
+.size-variants h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.color-options {
+    display: flex;
+    gap: 10px;
+}
+
+.color-option {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.color-option.selected {
+    border-color: #3a86ff;
+}
+
+.size-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.size-option {
+    padding: 5px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.size-option.selected {
+    background-color: #3a86ff;
+    color: white;
+    border-color: #3a86ff;
+}
+
+.quantity-section h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-value {
+    min-width: 40px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.action-buttons {
+    margin-top: 20px;
+}
+
+.action-buttons button {
+    width: 100%;
+    height: 40px;
+}
+
+@media (max-width: 768px) {
+    .product-detail-content {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

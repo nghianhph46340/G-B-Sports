@@ -97,7 +97,7 @@
                 </div>
                 <div class="product-overlay" :class="{ 'active': activeProduct === product.id }">
                   <div class="overlay-buttons">
-                    <button class="overlay-btn view-btn">
+                    <button class="overlay-btn view-btn" @click="router.push('/sanphamdetail/'+product.id)">
                       <eye-outlined />
                       <span>Xem</span>
                     </button>
@@ -134,6 +134,7 @@
       </section>
     </div>
   </div>
+  
 </template>
 
 <script setup>

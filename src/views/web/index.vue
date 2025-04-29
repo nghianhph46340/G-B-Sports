@@ -8,7 +8,6 @@
         <SanPhamMoiChoTatCa />
         <AoTheThaoBanChay />
         <QuanTheThaoBanChay />
-        <GiayVaPhuKienBanChay />
         <ThuongHieuSanPham />
     </div>
     <ChatWidget :customerId="'1'" :staffId="'1'" senderType="CUSTOMER" :anou="false" />
@@ -21,7 +20,6 @@ import BoSuuTapHot from '@/components/ingredient-web-components/BoSuuTapHot.vue'
 import SanPhamMoiChoTatCa from '@/components/ingredient-web-components/SanPhamMoiChoTatCa.vue';
 import AoTheThaoBanChay from '@/components/ingredient-web-components/AoTheThaoBanChay.vue';
 import QuanTheThaoBanChay from '@/components/ingredient-web-components/QuanTheThaoBanChay.vue';
-import GiayVaPhuKienBanChay from '@/components/ingredient-web-components/GiayVaPhuKienBanChay.vue';
 import DanhMucSanPham from '@/components/ingredient-web-components/DanhMucSanPham.vue';
 import ThuongHieuSanPham from '@/components/ingredient-web-components/ThuongHieuSanPham.vue';
 import TheNoitification from '@/components/TheNoitification.vue';
@@ -32,7 +30,6 @@ export default {
         TheBaner,
         AoTheThaoBanChay,
         QuanTheThaoBanChay,
-        GiayVaPhuKienBanChay,
         SanPhamBanChay,
         BoSuuTapHot,
         SanPhamMoiChoTatCa,
