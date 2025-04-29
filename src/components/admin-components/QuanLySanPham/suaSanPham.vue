@@ -143,7 +143,8 @@
                                     :help="variant.soLuongHelp">
                                     <a-input-number v-model:value="variant.so_luong" class="w-full" :controls="false"
                                         :formatter="formatSoLuong" :parser="parseSoLuong"
-                                        placeholder="Nhập số lượng sản phẩm" @blur="validateSoLuong(variant, index)" />
+                                        placeholder="Nhập số lượng sản phẩm" @blur="validateSoLuong(variant, index)"
+                                        @change="validateSoLuong(variant, index)" />
                                 </a-form-item>
                             </div>
 
@@ -154,7 +155,8 @@
                                         class="w-full" :controls="false" :formatter="formatGiaBan" :parser="parseGiaBan"
                                         placeholder="Nhập giá bán sản phẩm"
                                         :disabled="useCommonPrice || variant.isExisting"
-                                        @blur="validateGiaBan(variant, index)" />
+                                        @blur="validateGiaBan(variant, index)"
+                                        @change="validateGiaBan(variant, index)" />
                                 </a-form-item>
                             </div>
                         </div>
@@ -1042,138 +1044,6 @@ onMounted(async () => {
     }
 });
 
-// Khi load dữ liệu có sẵn
-const loadProductData = async (productId) => {
-    try {
-        // Lấy thông tin sản phẩm theo ID
-        await store.getProductById(productId);
-
-        // Kiểm tra xem có dữ liệu sản phẩm không
-        if (!store.productById || !store.productById.id_san_pham) {
-            throw new Error('Không tìm thấy thông tin sản phẩm');
-        }
-
-        console.log('Dữ liệu sản phẩm:', store.productById);
-
-        // Lấy dữ liệu danh mục, thương hiệu, chất liệu trước khi cập nhật form
-        await store.getDanhMucList();
-        await store.getThuongHieuList();
-        await store.getChatLieuList();
-
-        // Lấy danh sách màu sắc và size
-        await store.getMauSacList();
-        await store.getSizeList();
-
-        danhMucList.value = store.danhMucList;
-        thuongHieuList.value = store.thuongHieuList;
-        chatLieuList.value = store.chatLieuList;
-        mauSacList.value = store.mauSacList;
-        sizeList.value = store.sizeList;
-
-        // Cập nhật formState với dữ liệu sản phẩm
-        formState.id_san_pham = store.productById.id_san_pham;
-        formState.ma_san_pham = store.productById.ma_san_pham;
-        formState.ten_san_pham = store.productById.ten_san_pham;
-        formState.mo_ta = store.productById.mo_ta;
-        formState.hinh_anh = store.productById.hinh_anh;
-
-        // Kiểm tra dữ liệu danh mục, thương hiệu, chất liệu
-        if (store.productById.danhMuc) {
-            formState.id_danh_muc = store.productById.danhMuc.id_danh_muc;
-        }
-
-        if (store.productById.thuongHieu) {
-            formState.id_thuong_hieu = store.productById.thuongHieu.id_thuong_hieu;
-        }
-
-        if (store.productById.chatLieu) {
-            formState.id_chat_lieu = store.productById.chatLieu.id_chat_lieu;
-        }
-
-        formState.trang_thai = store.productById.trang_thai;
-
-        // Nếu có hình ảnh sản phẩm, cập nhật fileList
-        if (store.productById.hinh_anh) {
-            fileList.value = [{
-                uid: '-1',
-                name: 'product-image.jpg',
-                status: 'done',
-                url: store.productById.hinh_anh
-            }];
-        }
-
-        // Lấy danh sách các biến thể của sản phẩm
-        await store.getCTSPBySanPham(store.productById.id_san_pham);
-        console.log('Chi tiết sản phẩm:', store.getCTSPBySanPhams);
-
-        // Xử lý dữ liệu biến thể
-        if (store.getCTSPBySanPhams && store.getCTSPBySanPhams.length > 0) {
-            variants.value = store.getCTSPBySanPhams.map(ctsp => {
-                // Tạo fileList từ hinh_anh_list
-                let variantFileList = [];
-
-                // Sử dụng hinh_anh_list từ API
-                if (ctsp.hinh_anh_list && Array.isArray(ctsp.hinh_anh_list) && ctsp.hinh_anh_list.length > 0) {
-                    console.log('Sử dụng hinh_anh_list:', ctsp.hinh_anh_list);
-
-                    variantFileList = ctsp.hinh_anh_list.map((img, index) => {
-                        // Kiểm tra xem img.hinh_anh có phải là object hay không
-                        let imageUrl = img.hinh_anh;
-                        if (typeof imageUrl === 'object' && imageUrl !== null) {
-                            console.log('Phát hiện hình ảnh là object:', imageUrl);
-                            if (imageUrl.url) {
-                                imageUrl = imageUrl.url;
-                            } else if (imageUrl.toString) {
-                                imageUrl = imageUrl.toString();
-                            } else {
-                                console.error('Không thể chuyển đổi hình ảnh:', imageUrl);
-                                imageUrl = '';
-                            }
-                        }
-
-                        return {
-                            uid: `-${index}`,
-                            name: `image-${index}.jpg`,
-                            status: 'done',
-                            url: imageUrl,
-                            anh_chinh: img.anh_chinh === true || img.anh_chinh === "1" || img.anh_chinh === 1 ? "1" : "0",
-                            id_hinh_anh: img.id_hinh_anh
-                        };
-                    });
-
-                    console.log('FileList sau khi xử lý:', variantFileList);
-                }
-
-                // Tạo đối tượng biến thể
-                return {
-                    id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
-                    id_mau_sac: ctsp.id_mau_sac,
-                    id_kich_thuoc: ctsp.id_kich_thuoc,
-                    so_luong: ctsp.so_luong || 1,
-                    gia_ban: ctsp.gia_ban || 1100,
-                    trang_thai: ctsp.trang_thai || 'Hoạt động',
-                    fileList: variantFileList,
-                    hinh_anh: variantFileList.map(file => file.url),
-                    ngay_tao: ctsp.ngay_tao,
-                    ngay_sua: ctsp.ngay_sua,
-                    isExisting: true // Đánh dấu đây là biến thể đã tồn tại
-                };
-            });
-
-            console.log('Variants sau khi xử lý:', variants.value);
-
-            // Đánh dấu form đã được validate để có thể chỉnh sửa biến thể
-            isProductValidated.value = true;
-
-            // Đảm bảo validate form sau khi tải dữ liệu
-            await validateForm();
-        }
-    } catch (error) {
-        message.error('Có lỗi khi tải thông tin sản phẩm!');
-        console.error(error);
-    }
-};
-
 // Watch changes in formState để debug
 watch(() => formState, (newVal) => {
     console.log('FormState changed:', newVal);
@@ -1274,28 +1144,173 @@ const setMainImage = (file, variantIndex) => {
 };
 
 // Thêm các hàm format và parse cho số lượng và giá
+const invalidInputs = ref({
+    soLuong: {},
+    giaBan: {}
+});
+
 const formatSoLuong = (value) => {
     if (value === null || value === undefined || value === '') return '';
-    return `${value}`.replace(/[^\d]/g, ''); // Chỉ giữ lại các chữ số
+
+    // Kiểm tra có ký tự không hợp lệ
+    const originalStr = String(value);
+    const hasInvalidChars = /[^\d]/.test(originalStr);
+
+    // Nếu có ký tự không hợp lệ, đánh dấu để hiển thị thông báo
+    if (hasInvalidChars) {
+        // Tìm variant index hiện tại đang được chỉnh sửa
+        const variantIndex = variants.value.findIndex(v => v.so_luong === value || String(v.so_luong) === originalStr);
+        if (variantIndex !== -1) {
+            invalidInputs.value.soLuong[variantIndex] = true;
+            // Gọi validate ngay lập tức
+            setTimeout(() => {
+                validateSoLuong(variants.value[variantIndex], variantIndex);
+            }, 0);
+        }
+    }
+
+    // Vẫn loại bỏ các ký tự không hợp lệ khi hiển thị
+    return originalStr.replace(/[^\d]/g, '');
 };
 
 const parseSoLuong = (value) => {
     if (value === null || value === undefined || value === '') return '';
-    const parsed = value.replace(/[^\d]/g, '');
-    return parsed;
+    // Loại bỏ tất cả ký tự không phải số
+    return value.replace(/[^\d]/g, '');
 };
 
 const formatGiaBan = (value) => {
     if (value === null || value === undefined || value === '') return '';
-    // Chuyển đổi về chuỗi, loại bỏ ký tự không phải số, và thêm dấu phẩy
-    const numStr = `${value}`.replace(/[^\d]/g, '');
+
+    // Kiểm tra có ký tự không hợp lệ (chấp nhận số và dấu phẩy)
+    const originalStr = String(value);
+    const hasInvalidChars = /[^\d,]/.test(originalStr);
+
+    if (hasInvalidChars) {
+        // Tìm variant index hiện tại đang được chỉnh sửa
+        const variantIndex = variants.value.findIndex(v => v.gia_ban === value || String(v.gia_ban) === originalStr);
+        if (variantIndex !== -1) {
+            invalidInputs.value.giaBan[variantIndex] = true;
+            // Gọi validate ngay lập tức
+            setTimeout(() => {
+                validateGiaBan(variants.value[variantIndex], variantIndex);
+            }, 0);
+        }
+    }
+
+    // Loại bỏ ký tự không hợp lệ và định dạng phần nghìn
+    const numStr = originalStr.replace(/[^\d]/g, '');
     return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 };
 
 const parseGiaBan = (value) => {
     if (value === null || value === undefined || value === '') return '';
-    // Loại bỏ dấu phẩy và các ký tự không phải số
+    // Loại bỏ tất cả ký tự không phải số
     return value.replace(/[^\d]/g, '');
+};
+
+// Thêm hàm validate số lượng với đầy đủ điều kiện
+const validateSoLuong = (variant, index) => {
+    // Reset trạng thái validate
+    variant.soLuongValidateStatus = '';
+    variant.soLuongHelp = '';
+
+    // Kiểm tra trống
+    if (variant.so_luong === undefined || variant.so_luong === null || variant.so_luong === '') {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Vui lòng nhập số lượng!';
+        return false;
+    }
+
+    // Hiển thị thông báo nếu đã phát hiện ký tự không hợp lệ
+    if (invalidInputs.value.soLuong[index]) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng chỉ được nhập số nguyên dương!';
+
+        // Giữ thông báo lỗi hiển thị trong 3 giây
+        setTimeout(() => {
+            if (variant.soLuongHelp === 'Số lượng chỉ được nhập số nguyên dương!') {
+                invalidInputs.value.soLuong[index] = false;
+                // Kiểm tra lại sau khi xóa cờ lỗi
+                validateSoLuong(variant, index);
+            }
+        }, 3000);
+
+        return false;
+    }
+
+    // Các kiểm tra khác vẫn giữ nguyên...
+    const numValue = Number(variant.so_luong);
+
+    if (numValue <= 0) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng phải lớn hơn 0!';
+        return false;
+    }
+
+    if (numValue > 100000) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng không được vượt quá 100.000!';
+        return false;
+    }
+
+    variant.soLuongValidateStatus = 'success';
+    return true;
+};
+
+// Thêm hàm validate giá bán với đầy đủ điều kiện
+const validateGiaBan = (variant, index) => {
+    // Reset trạng thái validate
+    variant.giaBanValidateStatus = '';
+    variant.giaBanHelp = '';
+
+    // Kiểm tra trống
+    if (variant.gia_ban === undefined || variant.gia_ban === null || variant.gia_ban === '') {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Vui lòng nhập giá bán!';
+        return false;
+    }
+
+    // Hiển thị thông báo nếu đã phát hiện ký tự không hợp lệ
+    if (invalidInputs.value.giaBan[index]) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán chỉ được nhập số!';
+
+        // Giữ thông báo lỗi hiển thị trong 3 giây
+        setTimeout(() => {
+            if (variant.giaBanHelp === 'Giá bán chỉ được nhập số!') {
+                invalidInputs.value.giaBan[index] = false;
+                // Kiểm tra lại sau khi xóa cờ lỗi
+                validateGiaBan(variant, index);
+            }
+        }, 3000);
+
+        return false;
+    }
+
+    // Các kiểm tra khác...
+    const numValue = convertPriceToNumber(variant.gia_ban);
+
+    if (numValue <= 0) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán phải lớn hơn 0!';
+        return false;
+    }
+
+    if (numValue < 1000) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán phải lớn hơn 1.000!';
+        return false;
+    }
+
+    if (numValue > 100000000) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán không được vượt quá 100.000.000!';
+        return false;
+    }
+
+    variant.giaBanValidateStatus = 'success';
+    return true;
 };
 
 const resetForm = () => {
@@ -1321,87 +1336,6 @@ const resetForm = () => {
             // ... rest of reset code
         }
     });
-};
-
-// Thêm hàm validate số lượng với hiển thị thông báo lỗi
-const validateSoLuong = (variant, index) => {
-    // Reset trạng thái validate
-    variant.soLuongValidateStatus = '';
-    variant.soLuongHelp = '';
-
-    // Kiểm tra có phải là số không
-    if (!/^\d+$/.test(variant.so_luong)) {
-        variant.soLuongValidateStatus = 'error';
-        variant.soLuongHelp = 'Số lượng phải là số nguyên dương!';
-        return false;
-    }
-
-    // Chuyển đổi thành số để kiểm tra giá trị
-    const numValue = Number(variant.so_luong);
-
-    // Kiểm tra giá trị
-    if (numValue <= 0) {
-        variant.soLuongValidateStatus = 'error';
-        variant.soLuongHelp = 'Số lượng phải lớn hơn 0!';
-        return false;
-    }
-
-    if (numValue > 100000) {
-        variant.soLuongValidateStatus = 'error';
-        variant.soLuongHelp = 'Số lượng không được vượt quá 100.000!';
-        return false;
-    }
-
-    // Nếu hợp lệ
-    variant.soLuongValidateStatus = 'success';
-    return true;
-};
-
-// Thêm hàm validate giá bán với hiển thị thông báo lỗi
-const validateGiaBan = (variant, index) => {
-    // Reset trạng thái validate
-    variant.giaBanValidateStatus = '';
-    variant.giaBanHelp = '';
-
-    // Kiểm tra có giá trị không
-    if (variant.gia_ban === undefined || variant.gia_ban === null || variant.gia_ban === '') {
-        variant.giaBanValidateStatus = 'error';
-        variant.giaBanHelp = 'Vui lòng nhập giá bán!';
-        return false;
-    }
-
-    // Chuyển đổi về số (loại bỏ dấu phẩy)
-    const numValue = convertPriceToNumber(variant.gia_ban);
-
-    // Kiểm tra định dạng số
-    if (isNaN(numValue)) {
-        variant.giaBanValidateStatus = 'error';
-        variant.giaBanHelp = 'Giá bán phải là số!';
-        return false;
-    }
-
-    // Kiểm tra giá trị
-    if (numValue <= 0) {
-        variant.giaBanValidateStatus = 'error';
-        variant.giaBanHelp = 'Giá bán phải lớn hơn 0!';
-        return false;
-    }
-
-    if (numValue < 1000) {
-        variant.giaBanValidateStatus = 'error';
-        variant.giaBanHelp = 'Giá bán phải lớn hơn 1.000!';
-        return false;
-    }
-
-    if (numValue > 100000000) {
-        variant.giaBanValidateStatus = 'error';
-        variant.giaBanHelp = 'Giá bán không được vượt quá 100.000.000!';
-        return false;
-    }
-
-    // Nếu hợp lệ
-    variant.giaBanValidateStatus = 'success';
-    return true;
 };
 </script>
 

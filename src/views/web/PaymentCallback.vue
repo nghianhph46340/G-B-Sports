@@ -179,7 +179,36 @@ const createOrderFromLocalStorage = async () => {
         // Gọi API tạo hóa đơn chi tiết
         const responseChiTiet = await banHangOnlineService.createOrderChiTiet(hoaDonChiTiet);
         console.log('Kết quả tạo hóa đơn chi tiết:', responseChiTiet);
+        // const maHoaDon = localStorage.getItem('lastOrderCode');
+        if (response && responseChiTiet) {
+                    // Lấy danh sách sản phẩm đã thanh toán
+                    const paidProducts = hoaDonChiTiet.map(item => {
+                        return {
+                            id: item.chiTietSanPham.id_chi_tiet_san_pham
+                        };
+                    });
 
+                    console.log('Sản phẩm đã thanh toán:', paidProducts);
+
+                    // Lấy giỏ hàng hiện tại
+                    const currentCart = JSON.parse(localStorage.getItem('gb-sport-cart') || '[]');
+                    console.log('Giỏ hàng hiện tại:', currentCart);
+
+                    // Lọc giỏ hàng, chỉ giữ lại những sản phẩm chưa thanh toán
+                    const updatedCart = currentCart.filter(cartItem => {
+                        return !paidProducts.some(paidItem => paidItem.id === cartItem.id);
+                    });
+
+                    console.log('Giỏ hàng sau khi cập nhật:', updatedCart);
+
+                    if (updatedCart.length > 0) {
+                        // Nếu còn sản phẩm trong giỏ hàng, cập nhật lại giỏ hàng
+                        localStorage.setItem('gb-sport-cart', JSON.stringify(updatedCart));
+                    } else {
+                        // Nếu không còn sản phẩm nào, xóa giỏ hàng
+                        localStorage.removeItem('gb-sport-cart');
+                    }
+                }
         // Xóa dữ liệu từ localStorage sau khi đã tạo hóa đơn
         localStorage.removeItem('hoaDon');
         localStorage.removeItem('hoaDonChiTiet');
@@ -231,6 +260,7 @@ const checkPaymentStatus = async () => {
 
                 if (orderResult) {
                     // Lấy thông tin từ kết quả tạo hóa đơn
+                    orderCode.value = orderResult.ma_hoa_don;
                     orderAmount.value = orderResult.tong_tien_sau_giam || 0;
                     message.success('Thanh toán thành công! Đơn hàng của bạn đã được xác nhận.');
                     dataLoaded.value = true;

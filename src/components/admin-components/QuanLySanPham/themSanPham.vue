@@ -64,7 +64,7 @@
 
                 <a-form-item label="Hình ảnh" name="hinh_anh">
                     <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1"
-                        :before-upload="beforeUpload" :customRequest="handleCustomRequest">
+                        :customRequest="handleProductImageUpload" @remove="handleProductImageRemove">
                         <div v-if="fileList.length < 1">
                             <plus-outlined />
                             <div style="margin-top: 8px">Upload</div>
@@ -793,11 +793,13 @@ import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import axiosInstance from '@/config/axiosConfig';
+import { testService } from '@/services/testService';
 
 const store = useGbStore();
 const router = useRouter();
 const loading = ref(false);
 const fileList = ref([]);
+const productImageLoading = ref(false);
 
 // Form layout
 const labelCol = {
@@ -815,7 +817,6 @@ const formState = reactive({
     ma_san_pham: '',
     ten_san_pham: '',
     mo_ta: '',
-    // gioi_tinh: undefined,
     hinh_anh: '',
     id_danh_muc: undefined,
     id_thuong_hieu: undefined,
@@ -1085,23 +1086,12 @@ const rules = {
         {
             validator: (_, value) => {
                 if (useCommonPrice.value) {
-                    // if (!formState.gia_nhap_chung || formState.gia_nhap_chung < 1000) {
-                    //     return Promise.reject('Giá nhập phải lớn hơn 1000!');
-                    // }
                     if (!formState.gia_ban_chung || formState.gia_ban_chung < 1000) {
                         return Promise.reject('Giá bán phải lớn hơn 1000!');
                     }
-                    // if (!formState.gia_nhap_chung || formState.gia_nhap_chung > 999999999) {
-                    //     return Promise.reject('Giá nhập phải nhỏ hơn 999.999.999')
-                    // }
                     if (!formState.gia_ban_chung || formState.gia_ban_chung > 999999999) {
                         return Promise.reject('Giá bán phải nhỏ hơn 999.999.999')
                     }
-                    // Kiểm tra giá nhập phải nhỏ hơn giá bán ít nhất 10%
-                    // const minGiaBan = formState.gia_nhap_chung * 1.1; // Giá bán tối thiểu = giá nhập + 10%
-                    // if (formState.gia_ban_chung < minGiaBan) {
-                    //     return Promise.reject(`Giá bán phải lớn hơn giá nhập ít nhất 10% (Tối thiểu: ${minGiaBan.toLocaleString()}đ)`);
-                    // }
                 }
                 return Promise.resolve();
             }
@@ -1336,12 +1326,85 @@ const uploadImage = async (file) => {
     }
 };
 
-const handleCustomRequest = (options) => {
-    if (options && typeof options.onSuccess === 'function') {
-        setTimeout(() => {
-            options.onSuccess('ok');
-        }, 0);
+const handleCustomRequest = async ({ file, onSuccess, onError, onProgress }) => {
+    try {
+        const variantType = variantTypes.value.find(type => type.fileList.some(f => f.uid === file.uid));
+        if (!variantType) {
+            throw new Error('Không tìm thấy biến thể tương ứng');
+        }
+
+        // Set loading state cho file này
+        imageLoadingStates.value.set(file.uid, true);
+
+        // Khởi tạo list ảnh cho màu này nếu chưa có
+        if (!variantImageLists.value.has(variantType.id_mau_sac)) {
+            variantImageLists.value.set(variantType.id_mau_sac, []);
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Upload file lên cloud
+        const response = await uploadImage(file);
+
+        if (response) {
+            // Thêm URL vào danh sách ảnh của màu sắc này
+            const currentImages = variantImageLists.value.get(variantType.id_mau_sac) || [];
+            currentImages.push(response);
+            updateImagesForColor(variantType.id_mau_sac, currentImages);
+
+            onSuccess(response);
+            message.success('Tải ảnh lên thành công');
+        } else {
+            throw new Error('Không nhận được URL từ server');
+        }
+    } catch (error) {
+        console.error('Lỗi upload:', error);
+        onError(error);
+        message.error('Không thể tải lên hình ảnh: ' + error.message);
+    } finally {
+        imageLoadingStates.value.delete(file.uid);
     }
+};
+
+// Hàm xử lý xóa ảnh
+const handleRemoveImage = async (file, variantType) => {
+    Modal.confirm({
+        title: 'Xác nhận xóa',
+        content: 'Bạn có chắc chắn muốn xóa ảnh này không?',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        async onOk() {
+            try {
+                const loadingKey = 'deletingImage';
+                message.loading({ content: 'Đang xóa ảnh...', key: loadingKey });
+
+                const url = file.url || file.response;
+                if (!url) throw new Error('Không tìm thấy URL của ảnh');
+
+                // Lấy public_id từ URL
+                const urlParts = url.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                const publicId = fileName.split('.')[0];
+
+                // Gọi API xóa ảnh
+                await testService.deleteImage(publicId);
+
+                // Cập nhật danh sách ảnh của màu sắc này
+                const currentImages = variantImageLists.value.get(variantType.id_mau_sac) || [];
+                const updatedImages = currentImages.filter(img => !img.includes(publicId));
+                updateImagesForColor(variantType.id_mau_sac, updatedImages);
+
+                // Cập nhật fileList của variantType
+                variantType.fileList = variantType.fileList.filter(f => f.uid !== file.uid);
+
+                message.success({ content: 'Đã xóa ảnh thành công', key: loadingKey });
+            } catch (error) {
+                console.error('Lỗi khi xóa ảnh:', error);
+                message.error('Không thể xóa ảnh: ' + error.message);
+            }
+        }
+    });
 };
 
 // Cập nhật kích thước có sẵn khi thay đổi màu sắc
@@ -1665,7 +1728,6 @@ const generateProductCode = (products) => {
 // Thêm hàm kiểm tra dữ liệu
 const validateFormData = (data) => {
     if (!data.ten_san_pham) throw new Error('Tên sản phẩm không được để trống');
-    // if (data.gioi_tinh === undefined) throw new Error('Vui lòng chọn giới tính');
     if (!data.id_danh_muc) throw new Error('Vui lòng chọn danh mục');
     if (!data.id_thuong_hieu) throw new Error('Vui lòng chọn thương hiệu');
     if (!data.id_chat_lieu) throw new Error('Vui lòng chọn chất liệu');
@@ -2180,6 +2242,14 @@ const onFinish = async () => {
 
     loading.value = true;
     try {
+        // Validate ảnh cho mỗi biến thể type
+        for (const type of variantTypes.value) {
+            const images = variantImageLists.value.get(type.id_mau_sac) || [];
+            if (images.length === 0) {
+                throw new Error(`Vui lòng thêm ít nhất một ảnh cho màu ${type.ten_mau_sac || 'đã chọn'}`);
+            }
+        }
+
         // Validate variants
         if (variants.value.length === 0) {
             throw new Error('Vui lòng thêm ít nhất một biến thể');
@@ -2205,14 +2275,9 @@ const onFinish = async () => {
             }
         }
 
-        // Upload hình ảnh sản phẩm
-        let imageUrl = null;
-        if (fileList.value.length > 0) {
-            const file = fileList.value[0].originFileObj;
-            imageUrl = await uploadImage(file);
-            if (imageUrl) {
-                formState.hinh_anh = imageUrl;
-            }
+        // Sử dụng URL ảnh đã được upload trước đó
+        if (fileList.value && fileList.value.length > 0 && fileList.value[0].response) {
+            formState.hinh_anh = fileList.value[0].response;
         }
 
         // 1. First, save any new attributes and get their real IDs
@@ -2377,51 +2442,53 @@ const onFinish = async () => {
         }
 
         // 4. Create variants with real IDs
+        const processedColors = new Set(); // Theo dõi các màu đã xử lý
+
         await Promise.all(updatedVariants.map(async (variant) => {
-            // Upload ảnh cho từng biến thể nếu có
-            const variantImages = [];
+            // Lấy ảnh đã upload từ variantImageLists
+            const variantImages = variantImageLists.value.get(variant.id_mau_sac) || [];
 
-            // Find the variant type for this variant
-            const variantTypeIndex = variantTypes.value.findIndex(type =>
-                type.id_mau_sac === variant.id_mau_sac &&
-                type.selectedSizes.includes(variant.id_kich_thuoc)
-            );
+            // Kiểm tra xem màu này đã được xử lý chưa
+            const isFirstVariantOfColor = !processedColors.has(variant.id_mau_sac);
 
-            if (variantTypeIndex !== -1 && variantTypes.value[variantTypeIndex].fileList && variantTypes.value[variantTypeIndex].fileList.length > 0) {
-                // Upload images from variant type
-                for (let i = 0; i < variantTypes.value[variantTypeIndex].fileList.length; i++) {
-                    const fileItem = variantTypes.value[variantTypeIndex].fileList[i];
-                    if (fileItem && fileItem.originFileObj) {
-                        console.log('Variant file to upload:', fileItem.originFileObj);
-                        const variantImageUrl = await uploadImage(fileItem.originFileObj);
-                        if (variantImageUrl) {
-                            variantImages.push(variantImageUrl);
-                        }
-                    } else {
-                        console.warn('originFileObj không tồn tại trong file item', fileItem);
-                    }
-                }
+            // Nếu là biến thể đầu tiên của màu này
+            if (isFirstVariantOfColor) {
+                processedColors.add(variant.id_mau_sac); // Đánh dấu màu này đã được xử lý
+
+                // Nếu không có ảnh biến thể, sử dụng ảnh chính của sản phẩm
+                const images = variantImages.length > 0 ? variantImages : (formState.hinh_anh ? [formState.hinh_anh] : []);
+
+                console.log('Variant data with real IDs before create (first variant of color):', {
+                    ...variant,
+                    id_san_pham: productId,
+                    hinh_anh: images
+                });
+
+                await store.createCTSP({
+                    ...variant,
+                    id_san_pham: productId,
+                    trang_thai: 'Hoạt động',
+                    ngay_tao: new Date().toISOString(),
+                    ngay_sua: new Date().toISOString(),
+                    hinh_anh: images
+                });
+            } else {
+                // Các biến thể còn lại của màu này sẽ có list ảnh rỗng
+                console.log('Variant data with real IDs before create (subsequent variant):', {
+                    ...variant,
+                    id_san_pham: productId,
+                    hinh_anh: []
+                });
+
+                await store.createCTSP({
+                    ...variant,
+                    id_san_pham: productId,
+                    trang_thai: 'Hoạt động',
+                    ngay_tao: new Date().toISOString(),
+                    ngay_sua: new Date().toISOString(),
+                    hinh_anh: []
+                });
             }
-
-            // If no variant images, use main product image
-            if (variantImages.length === 0 && imageUrl) {
-                variantImages.push(imageUrl);
-            }
-
-            console.log('Variant data with real IDs before create:', {
-                ...variant,
-                id_san_pham: productId,
-                hinh_anh: variantImages
-            });
-
-            await store.createCTSP({
-                ...variant,
-                id_san_pham: productId,
-                trang_thai: 'Hoạt động',
-                ngay_tao: new Date().toISOString(),
-                ngay_sua: new Date().toISOString(),
-                hinh_anh: variantImages
-            });
         }));
 
         message.success(response.message || 'Thêm sản phẩm và biến thể thành công!');
@@ -2885,6 +2952,107 @@ const sizeGuideModalVisible = ref(false);
 // Add functions to show modals
 const showSizeGuideModal = () => {
     sizeGuideModalVisible.value = true;
+};
+
+// Thêm state để quản lý ảnh
+const imageLoadingStates = ref(new Map()); // Theo dõi trạng thái loading của từng ảnh
+const variantImageLists = ref(new Map()); // Lưu danh sách ảnh cho mỗi màu sắc
+
+// Hàm lấy biến thể đầu tiên của một màu sắc
+const getFirstVariantByColor = (colorId) => {
+    return variants.value.find(v => v.id_mau_sac === colorId);
+};
+
+// Hàm cập nhật danh sách ảnh cho một màu sắc
+const updateImagesForColor = (colorId, images) => {
+    variantImageLists.value.set(colorId, images);
+
+    // Tìm biến thể đầu tiên của màu này và gán list ảnh
+    const firstVariant = getFirstVariantByColor(colorId);
+    if (firstVariant) {
+        firstVariant.hinh_anh = images;
+
+        // Các biến thể còn lại của màu này sẽ có list ảnh rỗng
+        variants.value.forEach(variant => {
+            if (variant.id_mau_sac === colorId && variant !== firstVariant) {
+                variant.hinh_anh = [];
+            }
+        });
+    }
+};
+
+// Hàm xử lý upload ảnh sản phẩm chính
+const handleProductImageUpload = async ({ file, onSuccess, onError, onProgress }) => {
+    try {
+        // Set loading state
+        productImageLoading.value = true;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Upload file lên cloud
+        const response = await testService.uploadImage(file);
+
+        if (response) {
+            // Cập nhật URL vào formState
+            formState.hinh_anh = response;
+
+            // Cập nhật fileList
+            fileList.value = [{
+                uid: file.uid,
+                name: file.name,
+                status: 'done',
+                url: response
+            }];
+
+            onSuccess(response);
+            message.success('Tải ảnh sản phẩm lên thành công');
+        } else {
+            throw new Error('Không nhận được URL từ server');
+        }
+    } catch (error) {
+        console.error('Lỗi upload:', error);
+        onError(error);
+        message.error('Không thể tải lên hình ảnh: ' + error.message);
+    } finally {
+        productImageLoading.value = false;
+    }
+};
+
+// Hàm xử lý xóa ảnh sản phẩm chính
+const handleProductImageRemove = async (file) => {
+    Modal.confirm({
+        title: 'Xác nhận xóa',
+        content: 'Bạn có chắc chắn muốn xóa ảnh sản phẩm này không?',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        async onOk() {
+            try {
+                const loadingKey = 'deletingProductImage';
+                message.loading({ content: 'Đang xóa ảnh...', key: loadingKey });
+
+                const url = file.url || file.response;
+                if (!url) throw new Error('Không tìm thấy URL của ảnh');
+
+                // Lấy public_id từ URL
+                const urlParts = url.split('/');
+                const fileName = urlParts[urlParts.length - 1];
+                const publicId = fileName.split('.')[0];
+
+                // Gọi API xóa ảnh
+                await testService.deleteImage(publicId);
+
+                // Reset formState và fileList
+                formState.hinh_anh = '';
+                fileList.value = [];
+
+                message.success({ content: 'Đã xóa ảnh sản phẩm thành công', key: loadingKey });
+            } catch (error) {
+                console.error('Lỗi khi xóa ảnh:', error);
+                message.error('Không thể xóa ảnh: ' + error.message);
+            }
+        }
+    });
 };
 </script>
 

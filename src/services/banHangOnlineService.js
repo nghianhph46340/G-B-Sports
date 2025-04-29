@@ -38,13 +38,23 @@ const createOrder1 = async (hoaDon) => {
 }
 // Giỏ hàng của KH có tài khoản
 const getGioHang = async (idKhachHang) => {
-    const response = await axiosInstance.get('/gioHangWeb/gioHangByKH?idKhachHang=' +idKhachHang);
+    const response = await axiosInstance.get('/gioHangWeb/gioHangByKH?idKhachHang=' + idKhachHang);
     return response.data;
 }
 // Lấy danh sách địa chỉ của khách hàng
 const getDanhSachDiaChi = async (idKhachHang) => {
     const response = await axiosInstance.get('/gioHangWeb/danhSachDiaChi?idKhachHang=' + idKhachHang);
     return response.data;
+}
+const voucherByGiaTruyen = async (giaTruyen) => {
+    try {
+        const { data } = await axiosInstance.get(banHangOnline + `voucherTheoGiaTruyen?giaTruyen=${giaTruyen}`);
+        console.log('Dữ liệu voucher từ API:', data);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API lấy voucher theo giá truyền:', error);
+        return { error: true };
+    }
 }
 // Thêm giỏ hàng cho khách hàng có tài khoản
 const themGioHangByIdKH = async (idKH, idCTSP, soLuong) => {
@@ -66,6 +76,7 @@ export const banHangOnlineService = {
     createOrder1,
     getGioHang,
     getDanhSachDiaChi,
+    voucherByGiaTruyen,
     themGioHangByIdKH,
     xoaSoLuongSPGH
 }
