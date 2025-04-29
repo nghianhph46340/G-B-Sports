@@ -3303,8 +3303,7 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra khi xử lý trả hàng');
         throw error;
       }
-    }
-  },
+    },
 
   // Xử lý trả hàng
   async processReturn(returnData) {
