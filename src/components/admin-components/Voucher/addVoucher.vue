@@ -171,11 +171,6 @@ const handleMaVoucherInput = () => {
   validateMaVoucher();
 };
 
-// Handle tenVoucher input to trim only
-const handleTenVoucherInput = () => {
-  voucher.value.tenVoucher = voucher.value.tenVoucher.trim();
-  validateTenVoucher();
-};
 
 const validateMaVoucher = () => {
   if (!voucher.value.maVoucher) {
