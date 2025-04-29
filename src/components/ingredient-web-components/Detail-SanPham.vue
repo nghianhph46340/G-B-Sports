@@ -4010,6 +4010,7 @@ onMounted(() => {
 :deep(.cart-notification-modal .ant-modal-content) {
     border-radius: 10px;
     overflow: hidden;
+    z-index: 10000;
 }
 
 :deep(.cart-notification-modal .ant-modal-body) {

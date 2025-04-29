@@ -72,3 +72,9 @@ npm list html2pdf.js
 npm install html2pdf.js --save
 #Qrcode
 npm install html5-qrcode
+
+npm list jspdf qrcode | cat
+
+npm list | grep -E "jspdf|qrcode"
+
+npm install jspdf-autotable
