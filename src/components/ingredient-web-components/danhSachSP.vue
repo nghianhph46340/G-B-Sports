@@ -85,7 +85,7 @@
         </div>
         <a-row :gutter="[24, 24]">
           <a-col
-            v-for="product in sortedAndFilteredProducts"
+            v-for="product in displayedProducts"
             :key="product.id"
             :xs="24" :sm="12" :md="8" :lg="6"
           >
@@ -128,7 +128,31 @@
             </div>
           </a-col>
         </a-row>
-        <div v-if="sortedAndFilteredProducts.length === 0" class="empty-state">
+
+        <!-- Thay thế phần nút Xem thêm cũ bằng đoạn code này -->
+        <div v-if="hasMoreProducts" class="load-more-section">
+          <!-- Phần preview sản phẩm tiếp theo -->
+          <div class="next-products-preview">
+            <a-row :gutter="[24, 24]">
+              <a-col v-for="product in nextProducts" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6">
+                <div class="product-card preview-card">
+                  <div class="product-image-container">
+                    <img class="product-image" :src="product.image" alt="Product preview">
+                  </div>
+                </div>
+              </a-col>
+            </a-row>
+          </div>
+          
+          <!-- Nút xem thêm dạng text -->
+          <button class="text-load-more" @click="loadMore">
+            Xem thêm
+            <down-outlined class="down-icon" />
+          </button>
+        </div>
+
+        <!-- Thông báo không có sản phẩm -->
+        <div v-if="displayedProducts.length === 0" class="empty-state">
           <a-empty description="Không có sản phẩm nào phù hợp" />
         </div>
       </section>
@@ -139,7 +163,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import { FilterOutlined, EyeOutlined, ShoppingCartOutlined, StarFilled } from '@ant-design/icons-vue';
+import { FilterOutlined, EyeOutlined, ShoppingCartOutlined, StarFilled, DownOutlined } from '@ant-design/icons-vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
 
@@ -201,20 +225,36 @@ function toggleColor(color) {
 // Lọc sản phẩm từ store theo nhiều keyword
 const filteredProducts = computed(() => {
   if (!store.listSanPhamBanHang) return [];
-  // Nếu không có filter hoặc filter là mảng rỗng hoặc filter là [''] thì trả về tất cả sản phẩm
-  if (
-    !filterKeywords.value.length ||
-    (filterKeywords.value.length === 1 && !filterKeywords.value[0])
-  ) {
+  
+  console.log('Filter keywords:', filterKeywords.value);
+  
+  // Nếu không có filter thì trả về tất cả sản phẩm
+  if (!filterKeywords.value.length || (filterKeywords.value.length === 1 && !filterKeywords.value[0])) {
     return store.listSanPhamBanHang;
   }
-  // Lọc theo filter
-  return store.listSanPhamBanHang.filter(p =>
-    filterKeywords.value.some(kw =>
-      (p.type && p.type.toLowerCase().includes(kw.toLowerCase())) ||
-      (p.name && p.name.toLowerCase().includes(kw.toLowerCase()))
-    )
-  );
+
+  // Định nghĩa các danh mục
+  const categoryKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
+  
+  // Định nghĩa các loại sản phẩm
+  const productTypeKeywords = ['Quần', 'Áo', 'Váy','Tank top'];
+
+  // Tách filter thành 2 loại
+  const categoryFilters = filterKeywords.value.filter(kw => categoryKeywords.includes(kw));
+  const productTypeFilters = filterKeywords.value.filter(kw => productTypeKeywords.includes(kw));
+
+  return store.listSanPhamBanHang.filter(product => {
+    // Kiểm tra theo danh mục (type)
+    const matchCategory = categoryFilters.length === 0 || 
+      categoryFilters.some(kw => product.type && product.type.toLowerCase().includes(kw.toLowerCase()));
+
+    // Kiểm tra theo tên sản phẩm
+    const matchProductType = productTypeFilters.length === 0 ||
+      productTypeFilters.some(kw => product.name && product.name.toLowerCase().includes(kw.toLowerCase()));
+
+    // Phải thỏa mãn cả 2 điều kiện
+    return matchCategory && matchProductType;
+  });
 });
 
 const sortedAndFilteredProducts = computed(() => {
@@ -252,20 +292,12 @@ const breadcrumbMap = [
     label: 'Tất cả sản phẩm'
   },
   {
-    keywords: ['Quần'],
+    keywords: ['Quần','Váy'],
     label: 'Quần'
   },
   {
-    keywords: ['Áo'],
+    keywords: ['Áo', 'Tank top'],
     label: 'Áo'
-  },
-  {
-    keywords: ['Giày'],
-    label: 'Giày'
-  },
-  {
-    keywords: ['Tất'],
-    label: 'Tất'
   }
   // Thêm các nhóm khác nếu cần
 ];
@@ -274,40 +306,98 @@ function getBreadcrumbLabel(filterKeywords) {
   if (!filterKeywords || filterKeywords.length === 0 || (filterKeywords.length === 1 && !filterKeywords[0])) {
     return 'Tất cả sản phẩm';
   }
+
+  // Danh sách từ khóa của môn thể thao
+  const sportsKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
+
+  // Kiểm tra nếu filter chứa bất kỳ từ khóa môn thể thao nào
+  if (filterKeywords.some(kw => sportsKeywords.includes(kw))) {
+    return 'Môn thể thao';
+  }
+
+  // Kiểm tra các trường hợp còn lại
   for (const group of breadcrumbMap) {
-    // Nếu tất cả keyword đều nằm trong group này
-    if (
-      group.keywords.length &&
-      filterKeywords.every(kw => group.keywords.includes(kw))
-    ) {
-      return group.label;
-    }
-    // Nếu chỉ có 1 keyword và nó nằm trong group
-    if (
-      group.keywords.length &&
-      filterKeywords.length === 1 &&
-      group.keywords.includes(filterKeywords[0])
-    ) {
+    if (group.keywords.length && filterKeywords.length === 1 && group.keywords.includes(filterKeywords[0])) {
       return group.label;
     }
   }
-  // Nếu không khớp group nào, trả về keyword đầu tiên hoặc ghép chuỗi
-  onMounted(async () => {
-    if (!store.listSanPhamBanHang || store.listSanPhamBanHang.length === 0) {
-      const filter = route.query.filter;
-      if (filter) {
-        await store.getSanPhamByTenDM(filter);
-        await store.getSanPhamByTenSP(filter);
-      }
-    }
-  });
+
   return filterKeywords[0] || 'Tất cả sản phẩm';
 }
 
 onMounted(async () => {
-  // Luôn gọi lại API khi vào trang, kể cả khi filter là rỗng
-  await store.getSanPhamByTenDM(route.query.filter || '');
-  await store.getSanPhamByTenSP(route.query.filter || '');
+  try {
+    const filter = route.query.filter;
+    console.log('Filter từ route:', filter);
+
+    // Danh sách các danh mục
+    const categories = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
+    
+    // Danh sách các loại sản phẩm
+    const productTypes = ['Quần', 'Áo', 'Váy', 'Tank top'];
+
+    if (categories.includes(filter)) {
+      // Nếu filter là danh mục thì gọi API lấy theo danh mục
+      await store.getSanPhamByTenDM(filter);
+      console.log('Lấy sản phẩm theo danh mục:', filter);
+    } else if (productTypes.includes(filter)) {
+      // Nếu filter là loại sản phẩm thì gọi API lấy theo tên
+      await store.getSanPhamByTenSP(filter);
+      console.log('Lấy sản phẩm theo tên:', filter);
+    } else {
+      // Nếu không có filter hoặc filter không thuộc 2 nhóm trên
+      await store.getSanPhamByTenDM('');
+      console.log('Lấy tất cả sản phẩm');
+    }
+
+    console.log('Số sản phẩm:', store.listSanPhamBanHang?.length);
+  } catch (error) {
+    console.error('Lỗi khi lấy dữ liệu:', error);
+  }
+});
+
+// Thêm vào phần khai báo biến trong script setup
+const itemsPerPage = 20; // Số sản phẩm mỗi trang
+const currentPage = ref(1); // Trang hiện tại
+const showLoadMore = ref(true); // Hiển thị nút "Xem thêm"
+
+const displayedProducts = computed(() => {
+  const endIndex = Math.min(currentPage.value * itemsPerPage, sortedAndFilteredProducts.value.length);
+  return sortedAndFilteredProducts.value.slice(0, endIndex);
+});
+
+// Kiểm tra còn sản phẩm để hiển thị không
+const hasMoreProducts = computed(() => {
+  return displayedProducts.value.length < sortedAndFilteredProducts.value.length;
+});
+
+const loadMore = () => {
+  const totalProducts = sortedAndFilteredProducts.value.length;
+  const currentlyShowing = currentPage.value * itemsPerPage;
+  
+  if (currentlyShowing < totalProducts) {
+    currentPage.value++;
+  }
+};
+
+// Thêm watch để reset currentPage khi filter hoặc route thay đổi
+watch([
+  () => route.query.filter,
+  selectedTypes,
+  selectedGender,
+  selectedBrands,
+  selectedPrice,
+  selectedColors,
+  sortBy
+], () => {
+  currentPage.value = 1;
+});
+
+// Thêm computed property này
+const nextProducts = computed(() => {
+  const startIndex = currentPage.value * itemsPerPage;
+  const endIndex = startIndex + 4; // Chỉ lấy 4 sản phẩm để preview
+  return sortedAndFilteredProducts.value.slice(startIndex, endIndex);
 });
 </script>
 
@@ -534,5 +624,77 @@ onMounted(async () => {
   font-size: 13px;
   color: #666;
   margin-top: 4px;
+}
+.load-more-section {
+  position: relative;
+  margin: 32px 0;
+  text-align: center;
+}
+
+.next-products-preview {
+  position: relative;
+  height: 100px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.next-products-preview::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.8) 30%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  pointer-events: none;
+}
+
+.preview-card {
+  opacity: 0.5;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.text-load-more {
+  background: none;
+  border: none;
+  color: #f33b47;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.text-load-more:hover {
+  color: #ff5060;
+  transform: translateY(-2px);
+}
+
+.text-load-more .down-icon {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.text-load-more:hover .down-icon {
+  transform: translateY(2px);
+}
+
+/* Điều chỉnh lại style cho product-card trong preview */
+.preview-card .product-image-container {
+  height: 80px;
+}
+
+.preview-card .product-image {
+  height: 100%;
 }
 </style>

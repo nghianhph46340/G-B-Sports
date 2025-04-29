@@ -9,7 +9,7 @@
                     <div class="col-md-2"></div>
                     <div class="col-md-4">
                         <div class="category-item">
-                            <div class="category-content" @click.prevent="handleSidebarClick('Áo')" >
+                            <div class="category-content" @click.prevent="handleSidebarClick(['Áo','Tank top'])">
                                 <div class="category-image">
                                     <img src="../../images/danhMucSanPham/DanhMucAoNganTay.png" alt="Áo ngắn tay">
                                     <div class="category-overlay">
@@ -27,7 +27,7 @@
                     </div>
                     <div class=" col-md-4">
                         <div class="category-item">
-                            <div class="category-content" @click.prevent="handleSidebarClick('Quần')">
+                            <div class="category-content" @click.prevent="handleSidebarClick(['Quần','Váy'])">
                                 <div class="category-image">
                                     <img  src="../../images/danhMucSanPham/DanhMucQuan.png" alt="Quần dài">
                                     <div class="category-overlay">
@@ -38,7 +38,7 @@
                                     </div>
                                 </div>
                                 <div class="category-name">
-                                    <span>Quần</span>
+                                    <span>Quần & Váy</span>
                                 </div>
                             </div>
                         </div>
