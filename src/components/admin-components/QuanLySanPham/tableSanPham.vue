@@ -31,9 +31,12 @@
                         <a-radio-button value="Không hoạt động">Không hoạt động</a-radio-button>
                     </a-radio-group>
                     <span class="ms-3">
-                        <span class="badge bg-primary">{{ displayData.length }} sản phẩm</span>
+                        <span class="badge bg-primary">{{ filteredDisplayData.length }} sản phẩm</span>
                         <template v-if="statusFilter">
                             <strong class="ms-2">Lọc theo: {{ statusFilter }}</strong>
+                            <template v-if="displayData.length > filteredDisplayData.length">
+                                <span class="text-muted ms-2">(trong tổng số {{ displayData.length }} sản phẩm)</span>
+                            </template>
                         </template>
                     </span>
                 </div>
@@ -928,10 +931,10 @@ const refreshData = async () => {
     try {
         // Reset các tham số tìm kiếm và lọc
         store.resetSearchFilterParams();
-        
+
         // Tải lại dữ liệu
         await store.getAllSP();
-        
+
         // Cập nhật dữ liệu hiển thị
         const formattedData = store.getAllSanPham.map((item, index) => ({
             stt: index + 1,
@@ -945,10 +948,10 @@ const refreshData = async () => {
             tong_so_luong: item.tong_so_luong || 0,
             ngay_cap_nhat: item.ngay_cap_nhat || ''
         }));
-        
+
         data.value = formattedData;
         displayData.value = formattedData;
-        
+
         message.success('Đã tải lại dữ liệu');
     } catch (error) {
         console.error('Lỗi khi tải lại dữ liệu:', error);
@@ -1513,7 +1516,7 @@ onMounted(async () => {
         // Đăng ký lắng nghe sự kiện
         window.addEventListener('search-filter-changed', handleSearchFilterChanged);
         window.addEventListener('sort-option-changed', handleExternalSort);
-        
+
         console.log('Đã đăng ký lắng nghe sự kiện search-filter-changed');
 
         // Kiểm tra xem đã có dữ liệu lọc chưa
@@ -1556,7 +1559,7 @@ onMounted(async () => {
                 tong_so_luong: item.tong_so_luong || 0,
                 ngay_cap_nhat: item.ngay_cap_nhat || ''
             }));
-            
+
             data.value = formattedData;
             displayData.value = formattedData;
         }
