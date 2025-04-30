@@ -1128,7 +1128,7 @@ const bulkChangeStatus = async (newStatus) => {
                 console.log(`Cập nhật UI cho ${result.updatedParents.length} sản phẩm cha`);
 
                 // Cập nhật danh sách sản phẩm với trạng thái mới của các sản phẩm cha
-                data.value = data.value.map(item => {
+                displayData.value = displayData.value.map(item => {
                     // Tìm sản phẩm cha tương ứng trong danh sách đã cập nhật
                     const updatedParent = result.updatedParents.find(p => p.id === item.id_san_pham);
                     if (updatedParent) {
@@ -1148,20 +1148,6 @@ const bulkChangeStatus = async (newStatus) => {
                         };
                     }
                 }
-
-                // Cập nhật cache sản phẩm
-                // const productsCache = getFromCache(PRODUCTS_CACHE_KEY);
-                // if (productsCache) {
-                //     const updatedCache = productsCache.map(p => {
-                //         // Tìm sản phẩm tương ứng trong danh sách đã cập nhật
-                //         const updatedParent = result.updatedParents.find(up => up.id === p.id_san_pham);
-                //         if (updatedParent) {
-                //             return { ...p, trang_thai: updatedParent.status };
-                //         }
-                //         return p;
-                //     });
-                //     saveToCache(PRODUCTS_CACHE_KEY, updatedCache);
-                // }
             }
         } else {
             // Hiển thị thông báo lỗi
