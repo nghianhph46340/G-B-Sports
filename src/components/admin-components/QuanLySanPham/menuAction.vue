@@ -653,6 +653,12 @@ onMounted(async () => {
 
         // Đăng ký sự kiện lắng nghe filter-data-updated
         window.addEventListener('filter-data-updated', handleFilterDataUpdated);
+        
+        // Thêm sự kiện lắng nghe cho search-filter-changed
+        window.addEventListener('search-filter-changed', (event) => {
+            console.log('Nhận sự kiện search-filter-changed:', event.detail);
+            // Bạn có thể thêm xử lý nếu cần
+        });
 
         // Kiểm tra nếu cần refresh bộ lọc
         if (store.needFilterRefresh) {
@@ -664,12 +670,14 @@ onMounted(async () => {
     }
 });
 
-// Hủy đăng ký sự kiện khi component bị hủy
+// Cập nhật onBeforeUnmount để remove event listener
 onBeforeUnmount(() => {
     window.removeEventListener('filter-data-updated', handleFilterDataUpdated);
+    window.removeEventListener('search-filter-changed', () => {});
 });
 
-const filterProducts = () => {
+// Phương thức lọc sản phẩm
+const filterProducts = async () => {
     console.log('Áp dụng bộ lọc với các giá trị:');
     console.log('- Danh mục:', valueDanhMuc.value);
     console.log('- Thương hiệu:', valueThuongHieu.value);
@@ -678,39 +686,82 @@ const filterProducts = () => {
     console.log('- Kích thước:', valueSize.value);
     console.log('- Giá:', value2.value);
 
-    // Chuyển đổi mảng giá trị sang số nếu cần
-    const idDanhMuc = valueDanhMuc.value.map(id => Number(id));
-    const idThuongHieu = valueThuongHieu.value.map(id => Number(id));
-    const idChatLieu = valueChatLieu.value.map(id => Number(id));
-    const idMauSac = valueMauSac.value.map(id => Number(id));
-    const idKichThuoc = valueSize.value.map(id => Number(id));
+    // Chuyển đổi ID sang tên
+    // Lấy danh sách tên danh mục từ ID được chọn
+    const listDanhMuc = valueDanhMuc.value.length > 0 
+        ? valueDanhMuc.value.map(id => {
+            const danhMuc = danhMucList.value.find(dm => dm.id_danh_muc === id);
+            return danhMuc ? danhMuc.ten_danh_muc : '';
+        }).filter(ten => ten !== '')
+        : [];
+        
+    // Lấy danh sách tên thương hiệu từ ID được chọn
+    const listThuongHieu = valueThuongHieu.value.length > 0 
+        ? valueThuongHieu.value.map(id => {
+            const thuongHieu = thuongHieuList.value.find(th => th.id_thuong_hieu === id);
+            return thuongHieu ? thuongHieu.ten_thuong_hieu : '';
+        }).filter(ten => ten !== '')
+        : [];
+        
+    // Lấy danh sách tên chất liệu từ ID được chọn
+    const listChatLieu = valueChatLieu.value.length > 0 
+        ? valueChatLieu.value.map(id => {
+            const chatLieu = chatLieuList.value.find(cl => cl.id_chat_lieu === id);
+            return chatLieu ? chatLieu.ten_chat_lieu : '';
+        }).filter(ten => ten !== '')
+        : [];
+        
+    // Lấy danh sách tên màu sắc từ ID được chọn
+    const listMauSac = valueMauSac.value.length > 0 
+        ? valueMauSac.value.map(id => {
+            const mauSac = mauSacList.value.find(ms => ms.id_mau_sac === id);
+            return mauSac ? mauSac.ten_mau_sac : '';
+        }).filter(ten => ten !== '')
+        : [];
+        
+    // Lấy danh sách giá trị kích thước từ ID được chọn
+    const listKichThuoc = valueSize.value.length > 0 
+        ? valueSize.value.map(id => {
+            const kichThuoc = kichThuocList.value.find(kt => kt.id_kich_thuoc === id);
+            return kichThuoc ? kichThuoc.gia_tri : '';
+        }).filter(giatri => giatri !== '')
+        : [];
 
-    const filterCriteria = {
-        id_danh_muc: idDanhMuc,
-        id_thuong_hieu: idThuongHieu,
-        id_chat_lieu: idChatLieu,
-        id_mau_sac: idMauSac,
-        id_size: idKichThuoc,
-        minPrice: value2.value[0],
-        maxPrice: value2.value[1]
-    };
+    // Lấy giá trị min và max
+    const giaBanMin = value2.value[0];
+    const giaBanMax = value2.value[1];
 
-    console.log('Tiêu chí lọc cuối cùng:', filterCriteria);
+    try {
+        // Cập nhật các tham số lọc vào đối tượng chung, giữ nguyên keyword nếu có
+        store.updateSearchFilterParams({
+            giaBanMin,
+            giaBanMax,
+            listMauSac,
+            listDanhMuc,
+            listThuongHieu,
+            listChatLieu,
+            listKichThuoc
+        });
 
-    // Gọi action lọc sản phẩm trong store
-    store.applyFilter(filterCriteria);
+        // Áp dụng tìm kiếm và lọc
+        await store.applySearchAndFilter();
 
-    // Đóng drawer sau khi áp dụng bộ lọc
-    visible.value = false;
+        console.log('Kết quả lọc:', store.filteredProductsData.length, 'sản phẩm');
+        
+        // Đóng drawer sau khi áp dụng bộ lọc
+        visible.value = false;
 
-    // Hiển thị thông báo
-    message.success('Đã áp dụng bộ lọc');
+        // Hiển thị thông báo
+        message.success('Đã áp dụng bộ lọc');
+    } catch (error) {
+        console.error('Lỗi khi lọc sản phẩm:', error);
+        message.error('Có lỗi xảy ra khi lọc sản phẩm');
+    }
 };
 
+// Hàm reset bộ lọc
 const resetFilter = () => {
-    console.log('Reset bộ lọc');
-
-    // Reset các giá trị trên giao diện
+    // Reset các giá trị lọc trong component
     valueDanhMuc.value = [];
     valueThuongHieu.value = [];
     valueChatLieu.value = [];
@@ -718,12 +769,33 @@ const resetFilter = () => {
     valueSize.value = [];
     value2.value = [0, 10000000];
 
-    // Reset bộ lọc trong store
-    store.resetFilter();
-
-    // Hiển thị thông báo
-    message.success('Đã xóa bộ lọc');
+    try {
+        // Lưu keyword hiện tại
+        const currentKeyword = store.searchFilterParams.keyword;
+        
+        // Reset tất cả tham số lọc nhưng giữ lại keyword
+        store.updateSearchFilterParams({
+            keyword: currentKeyword,
+            giaBanMin: null,
+            giaBanMax: null,
+            listMauSac: [],
+            listDanhMuc: [],
+            listThuongHieu: [],
+            listChatLieu: [],
+            listKichThuoc: []
+        });
+        
+        // Áp dụng tìm kiếm và lọc
+        store.applySearchAndFilter();
+        
+        // Thông báo
+        message.success('Đã reset bộ lọc');
+    } catch (error) {
+        console.error('Lỗi khi reset bộ lọc:', error);
+        message.error('Có lỗi xảy ra khi reset bộ lọc');
+    }
 };
+
 
 const afterOpenChange = bool => {
     console.log('open', bool);

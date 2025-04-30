@@ -59,7 +59,16 @@ export const useGbStore = defineStore('gbStore', {
     isSearching: false, // Đang trong trạng thái tìm kiếm?
     isFiltering: false, // Đang trong trạng thái lọc?
     debug: true, // Chế độ debug để ghi log chi tiết
-
+    searchFilterParams: {
+      keyword: '',
+      giaBanMin: null,
+      giaBanMax: null,
+      listMauSac: [],
+      listDanhMuc: [],
+      listThuongHieu: [],
+      listChatLieu: [],
+      listKichThuoc: []
+    },
     //Nhân viên
     getAllNhanVienArr: [],
     totalPages: 0, // Dùng chung cho phân trang
@@ -138,6 +147,8 @@ export const useGbStore = defineStore('gbStore', {
     //lưu id hoá đơn
     currentHoaDonId: null,
 
+    // Thêm vào phần state
+    filteredProductsData: [],
   }),
 
   ///Đầu mút2
@@ -497,6 +508,28 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
     ////////////-----------------Sản phẩm-------------------////////////
+    // Reset tham số tìm kiếm và lọc  
+    resetSearchFilterParams() {
+      console.log('Reset params tìm kiếm/lọc');
+      this.searchFilterParams = {
+        keyword: '',
+        giaBanMin: null,
+        giaBanMax: null,
+        listMauSac: [],
+        listDanhMuc: [],
+        listThuongHieu: [],
+        listChatLieu: [],
+        listKichThuoc: []
+      };
+    },
+    // Cập nhật tham số tìm kiếm và lọc
+    updateSearchFilterParams(params) {
+      console.log('Cập nhật params tìm kiếm/lọc:', params);
+      this.searchFilterParams = {
+        ...this.searchFilterParams,
+        ...params
+      };
+    },
     //Lấy danh sách sản phẩm theo sản phẩm
     async getSanPhamBySP(tenSanPham) {
       try {
@@ -939,6 +972,15 @@ export const useGbStore = defineStore('gbStore', {
       } catch (error) {
         console.error(error)
         toast.error('Có lỗi xảy ra')
+      }
+    },
+    async locAndTimKiemSanPhamVaChiTietSanPham(keyword, tenSanPham, giaBanMin, giaBanMax, listMauSac, listDanhMuc, listThuongHieu, listChatLieu, listKichThuoc) {
+      try {
+        const response = await sanPhamService.locSanPhamVaChiTietSanPham(keyword, tenSanPham, giaBanMin, giaBanMax, listMauSac, listDanhMuc, listThuongHieu, listChatLieu, listKichThuoc)
+        return response
+      } catch (error) {
+        console.error(error)
+        return null
       }
     },
     ///////////-----------------Hóa đơn-------------------////////////
@@ -3252,6 +3294,81 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra khi xử lý trả hàng');
         throw error;
       }
+    },
+
+    // Thêm vào phần actions
+    // Cập nhật lại hàm applySearchAndFilter để sử dụng đối tượng searchFilterParams
+    async applySearchAndFilter() {
+      try {
+        console.log('Áp dụng tìm kiếm và lọc với params:', this.searchFilterParams);
+
+        // Destructuring các tham số
+        const {
+          keyword,
+          giaBanMin,
+          giaBanMax,
+          listMauSac,
+          listDanhMuc,
+          listThuongHieu,
+          listChatLieu,
+          listKichThuoc
+        } = this.searchFilterParams;
+
+        // Gọi API với các tham số
+        const response = await this.locAndTimKiemSanPhamVaChiTietSanPham(
+          keyword,
+          giaBanMin,
+          giaBanMax,
+          listMauSac,
+          listDanhMuc,
+          listThuongHieu,
+          listChatLieu,
+          listKichThuoc
+        );
+
+        // Xử lý kết quả
+        if (response) {
+          if (Array.isArray(response)) {
+            this.filteredProductsData = response;
+          } else if (typeof response === 'object' && response.data && Array.isArray(response.data)) {
+            this.filteredProductsData = response.data;
+          } else {
+            this.filteredProductsData = [];
+          }
+        } else {
+          this.filteredProductsData = [];
+        }
+
+        console.log('Kết quả tìm kiếm/lọc:', this.filteredProductsData.length, 'sản phẩm');
+
+        // Phát sự kiện để thông báo thay đổi
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('search-filter-changed', {
+            detail: {
+              results: this.filteredProductsData,
+              params: this.searchFilterParams
+            }
+          }));
+          console.log('Đã phát sự kiện search-filter-changed');
+        }, 0);
+
+        return this.filteredProductsData;
+      } catch (error) {
+        console.error('Lỗi khi áp dụng tìm kiếm và lọc:', error);
+        this.filteredProductsData = [];
+        return [];
+      }
+    },
+
+    // Thêm getter để lấy dữ liệu sản phẩm đã lọc
+    getFilteredProductsData() {
+      return this.filteredProductsData;
+    },
+
+    // Hàm reset tìm kiếm và lọc
+    resetSearchAndFilter() {
+      this.filteredProductsData = [];
+      this.getAllSanPhamNgaySua(); // Tải lại tất cả sản phẩm
     }
   },
   persist: {
