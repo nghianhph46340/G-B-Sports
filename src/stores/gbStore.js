@@ -3122,10 +3122,10 @@ export const useGbStore = defineStore('gbStore', {
           const newParentStatus = responseData.sanPham.trang_thai;
 
           // Tìm và cập nhật sản phẩm trong store
-          const productIndex = this.getAllSanPham.findIndex(item => item.id_san_pham === parentId);
+          const productIndex = this.filteredProductIds.findIndex(item => item.id_san_pham === parentId);
           if (productIndex !== -1) {
             // Cập nhật trạng thái cho sản phẩm trong store để đảm bảo UI đồng bộ
-            this.getAllSanPham[productIndex].trang_thai = newParentStatus;
+            this.filteredProductIds[productIndex].trang_thai = newParentStatus;
             console.log(`Đã cập nhật trạng thái sản phẩm ${parentId} trong store thành ${newParentStatus}`);
           }
         }
@@ -3187,9 +3187,9 @@ export const useGbStore = defineStore('gbStore', {
                   parentStatusMap.set(parentId, newParentStatus);
 
                   // Tìm và cập nhật sản phẩm trong store
-                  const productIndex = this.getAllSanPham.findIndex(item => item.id_san_pham === parentId);
+                  const productIndex = this.filteredProductIds.findIndex(item => item.id_san_pham === parentId);
                   if (productIndex !== -1) {
-                    this.getAllSanPham[productIndex].trang_thai = newParentStatus;
+                    this.filteredProductIds[productIndex].trang_thai = newParentStatus;
                     console.log(`Đã cập nhật trạng thái sản phẩm ${parentId} trong store thành ${newParentStatus}`);
                   }
                 }

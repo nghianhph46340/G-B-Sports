@@ -656,7 +656,7 @@ const changeStatusSanPham = async (id, checked) => {
 
             // Đảm bảo UI đã được cập nhật chính xác theo response
             // Tìm và cập nhật sản phẩm trong danh sách hiển thị
-            data.value = data.value.map(item => {
+            displayData.value = displayData.value.map(item => {
                 if (item.id_san_pham === id) {
                     return { ...item, trang_thai: result.newStatus };
                 }
@@ -745,26 +745,22 @@ const changeStatusCTSP = async (ctspRecord) => {
                 key: messageKey,
                 duration: 2
             });
-
-            // Cập nhật cache chi tiết sản phẩm
-            // const cacheKey = `${CTSP_CACHE_PREFIX}${productId}`;
-            // saveToCache(cacheKey, updatedCtspList);
-
             // Nếu có thông tin về cập nhật sản phẩm cha trong dữ liệu trả về
             if (result.data && result.data.sanPham && result.data.sanPham.id_san_pham && result.data.sanPham.trang_thai) {
+                console.log('result.data.sanPham', result.data.sanPham);
                 const parentId = result.data.sanPham.id_san_pham;
                 const newParentStatus = result.data.sanPham.trang_thai;
 
                 console.log(`Cập nhật UI sản phẩm ${parentId} thành ${newParentStatus}`);
 
                 // Cập nhật danh sách sản phẩm với trạng thái mới của sản phẩm cha
-                data.value = data.value.map(item => {
+                displayData.value = displayData.value.map(item => {
                     if (item.id_san_pham === parentId) {
                         return { ...item, trang_thai: newParentStatus };
                     }
                     return item;
                 });
-
+               
                 // Cập nhật sản phẩm trong drawer nếu đang hiển thị
                 if (currentProduct.value && currentProduct.value.id_san_pham === parentId) {
                     currentProduct.value = {
@@ -772,18 +768,6 @@ const changeStatusCTSP = async (ctspRecord) => {
                         trang_thai: newParentStatus
                     };
                 }
-
-                // Cập nhật cache sản phẩm
-                // const productsCache = getFromCache(PRODUCTS_CACHE_KEY);
-                // if (productsCache) {
-                //     const updatedCache = productsCache.map(p => {
-                //         if (p.id_san_pham === parentId) {
-                //             return { ...p, trang_thai: newParentStatus };
-                //         }
-                //         return p;
-                //     });
-                //     saveToCache(PRODUCTS_CACHE_KEY, updatedCache);
-                // }
             }
         } else {
             // Hiển thị thông báo lỗi
@@ -850,71 +834,6 @@ const handleStatusFilterChange = () => {
     // và để computed displayData tự động lọc lại dữ liệu
 };
 
-// Cập nhật computed property để lọc theo trạng thái
-// const displayData = computed(() => {
-//     // Lấy danh sách sản phẩm đã lọc/tìm kiếm từ store
-//     const filteredProducts = store.getFilteredProducts;
-
-//     // Tạo danh sách sản phẩm từ nguồn dữ liệu
-//     let productsToDisplay = [];
-
-//     // Kiểm tra xem có sản phẩm nào được lọc/tìm kiếm không
-//     if (filteredProducts && filteredProducts.length > 0) {
-//         console.log(`Hiển thị ${filteredProducts.length} sản phẩm đã lọc/tìm kiếm`);
-
-//         // Format dữ liệu để phù hợp với cấu trúc bảng
-//         productsToDisplay = filteredProducts.map((item, index) => {
-//             // Try to get the prices from the cached data if available
-//             let highestPrice = 0;
-//             let lowestPrice = 0;
-//             const productId = item.id_san_pham;
-
-//             if (productCTSPMap.value.has(productId)) {
-//                 const variants = productCTSPMap.value.get(productId);
-//                 if (variants && variants.length > 0) {
-//                     const prices = variants
-//                         .map(variant => variant.gia_ban || 0)
-//                         .filter(price => price > 0);
-
-//                     if (prices.length > 0) {
-//                         highestPrice = Math.max(...prices);
-//                         lowestPrice = Math.min(...prices);
-//                     }
-//                 }
-//             }
-
-//             return {
-//                 stt: index + 1,
-//                 key: item.id_san_pham,
-//                 id_san_pham: item.id_san_pham,
-//                 ma_san_pham: item.ma_san_pham,
-//                 ten_san_pham: item.ten_san_pham,
-//                 hinh_anh: item.hinh_anh,
-//                 chi_muc: (item.ten_danh_muc || '') + "/" +
-//                     (item.ten_thuong_hieu || '') + "/" +
-//                     (item.ten_chat_lieu || ''),
-//                 trang_thai: item.trang_thai,
-//                 tong_so_luong: item.tong_so_luong || 0,
-//                 gia_cao_nhat: highestPrice,
-//                 gia_thap_nhat: lowestPrice,
-//                 ngay_cap_nhat: item.ngay_cap_nhat || ''
-//             };
-//         });
-//     } else {
-//         // Nếu không có kết quả lọc hoặc tìm kiếm, hiển thị tất cả sản phẩm
-//         console.log(`Hiển thị tất cả ${data.value.length} sản phẩm`);
-//         productsToDisplay = data.value;
-//     }
-
-//     // Lọc theo trạng thái nếu người dùng đã chọn
-//     if (statusFilter.value) {
-//         console.log(`Lọc theo trạng thái: ${statusFilter.value}`);
-//         return productsToDisplay.filter(item => item.trang_thai === statusFilter.value);
-//     }
-
-//     // Trả về danh sách không lọc nếu không chọn trạng thái
-//     return productsToDisplay;
-// });
 const displayData = ref([]);
 const filteredDisplayData = computed(() => {
     if (statusFilter.value) {
