@@ -1122,8 +1122,8 @@ const validateProductName = async (rule, value) => {
 
     // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt
     // Cho phép chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc
-    if (!/^[a-zA-Z0-9À-ỹ\s\-\.,()]+$/.test(normalizedValue)) {
-        return Promise.reject('Tên sản phẩm chỉ được chứa chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc');
+    if (!/^(?=.*[a-zA-ZÀ-ỹ])[a-zA-Z0-9À-ỹ\s\-\.,()/&+'"\[\]®™©℠$€£¥₫°²³%+×÷±µ=]+$/.test(normalizedValue)) {
+        return Promise.reject('Tên sản phẩm phải chứa ít nhất một ký tự chữ cái và chỉ được chứa các ký tự cho phép');
     }
 
     // Chuẩn hóa tên sản phẩm - loại bỏ khoảng trắng thừa và dấu

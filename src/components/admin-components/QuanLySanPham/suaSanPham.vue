@@ -10,9 +10,9 @@
                 </a-form-item>
                 <a-form-item label="Tên sản phẩm" name="ten_san_pham" :rules="[
                     { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
-                    { validator: validateProductName }
+                    
                 ]">
-                    <a-input v-model:value="formState.ten_san_pham" />
+                    <a-input readonly v-model:value="formState.ten_san_pham" />
                 </a-form-item>
 
                 <a-form-item label="Danh mục" name="id_danh_muc"
@@ -210,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, watch, readonly } from 'vue';
 import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
