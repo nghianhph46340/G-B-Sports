@@ -1,7 +1,7 @@
 <template>
     <div class="row">
         <div class="col-md-6 border-end">
-            <h5>Thêm sản phẩm</h5>
+            <h5>Sửa sản phẩm</h5>
             <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol" layout="horizontal" ref="formRef"
                 :rules="rules">
                 <a-form-item label="Mã sản phẩm" name="ma_san_pham"
@@ -51,7 +51,7 @@
 
                 <a-form-item label="Hình ảnh" name="hinh_anh">
                     <a-upload v-model:file-list="fileList" list-type="picture-card" :max-count="1"
-                        @change="handleImageChange" :before-upload="beforeUpload">
+                        @change="handleImageChange" :before-upload="beforeUpload" :customRequest="handleCustomRequest">
                         <div v-if="fileList.length < 1">
                             <plus-outlined />
                             <div style="margin-top: 8px">Upload</div>
@@ -139,45 +139,24 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <a-form-item label="Số lượng" :rules="[
-                                    { required: true, message: 'Vui lòng nhập số lượng!' },
-                                    {
-                                        validator: (_, value) => {
-                                            if (value < 1) {
-                                                return Promise.reject('Số lượng phải lớn hơn 0!');
-                                            }
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                ]">
+                                <a-form-item label="Số lượng" :validate-status="variant.soLuongValidateStatus"
+                                    :help="variant.soLuongHelp">
                                     <a-input-number v-model:value="variant.so_luong" class="w-full" :controls="false"
-                                        :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
-                                        :parser="(value) => value.replace(/,/g, '')"
-                                        placeholder="Nhập số lượng sản phẩm" />
+                                        :formatter="formatSoLuong" :parser="parseSoLuong"
+                                        placeholder="Nhập số lượng sản phẩm" @blur="validateSoLuong(variant, index)"
+                                        @change="validateSoLuong(variant, index)" />
                                 </a-form-item>
                             </div>
 
                             <div class="col-md-6">
-                                <a-form-item label="Giá" :rules="[
-                                    { required: true, message: 'Vui lòng nhập giá bán!' },
-                                    {
-                                        validator: (_, value) => {
-                                            if (value === undefined || value === null || value === '') {
-                                                return Promise.reject('Vui lòng nhập giá bán!');
-                                            }
-                                            if (value < 1000) {
-                                                return Promise.reject('Giá bán phải lớn hơn 1000!');
-                                            }
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                ]">
+                                <a-form-item label="Giá" :validate-status="variant.giaBanValidateStatus"
+                                    :help="variant.giaBanHelp">
                                     <a-input-number :readonly="variant.isExisting" v-model:value="variant.gia_ban"
-                                        class="w-full" :controls="false"
-                                        :formatter="(value) => value === null || value === undefined ? '' : `${value}`"
-                                        :parser="(value) => value.replace(/,/g, '')" placeholder="Nhập giá bán sản phẩm"
+                                        class="w-full" :controls="false" :formatter="formatGiaBan" :parser="parseGiaBan"
+                                        placeholder="Nhập giá bán sản phẩm"
                                         :disabled="useCommonPrice || variant.isExisting"
-                                        @blur="formatPriceOnBlur($event, index)" />
+                                        @blur="validateGiaBan(variant, index)"
+                                        @change="validateGiaBan(variant, index)" />
                                 </a-form-item>
                             </div>
                         </div>
@@ -238,10 +217,11 @@ import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 import axiosInstance from '@/config/axiosConfig';
-
+import { testService } from '@/services/testService';
 const store = useGbStore();
 const router = useRouter();
 const route = useRoute();
+// const testServices = testService();
 const loading = ref(false);
 const fileList = ref([]);
 
@@ -338,7 +318,7 @@ const rules = {
     ]
 };
 
-// Hàm validate tên sản phẩm không được trùng (trừ sản phẩm hiện tại)
+// Sửa hàm validateProductName để cho phép các ký tự đặc biệt
 const validateProductName = async (_, value) => {
     if (!value) return Promise.reject('Tên sản phẩm không được để trống');
 
@@ -347,9 +327,9 @@ const validateProductName = async (_, value) => {
         return Promise.reject('Tên sản phẩm không được chỉ chứa số');
     }
 
-    // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt (chỉ cho phép chữ cái, số, dấu cách, và dấu gạch ngang)
-    if (!/^[a-zA-Z0-9À-ỹ\s\-]+$/.test(value)) {
-        return Promise.reject('Tên sản phẩm không được chứa ký tự đặc biệt');
+    // Sửa regex để cho phép thêm ký tự đặc biệt /, -, _, &, (), 
+    if (!/^[a-zA-Z0-9À-ỹ\s\-_\/&()]+$/.test(value)) {
+        return Promise.reject('Tên sản phẩm chỉ được chứa chữ cái, số và các ký tự -, _, /, &, (), không được chứa các ký tự đặc biệt khác');
     }
 
     // Lấy ID sản phẩm hiện tại từ route
@@ -413,7 +393,12 @@ const addVariant = async () => {
         hinh_anh: [],
         ngay_sua: new Date().toISOString(),
         ngay_tao: new Date().toISOString(),
-        isExisting: false // Đánh dấu đây là biến thể mới
+        isExisting: false, // Đánh dấu đây là biến thể mới
+        // Thêm các trường validate status và help
+        soLuongValidateStatus: '',
+        soLuongHelp: '',
+        giaBanValidateStatus: '',
+        giaBanHelp: ''
     });
 };
 
@@ -450,14 +435,46 @@ const beforeUpload = (file, currentFileCount) => {
     return true;
 };
 
+// Chuẩn hóa định dạng ngày tháng
+const formatDate = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+};
+
+// Lấy publicId từ URL Cloudinary
+const getPublicIdFromUrl = (url) => {
+    try {
+        // Mẫu URL: http://res.cloudinary.com/dtwsqkqpc/image/upload/v1745539680/l7g7eeubva8op7zzks8h.webp
+        const regex = /\/v\d+\/([^/\.]+)/;
+        const match = url.match(regex);
+        return match ? match[1] : null;
+    } catch (error) {
+        console.error('Lỗi khi phân tích URL:', error);
+        return null;
+    }
+};
+
+// Chuẩn bị dữ liệu variant trước khi gửi
+const prepareVariantForSubmit = (variant) => {
+    return {
+        id_chi_tiet_san_pham: variant.id_chi_tiet_san_pham || null,
+        id_san_pham: Number(variant.id_san_pham),
+        id_mau_sac: Number(variant.id_mau_sac),
+        id_kich_thuoc: Number(variant.id_kich_thuoc),
+        so_luong: Number(variant.so_luong),
+        gia_ban: Number(convertPriceToNumber(variant.gia_ban)),
+        trang_thai: "Hoạt động", // Gán giá trị chuỗi cố định
+        // ngay_tao: variant.isExisting ? formatDate(variant.ngay_tao) : formatDate(new Date()),
+        // ngay_sua: formatDate(new Date()),
+        hinh_anh: (variant.hinh_anh || []).filter(url => url && url.trim() !== '')
+    };
+};
+
+// Cập nhật hàm xử lý tải lên và xóa ảnh
 const handleVariantImageChange = async (info, variantIndex) => {
-    const { fileList } = info;
-
-    // Giới hạn số lượng file
-    const limitedFileList = fileList.slice(0, 3);
-
-    // Cập nhật fileList cho biến thể
-    variants.value[variantIndex].fileList = limitedFileList;
+    console.log('handleVariantImageChange được gọi với:', info);
+    const variant = variants.value[variantIndex];
 
     // Xử lý khi có file được xóa
     if (info.file.status === 'removed') {
@@ -467,22 +484,23 @@ const handleVariantImageChange = async (info, variantIndex) => {
         // Nếu file có URL (đã được tải lên cloud trước đó)
         if (removedFile.url) {
             try {
-                // Lấy tên file từ URL
-                const urlParts = removedFile.url.split('/');
-                const fileName = urlParts[urlParts.length - 1];
-                const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
+                // Lấy public_id từ URL
+                const publicId = getPublicIdFromUrl(removedFile.url);
 
-                console.log('Public ID cần xóa:', publicId);
-
-                // Gọi API xóa ảnh
-                await axiosInstance.delete("testDeleteImage?publicId=" + publicId);
+                if (publicId) {
+                    console.log('Public ID cần xóa:', publicId);
+                    // Gọi API xóa ảnh
+                    await testService.deleteImage(publicId);
+                    message.success(`Đã xóa ảnh khỏi cloud storage`);
+                } else if (removedFile.id_hinh_anh) {
+                    console.log('Xóa hình ảnh theo ID:', removedFile.id_hinh_anh);
+                } else {
+                    console.error('Không thể trích xuất public_id từ URL:', removedFile.url);
+                }
 
                 // Cập nhật mảng hinh_anh của biến thể
-                variants.value[variantIndex].hinh_anh = variants.value[variantIndex].hinh_anh.filter(
-                    url => url !== removedFile.url
-                );
-
-                message.success(`Đã xóa ảnh khỏi cloud storage`);
+                variant.hinh_anh = variant.hinh_anh.filter(url => url !== removedFile.url);
+                console.log('Danh sách hình ảnh sau khi xóa:', variant.hinh_anh);
             } catch (error) {
                 console.error('Lỗi khi xóa ảnh:', error);
                 message.error('Không thể xóa ảnh: ' + (error.response?.data || error.message));
@@ -490,19 +508,63 @@ const handleVariantImageChange = async (info, variantIndex) => {
         }
     }
 
-    // Xử lý các file đã upload thành công
-    if (info.file.status === 'done') {
-        // Thông báo kết quả
-        message.success(`${info.file.name} đã được tải lên thành công`);
+    // Xử lý khi có file mới được chọn (có originFileObj) - tải lên ngay lập tức
+    if (info.file.originFileObj && !info.file.url && info.file.status !== 'removed') {
+        console.log('Phát hiện file mới, bắt đầu tải lên cloud:', info.file.name);
 
-        // Nếu là file mới và có originFileObj, chuẩn bị cho việc upload
-        if (info.file.originFileObj) {
-            // Đánh dấu file này cần được upload khi lưu
-            info.file.needUpload = true;
+        // Đánh dấu file đang tải lên
+        info.file.status = 'uploading';
+
+        try {
+            // Gọi API tải ảnh lên cloud
+            const response = await testService.uploadImage(info.file.originFileObj);
+            console.log('Phản hồi từ Cloudinary:', response);
+
+            // Xử lý response để lấy URL
+            let imageUrl = null;
+            if (typeof response === 'string') {
+                imageUrl = response;
+            } else if (response && response.data) {
+                imageUrl = response.data;
+            }
+
+            if (imageUrl) {
+                // Cập nhật thông tin file
+                info.file.status = 'done';
+                info.file.url = imageUrl;
+
+                // Chỉ thêm URL vào danh sách hình ảnh nếu chưa tồn tại
+                if (!variant.hinh_anh) {
+                    variant.hinh_anh = [];
+                }
+                if (!variant.hinh_anh.includes(imageUrl)) {
+                    variant.hinh_anh.push(imageUrl);
+                }
+
+                message.success(`${info.file.name} đã được tải lên thành công`);
+                console.log('Danh sách hình ảnh sau khi tải lên:', variant.hinh_anh);
+            } else {
+                info.file.status = 'error';
+                message.error(`${info.file.name} tải lên thất bại: không nhận được URL`);
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải ảnh lên cloud:', error);
+            info.file.status = 'error';
+            message.error(`${info.file.name} tải lên thất bại: ${error.message}`);
         }
-    } else if (info.file.status === 'error') {
-        message.error(`${info.file.name} tải lên thất bại`);
     }
+
+    // Cập nhật fileList và đảm bảo không quá 3 ảnh
+    variant.fileList = info.fileList.slice(0, 3);
+
+    // Đồng bộ hoá giữa fileList và hinh_anh để đảm bảo chúng khớp nhau
+    // Cập nhật hinh_anh dựa trên fileList có URL
+    variant.hinh_anh = variant.fileList
+        .filter(file => file.url) // Chỉ lấy file có URL
+        .map(file => file.url);   // Lấy URL từ mỗi file
+
+    console.log('Danh sách fileList sau khi cập nhật:', variant.fileList);
+    console.log('Danh sách hinh_anh sau khi đồng bộ:', variant.hinh_anh);
 };
 
 const handlePreview = async (file) => {
@@ -550,135 +612,99 @@ const onFinish = async () => {
             throw new Error('Vui lòng thêm ít nhất một biến thể');
         }
 
-        // Tách biến thể thành 2 loại: đã tồn tại và mới 
-        const existingVariants = variants.value.filter(v => v.isExisting);
-        const newVariants = variants.value.filter(v => !v.isExisting);
+        // Lấy tất cả biến thể (cả mới và đã tồn tại)
+        const allVariants = [...variants.value];
 
-        // Validate từng biến thể mới
-        for (const variant of newVariants) {
+        // Validate từng biến thể
+        for (const [index, variant] of allVariants.entries()) {
+            // Kiểm tra thông tin cơ bản
             if (!variant.id_mau_sac || !variant.id_kich_thuoc) {
-                throw new Error('Vui lòng điền đầy đủ thông tin cho tất cả biến thể mới');
-            }
-            // Validate giá của biến thể
-            if (!useCommonPrice.value) {
-                if (!variant.gia_ban || convertPriceToNumber(variant.gia_ban) < 1000) {
-                    throw new Error(`Giá bán của biến thể phải lớn hơn 1000!`);
-                }
+                throw new Error('Vui lòng điền đầy đủ thông tin màu sắc và kích thước cho tất cả biến thể');
             }
 
-            // Chuyển đổi giá bán từ chuỗi có dấu phẩy sang số
-            variant.gia_ban = convertPriceToNumber(variant.gia_ban);
+            // Validate số lượng
+            const soLuong = Number(variant.so_luong);
+            if (isNaN(soLuong) || soLuong <= 0) {
+                throw new Error(`Biến thể #${index + 1}: Số lượng phải là số dương lớn hơn 0`);
+            }
+            if (soLuong > 100000) {
+                throw new Error(`Biến thể #${index + 1}: Số lượng không được vượt quá 100.000`);
+            }
+
+            // Validate giá bán
+            const giaBan = convertPriceToNumber(variant.gia_ban);
+            if (isNaN(giaBan) || giaBan < 1000) {
+                throw new Error(`Biến thể #${index + 1}: Giá bán phải lớn hơn 1.000`);
+            }
+            if (giaBan > 100000000) {
+                throw new Error(`Biến thể #${index + 1}: Giá bán không được vượt quá 100.000.000`);
+            }
 
             // Chuyển đổi số lượng thành số
-            variant.so_luong = convertPriceToNumber(variant.so_luong);
-        }
+            variant.so_luong = soLuong;
 
-        // Validate giá chung
-        if (useCommonPrice.value) {
-            if (!formState.gia_ban_chung || convertPriceToNumber(formState.gia_ban_chung) < 1000) {
-                throw new Error('Giá bán phải lớn hơn 1000!');
-            }
+            // Chuyển đổi giá bán từ chuỗi có dấu phẩy sang số
+            variant.gia_ban = giaBan;
 
-            // Chuyển đổi giá bán chung từ chuỗi có dấu phẩy sang số
-            formState.gia_ban_chung = convertPriceToNumber(formState.gia_ban_chung);
-        }
-
-        // Đảm bảo các giá khác cũng là số
-        if (formState.gia_nhap_chung) {
-            formState.gia_nhap_chung = convertPriceToNumber(formState.gia_nhap_chung);
-        }
-
-        let imageUrl = null;
-        if (fileList.value.length > 0) {
-            const file = fileList.value[0].originFileObj;
-            imageUrl = await uploadImage(file);
-            if (imageUrl) {
-                formState.hinh_anh = imageUrl;
-            }
-        }
-
-        // Upload ảnh mới cho từng biến thể mới nếu có
-        for (const variant of newVariants) {
-            if (variant.fileList && variant.fileList.length > 0) {
-                // Tìm các file mới cần upload
-                const newFiles = variant.fileList.filter(file => file.originFileObj && file.needUpload);
-
-                // Upload các file mới
-                for (const file of newFiles) {
-                    try {
-                        const imageUrl = await uploadImage(file.originFileObj);
-                        if (imageUrl) {
-                            console.log('Đã upload ảnh mới, URL trả về:', imageUrl);
-
-                            // Đảm bảo hinh_anh là một mảng
-                            if (!Array.isArray(variant.hinh_anh)) {
-                                variant.hinh_anh = [];
-                            }
-
-                            // Thêm URL mới vào mảng hinh_anh
-                            variant.hinh_anh.push(imageUrl);
-
-                            // Cập nhật file.url để hiển thị ảnh
-                            file.url = imageUrl;
-                            file.status = 'done';
-
-                            console.log('Mảng hinh_anh sau khi thêm:', variant.hinh_anh);
-                        }
-                    } catch (error) {
-                        console.error('Lỗi khi upload ảnh:', error);
-                        message.error(`Không thể upload ảnh ${file.name}`);
-                    }
-                }
+            // Kiểm tra danh sách hình ảnh
+            if (!variant.hinh_anh || variant.hinh_anh.length === 0) {
+                throw new Error(`Biến thể #${index + 1} phải có ít nhất một hình ảnh`);
             }
         }
 
         // Cập nhật sản phẩm
-        console.log('FormState trước khi gửi:', formState);
         formState.id_san_pham = route.params.id;
 
-        try {
-            // Sử dụng axiosInstance để gọi trực tiếp API cập nhật sản phẩm
-            const response = await store.createSanPham(formState);
-            console.log('Response nhận được:', response);
+        // Chuẩn bị toàn bộ danh sách CTSP sẽ gửi đi
+        const preparedVariants = allVariants.map(variant => {
+            // Đảm bảo variant có id_san_pham
+            variant.id_san_pham = formState.id_san_pham;
+            return prepareVariantForSubmit(variant);
+        });
 
-            if (!response || !response.success) {
-                throw new Error(response?.message || 'Không nhận được dữ liệu phản hồi hợp lệ từ server');
-            }
+        // In ra danh sách CTSP đã chuẩn bị
+        console.log('Danh sách chi tiết sản phẩm sẽ gửi đi:', JSON.stringify(preparedVariants, null, 2));
 
-            // Cập nhật chỉ các biến thể mới
-            for (const variant of newVariants) {
-                // Đảm bảo variant có id_san_pham
-                variant.id_san_pham = formState.id_san_pham;
+        // Cập nhật sản phẩm chính
+        console.log('Đang gửi thông tin sản phẩm:', formState);
+        const response = await store.createSanPham(formState);
+        console.log('Response từ API sản phẩm:', response);
 
-                // Log để debug
-                console.log('Gửi biến thể mới với giá:', variant.gia_ban, 'và số lượng:', variant.so_luong);
-
-                // Gọi API lưu chi tiết sản phẩm
-                await store.createCTSP({
-                    ...variant,
-                    hinh_anh: variant.hinh_anh
-                });
-            }
-
-            message.success(response.data.message || 'Cập nhật sản phẩm và biến thể thành công!');
-            await store.getAllSanPhamNgaySua();
-
-            // Đánh dấu vừa thêm sản phẩm mới
-            store.justAddedProduct = true;
-            router.push('/admin/quanlysanpham');
-        } catch (error) {
-            console.error('Chi tiết lỗi:', error);
-            if (error.response?.data) {
-                // Xử lý lỗi từ server
-                const errorMessage = error.response.data.message || 'Có lỗi xảy ra khi cập nhật sản phẩm';
-                message.error(errorMessage);
-            } else {
-                // Xử lý lỗi khác
-                message.error(error.message || 'Có lỗi xảy ra khi cập nhật sản phẩm');
-            }
-        } finally {
-            loading.value = false;
+        if (!response) {
+            throw new Error('Không nhận được phản hồi hợp lệ từ server khi lưu sản phẩm');
         }
+
+        // Duyệt từng biến thể để lưu
+        console.log('Tổng số biến thể cần lưu:', allVariants.length);
+
+        for (let i = 0; i < allVariants.length; i++) {
+            const variant = allVariants[i];
+            console.log(`Đang xử lý biến thể ${i + 1}/${allVariants.length}:`, variant);
+
+            // Đảm bảo variant có id_san_pham
+            variant.id_san_pham = formState.id_san_pham;
+
+            // Chuẩn bị dữ liệu biến thể
+            const variantData = prepareVariantForSubmit(variant);
+            console.log(`Chi tiết biến thể ${i + 1} sẽ gửi:`, JSON.stringify(variantData, null, 2));
+
+            // Gọi API lưu chi tiết sản phẩm
+            try {
+                const ctspResponse = await store.createCTSP(variantData);
+                console.log(`Lưu biến thể ${i + 1} thành công:`, ctspResponse);
+            } catch (error) {
+                console.error(`Lỗi khi lưu biến thể ${i + 1}:`, error);
+                throw error;
+            }
+        }
+
+        // Thông báo thành công và chuyển hướng
+        message.success('Cập nhật sản phẩm và biến thể thành công!');
+        await store.getAllSanPhamNgaySua();
+
+        // Đánh dấu vừa thêm sản phẩm mới
+        store.justAddedProduct = true;
+        router.push('/admin/quanlysanpham');
     } catch (error) {
         console.error('Chi tiết lỗi:', error);
         if (error.response?.data) {
@@ -691,49 +717,7 @@ const onFinish = async () => {
         }
     } finally {
         loading.value = false;
-        await store.getAllCTSP();
         await store.getAllSanPhamNgaySua();
-    }
-};
-
-// Hàm upload ảnh lên server
-const uploadImage = async (file) => {
-    if (!file) {
-        console.warn('No file provided for upload');
-        return null;
-    }
-
-    console.log('Uploading file:', file);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        // Sử dụng endpoint API giống như trong themSanPham.vue
-        const response = await axiosInstance.post('testImage', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-        console.log('Upload image response:', response.data);
-
-        // Kiểm tra response và trả về URL
-        if (response.data) {
-            // Nếu response.data là string (URL trực tiếp)
-            if (typeof response.data === 'string') {
-                return response.data;
-            }
-            // Nếu response.data là object có thuộc tính url
-            else if (response.data.url) {
-                return response.data.url;
-            }
-            // Trường hợp khác, trả về toàn bộ response.data
-            return response.data;
-        }
-        return null;
-    } catch (error) {
-        console.error('Lỗi khi upload ảnh:', error);
-        message.error('Không thể upload ảnh: ' + error.message);
-        return null;
     }
 };
 
@@ -825,39 +809,98 @@ watch(() => formState, async (newVal) => {
     }
 }, { deep: true });
 
-// Hàm xử lý upload ảnh
+// Hàm xử lý upload ảnh cho sản phẩm chính
 const handleImageChange = async (info) => {
     console.log('handleImageChange được gọi với:', info);
 
-    // Cập nhật fileList
-    fileList.value = info.fileList;
-
     // Xử lý khi ảnh bị xóa (status = 'removed')
     if (info.file.status === 'removed') {
-        console.log('Ảnh bị xóa:', info.file);
+        console.log('Ảnh sản phẩm bị xóa:', info.file);
+
+        // Cập nhật fileList
+        fileList.value = [];
 
         // Nếu ảnh đã được upload lên cloud (có url)
         if (info.file.url) {
             try {
-                // Trích xuất publicId từ URL
-                const urlParts = info.file.url.split('/');
-                const fileName = urlParts[urlParts.length - 1];
-                const publicId = fileName.split('.')[0]; // Lấy phần trước .jpg hoặc .png
+                // Lấy public_id từ URL
+                const publicId = getPublicIdFromUrl(info.file.url);
 
-                console.log('Public ID cần xóa:', publicId);
+                if (publicId) {
+                    console.log('Public ID cần xóa:', publicId);
+                    // Gọi API xóa ảnh
+                    await testService.deleteImage(publicId);
 
-                // Gọi API xóa ảnh
-                await axiosInstance.delete("testDeleteImage?publicId=" + publicId);
+                    // Xóa URL ảnh khỏi formState
+                    formState.hinh_anh = '';
 
-                // Xóa URL ảnh khỏi formState
-                formState.hinh_anh = '';
-
-                message.success('Đã xóa ảnh thành công');
+                    message.success('Đã xóa ảnh sản phẩm thành công');
+                } else {
+                    console.error('Không thể trích xuất public_id từ URL:', info.file.url);
+                }
             } catch (error) {
-                console.error('Lỗi khi xóa ảnh:', error);
-                message.error('Không thể xóa ảnh: ' + error.message);
+                console.error('Lỗi khi xóa ảnh sản phẩm:', error);
+                message.error('Không thể xóa ảnh: ' + (error.response?.data || error.message));
             }
         }
+    }
+
+    // Xử lý khi có file mới được chọn (có originFileObj)
+    if (info.file.originFileObj && info.file.status !== 'removed') {
+        console.log('Phát hiện file mới cho sản phẩm, bắt đầu tải lên cloud:', info.file.name);
+
+        // Đánh dấu file đang tải lên
+        const currentFile = { ...info.file, status: 'uploading' };
+        fileList.value = [currentFile];
+
+        try {
+            // Gọi API tải ảnh lên cloud
+            const response = await testService.uploadImage(info.file.originFileObj);
+            console.log('Phản hồi từ Cloudinary cho ảnh sản phẩm:', response);
+
+            // Xử lý response để lấy URL
+            let imageUrl = null;
+            if (typeof response === 'string') {
+                imageUrl = response;
+            } else if (response && response.data) {
+                imageUrl = response.data;
+            }
+
+            if (imageUrl) {
+                // Cập nhật trạng thái thành công
+                const updatedFile = {
+                    ...info.file,
+                    status: 'done',
+                    url: imageUrl,
+                    response: response,
+                    name: info.file.name || 'product-image.jpg',
+                    uid: info.file.uid || '-1'
+                };
+
+                // Cập nhật fileList với file đã hoàn thành
+                fileList.value = [updatedFile];
+
+                // Cập nhật URL vào formState
+                formState.hinh_anh = imageUrl;
+
+                message.success(`${info.file.name} đã được tải lên thành công`);
+                console.log('URL ảnh sản phẩm sau khi tải lên:', formState.hinh_anh);
+            } else {
+                // Cập nhật trạng thái lỗi
+                const errorFile = { ...info.file, status: 'error' };
+                fileList.value = [errorFile];
+                message.error(`${info.file.name} tải lên thất bại: không nhận được URL`);
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải ảnh sản phẩm lên cloud:', error);
+            // Cập nhật trạng thái lỗi
+            const errorFile = { ...info.file, status: 'error' };
+            fileList.value = [errorFile];
+            message.error(`${info.file.name} tải lên thất bại: ${error.message}`);
+        }
+    } else {
+        // Đảm bảo giới hạn chỉ 1 ảnh và cập nhật fileList
+        fileList.value = info.fileList.slice(0, 1);
     }
 };
 
@@ -891,20 +934,11 @@ onMounted(async () => {
         await store.getMauSacList();
         await store.getSizeList();
 
-        console.log('Danh mục:', store.danhMucList);
-        console.log('Thương hiệu:', store.thuongHieuList);
-        console.log('Chất liệu:', store.chatLieuList);
-        console.log('Màu sắc:', store.mauSacList);
-        console.log('Size:', store.sizeList);
-
         danhMucList.value = store.danhMucList;
         thuongHieuList.value = store.thuongHieuList;
         chatLieuList.value = store.chatLieuList;
         mauSacList.value = store.mauSacList;
         sizeList.value = store.sizeList;
-        console.log('Màu sắc:', mauSacList.value);
-        console.log('Size:', sizeList.value);
-
 
         // Cập nhật formState với dữ liệu sản phẩm
         formState.id_san_pham = store.sanPhamById.id_san_pham;
@@ -945,43 +979,40 @@ onMounted(async () => {
         // Xử lý dữ liệu biến thể
         if (store.getCTSPBySanPhams && store.getCTSPBySanPhams.length > 0) {
             variants.value = store.getCTSPBySanPhams.map(ctsp => {
-                console.log('Đang xử lý biến thể:', ctsp);
-
-                // Kiểm tra và log thông tin về màu sắc và kích thước
-                const mauSac = mauSacList.value.find(ms => ms.id_mau_sac === ctsp.id_mau_sac);
-                const kichThuoc = sizeList.value.find(size => size.id_kich_thuoc === ctsp.id_kich_thuoc);
-
-                console.log('Màu sắc tìm thấy:', mauSac);
-                console.log('Kích thước tìm thấy:', kichThuoc);
-
-                // Chuyển đổi URL hình ảnh thành định dạng fileList cho a-upload
+                // Tạo fileList từ hinh_anh_list
                 let variantFileList = [];
 
-                if (ctsp.hinh_anh) {
-                    console.log('Hình ảnh biến thể gốc:', ctsp.hinh_anh);
+                // Sử dụng hinh_anh_list từ API
+                if (ctsp.hinh_anh_list && Array.isArray(ctsp.hinh_anh_list) && ctsp.hinh_anh_list.length > 0) {
+                    console.log('Sử dụng hinh_anh_list:', ctsp.hinh_anh_list);
 
-                    // Nếu hinh_anh là chuỗi, chuyển thành mảng có một phần tử
-                    const hinhAnhArray = typeof ctsp.hinh_anh === 'string'
-                        ? [ctsp.hinh_anh]
-                        : Array.isArray(ctsp.hinh_anh)
-                            ? ctsp.hinh_anh
-                            : [];
+                    variantFileList = ctsp.hinh_anh_list.map((img, index) => {
+                        // Kiểm tra xem img.hinh_anh có phải là object hay không
+                        let imageUrl = img.hinh_anh;
+                        if (typeof imageUrl === 'object' && imageUrl !== null) {
+                            console.log('Phát hiện hình ảnh là object:', imageUrl);
+                            if (imageUrl.url) {
+                                imageUrl = imageUrl.url;
+                            } else if (imageUrl.toString) {
+                                imageUrl = imageUrl.toString();
+                            } else {
+                                console.error('Không thể chuyển đổi hình ảnh:', imageUrl);
+                                imageUrl = '';
+                            }
+                        }
 
-                    console.log('Mảng hình ảnh sau khi xử lý:', hinhAnhArray);
-
-                    variantFileList = hinhAnhArray.map((url, index) => {
-                        const fileItem = {
+                        return {
                             uid: `-${index}`,
                             name: `image-${index}.jpg`,
                             status: 'done',
-                            url: url
+                            url: imageUrl,
+                            anh_chinh: img.anh_chinh === true || img.anh_chinh === "1" || img.anh_chinh === 1 ? "1" : "0",
+                            id_hinh_anh: img.id_hinh_anh
                         };
-                        console.log('File item được tạo:', fileItem);
-                        return fileItem;
                     });
-                }
 
-                console.log('FileList cuối cùng:', variantFileList);
+                    console.log('FileList sau khi xử lý:', variantFileList);
+                }
 
                 // Tạo đối tượng biến thể
                 return {
@@ -992,11 +1023,7 @@ onMounted(async () => {
                     gia_ban: ctsp.gia_ban || 1100,
                     trang_thai: ctsp.trang_thai || 'Hoạt động',
                     fileList: variantFileList,
-                    hinh_anh: typeof ctsp.hinh_anh === 'string'
-                        ? [ctsp.hinh_anh]
-                        : Array.isArray(ctsp.hinh_anh)
-                            ? ctsp.hinh_anh
-                            : [],
+                    hinh_anh: variantFileList.map(file => file.url),
                     ngay_tao: ctsp.ngay_tao,
                     ngay_sua: ctsp.ngay_sua,
                     isExisting: true // Đánh dấu đây là biến thể đã tồn tại
@@ -1017,186 +1044,10 @@ onMounted(async () => {
     }
 });
 
-// Khi load dữ liệu có sẵn
-const loadProductData = async (productId) => {
-    try {
-        // Lấy thông tin sản phẩm theo ID
-        await store.getProductById(productId);
-
-        // Kiểm tra xem có dữ liệu sản phẩm không
-        if (!store.productById || !store.productById.id_san_pham) {
-            throw new Error('Không tìm thấy thông tin sản phẩm');
-        }
-
-        console.log('Dữ liệu sản phẩm:', store.productById);
-
-        // Lấy dữ liệu danh mục, thương hiệu, chất liệu trước khi cập nhật form
-        await store.getDanhMucList();
-        await store.getThuongHieuList();
-        await store.getChatLieuList();
-
-        // Lấy danh sách màu sắc và size
-        await store.getMauSacList();
-        await store.getSizeList();
-
-        console.log('Danh mục:', store.danhMucList);
-        console.log('Thương hiệu:', store.thuongHieuList);
-        console.log('Chất liệu:', store.chatLieuList);
-        console.log('Màu sắc:', store.mauSacList);
-        console.log('Size:', store.sizeList);
-
-        danhMucList.value = store.danhMucList;
-        thuongHieuList.value = store.thuongHieuList;
-        chatLieuList.value = store.chatLieuList;
-        mauSacList.value = store.mauSacList;
-        sizeList.value = store.sizeList;
-
-        // Cập nhật formState với dữ liệu sản phẩm
-        Object.assign(formState, {
-            ten_san_pham: store.productById.ten_san_pham,
-            mo_ta: store.productById.mo_ta,
-            gioi_tinh: store.productById.gioi_tinh,
-            hinh_anh: store.productById.hinh_anh,
-            id_danh_muc: store.productById.id_danh_muc,
-            id_thuong_hieu: store.productById.id_thuong_hieu,
-            id_chat_lieu: store.productById.id_chat_lieu,
-            trang_thai: store.productById.trang_thai
-        });
-
-        // Validate form sau khi load dữ liệu
-        await validateForm();
-
-        // ... rest of the loading code
-    } catch (error) {
-        message.error('Có lỗi khi tải thông tin sản phẩm!');
-        console.error(error);
-    }
-};
-
 // Watch changes in formState để debug
 watch(() => formState, (newVal) => {
     console.log('FormState changed:', newVal);
 }, { deep: true });
-
-// Thêm các hàm validate giống như trong themSanPham
-// 1. Validate và xử lý cho giá chung
-const handleGiaChungInput = (value) => {
-    console.log('Giá chung thay đổi thành:', value);
-    // Không gọi validateGiaChung ở đây nữa để tránh nhân đôi cập nhật
-
-    // Cập nhật giá cho tất cả các biến thể nếu dùng giá chung
-    if (useCommonPrice.value && validateGiaChung(value)) {
-        variants.value.forEach((variant) => {
-            variant.gia_ban = value;
-        });
-    }
-}
-
-const validateGiaChung = (value, showMessage = false) => {
-    if (value === undefined || value === null || value === '') {
-        if (showMessage) message.warning('Giá bán chung không được để trống');
-        return false;
-    }
-
-    if (value < 1000) {
-        if (showMessage) message.warning('Giá bán chung phải lớn hơn 1000!');
-        return false;
-    }
-
-    if (value > 100000000) {
-        if (showMessage) message.warning('Giá bán chung không được vượt quá 100,000,000!');
-        return false;
-    }
-
-    return true;
-}
-
-// 2. Validate và xử lý cho giá bán của biến thể
-const handleGiaBanInput = (value, index) => {
-    console.log('Giá biến thể thay đổi thành:', value, 'tại index:', index);
-    // Không validate lặp
-}
-
-const validateGiaBanSafe = (value, index, showMessage = false) => {
-    const variant = variants.value[index];
-    if (!variant) return false;
-
-    if (value === undefined || value === null || value === '') {
-        if (showMessage) message.error('Vui lòng nhập giá bán!');
-        return false;
-    }
-
-    if (value < 1000) {
-        if (showMessage) message.error('Giá bán phải lớn hơn 1000!');
-        return false;
-    }
-
-    if (value > 100000000) {
-        if (showMessage) message.error('Giá bán không được vượt quá 100,000,000!');
-        return false;
-    }
-
-    return true;
-}
-
-const validateGiaBan = (value, index, showMessage = false) => {
-    // Nếu đang sử dụng giá chung, không validate riêng
-    if (useCommonPrice.value) return true;
-    return validateGiaBanSafe(value, index, showMessage);
-}
-
-// 3. Validate và xử lý cho số lượng biến thể
-const handleSoLuongInput = (value, index) => {
-    console.log('Số lượng biến thể thay đổi thành:', value, 'tại index:', index);
-    // Không validate lặp
-}
-
-const validateSoLuong = (value, index, showMessage = false) => {
-    const variant = variants.value[index];
-    if (!variant) return false;
-
-    if (value === undefined || value === null || value === '') {
-        if (showMessage) message.error('Vui lòng nhập số lượng!');
-        return false;
-    }
-
-    if (value < 1) {
-        if (showMessage) message.error('Số lượng phải lớn hơn 0!');
-        return false;
-    }
-
-    if (value > 100000) {
-        if (showMessage) message.error('Số lượng không được vượt quá 100,000!');
-        return false;
-    }
-
-    return true;
-}
-
-const resetForm = () => {
-    Modal.confirm({
-        title: 'Xác nhận làm mới',
-        content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
-        okText: 'Đồng ý',
-        cancelText: 'Hủy',
-        onOk: () => {
-            // Code reset ở trên
-            Object.assign(formState, {
-                ten_san_pham: '',
-                mo_ta: '',
-                gioi_tinh: undefined,
-                hinh_anh: '',
-                id_danh_muc: undefined,
-                id_thuong_hieu: undefined,
-                id_chat_lieu: undefined,
-                trang_thai: 'Hoạt động',
-                gia_nhap_chung: 0,
-                gia_ban_chung: 0
-            });
-            // ... rest of reset code
-        }
-    });
-};
 
 // Thêm các hàm format và parse mới
 const formatNumber = (value) => {
@@ -1258,6 +1109,233 @@ const formatCommonPriceOnBlur = () => {
     // Format và cập nhật giá trị hiển thị
     let formattedValue = numericValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     formState.gia_ban_chung = formattedValue;
+};
+
+const setMainImage = (file, variantIndex) => {
+    const currentVariant = variants.value[variantIndex];
+    const fileList = currentVariant.fileList;
+
+    // Lặp qua fileList để cập nhật trạng thái anh_chinh
+    fileList.forEach(item => {
+        // Reset tất cả ảnh về trạng thái không phải ảnh chính
+        item.anh_chinh = false;
+
+        // Nếu item này chính là file được chọn làm ảnh chính
+        if (item.uid === file.uid) {
+            item.anh_chinh = true;
+            console.log('Đã đặt file này làm ảnh chính:', item);
+        }
+    });
+
+    // Cập nhật lại fileList cho biến thể
+    currentVariant.fileList = [...fileList];
+
+    // Nếu file có id_hinh_anh, cập nhật trạng thái anh_chinh thông qua API
+    if (file.id_hinh_anh) {
+        try {
+            // TODO: Thêm API để cập nhật trạng thái ảnh chính dựa trên id_hinh_anh
+            console.log('Cập nhật ảnh chính với ID:', file.id_hinh_anh);
+            // Ví dụ: await axiosInstance.put(`hinh-anh/${file.id_hinh_anh}/set-main`);
+        } catch (error) {
+            console.error('Lỗi khi cập nhật ảnh chính:', error);
+            message.error('Không thể cập nhật ảnh chính: ' + (error.response?.data || error.message));
+        }
+    }
+};
+
+// Thêm các hàm format và parse cho số lượng và giá
+const invalidInputs = ref({
+    soLuong: {},
+    giaBan: {}
+});
+
+const formatSoLuong = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+
+    // Kiểm tra có ký tự không hợp lệ
+    const originalStr = String(value);
+    const hasInvalidChars = /[^\d]/.test(originalStr);
+
+    // Nếu có ký tự không hợp lệ, đánh dấu để hiển thị thông báo
+    if (hasInvalidChars) {
+        // Tìm variant index hiện tại đang được chỉnh sửa
+        const variantIndex = variants.value.findIndex(v => v.so_luong === value || String(v.so_luong) === originalStr);
+        if (variantIndex !== -1) {
+            invalidInputs.value.soLuong[variantIndex] = true;
+            // Gọi validate ngay lập tức
+            setTimeout(() => {
+                validateSoLuong(variants.value[variantIndex], variantIndex);
+            }, 0);
+        }
+    }
+
+    // Vẫn loại bỏ các ký tự không hợp lệ khi hiển thị
+    return originalStr.replace(/[^\d]/g, '');
+};
+
+const parseSoLuong = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    // Loại bỏ tất cả ký tự không phải số
+    return value.replace(/[^\d]/g, '');
+};
+
+const formatGiaBan = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+
+    // Kiểm tra có ký tự không hợp lệ (chấp nhận số và dấu phẩy)
+    const originalStr = String(value);
+    const hasInvalidChars = /[^\d,]/.test(originalStr);
+
+    if (hasInvalidChars) {
+        // Tìm variant index hiện tại đang được chỉnh sửa
+        const variantIndex = variants.value.findIndex(v => v.gia_ban === value || String(v.gia_ban) === originalStr);
+        if (variantIndex !== -1) {
+            invalidInputs.value.giaBan[variantIndex] = true;
+            // Gọi validate ngay lập tức
+            setTimeout(() => {
+                validateGiaBan(variants.value[variantIndex], variantIndex);
+            }, 0);
+        }
+    }
+
+    // Loại bỏ ký tự không hợp lệ và định dạng phần nghìn
+    const numStr = originalStr.replace(/[^\d]/g, '');
+    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
+const parseGiaBan = (value) => {
+    if (value === null || value === undefined || value === '') return '';
+    // Loại bỏ tất cả ký tự không phải số
+    return value.replace(/[^\d]/g, '');
+};
+
+// Thêm hàm validate số lượng với đầy đủ điều kiện
+const validateSoLuong = (variant, index) => {
+    // Reset trạng thái validate
+    variant.soLuongValidateStatus = '';
+    variant.soLuongHelp = '';
+
+    // Kiểm tra trống
+    if (variant.so_luong === undefined || variant.so_luong === null || variant.so_luong === '') {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Vui lòng nhập số lượng!';
+        return false;
+    }
+
+    // Hiển thị thông báo nếu đã phát hiện ký tự không hợp lệ
+    if (invalidInputs.value.soLuong[index]) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng chỉ được nhập số nguyên dương!';
+
+        // Giữ thông báo lỗi hiển thị trong 3 giây
+        setTimeout(() => {
+            if (variant.soLuongHelp === 'Số lượng chỉ được nhập số nguyên dương!') {
+                invalidInputs.value.soLuong[index] = false;
+                // Kiểm tra lại sau khi xóa cờ lỗi
+                validateSoLuong(variant, index);
+            }
+        }, 3000);
+
+        return false;
+    }
+
+    // Các kiểm tra khác vẫn giữ nguyên...
+    const numValue = Number(variant.so_luong);
+
+    if (numValue <= 0) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng phải lớn hơn 0!';
+        return false;
+    }
+
+    if (numValue > 100000) {
+        variant.soLuongValidateStatus = 'error';
+        variant.soLuongHelp = 'Số lượng không được vượt quá 100.000!';
+        return false;
+    }
+
+    variant.soLuongValidateStatus = 'success';
+    return true;
+};
+
+// Thêm hàm validate giá bán với đầy đủ điều kiện
+const validateGiaBan = (variant, index) => {
+    // Reset trạng thái validate
+    variant.giaBanValidateStatus = '';
+    variant.giaBanHelp = '';
+
+    // Kiểm tra trống
+    if (variant.gia_ban === undefined || variant.gia_ban === null || variant.gia_ban === '') {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Vui lòng nhập giá bán!';
+        return false;
+    }
+
+    // Hiển thị thông báo nếu đã phát hiện ký tự không hợp lệ
+    if (invalidInputs.value.giaBan[index]) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán chỉ được nhập số!';
+
+        // Giữ thông báo lỗi hiển thị trong 3 giây
+        setTimeout(() => {
+            if (variant.giaBanHelp === 'Giá bán chỉ được nhập số!') {
+                invalidInputs.value.giaBan[index] = false;
+                // Kiểm tra lại sau khi xóa cờ lỗi
+                validateGiaBan(variant, index);
+            }
+        }, 3000);
+
+        return false;
+    }
+
+    // Các kiểm tra khác...
+    const numValue = convertPriceToNumber(variant.gia_ban);
+
+    if (numValue <= 0) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán phải lớn hơn 0!';
+        return false;
+    }
+
+    if (numValue < 1000) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán phải lớn hơn 1.000!';
+        return false;
+    }
+
+    if (numValue > 100000000) {
+        variant.giaBanValidateStatus = 'error';
+        variant.giaBanHelp = 'Giá bán không được vượt quá 100.000.000!';
+        return false;
+    }
+
+    variant.giaBanValidateStatus = 'success';
+    return true;
+};
+
+const resetForm = () => {
+    Modal.confirm({
+        title: 'Xác nhận làm mới',
+        content: 'Bạn có chắc muốn làm mới form? Tất cả dữ liệu sẽ bị xóa.',
+        okText: 'Đồng ý',
+        cancelText: 'Hủy',
+        onOk: () => {
+            // Code reset ở trên
+            Object.assign(formState, {
+                ten_san_pham: '',
+                mo_ta: '',
+                gioi_tinh: undefined,
+                hinh_anh: '',
+                id_danh_muc: undefined,
+                id_thuong_hieu: undefined,
+                id_chat_lieu: undefined,
+                trang_thai: 'Hoạt động',
+                gia_nhap_chung: 0,
+                gia_ban_chung: 0
+            });
+            // ... rest of reset code
+        }
+    });
 };
 </script>
 
