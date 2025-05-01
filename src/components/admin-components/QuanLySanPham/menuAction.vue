@@ -27,8 +27,8 @@
                         <!-- Bộ lọc Danh mục -->
                         <div class="filter-group">
                             <div class="filter-title">Danh mục</div>
-                            <a-select v-model:value="valueDanhMuc" @change="updatePreview" style="width: 100%" mode="multiple"
-                                placeholder="Chọn danh mục" :maxTagCount="2"
+                            <a-select v-model:value="valueDanhMuc" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn danh mục" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} danh mục khác`">
                                 <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc"
                                     :value="item.id_danh_muc">
@@ -40,8 +40,8 @@
                         <!-- Bộ lọc Thương hiệu -->
                         <div class="filter-group">
                             <div class="filter-title">Thương hiệu</div>
-                            <a-select v-model:value="valueThuongHieu" @change="updatePreview" style="width: 100%" mode="multiple"
-                                placeholder="Chọn thương hiệu" :maxTagCount="2"
+                            <a-select v-model:value="valueThuongHieu" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn thương hiệu" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} thương hiệu khác`">
                                 <a-select-option v-for="item in thuongHieuList" :key="item.id_thuong_hieu"
                                     :value="item.id_thuong_hieu">
@@ -53,8 +53,8 @@
                         <!-- Bộ lọc Chất liệu -->
                         <div class="filter-group">
                             <div class="filter-title">Chất liệu</div>
-                            <a-select v-model:value="valueChatLieu" @change="updatePreview" style="width: 100%" mode="multiple"
-                                placeholder="Chọn chất liệu" :maxTagCount="2"
+                            <a-select v-model:value="valueChatLieu" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn chất liệu" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} chất liệu khác`">
                                 <a-select-option v-for="item in chatLieuList" :key="item.id_chat_lieu"
                                     :value="item.id_chat_lieu">
@@ -66,8 +66,8 @@
                         <!-- Bộ lọc Màu sắc -->
                         <div class="filter-group">
                             <div class="filter-title">Màu sắc</div>
-                            <a-select v-model:value="valueMauSac" @change="updatePreview" style="width: 100%" mode="multiple"
-                                placeholder="Chọn màu sắc" :maxTagCount="2"
+                            <a-select v-model:value="valueMauSac" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn màu sắc" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} màu sắc khác`">
                                 <a-select-option v-for="item in mauSacList" :key="item.id_mau_sac"
                                     :value="item.id_mau_sac">
@@ -79,8 +79,8 @@
                         <!-- Bộ lọc Kích thước -->
                         <div class="filter-group">
                             <div class="filter-title">Kích thước</div>
-                            <a-select v-model:value="valueSize" @change="updatePreview" style="width: 100%" mode="multiple"
-                                placeholder="Chọn kích thước" :maxTagCount="2"
+                            <a-select v-model:value="valueSize" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn kích thước" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} kích thước khác`">
                                 <a-select-option v-for="item in kichThuocList" :key="item.id_kich_thuoc"
                                     :value="item.id_kich_thuoc">
@@ -92,7 +92,8 @@
                         <!-- Bộ lọc Giá -->
                         <div class="filter-group">
                             <div class="filter-title">Giá</div>
-                            <a-slider v-model:value="value2" @change="updatePreview" range :min="0" :max="maxPriceFromProducts" :step="100000"
+                            <a-slider v-model:value="value2" @change="updatePreview" range :min="0"
+                                :max="maxPriceFromProducts" :step="100000"
                                 :tipFormatter="value => `${value.toLocaleString('vi-VN')} đ`" />
                             <div class="price-range">
                                 <span>{{ value2[0].toLocaleString('vi-VN') }} đ</span>
@@ -102,8 +103,8 @@
 
                         <!-- Nút Áp dụng bộ lọc -->
                         <!-- Thay thế đoạn code hiện tại hiển thị dự đoán sản phẩm -->
-                        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
-                            <div class="preview-count w-100">
+                        <div class="align-items-center mt-4 mb-2">
+                            <div class="preview-count ">
                                 <template v-if="isPreviewLoading">
                                     <a-spin size="small" />
                                     <span class="ms-2">Đang tính toán...</span>
@@ -114,7 +115,8 @@
                                     </a-tag>
                                 </template>
                             </div>
-                            <div>
+                            <br>
+                            <div class="d-flex justify-content-between align-items-center">
                                 <a-button class="me-2" @click="resetFilter">
                                     Reset
                                 </a-button>
@@ -127,8 +129,8 @@
                     </div>
                 </a-drawer>
 
-                <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
-                    style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select>
+                <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
+                    style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select> -->
                 <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
                     style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select> -->
 
@@ -677,7 +679,7 @@ const showFilter = async () => {
     // Kiểm tra dữ liệu trước khi mở bộ lọc
     await checkAndLoadFilterData();
     visible.value = true;
-    
+
     // Sau khi mở drawer, tính toán số lượng sản phẩm
     try {
         await previewFilterResults();
@@ -863,14 +865,14 @@ const filterProducts = async () => {
 };
 
 // Hàm reset bộ lọc
-const resetFilter = () => {
+const resetFilter = async () => {
     // Reset các giá trị lọc trong component
     valueDanhMuc.value = [];
     valueThuongHieu.value = [];
     valueChatLieu.value = [];
     valueMauSac.value = [];
     valueSize.value = [];
-    value2.value = [0, 10000000];
+    value2.value = [0, store.giaMax];
 
     try {
         // Lưu keyword hiện tại
@@ -880,7 +882,7 @@ const resetFilter = () => {
         store.updateSearchFilterParams({
             keyword: currentKeyword,
             giaBanMin: null,
-            giaBanMax: null,
+            giaBanMax: store.giaMax,
             listMauSac: [],
             listDanhMuc: [],
             listThuongHieu: [],
@@ -889,8 +891,8 @@ const resetFilter = () => {
         });
 
         // Áp dụng tìm kiếm và lọc
-        store.applySearchAndFilter();
-
+        await store.applySearchAndFilter();
+        await previewFilterResults();
         // Thông báo
         message.success('Đã reset bộ lọc');
     } catch (error) {
