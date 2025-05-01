@@ -1,114 +1,125 @@
 <template>
-  <div>
+  <div class="container">
     <div class="header-section">
       <h2>Sửa thông tin khách hàng</h2>
-      <button class="btn btn-secondary btn-sm" @click="router.push('/admin/quanlykhachhang')">Quay lại</button>
+      <a-button type="text" class="btn-back" @click="router.push('/admin/quanlykhachhang')">
+        <template #icon><arrow-left-outlined /></template>
+        Quay lại
+      </a-button>
     </div>
-    <form @submit.prevent="confirmSubmitForm" @reset.prevent="resetForm">
-      <a-form :model="formData" :label-col="{ span: 24 }" :wrapper-col="{ span: 24 }">
-        <a-row :gutter="16">
-          <a-col :span="8">
-            <a-form-item label="Mã khách hàng">
-              <a-input v-model:value="formData.maKhachHang" disabled />
+    <a-form :model="formData" :label-col="{ span: 24 }" :wrapper-col="{ span: 24 }" @submit="confirmSubmitForm"
+      @reset="resetForm" class="form-container">
+      <a-row :gutter="[16, 16]">
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-form-item label="Mã khách hàng">
+            <a-input v-model:value="formData.maKhachHang" disabled class="input-field" />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-form-item label="Họ tên khách hàng" :validate-status="errors.tenKhachHang ? 'error' : ''"
+            :help="errors.tenKhachHang">
+            <a-input v-model:value="formData.tenKhachHang" placeholder="Nhập tên khách hàng" class="input-field" />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-form-item label="Giới tính" :validate-status="errors.gioiTinh ? 'error' : ''" :help="errors.gioiTinh">
+            <a-radio-group v-model:value="formData.gioiTinh" class="radio-group">
+              <a-radio :value="true">Nam</a-radio>
+              <a-radio :value="false">Nữ</a-radio>
+            </a-radio-group>
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-form-item label="Ngày sinh" :validate-status="errors.ngaySinh ? 'error' : ''" :help="errors.ngaySinh">
+            <a-date-picker v-model:value="formData.ngaySinh" format="DD/MM/YYYY" placeholder="Chọn ngày sinh"
+              class="input-field w-100" />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-form-item label="Số điện thoại" :validate-status="errors.soDienThoai ? 'error' : ''"
+            :help="errors.soDienThoai">
+            <a-input v-model:value="formData.soDienThoai" placeholder="Nhập số điện thoại" class="input-field" />
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="8">
+          <a-form-item label="Email" :validate-status="errors.email ? 'error' : ''" :help="errors.email">
+            <a-input v-model:value="formData.email" placeholder="Nhập email" disabled class="input-field" />
+          </a-form-item>
+        </a-col>
+      </a-row>
+
+      <!-- Danh sách địa chỉ -->
+      <div v-for="(diaChi, index) in formData.diaChiList" :key="index" class="address-section">
+        <div class="address-header">
+          <h3>Địa chỉ {{ index + 1 }}</h3>
+          <a-button type="link" danger size="small" @click="xoaDiaChi(index)" v-if="formData.diaChiList.length > 1">
+            <delete-outlined /> Xóa
+          </a-button>
+        </div>
+        <a-row :gutter="[16, 16]">
+          <a-col :xs="24" :sm="12" :md="6">
+            <a-form-item label="Tỉnh/Thành phố"
+              :validate-status="errors.diaChiErrors[index]?.tinhThanhPho ? 'error' : ''"
+              :help="errors.diaChiErrors[index]?.tinhThanhPho">
+              <a-select v-model:value="diaChi.tinhThanhPho" placeholder="Chọn Tỉnh/Thành phố"
+                @change="() => handleProvinceChange(index)" class="select-field">
+                <a-select-option v-for="province in provinces" :key="province.code" :value="province.name">
+                  {{ province.name }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="8">
-            <a-form-item label="Họ tên khách hàng" :validate-status="errors.tenKhachHang ? 'error' : ''"
-              :help="errors.tenKhachHang">
-              <a-input v-model:value="formData.tenKhachHang" placeholder="Nhập tên khách hàng" />
+          <a-col :xs="24" :sm="12" :md="6">
+            <a-form-item label="Quận/Huyện" :validate-status="errors.diaChiErrors[index]?.quanHuyen ? 'error' : ''"
+              :help="errors.diaChiErrors[index]?.quanHuyen">
+              <a-select v-model:value="diaChi.quanHuyen" placeholder="Chọn Quận/Huyện" :disabled="!diaChi.tinhThanhPho"
+                @change="() => handleDistrictChange(index)" class="select-field">
+                <a-select-option v-for="district in districts[index]" :key="district.code" :value="district.name">
+                  {{ district.name }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="8">
-            <a-form-item label="Giới tính" :validate-status="errors.gioiTinh ? 'error' : ''" :help="errors.gioiTinh">
-              <a-radio-group v-model:value="formData.gioiTinh">
-                <a-radio :value="true">Nam</a-radio>
-                <a-radio :value="false">Nữ</a-radio>
-              </a-radio-group>
+          <a-col :xs="24" :sm="12" :md="6">
+            <a-form-item label="Phường/Xã" :validate-status="errors.diaChiErrors[index]?.xaPhuong ? 'error' : ''"
+              :help="errors.diaChiErrors[index]?.xaPhuong">
+              <a-select v-model:value="diaChi.xaPhuong" placeholder="Chọn Phường/Xã" :disabled="!diaChi.quanHuyen"
+                class="select-field">
+                <a-select-option v-for="ward in wards[index]" :key="ward.code" :value="ward.name">
+                  {{ ward.name }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="8">
-            <a-form-item label="Ngày sinh" :validate-status="errors.ngaySinh ? 'error' : ''" :help="errors.ngaySinh">
-              <a-date-picker v-model:value="formData.ngaySinh" format="DD/MM/YYYY" placeholder="Chọn ngày sinh"
-                class="w-100" />
+          <a-col :xs="24" :sm="12" :md="5">
+            <a-form-item label="Số nhà, tên đường" :validate-status="errors.diaChiErrors[index]?.soNha ? 'error' : ''"
+              :help="errors.diaChiErrors[index]?.soNha">
+              <a-input v-model:value="diaChi.soNha" placeholder="Số nhà, tên đường..." class="input-field" />
             </a-form-item>
           </a-col>
-          <a-col :span="8">
-            <a-form-item label="Số điện thoại" :validate-status="errors.soDienThoai ? 'error' : ''"
-              :help="errors.soDienThoai">
-              <a-input v-model:value="formData.soDienThoai" placeholder="Nhập số điện thoại" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="Email" :validate-status="errors.email ? 'error' : ''" :help="errors.email">
-              <a-input v-model:value="formData.email" placeholder="Nhập email" disabled />
+          <a-col :xs="24" :sm="12" :md="1">
+            <a-form-item label="Mặc định">
+              <a-checkbox v-model:checked="diaChi.diaChiMacDinh" @change="handleDefaultChange(index)" />
             </a-form-item>
           </a-col>
         </a-row>
+      </div>
 
-        <!-- Danh sách địa chỉ -->
-        <div v-for="(diaChi, index) in formData.diaChiList" :key="index" class="address-section">
-          <h3>Địa chỉ {{ index + 1 }}</h3>
-          <a-row :gutter="16">
-            <a-col :span="6">
-              <a-form-item label="Tỉnh/Thành phố"
-                :validate-status="errors.diaChiErrors[index]?.tinhThanhPho ? 'error' : ''"
-                :help="errors.diaChiErrors[index]?.tinhThanhPho">
-                <a-select v-model:value="diaChi.tinhThanhPho" placeholder="Chọn Tỉnh/Thành phố"
-                  @change="() => handleProvinceChange(index)">
-                  <a-select-option v-for="province in provinces" :key="province.code" :value="province.name">
-                    {{ province.name }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="Quận/Huyện" :validate-status="errors.diaChiErrors[index]?.quanHuyen ? 'error' : ''"
-                :help="errors.diaChiErrors[index]?.quanHuyen">
-                <a-select v-model:value="diaChi.quanHuyen" placeholder="Chọn Quận/Huyện" :disabled="!diaChi.tinhThanhPho"
-                  @change="() => handleDistrictChange(index)">
-                  <a-select-option v-for="district in districts[index]" :key="district.code" :value="district.name">
-                    {{ district.name }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="6">
-              <a-form-item label="Phường/Xã" :validate-status="errors.diaChiErrors[index]?.xaPhuong ? 'error' : ''"
-                :help="errors.diaChiErrors[index]?.xaPhuong">
-                <a-select v-model:value="diaChi.xaPhuong" placeholder="Chọn Phường/Xã" :disabled="!diaChi.quanHuyen">
-                  <a-select-option v-for="ward in wards[index]" :key="ward.code" :value="ward.name">
-                    {{ ward.name }}
-                  </a-select-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="5">
-              <a-form-item label="Số nhà, tên đường" :validate-status="errors.diaChiErrors[index]?.soNha ? 'error' : ''"
-                :help="errors.diaChiErrors[index]?.soNha">
-                <a-input v-model:value="diaChi.soNha" placeholder="Số nhà, tên đường..." />
-              </a-form-item>
-            </a-col>
-            <a-col :span="1">
-              <a-form-item label="Mặc định">
-                <a-checkbox v-model:checked="diaChi.diaChiMacDinh" @change="handleDefaultChange(index)" />
-              </a-form-item>
-            </a-col>
-          </a-row>
-          <button type="button" class="btn btn-danger" @click="xoaDiaChi(index)"
-            v-if="formData.diaChiList.length > 1">
-            Xóa địa chỉ
-          </button>
-        </div>
+      <a-button type="dashed" block class="btn-add-address" @click="themDiaChi">
+        <plus-outlined /> Thêm địa chỉ khác
+      </a-button>
 
-        <hr>
-        <button type="button" class="btn btn-primary" @click="themDiaChi">+ Thêm địa chỉ khác</button>
+      <div class="form-actions">
+        <a-button type="primary" html-type="submit" size="large"
+          style="background-color: #d02c39; border-color: #d02c39; color: white;">
+          Cập nhật
+        </a-button>
 
-        <div class="mt-4">
-          <button type="submit" class="btn btn-warning me-2" @click="confirmSubmitForm">Cập nhật</button>
-          <button type="button" class="btn btn-secondary" @click="resetForm">Làm mới</button>
-        </div>
-      </a-form>
-    </form>
+        <a-button html-type="reset" size="large">
+          Làm mới
+        </a-button>
+      </div>
+    </a-form>
   </div>
 </template>
 
@@ -118,6 +129,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
 import dayjs from 'dayjs';
+import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons-vue';
 
 const gbStore = useGbStore();
 const router = useRouter();
@@ -338,6 +350,10 @@ const handleDistrictChange = async (index) => {
 };
 
 const themDiaChi = () => {
+  if (formData.diaChiList.length >= 5) {
+    toast.error('Không thể thêm quá 5 địa chỉ!');
+    return;
+  }
   formData.diaChiList.push({
     soNha: '',
     xaPhuong: '',
@@ -507,38 +523,128 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+:root {
+  --primary-color: #1890ff;
+  --text-color: #1f2a44;
+  --border-color: #d9d9d9;
+  --background-color: #ffffff;
+  --danger-color: #ff4d4f;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --border-radius: 6px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 24px;
+  background: var(--background-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
 .header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .header-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color);
   margin: 0;
 }
 
-.btn-secondary {
-  margin-left: auto;
+.btn-back {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.btn-back:hover {
+  color: var(--primary-color);
+}
+
+.form-container {
+  padding: 24px;
+  background: #fafafa;
+  border-radius: var(--border-radius);
+}
+
+.input-field,
+.select-field {
+  border-radius: var(--border-radius);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-field:focus,
+.select-field:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.radio-group {
+  display: flex;
+  gap: 24px;
+  padding: 8px 0;
 }
 
 .address-section {
-  border: 1px solid #e8e8e8;
+  background: var(--background-color);
   padding: 16px;
   margin-bottom: 16px;
-  border-radius: 4px;
-  position: relative;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
 }
 
-.address-section h3 {
+.address-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
-  font-size: 16px;
-  color: #333;
 }
 
-.btn-danger {
-  position: absolute;
-  top: 16px;
-  right: 16px;
+.address-header h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.btn-add-address {
+  margin: 16px 0;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background: #e6f7ff;
+}
+
+.btn-add-address:hover {
+  background: #bae7ff;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.form-actions .ant-btn {
+  border-radius: var(--border-radius);
+  padding: 8px 24px;
+}
+
+.form-actions .ant-btn-primary:hover {
+  background: #40a9ff;
+}
+
+.form-actions .ant-btn-default {
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+.form-actions .ant-btn-default:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 </style>
