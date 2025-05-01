@@ -136,32 +136,32 @@
                         </a-tab-pane>
                         <a-tab-pane key="return" tab="Đổi trả">
                             <a-collapse accordion>
-                                <a-collapse-panel header="Chính sách trả hàng như thế nào?" key="1">
-                                    <p>G&B SPORTS áp dụng chính sách đổi trả trong vòng 14 ngày kể từ ngày nhận hàng,
-                                        với các điều kiện sau:</p>
-                                    <ul>
-                                        <li>Sản phẩm còn nguyên tem mác, chưa qua sử dụng</li>
-                                        <li>Còn đầy đủ bao bì, hộp đựng như ban đầu</li>
-                                        <li>Có hóa đơn mua hàng hoặc phiếu giao hàng</li>
-                                    </ul>
-                                    <p>Chúng tôi không hỗ trợ đổi trả cho các sản phẩm đã qua sử dụng, đã giặt là hoặc
-                                        có dấu hiệu hư hỏng do người dùng và khách hàng trả hàng do lý do cá nhân như 
-                                        không thích, không hợp style...</p>
+                                <a-collapse-panel header="Chính sách trả hàng tại quầy của G&B SPORTS?" key="1">
+                                <p>G&B SPORTS cam kết mang đến trải nghiệm mua sắm tốt nhất và hỗ trợ trả hàng tại quầy trong vòng <strong>14 ngày</strong> kể từ ngày nhận hàng, với các điều kiện sau:</p>
+                                <ul>
+                                    <li>Sản phẩm còn <strong>nguyên tem, mác, chưa qua sử dụng, giặt ủi</strong> hoặc không bị hư hỏng do khách hàng.</li>
+                                    <li>Sản phẩm bị <strong>lỗi do nhà sản xuất</strong> hoặc <strong>giao sai mẫu, kích thước, màu sắc</strong>.</li>
+                                    <li>Có <strong>hóa đơn mua hàng</strong> hoặc <strong>mã đơn hàng</strong> để tra cứu thông tin.</li>
+                                </ul>
+                                <p>Chúng tôi <strong>không hỗ trợ trả hàng</strong> trong các trường hợp:</p>
+                                <ul>
+                                    <li>Sản phẩm đã qua sử dụng, giặt ủi hoặc bị hư hỏng do khách hàng.</li>
+                                    <li>Sản phẩm không còn tem mác hoặc bị can thiệp, chỉnh sửa.</li>
+                                    <li>Trả hàng do lý do cá nhân như không thích, không hợp style.</li>
+                                </ul>
                                 </a-collapse-panel>
-                                <a-collapse-panel header="Làm thế nào để đổi hoặc trả sản phẩm?" key="2">
-                                    <p>Để đổi hoặc trả sản phẩm, bạn vui lòng:</p>
-                                    <ol>
-                                        <li>Liên hệ với chúng tôi qua số điện thoại 0987 654 321 hoặc email
-                                            info@gbsports.com</li>
-                                        <li>Cung cấp thông tin đơn hàng và lý do đổi/trả</li>
-                                        <li>Nhận hướng dẫn về cách thức hoàn trả sản phẩm</li>
-                                       
-                                    </ol>
-                                    <p>Sau khi nhận được sản phẩm, chúng tôi sẽ kiểm tra và xử lý yêu cầu đổi/trả của
-                                        bạn trong vòng 3-5 ngày làm việc.</p>
+                                <a-collapse-panel header="Làm thế nào để trả hàng tại quầy?" key="2">
+                                <p>Để thực hiện trả hàng tại quầy, bạn vui lòng làm theo các bước sau:</p>
+                                <ol>
+                                    <li>Đến cửa hàng G&B SPORTS gần nhất với <strong>sản phẩm cần trả</strong> và <strong>mã đơn hàng</strong> hoặc <strong>hóa đơn mua hàng</strong>.</li>
+                                    <li>Cung cấp <strong>mã đơn hàng</strong> để nhân viên tra cứu hoặc sử dụng chức năng <strong>quét mã QR</strong> trên hóa đơn (nếu có).</li>
+                                    <li>Chọn sản phẩm cần trả, nhập số lượng và lý do trả hàng (ví dụ: sản phẩm lỗi, nhầm lẫn của nhân viên).</li>
+                                    <li>Nhân viên sẽ kiểm tra sản phẩm và xử lý yêu cầu trả hàng ngay tại quầy. Nếu được chấp thuận, bạn sẽ nhận được <strong>hoàn tiền</strong> theo tổng số tiền của sản phẩm trả lại.</li>
+                                </ol>
+                                <p>Sau khi tiếp nhận, yêu cầu trả hàng sẽ được xử lý ngay lập tức tại quầy, và bạn sẽ nhận được hóa đơn trả hàng (nếu yêu cầu in). Để được hỗ trợ thêm, vui lòng liên hệ qua số điện thoại <strong>0397572262</strong> hoặc email <strong>info@gbsports.com</strong>.</p>
                                 </a-collapse-panel>
                             </a-collapse>
-                        </a-tab-pane>
+                            </a-tab-pane>
                     </a-tabs>
                 </div>
             </div>
