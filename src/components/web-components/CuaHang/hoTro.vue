@@ -112,28 +112,29 @@
                         </a-tab-pane>
                         <a-tab-pane key="shipping" tab="Vận chuyển">
                             <a-collapse accordion>
-                                <a-collapse-panel header="Thời gian giao hàng là bao lâu?" key="1">
-                                    <p>Thời gian giao hàng phụ thuộc vào địa điểm của bạn:</p>
-                                    <ul>
-                                        <li>Nội thành Hà Nội, TP. HCM: 1-2 ngày làm việc</li>
-                                        <li>Các tỉnh thành khác: 2-5 ngày làm việc</li>
-                                        <li>Vùng sâu vùng xa: 5-7 ngày làm việc</li>
-                                    </ul>
-                                    <p>Lưu ý: Thời gian giao hàng có thể bị ảnh hưởng bởi điều kiện thời tiết hoặc các
-                                        sự kiện bất khả kháng.</p>
+                                <a-collapse-panel header="Thời gian giao hàng từ Hà Nội là bao lâu?" key="1">
+                                <p>G&B SPORTS, đặt tại <strong>Hà Nội</strong>, hợp tác với <strong>Giao Hàng Tiết Kiệm (GHTK)</strong> để giao hàng nhanh chóng và an toàn. Thời gian giao hàng phụ thuộc vào địa điểm nhận hàng:</p>
+                                <ul>
+                                    <li><strong>Nội thành Hà Nội</strong>: 1-2 ngày làm việc.</li>
+                                    <li><strong>Các tỉnh miền Bắc</strong> (gần Hà Nội, như Bắc Ninh, Hải Phòng): 2-3 ngày làm việc.</li>
+                                    <li><strong>Các tỉnh miền Trung và miền Nam</strong> (như Đà Nẵng, TP. HCM): 3-5 ngày làm việc.</li>
+                                    <li><strong>Vùng sâu, vùng xa, hải đảo</strong>: 5-7 ngày làm việc.</li>
+                                </ul>
+                                <p><strong>Lưu ý</strong>: Thời gian giao hàng có thể bị ảnh hưởng bởi thời tiết, dịp lễ Tết, hoặc các sự kiện bất khả kháng. Bạn có thể theo dõi trạng thái đơn hàng bằng <strong>mã vận đơn</strong> được gửi qua email hoặc tin nhắn sau khi đơn hàng được xử lý.</p>
                                 </a-collapse-panel>
-                                <a-collapse-panel header="Chi phí vận chuyển là bao nhiêu?" key="2">
-                                    <p>Chi phí vận chuyển được tính dựa trên trọng lượng đơn hàng và khoảng cách giao
-                                        hàng:</p>
-                                    <ul>
-                                        <li>Miễn phí vận chuyển cho đơn hàng từ 500.000đ</li>
-                                        <li>Nội thành Hà Nội, TP. HCM: 30.000đ</li>
-                                        <li>Các tỉnh thành khác: 40.000đ - 60.000đ</li>
-                                    </ul>
-                                    <p>Chi phí vận chuyển sẽ được hiển thị chính xác khi bạn thanh toán.</p>
+                                <a-collapse-panel header="Chi phí vận chuyển được tính như thế nào?" key="2">
+                                <p>Chi phí vận chuyển được tính dựa trên <strong>trọng lượng đơn hàng</strong>, <strong>kích thước gói hàng</strong>, và <strong>khoảng cách</strong> từ Hà Nội, theo bảng giá của Giao Hàng Tiết Kiệm (GHTK):</p>
+                                <ul>
+                                    <li><strong>Miễn phí vận chuyển</strong> cho đơn hàng từ <strong>2.000.000đ</strong> (trừ một số khu vực vùng sâu, vùng xa).</li>
+                                    <li><strong>Nội thành Hà Nội</strong>: 20.000đ - 30.000đ (tùy trọng lượng và kích thước).</li>
+                                    <li><strong>Các tỉnh miền Bắc</strong>: 25.000đ - 40.000đ (tùy khu vực).</li>
+                                    <li><strong>Các tỉnh miền Trung và miền Nam</strong>: 35.000đ - 50.000đ (tùy khoảng cách).</li>
+                                    <li><strong>Vùng sâu, vùng xa, hải đảo</strong>: 50.000đ trở lên, tùy thuộc vào địa điểm cụ thể.</li>
+                                </ul>
+                                <p>Chi phí vận chuyển chính xác sẽ được hiển thị tại bước thanh toán trên website hoặc ứng dụng của G&B SPORTS. Nếu bạn chọn dịch vụ <strong>GHTK Express</strong>, chi phí có thể cao hơn nhưng thời gian giao hàng sẽ nhanh hơn. Để được hỗ trợ, vui lòng liên hệ qua số <strong>0397572262</strong> hoặc email <strong>info@gbsports.com</strong>.</p>
                                 </a-collapse-panel>
                             </a-collapse>
-                        </a-tab-pane>
+                            </a-tab-pane>
                         <a-tab-pane key="return" tab="Đổi trả">
                             <a-collapse accordion>
                                 <a-collapse-panel header="Chính sách trả hàng tại quầy của G&B SPORTS?" key="1">
