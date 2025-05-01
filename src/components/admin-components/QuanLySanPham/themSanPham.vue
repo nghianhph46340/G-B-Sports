@@ -2502,7 +2502,10 @@ const onFinish = async () => {
         await store.getSizeList();
 
         // Đánh dấu vừa thêm sản phẩm mới
-        store.justAddedProduct = true;
+        await store.getAllSanPhamNgaySua();
+        // Đánh dấu vừa thêm sản phẩm mới
+        store.changeAction(true);
+        localStorage.setItem('justAddedProduct', 'true');
         // Đánh dấu cần refresh bộ lọc
         store.needFilterRefresh = true;
 

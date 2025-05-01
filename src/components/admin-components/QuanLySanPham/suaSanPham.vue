@@ -700,10 +700,12 @@ const onFinish = async () => {
 
         // Thông báo thành công và chuyển hướng
         message.success('Cập nhật sản phẩm và biến thể thành công!');
+        //  await store.getAllSanPhamNgaySua();
+        //todo: cập nhật lại dữ liệu mới nhất
         await store.getAllSanPhamNgaySua();
-
         // Đánh dấu vừa thêm sản phẩm mới
-        store.justAddedProduct = true;
+        store.changeAction(true);
+        localStorage.setItem('justAddedProduct', 'true');
         router.push('/admin/quanlysanpham');
     } catch (error) {
         console.error('Chi tiết lỗi:', error);
