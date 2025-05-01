@@ -45,8 +45,14 @@
                 </a-form-item>
 
                 <a-form-item label="Mô tả" name="mo_ta">
-                    <a-textarea v-model:value="formState.mo_ta" :rows="4" placeholder="Nhập mô tả sản phẩm"
-                        :maxLength="500" show-count />
+                    <QuillEditor
+                        v-model:content="formState.mo_ta"
+                        contentType="html"
+                        toolbar="full" 
+                        theme="snow"
+                        placeholder="Nhập mô tả sản phẩm..."
+                        class="editor-container"
+                    />
                 </a-form-item>
 
                 <a-form-item label="Hình ảnh" name="hinh_anh">
@@ -218,6 +224,8 @@ import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 import axiosInstance from '@/config/axiosConfig';
 import { testService } from '@/services/testService';
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 const store = useGbStore();
 const router = useRouter();
 const route = useRoute();
@@ -1404,5 +1412,60 @@ const resetForm = () => {
 
 .ant-empty {
     margin: 32px 0;
+}
+
+/* Rich Text Editor styles */
+.editor-container {
+  height: 300px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+:deep(.ql-toolbar) {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-color: #f6f6f6;
+  border-color: #d9d9d9;
+}
+
+:deep(.ql-container) {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-color: #d9d9d9;
+  min-height: 250px;
+}
+
+:deep(.ql-editor) {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:deep(.ql-container:hover), :deep(.ql-toolbar:hover) {
+  border-color: #f33b47;
+}
+
+:deep(.ql-toolbar .ql-stroke) {
+  stroke: #333;
+}
+
+:deep(.ql-toolbar .ql-fill) {
+  fill: #333;
+}
+
+:deep(.ql-toolbar button:hover .ql-stroke) {
+  stroke: #f33b47;
+}
+
+:deep(.ql-toolbar button:hover .ql-fill) {
+  fill: #f33b47;
+}
+
+:deep(.ql-toolbar button.ql-active .ql-stroke) {
+  stroke: #f33b47;
+}
+
+:deep(.ql-toolbar button.ql-active .ql-fill) {
+  fill: #f33b47;
 }
 </style>
