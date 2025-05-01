@@ -49,7 +49,7 @@ export const useGbStore = defineStore('gbStore', {
     // Cập nhật cấu trúc cho tìm kiếm và lọc
     currentFilter: null, // Bộ lọc hiện tại
     needFilterRefresh: false, // Flag để đánh dấu khi nào cần refresh dữ liệu bộ lọc
-
+    giaMax: null,
     // State cho tìm kiếm
     searchKeyword: '', // Từ khóa tìm kiếm hiện tại
     searchProductIds: [], // Lưu trữ ID của các sản phẩm tìm thấy
@@ -2716,7 +2716,10 @@ export const useGbStore = defineStore('gbStore', {
     closeNoitification() {
       this.checkNoitification = false
     },
-
+    async getGiaMax() {
+      const response = await sanPhamService.giaMax()
+      this.giaMax = response
+    },
     // Action để áp dụng bộ lọc
     async filterSanPham(filterCriteria) {
       console.log('Đang lọc sản phẩm với tiêu chí:', filterCriteria)
@@ -2738,7 +2741,7 @@ export const useGbStore = defineStore('gbStore', {
 
         // Khởi tạo Set để lưu trữ ID sản phẩm khớp
         const matchingProductIds = new Set()
-
+        await this.getGiaMax()
         // Kiểm tra xem có tiêu chí lọc nào không
         const hasFilterCriteria =
           (filterCriteria.id_danh_muc && filterCriteria.id_danh_muc.length > 0) ||
@@ -2747,7 +2750,7 @@ export const useGbStore = defineStore('gbStore', {
           (filterCriteria.id_mau_sac && filterCriteria.id_mau_sac.length > 0) ||
           (filterCriteria.id_size && filterCriteria.id_size.length > 0) ||
           filterCriteria.minPrice > 0 ||
-          filterCriteria.maxPrice < 10000000
+          filterCriteria.maxPrice < this.giaMax
 
         // Nếu không có tiêu chí lọc, trả về tất cả sản phẩm
         if (!hasFilterCriteria) {
@@ -2846,8 +2849,8 @@ export const useGbStore = defineStore('gbStore', {
               matches = false
             }
           }
-
-          if (matches && filterCriteria.maxPrice < 10000000) {
+          await this.getGiaMax()  
+          if (matches && filterCriteria.maxPrice < this.giaMax) {
             // Chuyển đổi giá bán sang kiểu số nếu là chuỗi
             const giaBan =
               typeof ctsp.gia_ban === 'string'

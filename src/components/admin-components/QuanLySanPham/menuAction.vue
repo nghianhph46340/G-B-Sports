@@ -92,7 +92,7 @@
                         <!-- Bộ lọc Giá -->
                         <div class="filter-group">
                             <div class="filter-title">Giá</div>
-                            <a-slider v-model:value="value2" range :min="0" :max="maxPriceFromProducts" :step="100000"
+                            <a-slider v-model:value="value2" @change="updatePreview" range :min="0" :max="maxPriceFromProducts" :step="100000"
                                 :tipFormatter="value => `${value.toLocaleString('vi-VN')} đ`" />
                             <div class="price-range">
                                 <span>{{ value2[0].toLocaleString('vi-VN') }} đ</span>
@@ -103,7 +103,7 @@
                         <!-- Nút Áp dụng bộ lọc -->
                         <!-- Thay thế đoạn code hiện tại hiển thị dự đoán sản phẩm -->
                         <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
-                            <div class="preview-count">
+                            <div class="preview-count w-100">
                                 <template v-if="isPreviewLoading">
                                     <a-spin size="small" />
                                     <span class="ms-2">Đang tính toán...</span>
@@ -586,17 +586,11 @@ watch(() => store.needFilterRefresh, (newValue) => {
 
 // Computed property để lấy giá bán lớn nhất
 const maxPriceFromProducts = computed(() => {
-    if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
-        return 10000000; // Giá trị mặc định nếu chưa có dữ liệu
+    if (store.giaMax) {
+        return store.giaMax; // Giá trị mặc định nếu chưa có dữ liệu
     }
-
-    // Tìm giá bán lớn nhất trong danh sách chi tiết sản phẩm
-    const maxPrice = Math.max(...store.getAllChiTietSanPham.map(item =>
-        item.gia_ban ? Number(item.gia_ban) : 0
-    ));
-
     // Làm tròn đến hàng trăm nghìn gần nhất và thêm khoảng dư
-    return Math.ceil(maxPrice / 100000) * 100000 + 100000;
+    // return Math.ceil(store.giaMax / 100000) * 100000 + 100000;
 });
 
 // Sử dụng mảng để lưu nhiều giá trị
@@ -768,7 +762,7 @@ onMounted(async () => {
         await store.getAllCL();   // Thay thế loadChatLieu
         await store.getAllMS();   // Thay thế loadMauSac
         await store.getAllKT();   // Thay thế loadKichThuoc
-
+        await store.getGiaMax();
         // Đăng ký sự kiện lắng nghe filter-data-updated
         window.addEventListener('filter-data-updated', handleFilterDataUpdated);
 

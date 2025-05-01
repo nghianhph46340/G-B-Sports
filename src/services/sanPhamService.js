@@ -514,6 +514,14 @@ const locSanPhamVaChiTietSanPham = async (keyword, giaBanMin, giaBanMax, listMau
     };
   }
 }
+const giaMax = async () => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'giaLonNhat')
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy giá max:', error)
+  }
+}
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -558,5 +566,6 @@ export const sanPhamService = {
   updateThuongHieu,
   updateDanhMuc,
   updateKichThuoc,
-  locSanPhamVaChiTietSanPham
+  locSanPhamVaChiTietSanPham,
+  giaMax
 }
