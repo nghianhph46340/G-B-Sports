@@ -34,7 +34,7 @@
                             <phone-outlined />
                         </div>
                         <h3>Gọi điện</h3>
-                        <p>0987 654 321</p>
+                        <p>0989864737</p>
                         <span class="time">(8:00 - 21:00 mỗi ngày)</span>
                     </div>
 
@@ -44,7 +44,7 @@
                         </div>
                         <h3>Live Chat</h3>
                         <p>Chat trực tiếp với nhân viên</p>
-                        <a-button type="primary" @click="openChat">Chat ngay</a-button>
+                        <!-- <a-button type="primary" @click="openChat">Chat ngay</a-button> -->
                     </div>
 
                     <div class="support-option">
@@ -52,7 +52,7 @@
                             <mail-outlined />
                         </div>
                         <h3>Email</h3>
-                        <p>info@gbsports.com</p>
+                        <p>chinhhtph46334@fpt.edu.vn</p>
                         <span class="time">(Phản hồi trong 24h)</span>
                     </div>
 
@@ -62,7 +62,6 @@
                         </div>
                         <h3>Cửa hàng</h3>
                         <p>Ghé thăm cửa hàng G&B SPORTS</p>
-                        <a-button>Xem địa chỉ</a-button>
                     </div>
                 </div>
             </div>
@@ -112,52 +111,84 @@
                         </a-tab-pane>
                         <a-tab-pane key="shipping" tab="Vận chuyển">
                             <a-collapse accordion>
-                                <a-collapse-panel header="Thời gian giao hàng là bao lâu?" key="1">
-                                    <p>Thời gian giao hàng phụ thuộc vào địa điểm của bạn:</p>
+                                <a-collapse-panel header="Thời gian giao hàng từ Hà Nội là bao lâu?" key="1">
+                                    <p>G&B SPORTS, đặt tại <strong>Hà Nội</strong>, hợp tác với <strong>Giao Hàng Tiết
+                                            Kiệm (GHTK)</strong> để giao hàng nhanh chóng và an toàn. Thời gian giao
+                                        hàng phụ thuộc vào địa điểm nhận hàng:</p>
                                     <ul>
-                                        <li>Nội thành Hà Nội, TP. HCM: 1-2 ngày làm việc</li>
-                                        <li>Các tỉnh thành khác: 2-5 ngày làm việc</li>
-                                        <li>Vùng sâu vùng xa: 5-7 ngày làm việc</li>
+                                        <li><strong>Nội thành Hà Nội</strong>: 1-2 ngày làm việc.</li>
+                                        <li><strong>Các tỉnh miền Bắc</strong> (gần Hà Nội, như Bắc Ninh, Hải Phòng):
+                                            2-3 ngày làm việc.</li>
+                                        <li><strong>Các tỉnh miền Trung và miền Nam</strong> (như Đà Nẵng, TP. HCM): 3-5
+                                            ngày làm việc.</li>
+                                        <li><strong>Vùng sâu, vùng xa, hải đảo</strong>: 5-7 ngày làm việc.</li>
                                     </ul>
-                                    <p>Lưu ý: Thời gian giao hàng có thể bị ảnh hưởng bởi điều kiện thời tiết hoặc các
-                                        sự kiện bất khả kháng.</p>
+                                    <p><strong>Lưu ý</strong>: Thời gian giao hàng có thể bị ảnh hưởng bởi thời tiết,
+                                        dịp lễ Tết, hoặc các sự kiện bất khả kháng. Bạn có thể theo dõi trạng thái đơn
+                                        hàng bằng <strong>mã vận đơn</strong> được gửi qua email hoặc tin nhắn sau khi
+                                        đơn hàng được xử lý.</p>
                                 </a-collapse-panel>
-                                <a-collapse-panel header="Chi phí vận chuyển là bao nhiêu?" key="2">
-                                    <p>Chi phí vận chuyển được tính dựa trên trọng lượng đơn hàng và khoảng cách giao
-                                        hàng:</p>
+                                <a-collapse-panel header="Chi phí vận chuyển được tính như thế nào?" key="2">
+                                    <p>Chi phí vận chuyển được tính dựa trên <strong>trọng lượng đơn hàng</strong>,
+                                        <strong>kích thước gói hàng</strong>, và <strong>khoảng cách</strong> từ Hà Nội,
+                                        theo bảng giá của Giao Hàng Tiết Kiệm (GHTK):</p>
                                     <ul>
-                                        <li>Miễn phí vận chuyển cho đơn hàng từ 500.000đ</li>
-                                        <li>Nội thành Hà Nội, TP. HCM: 30.000đ</li>
-                                        <li>Các tỉnh thành khác: 40.000đ - 60.000đ</li>
+                                        <li><strong>Miễn phí vận chuyển</strong> cho đơn hàng từ
+                                            <strong>2.000.000đ</strong> (trừ một số khu vực vùng sâu, vùng xa).</li>
+                                        <li><strong>Nội thành Hà Nội</strong>: 20.000đ - 30.000đ (tùy trọng lượng và
+                                            kích thước).</li>
+                                        <li><strong>Các tỉnh miền Bắc</strong>: 25.000đ - 40.000đ (tùy khu vực).</li>
+                                        <li><strong>Các tỉnh miền Trung và miền Nam</strong>: 35.000đ - 50.000đ (tùy
+                                            khoảng cách).</li>
+                                        <li><strong>Vùng sâu, vùng xa, hải đảo</strong>: 50.000đ trở lên, tùy thuộc vào
+                                            địa điểm cụ thể.</li>
                                     </ul>
-                                    <p>Chi phí vận chuyển sẽ được hiển thị chính xác khi bạn thanh toán.</p>
+                                    <p>Chi phí vận chuyển chính xác sẽ được hiển thị tại bước thanh toán trên website
+                                        hoặc ứng dụng của G&B SPORTS. Nếu bạn chọn dịch vụ <strong>GHTK
+                                            Express</strong>, chi phí có thể cao hơn nhưng thời gian giao hàng sẽ nhanh
+                                        hơn. Để được hỗ trợ, vui lòng liên hệ qua số <strong>0397572262</strong> hoặc
+                                        email <strong>info@gbsports.com</strong>.</p>
                                 </a-collapse-panel>
                             </a-collapse>
                         </a-tab-pane>
-                        <a-tab-pane key="return" tab="Đổi trả">
+                        <a-tab-pane key="return" tab="Trả hàng tại quầy">
                             <a-collapse accordion>
-                                <a-collapse-panel header="Chính sách đổi trả như thế nào?" key="1">
-                                    <p>G&B SPORTS áp dụng chính sách đổi trả trong vòng 15 ngày kể từ ngày nhận hàng,
-                                        với các điều kiện sau:</p>
+                                <a-collapse-panel header="Chính sách trả hàng tại quầy của G&B SPORTS?" key="1">
+                                    <p>G&B SPORTS cam kết mang đến trải nghiệm mua sắm tốt nhất và hỗ trợ trả hàng tại
+                                        quầy trong vòng <strong>14 ngày</strong> kể từ ngày nhận hàng, với các điều kiện
+                                        sau:</p>
                                     <ul>
-                                        <li>Sản phẩm còn nguyên tem mác, chưa qua sử dụng</li>
-                                        <li>Còn đầy đủ bao bì, hộp đựng như ban đầu</li>
-                                        <li>Có hóa đơn mua hàng hoặc phiếu giao hàng</li>
+                                        <li>Sản phẩm còn <strong>nguyên tem, mác, chưa qua sử dụng, giặt ủi</strong>
+                                            hoặc không bị hư hỏng do khách hàng.</li>
+                                        <li>Sản phẩm bị <strong>lỗi do nhà sản xuất</strong> hoặc <strong>giao sai mẫu,
+                                                kích thước, màu sắc</strong>.</li>
+                                        <li>Có <strong>hóa đơn mua hàng</strong> hoặc <strong>mã đơn hàng</strong> để
+                                            tra cứu thông tin.</li>
                                     </ul>
-                                    <p>Chúng tôi không hỗ trợ đổi trả cho các sản phẩm đã qua sử dụng, đã giặt là hoặc
-                                        có dấu hiệu hư hỏng do người dùng.</p>
+                                    <p>Chúng tôi <strong>không hỗ trợ trả hàng</strong> trong các trường hợp:</p>
+                                    <ul>
+                                        <li>Sản phẩm đã qua sử dụng, giặt ủi hoặc bị hư hỏng do khách hàng.</li>
+                                        <li>Sản phẩm không còn tem mác hoặc bị can thiệp, chỉnh sửa.</li>
+                                        <li>Trả hàng do lý do cá nhân như không thích, không hợp style.</li>
+                                    </ul>
                                 </a-collapse-panel>
-                                <a-collapse-panel header="Làm thế nào để đổi hoặc trả sản phẩm?" key="2">
-                                    <p>Để đổi hoặc trả sản phẩm, bạn vui lòng:</p>
+                                <a-collapse-panel header="Làm thế nào để trả hàng tại quầy?" key="2">
+                                    <p>Để thực hiện trả hàng tại quầy, bạn vui lòng làm theo các bước sau:</p>
                                     <ol>
-                                        <li>Liên hệ với chúng tôi qua số điện thoại 0987 654 321 hoặc email
-                                            info@gbsports.com</li>
-                                        <li>Cung cấp thông tin đơn hàng và lý do đổi/trả</li>
-                                        <li>Nhận hướng dẫn về cách thức gửi lại sản phẩm</li>
-                                        <li>Đóng gói sản phẩm cẩn thận và gửi lại theo hướng dẫn</li>
+                                        <li>Đến cửa hàng G&B SPORTS gần nhất với <strong>sản phẩm cần trả</strong> và
+                                            <strong>mã đơn hàng</strong> hoặc <strong>hóa đơn mua hàng</strong>.</li>
+                                        <li>Cung cấp <strong>mã đơn hàng</strong> để nhân viên tra cứu hoặc sử dụng chức
+                                            năng <strong>quét mã QR</strong> trên hóa đơn (nếu có).</li>
+                                        <li>Chọn sản phẩm cần trả, nhập số lượng và lý do trả hàng (ví dụ: sản phẩm lỗi,
+                                            nhầm lẫn của nhân viên).</li>
+                                        <li>Nhân viên sẽ kiểm tra sản phẩm và xử lý yêu cầu trả hàng ngay tại quầy. Nếu
+                                            được chấp thuận, bạn sẽ nhận được <strong>hoàn tiền</strong> theo tổng số
+                                            tiền của sản phẩm trả lại.</li>
                                     </ol>
-                                    <p>Sau khi nhận được sản phẩm, chúng tôi sẽ kiểm tra và xử lý yêu cầu đổi/trả của
-                                        bạn trong vòng 3-5 ngày làm việc.</p>
+                                    <p>Sau khi tiếp nhận, yêu cầu trả hàng sẽ được xử lý ngay lập tức tại quầy, và bạn
+                                        sẽ nhận được hóa đơn trả hàng (nếu yêu cầu in). Để được hỗ trợ thêm, vui lòng
+                                        liên hệ qua số điện thoại <strong>0397572262</strong> hoặc email
+                                        <strong>info@gbsports.com</strong>.</p>
                                 </a-collapse-panel>
                             </a-collapse>
                         </a-tab-pane>
@@ -217,26 +248,31 @@
                         <h2 class="section-title">Gửi yêu cầu hỗ trợ</h2>
                         <div class="divider"></div>
 
-                        <a-form layout="vertical">
+                        <a-form layout="vertical" :model="formData" @finish="handleSubmit">
                             <a-row :gutter="16">
                                 <a-col :span="12">
-                                    <a-form-item label="Họ và tên">
-                                        <a-input placeholder="Nhập họ và tên" />
+                                    <a-form-item label="Họ và tên" name="hoTen"
+                                        :validate-status="errors.hoTen ? 'error' : ''" :help="errors.hoTen">
+                                        <a-input v-model:value="formData.hoTen" placeholder="Nhập họ và tên" />
                                     </a-form-item>
                                 </a-col>
                                 <a-col :span="12">
-                                    <a-form-item label="Số điện thoại">
-                                        <a-input placeholder="Nhập số điện thoại" />
+                                    <a-form-item label="Số điện thoại" name="soDienThoai"
+                                        :validate-status="errors.soDienThoai ? 'error' : ''" :help="errors.soDienThoai">
+                                        <a-input v-model:value="formData.soDienThoai"
+                                            placeholder="Nhập số điện thoại" />
                                     </a-form-item>
                                 </a-col>
                             </a-row>
 
-                            <a-form-item label="Email">
-                                <a-input placeholder="Nhập địa chỉ email" />
+                            <a-form-item label="Email" name="email" :validate-status="errors.email ? 'error' : ''"
+                                :help="errors.email">
+                                <a-input v-model:value="formData.email" placeholder="Nhập địa chỉ email" />
                             </a-form-item>
 
-                            <a-form-item label="Chủ đề">
-                                <a-select placeholder="Chọn chủ đề">
+                            <a-form-item label="Chủ đề" name="chuDe" :validate-status="errors.chuDe ? 'error' : ''"
+                                :help="errors.chuDe">
+                                <a-select v-model:value="formData.chuDe" placeholder="Chọn chủ đề">
                                     <a-select-option value="order">Đơn hàng</a-select-option>
                                     <a-select-option value="return">Đổi trả</a-select-option>
                                     <a-select-option value="product">Thông tin sản phẩm</a-select-option>
@@ -244,18 +280,32 @@
                                 </a-select>
                             </a-form-item>
 
-                            <a-form-item label="Nội dung">
-                                <a-textarea :rows="4" placeholder="Nhập nội dung yêu cầu hỗ trợ" />
+                            <a-form-item label="Nội dung" name="noiDung"
+                                :validate-status="errors.noiDung ? 'error' : ''" :help="errors.noiDung">
+                                <a-textarea v-model:value="formData.noiDung" :rows="4"
+                                    placeholder="Nhập nội dung yêu cầu hỗ trợ" />
                             </a-form-item>
 
                             <a-form-item>
-                                <a-button type="primary" html-type="submit" size="large" block>Gửi yêu cầu</a-button>
+                                <a-button type="primary" html-type="submit" size="large" block :loading="loading">
+                                    Gửi yêu cầu
+                                </a-button>
                             </a-form-item>
                         </a-form>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- Success Modal -->
+        <a-modal v-model:visible="showSuccessModal" title="Yêu cầu hỗ trợ đã được gửi!" :footer="null" centered>
+            <div class="success-modal-content">
+                <p>Cảm ơn bạn đã gửi yêu cầu hỗ trợ. Chúng tôi sẽ phản hồi trong thời gian sớm nhất!</p>
+                <a-button type="primary" block @click="showSuccessModal = false">
+                    Đóng
+                </a-button>
+            </div>
+        </a-modal>
 
         <!-- Support Policy Section -->
         <section class="policy-section" ref="policyRef" :class="{ 'visible': policyVisible }">
@@ -323,15 +373,7 @@
             </div>
         </section>
 
-        <!-- Live Chat Button -->
-        <!-- <div class="live-chat-button">
-            <a-button type="primary" shape="circle" size="large">
-                <message-outlined />
-            </a-button>
-            <span class="live-chat-tooltip">Chat với tư vấn viên</span>
-        </div> -->
-
-        <!-- Thêm vào ngay sau thẻ div.support-page -->
+        <!-- Scroll Indicator -->
         <div class="scroll-indicator"></div>
     </div>
 </template>
@@ -352,9 +394,41 @@ import {
     CarOutlined,
     GiftOutlined
 } from '@ant-design/icons-vue';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
+import axiosInstance from '@/config/axiosConfig'; // Nhập axiosInstance
+import { message } from 'ant-design-vue';
+import { useGbStore } from '@/stores/gbStore'; // Nhập Pinia store
+import { useRouter } from 'vue-router'; // Nhập vue-router
 
-// Refs for sections
+// Khởi tạo store và router
+const store = useGbStore();
+const router = useRouter();
+
+// Dữ liệu biểu mẫu
+const formData = ref({
+    hoTen: '',
+    soDienThoai: '',
+    email: '',
+    chuDe: undefined,
+    noiDung: ''
+});
+
+// Trạng thái hiển thị modal thành công
+const showSuccessModal = ref(false);
+
+// Đối tượng lưu trữ lỗi validation
+const errors = reactive({
+    hoTen: '',
+    soDienThoai: '',
+    email: '',
+    chuDe: '',
+    noiDung: ''
+});
+
+// Trạng thái loading khi gửi yêu cầu
+const loading = ref(false);
+
+// Refs cho các section
 const heroRef = ref(null);
 const optionsRef = ref(null);
 const faqRef = ref(null);
@@ -362,7 +436,7 @@ const contactRef = ref(null);
 const policyRef = ref(null);
 const mapRef = ref(null);
 
-// Visibility state
+// Trạng thái hiển thị của các section
 const heroVisible = ref(false);
 const optionsVisible = ref(false);
 const faqVisible = ref(false);
@@ -370,7 +444,149 @@ const contactVisible = ref(false);
 const policyVisible = ref(false);
 const mapVisible = ref(false);
 
-// Scroll to element function
+// Ánh xạ giá trị chuDe từ tiếng Anh sang tiếng Việt
+const chuDeMapping = {
+    order: 'Đơn hàng',
+    return: 'Đổi trả',
+    product: 'Thông tin sản phẩm',
+    other: 'Khác'
+};
+
+// Hàm validate số điện thoại
+const validatePhoneNumber = (phone) => {
+    const cleanedPhone = phone.replace(/\s+/g, '');
+    const regex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
+    return regex.test(cleanedPhone);
+};
+
+// Hàm validate email
+const validateEmail = (email) => {
+    const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    return regex.test(email);
+};
+
+// Hàm validate form trước khi gửi (chỉ gọi khi đã đăng nhập)
+const validateForm = () => {
+    let isValid = true;
+    Object.keys(errors).forEach(key => {
+        errors[key] = '';
+    });
+
+    // Chuẩn hóa các trường văn bản
+    formData.value.hoTen = formData.value.hoTen?.replace(/\s+/g, ' ').trim() || '';
+    formData.value.soDienThoai = formData.value.soDienThoai?.replace(/\s+/g, '').trim() || '';
+    formData.value.email = formData.value.email?.replace(/\s+/g, '').trim() || '';
+    formData.value.noiDung = formData.value.noiDung?.replace(/\s+/g, ' ').trim() || '';
+
+    // Validate họ tên
+    if (!formData.value.hoTen) {
+        errors.hoTen = 'Họ và tên không được để trống';
+        isValid = false;
+    } else if (!/^[a-zA-Z\s\u00C0-\u1EF9]+$/.test(formData.value.hoTen)) {
+        errors.hoTen = 'Họ và tên chỉ được chứa chữ cái';
+        isValid = false;
+    } else if (formData.value.hoTen.length > 100) {
+        errors.hoTen = 'Họ và tên không được vượt quá 100 ký tự';
+        isValid = false;
+    } else if (formData.value.hoTen.length < 2) {
+        errors.hoTen = 'Họ và tên không được nhỏ hơn 2 ký tự';
+        isValid = false;
+    }
+
+    // Validate số điện thoại
+    if (!formData.value.soDienThoai) {
+        errors.soDienThoai = 'Số điện thoại không được để trống';
+        isValid = false;
+    } else if (!validatePhoneNumber(formData.value.soDienThoai)) {
+        errors.soDienThoai = 'Số điện thoại phải bắt đầu bằng 0 và đúng 10 chữ số (VD: 0912345678)';
+        isValid = false;
+    }
+
+    // Validate email
+    if (!formData.value.email) {
+        errors.email = 'Email không được để trống';
+        isValid = false;
+    } else if (!validateEmail(formData.value.email)) {
+        errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
+        isValid = false;
+    } else if (formData.value.email.length > 100) {
+        errors.email = 'Email không được vượt quá 100 ký tự';
+        isValid = false;
+    }
+
+    // Validate chủ đề
+    if (!formData.value.chuDe) {
+        errors.chuDe = 'Chủ đề không được để trống';
+        isValid = false;
+    }
+
+    // Validate nội dung
+    if (!formData.value.noiDung) {
+        errors.noiDung = 'Nội dung không được để trống';
+        isValid = false;
+    } else if (formData.value.noiDung.length > 255) {
+        errors.noiDung = 'Nội dung không được vượt quá 255 ký tự';
+        isValid = false;
+    }
+
+    return isValid;
+};
+
+// Hàm xử lý khi gửi biểu mẫu
+const handleSubmit = async () => {
+    loading.value = true;
+    try {
+        // Kiểm tra trạng thái đăng nhập trước
+        if (!store.isLoggedIn || !store.userDetails) {
+            message.error('Bạn cần đăng nhập để gửi yêu cầu hỗ trợ!');
+            setTimeout(async () => {
+                await router.push('/login-register/login');
+                loading.value = false;
+            }, 2000); // Độ trễ 2 giây để hiển thị thông báo
+            return;
+        }
+
+        // Nếu đã đăng nhập, tiến hành validate form
+        if (!validateForm()) {
+            loading.value = false;
+            return; // Hiển thị các lỗi validation nếu có
+        }
+
+        // Ánh xạ giá trị chuDe sang tiếng Việt trước khi gửi
+        const mappedFormData = {
+            ...formData.value,
+            chuDe: chuDeMapping[formData.value.chuDe] || formData.value.chuDe
+        };
+
+        const response = await axiosInstance.post('/api/khach-hang/send-support-request', mappedFormData);
+        if (response.data.success) {
+            // Hiển thị modal thành công
+            showSuccessModal.value = true;
+            // Xóa dữ liệu biểu mẫu
+            formData.value = { hoTen: '', soDienThoai: '', email: '', chuDe: undefined, noiDung: '' };
+            Object.keys(errors).forEach(key => {
+                errors[key] = '';
+            });
+        } else {
+            message.error(response.data.message || 'Có lỗi xảy ra khi gửi yêu cầu!');
+        }
+    } catch (error) {
+        console.error('Lỗi:', error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+            message.error('Phiên đăng nhập không hợp lệ, vui lòng đăng nhập lại!');
+            setTimeout(async () => {
+                store.logoutKH();
+                await router.push('/login-register/login');
+            }, 2000); // Độ trễ 2 giây để hiển thị thông báo
+        } else {
+            message.error('Có lỗi xảy ra khi gửi yêu cầu: ' + (error.response?.data?.message || error.message));
+        }
+    } finally {
+        loading.value = false;
+    }
+};
+
+// Hàm cuộn đến phần tử
 const scrollToElement = (elementId) => {
     const element = document.getElementById(elementId);
     if (element) {
@@ -378,12 +594,13 @@ const scrollToElement = (elementId) => {
     }
 };
 
+// Hàm mở chat (giả lập, bạn có thể tùy chỉnh)
 function openChat() {
-    emitter.emit('open-chat')
+    message.info('Chức năng chat đang được phát triển!');
 }
 
 onMounted(() => {
-    // Hiệu ứng cuộn
+    // Hiệu ứng cuộn: Không kiểm tra đăng nhập ở đây để khách chưa đăng nhập vẫn xem được trang
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.target === heroRef.value) {
@@ -435,7 +652,7 @@ onMounted(() => {
     window.addEventListener('scroll', () => {
         const scrollPosition = window.scrollY;
 
-        // Parallax effect cho hero image
+        // Hiệu ứng parallax cho hình ảnh hero
         if (heroRef.value) {
             const heroImage = heroRef.value.querySelector('.hero-image img');
             if (heroImage) {
@@ -443,7 +660,7 @@ onMounted(() => {
             }
         }
 
-        // Background color change on scroll
+        // Thay đổi màu nền khi cuộn
         document.querySelectorAll('section').forEach((section, index) => {
             const sectionTop = section.offsetTop;
             const sectionHeight = section.offsetHeight;
@@ -457,7 +674,7 @@ onMounted(() => {
         });
     });
 
-    // Animate numbers when scrolling to policy section
+    // Hiệu ứng đếm số khi cuộn đến section chính sách
     const animateCounters = () => {
         const counters = document.querySelectorAll('.counter');
         counters.forEach(counter => {
@@ -474,7 +691,7 @@ onMounted(() => {
         });
     };
 
-    // Thêm các counter vào trong policy section
+    // Thêm các counter vào trong section chính sách
     if (policyRef.value) {
         const observer = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting) {
@@ -484,7 +701,7 @@ onMounted(() => {
         observer.observe(policyRef.value);
     }
 
-    // Thêm vào onMounted
+    // Hiệu ứng thanh cuộn
     window.addEventListener('scroll', () => {
         const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
         const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -805,6 +1022,17 @@ section.visible {
     font-size: 1.05rem;
 }
 
+/* Success Modal Styling */
+.success-modal-content {
+    text-align: center;
+}
+
+.success-modal-content p {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
 /* Policy Section */
 .policy-section {
     background-color: #fff;
@@ -871,45 +1099,6 @@ section.visible {
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     border: 1px solid #eee;
-}
-
-/* Live Chat Button */
-.live-chat-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 100;
-}
-
-.live-chat-button .ant-btn {
-    width: 65px;
-    height: 65px;
-    box-shadow: 0 5px 15px rgba(229, 57, 53, 0.3);
-}
-
-.live-chat-button .anticon {
-    font-size: 28px;
-}
-
-.live-chat-tooltip {
-    position: absolute;
-    right: 75px;
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: #000;
-    color: white;
-    padding: 10px 18px;
-    border-radius: 20px;
-    font-size: 1rem;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-}
-
-.live-chat-button:hover .live-chat-tooltip {
-    opacity: 1;
-    visibility: visible;
 }
 
 /* Override Ant Design styles */
@@ -1007,21 +1196,16 @@ section.visible {
 /* Thêm CSS riêng cho vạch cam ở section support-options */
 .support-options .divider {
     background-color: #FF5722;
-    /* Màu cam */
     width: 100px;
-    /* Có thể điều chỉnh độ dài */
     margin-left: auto;
     margin-right: auto;
 }
 
-/* Thêm các styles mới cho hiệu ứng cuộn */
-
-/* Smooth scrolling cho toàn trang */
+/* Hiệu ứng cuộn */
 html {
     scroll-behavior: smooth;
 }
 
-/* Hiệu ứng parallax cho sections */
 section {
     position: relative;
     transition: transform 0.5s ease, background-color 0.5s ease;
@@ -1031,7 +1215,6 @@ section.active-section {
     z-index: 2;
 }
 
-/* Hiệu ứng khi cuộn đến section */
 .visible {
     animation: fadeInScale 0.8s ease forwards;
 }
