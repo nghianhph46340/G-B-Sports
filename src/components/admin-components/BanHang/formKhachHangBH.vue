@@ -103,6 +103,7 @@
 import { ref, onMounted, reactive, computed, watch } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
+import { Modal as AModal } from 'ant-design-vue';
 
 const gbStore = useGbStore();
 const provinces = ref([]);
@@ -347,15 +348,23 @@ const luuThongTin = async () => {
 };
 
 const confirmThemKhachHang = () => {
-    if (confirm('Bạn có chắc chắn muốn tạo tài khoản khách hàng này không?')) {
-        themKhachHang();
-    }
+    AModal.confirm({
+        title: 'Xác nhận',
+        content: 'Bạn có đồng ý thêm khách hàng không?',
+        onOk: () => {
+            themKhachHang();
+        },
+    });
 };
 
 const luuThongTinKhachHang = () => {
-    if (confirm('Bạn có chắc chắn muốn lưu thông tin khách hàng này không?')) {
-        luuThongTin();
-    }
+    AModal.confirm({
+        title: 'Xác nhận',
+        content: 'Bạn có muốn lưu thông tin khách hàng không?',
+        onOk: () => {
+            luuThongTin();
+        }
+    });
 };
 
 const tachDiaChi = (diaChiDayDu) => {

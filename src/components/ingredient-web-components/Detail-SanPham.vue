@@ -82,8 +82,7 @@
                 </div>
 
                 <div class="product-price">
-                    <span class="current-price" @input="handleGiaBanInput" @blur="handleGiaBanBlur">{{
-                        formatCurrency(product.gia_khuyen_mai) }}</span>
+                    <span class="current-price" @input="handleGiaBanInput" @blur="handleGiaBanBlur">{{ formatCurrency(product.gia_khuyen_mai) }}</span>
                     <span class="original-price" v-if="product.giam_gia">{{ formatCurrency(product.gia_goc) }}</span>
                     <span class="discount-percent" v-if="product.giam_gia">(-{{ discountPercent }}%)</span>
                 </div>
@@ -439,6 +438,11 @@
             </div>
         </a-modal>
 
+        <!-- lềnh thêm mới -->
+        <div v-if="isFavoritedVariant" class="favorited-variant-badge">
+        Đây là sản phẩm yêu thích của bạn với màu sắc và kích thước này
+        </div>
+
         <!-- Modal thêm bình luận mới -->
         <a-modal v-model:open="addReviewVisible" :footer="null" :mask-closable="true" :width="600" centered
             class="add-review-modal">
@@ -546,40 +550,44 @@ const imagesByColor = ref(new Map());
 const allImages = ref([]);
 
 // Cập nhật hàm fetchProductDetail để tạo map hình ảnh theo màu
+// lềnh sửa hàm
 const fetchProductDetail = async (id) => {
-    try {
-        // Gọi API để lấy chi tiết sản phẩm từ store
-        await store.getCTSPBySanPhamFull(id);
+  try {
+    isFavoritedVariant.value = false; // Reset trạng thái
+    await store.getCTSPBySanPhamFull(id);
 
-        // Cập nhật dữ liệu chi tiết sản phẩm
-        if (store.cTSPBySanPhamFull && store.cTSPBySanPhamFull.length > 0) {
-            productDetails.value = store.cTSPBySanPhamFull;
+    if (store.cTSPBySanPhamFull && store.cTSPBySanPhamFull.length > 0) {
+      productDetails.value = store.cTSPBySanPhamFull;
+      selectedVariant.value = productDetails.value[0];
+      organizeImagesByColor();
+      updateProductFromVariant(selectedVariant.value);
+      initializeColorAndSizeOptions();
 
-            // Lấy chi tiết sản phẩm đầu tiên làm mặc định
-            selectedVariant.value = productDetails.value[0];
-
-            // Gộp tất cả hình ảnh và tổ chức theo màu sắc
-            organizeImagesByColor();
-
-            // Cập nhật thông tin sản phẩm từ variant đầu tiên
-            updateProductFromVariant(selectedVariant.value);
-
-            // Khởi tạo danh sách màu sắc và kích thước
-            initializeColorAndSizeOptions();
-
-            // Fetch reviews for this product
-            if (selectedVariant.value && selectedVariant.value.id_chi_tiet_san_pham) {
-                fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
-            }
-
-            console.log('Đã load chi tiết sản phẩm:', productDetails.value);
-        } else {
-            message.error('Không tìm thấy thông tin sản phẩm');
+      // Kiểm tra tham số variant
+      const route = useRoute();
+      const variantId = route.query.variant;
+      if (variantId) {
+        const variant = productDetails.value.find(v => v.id_chi_tiet_san_pham == variantId);
+        if (variant) {
+          selectedColor.value = variant.id_mau_sac;
+          selectedColorName.value = variant.ten_mau_sac;
+          selectedSize.value = variant.id_kich_thuoc;
+          selectedSizeName.value = variant.gia_tri;
+          selectedVariant.value = variant;
+          isFavoritedVariant.value = true;
         }
-    } catch (error) {
-        console.error('Lỗi khi lấy thông tin sản phẩm:', error);
-        message.error('Đã xảy ra lỗi khi tải thông tin sản phẩm');
+      }
+
+      if (selectedVariant.value && selectedVariant.value.id_chi_tiet_san_pham) {
+        fetchProductReviews(selectedVariant.value.id_chi_tiet_san_pham);
+      }
+    } else {
+      message.error('Không tìm thấy thông tin sản phẩm');
     }
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin sản phẩm:', error);
+    message.error('Đã xảy ra lỗi khi tải thông tin sản phẩm');
+  }
 };
 
 const cartItemCount = ref(0);
@@ -663,20 +671,16 @@ const initializeColorAndSizeOptions = () => {
 // Thêm lại hàm lấy mã màu
 const getColorCode = (colorId) => {
     const colorMap = {
-        1: '#000000', // Đen
-        2: '#FFFFFF', // Trắng
-        6: '#FF0000', // Đỏ
-        5: '#0000FF', // Xanh dương
-        7: '#FFFF00', // Vàng
-        10: '#FF66FF', // Xanh lá
+        4: '#000000', // Đen
+        5: '#FFFFFF', // Trắng
+        1: '#FF0000', // Đỏ
+        2: '#0000FF', // Xanh dương
+        3: '#FFFF00', // Vàng
+        6: '#FF66FF', // Xanh lá
         8: '#FFA500', // Cam
-        11: '#800080', // Tím
-        15: '#A52A2A', // Nâu
-        3: '#808080', // Xám
-        4: '#03204c', // Xanh Navy
-        9: '#FF0099', // Hồng
-        12: '#fecca7', //Be
-        14: '#26ec08', //Xanh neon
+        7: '#800080', // Tím
+        9: '#A52A2A', // Nâu
+        10: '#808080', // Xám
         // Thêm các màu khác nếu cần
     };
 
@@ -1019,6 +1023,13 @@ const increaseQuantity = () => {
     }
 };
 
+// lềnh thêm mới
+watch(selectedVariant, () => {
+  if (selectedVariant.value) {
+    checkWishlistStatus();
+  }
+});
+
 // Theo dõi thay đổi của ID sản phẩm
 watch(productId, (newId) => {
     if (newId) {
@@ -1032,6 +1043,8 @@ const showFullscreen = ref(false);
 const zoomActive = ref(false);
 const zoomPosition = ref({ x: 0, y: 0 });
 const zoomVisible = ref(false);
+// thêm dòng mới lềnh
+const isFavoritedVariant = ref(false);
 
 // Tính toán hình ảnh hiện tại
 const currentImage = computed(() => {
@@ -2324,7 +2337,7 @@ const validateGiaBan = (value) => {
 const handleGiaBanInput = (value) => {
     // Convert value to number for validation
     const numValue = parseFloat(String(value).replace(/,/g, ''));
-
+    
     if (!isNaN(numValue)) {
         if (validateGiaBan(numValue)) {
             product.value.gia_goc = numValue;
@@ -3997,6 +4010,7 @@ onMounted(() => {
 :deep(.cart-notification-modal .ant-modal-content) {
     border-radius: 10px;
     overflow: hidden;
+    z-index: 10000;
 }
 
 :deep(.cart-notification-modal .ant-modal-body) {
@@ -4249,5 +4263,15 @@ onMounted(() => {
     height: 40px;
     font-size: 16px;
     border-radius: 8px;
+}
+
+/* lềnh thêm mới */
+.favorited-variant-badge {
+  background-color: #e53935;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 </style>

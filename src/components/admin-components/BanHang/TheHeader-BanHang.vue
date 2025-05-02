@@ -321,7 +321,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import {
     SearchOutlined,
     FileSearchOutlined,
@@ -365,7 +365,7 @@ const showQrScanner = () => {
 // Khởi tạo máy quét QR
 const initQrScanner = () => {
     html5QrCode = new Html5Qrcode("qr-reader");
-    const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+    const qrCodeSuccessCallback = async (decodedText) => {
         if (isProcessing) return; // Nếu đang xử lý, bỏ qua
         isProcessing = true;
         qrScanResult.value = decodedText;
@@ -466,7 +466,7 @@ const danhSachKhachHang = computed(() => {
 });
 
 console.log("danhSachKhachHang: ", danhSachKhachHang.value);
-const diaChiMap = computed(() => store.diaChiMap);
+// const diaChiMap = computed(() => store.diaChiMap);
 
 const chonKhachHang = async (khachHang) => {
     try {
@@ -550,29 +550,29 @@ const handleCancel = () => {
 };
 const ptnh = ref('Nhận tại cửa hàng');
 
-const openKhachLe = ref(false);
-const khachLeForm = reactive({
-    tenKhachHang: "",
-    soDienThoai: "",
-    diaChi: ""
-});
+// const openKhachLe = ref(false);
+// const khachLeForm = reactive({
+//     tenKhachHang: "",
+//     soDienThoai: "",
+//     diaChi: ""
+// });
 
-const handleThemDiaChi = () => {
-    openKhachLe.value = true;
-};
+// const handleThemDiaChi = () => {
+//     openKhachLe.value = true;
+// };
 
-const handleAddKhachLe = () => {
-    if (!khachLeForm.tenKhachHang || !khachLeForm.soDienThoai || !khachLeForm.diaChi) {
-        return message.warning("Vui lòng nhập đầy đủ thông tin khách lẻ!");
-    }
+// const handleAddKhachLe = () => {
+//     if (!khachLeForm.tenKhachHang || !khachLeForm.soDienThoai || !khachLeForm.diaChi) {
+//         return message.warning("Vui lòng nhập đầy đủ thông tin khách lẻ!");
+//     }
 
-    activeTabData.value.hd.ten_khach_hang = khachLeForm.tenKhachHang;
-    activeTabData.value.hd.so_dien_thoai = khachLeForm.soDienThoai;
-    activeTabData.value.hd.dia_chi = khachLeForm.diaChi;
-    activeTabData.value.hd.id_khach_hang = null;
-    store.addKHHD(activeTabData.value.hd.id_hoa_don, null, khachLeForm.diaChi, khachLeForm.tenKhachHang, khachLeForm.soDienThoai);
-    openKhachLe.value = false;
-};
+//     activeTabData.value.hd.ten_khach_hang = khachLeForm.tenKhachHang;
+//     activeTabData.value.hd.so_dien_thoai = khachLeForm.soDienThoai;
+//     activeTabData.value.hd.dia_chi = khachLeForm.diaChi;
+//     activeTabData.value.hd.id_khach_hang = null;
+//     store.addKHHD(activeTabData.value.hd.id_hoa_don, null, khachLeForm.diaChi, khachLeForm.tenKhachHang, khachLeForm.soDienThoai);
+//     openKhachLe.value = false;
+// };
 
 const selectedKeys = ref([store.indexMenu]);
 console.log(selectedKeys);
@@ -742,8 +742,8 @@ const addToBill = async (product) => {
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
             kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban,
-            tong_tien: item.don_gia,
+            gia_ban: item.don_gia,
+            tong_tien: item.don_gia * item.so_luong,
             so_luong_ton_goc: item.so_luong_ton || 0
         }));
         console.log("currentTab.items.value");
@@ -827,8 +827,8 @@ const updateItemTotal = async (item) => {
                 mau_sac: hd.ten_mau_sac || hd.mau_sac || null,
                 kich_thuoc: hd.gia_tri || null,
                 so_luong: hd.so_luong,
-                gia_ban: hd.gia_ban,
-                tong_tien: hd.don_gia,
+                gia_ban: hd.don_gia,
+                tong_tien: hd.don_gia * hd.so_luong,
                 so_luong_ton_goc: hd.so_luong_ton || 0
             }));
         }
@@ -874,8 +874,8 @@ const removeFromBill = async (productId) => {
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
             kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban,
-            tong_tien: item.don_gia,
+            gia_ban: item.don_gia,
+            tong_tien: item.don_gia * item.so_luong,
             so_luong_ton_goc: item.so_luong_ton || 0,
         }));
 
@@ -1499,8 +1499,8 @@ watch(() => activeKey.value, async (newKey) => {
             mau_sac: item.ten_mau_sac || item.mau_sac || null,
             kich_thuoc: item.gia_tri || null,
             so_luong: item.so_luong,
-            gia_ban: item.gia_ban,
-            tong_tien: item.don_gia,
+            gia_ban: item.don_gia,
+            tong_tien: item.don_gia * item.so_luong,
             so_luong_ton_goc: item.so_luong_ton || 0
         })) || [];
         console.log("store.getAllSPHDArr: ", currentTab.items.value);

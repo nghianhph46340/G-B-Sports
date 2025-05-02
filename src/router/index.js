@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import home from './home-router.js';
 import admin from './admin-router.js';
-import test from './test-router.js';
-import sell from './sell-router.js';  
+// import test from './test-router.js';
+// import sell from './sell-router.js';  
 import dangNhapDangKy from './dangNhapDangKy.js';
 import Unauthorized403 from '@/components/admin-components/Error/error.vue';
 
-const routes = [...home, ...admin, ...test, ...sell, ...dangNhapDangKy, {
+const routes = [...home, ...admin, ...dangNhapDangKy, {
   path: '/unauthorized',
   name: 'unauthorized',
   component: Unauthorized403

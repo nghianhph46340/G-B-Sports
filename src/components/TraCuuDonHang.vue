@@ -49,7 +49,7 @@
                             <h2>Thông tin đơn hàng #{{ thongTinHoaDon.ma_hoa_don }}</h2>
                             <p v-if="thongTinHoaDon.ma_hoa_don">Ngày đặt hàng: {{
                                 dinhDangNgayGio(thongTinHoaDon.ngay_tao)
-                            }}
+                                }}
                             </p>
                         </div>
                         <div :class="['order-status', `status-${currentStatus?.code || 'pending'}`]">
@@ -105,7 +105,7 @@
                             </div>
                             <div class="total-row" v-if="thongTinHoaDon.ma_voucher">
                                 <span>Giảm giá:</span>
-                                <span>0</span>
+                                <span>{{ dinhDangTien(thongTinHoaDon.tong_tien_truoc_giam+ thongTinHoaDon.phi_van_chuyen - thongTinHoaDon.tong_tien_sau_giam) }}</span>
                             </div>
                             <div class="total-row">
                                 <span>Phí vận chuyển:</span>
@@ -142,10 +142,7 @@
                         </div>
 
                         <div class="order-actions">
-                            <a-button v-if="coTheHuyDonHang" type="danger" @click="hienThiXacNhanHuy">
-                                Hủy đơn hàng
-                            </a-button>
-                            <a-button type="primary" @click="inHoaDon">
+                            <a-button type="primary" @click="inHoaDon" :disabled="!timThayDonHang">
                                 <printer-outlined /> In đơn hàng
                             </a-button>
                             <a-button>
@@ -154,12 +151,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Component in hóa đơn (ẩn mặc định) -->
-            <div style="display: none;">
-                <print-invoice ref="printInvoiceRef" :hoa-don="thongTinHoaDon"
-                    :hoa-don-chi-tiet="thongTinHoaDonChiTiet" />
             </div>
 
             <!-- FAQ Section -->
@@ -190,6 +181,7 @@
                             được thông tin giao hàng.</p>
                     </a-collapse-panel>
                 </a-collapse>
+                <img src="../images/logo/logo2.png" alt="logo" id="logo" hidden>
             </div>
         </div>
     </div>
@@ -213,7 +205,12 @@ import {
 } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { banHangOnlineService } from '@/services/banHangOnlineService';
-import PrintInvoice from './PrintInvoice.vue';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import QRCode from 'qrcode';
+// Import font từ thư mục config
+import '@/config/fonts/Roboto-normal.js';
+import '@/config/fonts/Roboto-bold.js';
 
 // Biến lưu mã tra cứu
 const trackingCode = ref('');
@@ -305,7 +302,6 @@ const coTheHuyDonHang = computed(() => {
 const hienThiKetQuaTimKiem = async () => {
     try {
         dangTai.value = true;
-        isLoading.value = true;
 
         // Gọi API và kiểm tra response
         const thongTinHoaDonResponse = await banHangOnlineService.getThongTinHoaDon(trackingCode.value);
@@ -328,11 +324,9 @@ const hienThiKetQuaTimKiem = async () => {
         // Kiểm tra mã hóa đơn
         if (trackingCode.value === thongTinHoaDon.value.ma_hoa_don) {
             timThayDonHang.value = true;
-            dataLoaded.value = true;
             message.success('Tìm thấy thông tin đơn hàng!');
         } else {
             timThayDonHang.value = false;
-            dataLoaded.value = false;
             message.error('Không tìm thấy đơn hàng với mã bạn đã nhập!');
         }
     } catch (error) {
@@ -340,7 +334,6 @@ const hienThiKetQuaTimKiem = async () => {
         message.error('Có lỗi xảy ra khi tìm kiếm đơn hàng');
     } finally {
         dangTai.value = false;
-        isLoading.value = false;
     }
 };
 
@@ -458,10 +451,14 @@ const layBieuTuongTrangThai = (maTrangThai) => {
 // Định dạng ngày tháng
 const dinhDangNgay = (ngay) => {
     if (!ngay) return '';
-    return new Date(ngay).toLocaleDateString('vi-VN', {
+    return new Date(ngay).toLocaleString('vi-VN', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric'
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
     });
 };
 
@@ -641,16 +638,302 @@ const getTimelineData = computed(() => {
     return allStatuses;
 });
 
-const isLoading = ref(true);
-const dataLoaded = ref(false);
-const printInvoiceRef = ref(null);
+// Hàm xuất hóa đơn PDF
+const inHoaDon = async () => {
+    try {
+        // Kiểm tra dữ liệu
+        if (!thongTinHoaDon.value || !thongTinHoaDonChiTiet.value || thongTinHoaDonChiTiet.value.length === 0) {
+            message.error('Không có dữ liệu hóa đơn để in');
+            return;
+        }
 
-// Hàm xử lý in hóa đơn
-const inHoaDon = () => {
-    if (printInvoiceRef.value) {
-        printInvoiceRef.value.inHoaDon();
-    } else {
-        message.error('Không thể tạo hóa đơn. Vui lòng thử lại sau.');
+        // Hiển thị loading
+        message.loading({ content: 'Đang tạo hóa đơn...', key: 'pdfLoading' });
+        
+        // Tạo một tài liệu PDF mới với kích thước A4
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // Thiết lập font mặc định cho tài liệu và các thông số căn lề
+        doc.setFont('Roboto', 'normal');
+        const pageWidth = doc.internal.pageSize.width;
+        const pageHeight = doc.internal.pageSize.height;
+        const margin = 20; // Lề 20mm cho tất cả các cạnh
+        const usableWidth = pageWidth - (margin * 2);
+        const logo = document.getElementById('logo');
+         // Thêm mã QR chứa mã hóa đơn ở góc trái
+         try {
+            // Thêm mã QR chứa mã hóa đơn ở góc trái
+            const qrCodeData = thongTinHoaDon.value.ma_hoa_don || 'UNKNOWN';
+            const qrDataUrl = await QRCode.toDataURL(qrCodeData);
+            doc.addImage(qrDataUrl, 'PNG', margin, 20, 25, 25);
+            
+            doc.setFontSize(8);
+            doc.text('Mã hóa đơn:', margin + 12.5, 50, { align: 'center' });
+            doc.setFont('Roboto', 'bold');
+            doc.text(qrCodeData, margin + 12.5, 55, { align: 'center' });
+        } catch (error) {
+            console.error('Không thể tạo mã QR:', error);
+            // Vẽ một hình chữ nhật đơn giản thay thế nếu không thể tạo mã QR
+            doc.setFillColor(240, 240, 240);
+            doc.rect(margin, 20, 25, 25, 'F');
+            doc.setFontSize(8);
+            doc.text('Mã QR', margin + 12.5, 32.5, { align: 'center' });
+        }
+        
+        // Thêm logo ở giữa và phía trên
+        try {
+            doc.addImage(logo.src, 'PNG', pageWidth / 2 - 20, 20, 40, 20);
+        } catch (error) {
+            console.error('Không thể tải logo:', error);
+            // Vẽ một hình chữ nhật đơn giản thay thế nếu không thể tải logo
+            doc.setFillColor(240, 240, 240);
+            doc.rect(pageWidth / 2 - 17.5, 20, 35, 15, 'F');
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Logo GB', pageWidth / 2, 27.5, { align: 'center' });
+        }
+        
+        // Thông tin cửa hàng - header đơn giản, ở dưới logo và căn giữa
+        doc.setFontSize(16);
+        doc.setFont('Roboto', 'bold');
+       
+        doc.setFontSize(9);
+        doc.setFont('Roboto', 'normal');
+        doc.text('Địa chỉ: 123 Đường Thế Thao, Quận Cầu Giấy, Hà Nội', pageWidth / 2, 45, { align: 'center' });
+        doc.text('Điện thoại: (024) 123 4567 | Email: info@gbsports.com', pageWidth / 2, 50, { align: 'center' });
+        
+        
+        // Tiêu đề hóa đơn - Đơn giản và căn giữa
+        doc.setFontSize(14);
+        doc.setFont('Roboto', 'bold');
+        doc.text('HÓA ĐƠN BÁN HÀNG', pageWidth / 2, 60, { align: 'center' });
+        
+        // Mã và ngày tạo hóa đơn
+        doc.setFontSize(10);
+        doc.setFont('Roboto', 'normal');
+        doc.text(`Mã hóa đơn: ${thongTinHoaDon.value.ma_hoa_don || 'N/A'}`, pageWidth / 2, 67, { align: 'center' });
+        const ngayDat = dinhDangNgay(thongTinHoaDon.value.ngay_tao);
+        doc.text(`Ngày đặt: ${ngayDat || 'N/A'}`, pageWidth / 2, 72, { align: 'center' });
+        
+        // Đường gạch ngang phân cách
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.line(margin, 75, pageWidth - margin, 75);
+        
+        // Thông tin khách hàng - Đơn giản và rõ ràng
+        let y = 85;
+        doc.setFontSize(11);
+        doc.setFont('Roboto', 'bold');
+        doc.text('THÔNG TIN KHÁCH HÀNG', margin, y);
+        
+        y += 8;
+        doc.setFontSize(10);
+        doc.setFont('Roboto', 'normal');
+        
+        doc.text('Họ tên:', margin, y);
+        doc.text(`${thongTinHoaDon.value.ho_ten || 'N/A'}`, margin + 60, y);
+        
+        y += 6;
+        doc.text('Điện thoại:', margin, y);
+        doc.text(`${thongTinHoaDon.value.sdt_nguoi_nhan || 'N/A'}`, margin + 60, y);
+        
+        y += 6;
+        doc.text('Địa chỉ:', margin, y);
+        const diaChi = thongTinHoaDon.value.dia_chi || 'N/A';
+        const diaChiLines = doc.splitTextToSize(diaChi, usableWidth - 60);
+        doc.text(diaChiLines, margin + 60, y);
+        
+        // Cập nhật vị trí y dựa trên số dòng của địa chỉ
+        y += diaChiLines.length * 5 + 2;
+        
+        // Email (nếu có)
+        if (thongTinHoaDon.value.email) {
+            doc.text('Email:', margin, y);
+            doc.text(thongTinHoaDon.value.email, margin + 60, y);
+            y += 6;
+        }
+        
+        // Phương thức thanh toán
+        doc.text('Phương thức:', margin, y);
+        doc.text(`${thongTinHoaDon.value.hinh_thuc_thanh_toan || 'Chuyển khoản'}`, margin + 60, y);
+        
+        y += 6;
+        doc.text('Trạng thái:', margin, y);
+        doc.text(`${currentStatus?.value?.name || 'Chờ xác nhận'}`, margin + 60, y);
+        
+        // Đường gạch ngang phân cách
+        y += 10;
+        doc.line(margin, y, pageWidth - margin, y);
+        
+        // Chi tiết đơn hàng - Tiêu đề
+        y += 10;
+        doc.setFontSize(11);
+        doc.setFont('Roboto', 'bold');
+        doc.text('CHI TIẾT ĐƠN HÀNG', margin, y);
+        
+        y += 7;
+        
+        // Tạo dữ liệu bảng sản phẩm
+        const tableColumn = ['STT', 'Tên sản phẩm', 'Phân loại', 'SL', 'Đơn giá', 'Thành tiền'];
+        const tableRows = [];
+        
+        try {
+            thongTinHoaDonChiTiet.value.forEach((item, index) => {
+                // Tính đơn giá thực tế = thành tiền / số lượng
+                const soLuong = parseInt(item.so_luong) || 1;
+                const thanhTien = parseInt(item.don_gia) || 0;
+                const donGiaThuc = Math.round(thanhTien / soLuong);
+                
+                let phanLoai = '';
+                if (item.ten_mau_sac) {
+                    phanLoai += `Màu: ${item.ten_mau_sac}`;
+                }
+                if (item.gia_tri) {
+                    if (phanLoai) phanLoai += '\nSize: ';
+                    else phanLoai += 'Size: ';
+                    phanLoai += `${item.gia_tri}${item.don_vi ? ' ' + item.don_vi : ''}`;
+                }
+                
+                const itemData = [
+                    index + 1,
+                    item.ten_san_pham,
+                    phanLoai,
+                    soLuong,
+                    dinhDangTien(donGiaThuc).replace('₫', 'đ'),
+                    dinhDangTien(thanhTien).replace('₫', 'đ')
+                ];
+                tableRows.push(itemData);
+            });
+        } catch (err) {
+            console.error('Lỗi khi xử lý dữ liệu sản phẩm:', err);
+        }
+        
+        // Vẽ bảng sản phẩm với kiểu dáng đơn giản
+        try {
+            autoTable(doc, {
+                head: [tableColumn],
+                body: tableRows,
+                startY: y,
+                margin: { left: margin, right: margin },
+                theme: 'grid',
+                styles: { 
+                    fontSize: 9, 
+                    font: 'Roboto', 
+                    cellPadding: 4,
+                    lineColor: [200, 200, 200],
+                    lineWidth: 0.1,
+                    valign: 'middle'
+                },
+                headStyles: { 
+                    fillColor: [240, 240, 240], 
+                    textColor: [50, 50, 50], 
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                columnStyles: {
+                    0: { cellWidth: 15, halign: 'center' },
+                    1: { cellWidth: null },
+                    2: { cellWidth: 30 },
+                    3: { cellWidth: 12, halign: 'center' },
+                    4: { cellWidth: 25, halign: 'right' },
+                    5: { cellWidth: 30, halign: 'right' }
+                },
+                alternateRowStyles: { 
+                    fillColor: [250, 250, 250] 
+                },
+                didDrawPage: (data) => {
+                    // Thêm số trang nếu có nhiều trang
+                    doc.setFontSize(8);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(
+                        `Trang ${data.pageNumber} / ${doc.getNumberOfPages()}`, 
+                        pageWidth / 2, 
+                        pageHeight - 10, 
+                        { align: 'center' }
+                    );
+                }
+            });
+        } catch (tableErr) {
+            console.error('Lỗi khi tạo bảng sản phẩm:', tableErr);
+            y += 10; // Tăng y để tiếp tục nếu có lỗi
+        }
+        
+        // Cập nhật vị trí sau bảng
+        y = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : y + 60;
+        
+        // Phần tổng tiền - đơn giản và rõ ràng
+        doc.setFontSize(10);
+        doc.setFont('Roboto', 'normal');
+        
+        // Tổng tiền trước giảm
+        doc.text('Tổng tiền hàng:', pageWidth - margin - 80, y);
+        doc.text(`${dinhDangTien(thongTinHoaDon.value.tong_tien_truoc_giam).replace('₫', 'đ')}`, pageWidth - margin, y, { align: 'right' });
+        
+        y += 7;
+        
+        // Giảm giá (voucher)
+        const giamGia = thongTinHoaDon.value.tong_tien_truoc_giam - thongTinHoaDon.value.tong_tien_sau_giam - thongTinHoaDon.value.phi_van_chuyen;
+        doc.text('Giảm giá:', pageWidth - margin - 80, y);
+        if (giamGia > 0) {
+            doc.text(`${dinhDangTien(giamGia).replace('₫', 'đ')}`, pageWidth - margin, y, { align: 'right' });
+        } else {
+            doc.text('0 đ', pageWidth - margin, y, { align: 'right' });
+        }
+        
+        y += 7;
+        
+        // Phí vận chuyển
+        doc.text('Phí vận chuyển:', pageWidth - margin - 80, y);
+        if (thongTinHoaDon.value.phi_van_chuyen > 0) {
+            doc.text(`${dinhDangTien(thongTinHoaDon.value.phi_van_chuyen).replace('₫', 'đ')}`, pageWidth - margin, y, { align: 'right' });
+        } else {
+            doc.text('0 đ', pageWidth - margin, y, { align: 'right' });
+        }
+        
+        // Đường kẻ phân cách trước tổng thanh toán
+        y += 5;
+        doc.setDrawColor(200, 200, 200);
+        doc.line(pageWidth - margin - 80, y, pageWidth - margin, y);
+        
+        y += 7;
+        
+        // Tổng thanh toán
+        doc.setFontSize(12);
+        doc.setFont('Roboto', 'bold');
+        doc.text('TỔNG THANH TOÁN:', pageWidth - margin - 80, y);
+        doc.text(`${dinhDangTien(thongTinHoaDon.value.tong_tien_sau_giam).replace('₫', 'đ')}`, pageWidth - margin, y, { align: 'right' });
+        
+        // Chữ ký
+        y += 20;
+        
+        // Đường kẻ phân cách
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 10;
+        
+        // Thêm khoảng trống cho chữ ký
+        y += 25;
+        
+        // Footer đơn giản
+        y = pageHeight - 20;
+        doc.setFontSize(9);
+        doc.setFont('Roboto', 'bold');
+        doc.text('Cảm ơn quý khách đã mua hàng tại G-B Sports!', pageWidth / 2, y, { align: 'center' });
+        
+        // Đóng loading
+        message.destroy('pdfLoading');
+        
+        // Xuất file PDF
+        doc.save(`HoaDon_${thongTinHoaDon.value.ma_hoa_don || 'GB'}.pdf`);
+        message.success('Đã tạo hóa đơn PDF thành công');
+    } catch (error) {
+        console.error('Lỗi khi tạo hóa đơn PDF:', error);
+        message.destroy('pdfLoading');
+        message.error('Không thể tạo hóa đơn PDF. Vui lòng thử lại sau.');
     }
 };
 </script>
@@ -1322,10 +1605,6 @@ const inHoaDon = () => {
 .order-actions .ant-btn-primary {
     background: linear-gradient(135deg, #3f6ad8, #25b0ed);
     border: none;
-}
-
-.order-actions .ant-btn-primary:hover {
-    background: linear-gradient(135deg, #25b0ed, #3f6ad8);
 }
 
 .order-actions .ant-btn-danger {

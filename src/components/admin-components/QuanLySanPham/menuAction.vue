@@ -27,8 +27,8 @@
                         <!-- Bộ lọc Danh mục -->
                         <div class="filter-group">
                             <div class="filter-title">Danh mục</div>
-                            <a-select v-model:value="valueDanhMuc" style="width: 100%" mode="multiple"
-                                placeholder="Chọn danh mục" :maxTagCount="2"
+                            <a-select v-model:value="valueDanhMuc" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn danh mục" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} danh mục khác`">
                                 <a-select-option v-for="item in danhMucList" :key="item.id_danh_muc"
                                     :value="item.id_danh_muc">
@@ -40,8 +40,8 @@
                         <!-- Bộ lọc Thương hiệu -->
                         <div class="filter-group">
                             <div class="filter-title">Thương hiệu</div>
-                            <a-select v-model:value="valueThuongHieu" style="width: 100%" mode="multiple"
-                                placeholder="Chọn thương hiệu" :maxTagCount="2"
+                            <a-select v-model:value="valueThuongHieu" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn thương hiệu" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} thương hiệu khác`">
                                 <a-select-option v-for="item in thuongHieuList" :key="item.id_thuong_hieu"
                                     :value="item.id_thuong_hieu">
@@ -53,8 +53,8 @@
                         <!-- Bộ lọc Chất liệu -->
                         <div class="filter-group">
                             <div class="filter-title">Chất liệu</div>
-                            <a-select v-model:value="valueChatLieu" style="width: 100%" mode="multiple"
-                                placeholder="Chọn chất liệu" :maxTagCount="2"
+                            <a-select v-model:value="valueChatLieu" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn chất liệu" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} chất liệu khác`">
                                 <a-select-option v-for="item in chatLieuList" :key="item.id_chat_lieu"
                                     :value="item.id_chat_lieu">
@@ -66,8 +66,8 @@
                         <!-- Bộ lọc Màu sắc -->
                         <div class="filter-group">
                             <div class="filter-title">Màu sắc</div>
-                            <a-select v-model:value="valueMauSac" style="width: 100%" mode="multiple"
-                                placeholder="Chọn màu sắc" :maxTagCount="2"
+                            <a-select v-model:value="valueMauSac" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn màu sắc" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} màu sắc khác`">
                                 <a-select-option v-for="item in mauSacList" :key="item.id_mau_sac"
                                     :value="item.id_mau_sac">
@@ -79,8 +79,8 @@
                         <!-- Bộ lọc Kích thước -->
                         <div class="filter-group">
                             <div class="filter-title">Kích thước</div>
-                            <a-select v-model:value="valueSize" style="width: 100%" mode="multiple"
-                                placeholder="Chọn kích thước" :maxTagCount="2"
+                            <a-select v-model:value="valueSize" @change="updatePreview" style="width: 100%"
+                                mode="multiple" placeholder="Chọn kích thước" :maxTagCount="2"
                                 :maxTagPlaceholder="(omittedValues) => `+ ${omittedValues.length} kích thước khác`">
                                 <a-select-option v-for="item in kichThuocList" :key="item.id_kich_thuoc"
                                     :value="item.id_kich_thuoc">
@@ -92,7 +92,8 @@
                         <!-- Bộ lọc Giá -->
                         <div class="filter-group">
                             <div class="filter-title">Giá</div>
-                            <a-slider v-model:value="value2" range :min="0" :max="maxPriceFromProducts" :step="100000"
+                            <a-slider v-model:value="value2" @change="updatePreview" range :min="0"
+                                :max="maxPriceFromProducts" :step="100000"
                                 :tipFormatter="value => `${value.toLocaleString('vi-VN')} đ`" />
                             <div class="price-range">
                                 <span>{{ value2[0].toLocaleString('vi-VN') }} đ</span>
@@ -101,27 +102,47 @@
                         </div>
 
                         <!-- Nút Áp dụng bộ lọc -->
-                        <div class="filter-actions">
-                            <a-button type="primary" size="large" style="width: 100%" @click="filterProducts"
-                                :disabled="danhMucList.length === 0 || thuongHieuList.length === 0">
-                                Áp dụng bộ lọc
-                            </a-button>
+                        <!-- Thay thế đoạn code hiện tại hiển thị dự đoán sản phẩm -->
+                        <div class="align-items-center mt-4 mb-2">
+                            <div class="preview-count ">
+                                <template v-if="isPreviewLoading">
+                                    <a-spin size="small" />
+                                    <span class="ms-2">Đang tính toán...</span>
+                                </template>
+                                <template v-else>
+                                    <a-tag color="#f33b47">
+                                        <strong>{{ previewFilterCount }}</strong> sản phẩm sẽ được hiển thị
+                                    </a-tag>
+                                </template>
+                            </div>
+                            <br>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a-button class="me-2" @click="resetFilter">
+                                    Reset
+                                </a-button>
+                                <a-button type="primary" @click="filterProducts" :loading="isPreviewLoading">
+                                    Áp dụng
+                                </a-button>
+                            </div>
                         </div>
+
                     </div>
                 </a-drawer>
 
-                <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
-                    style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select>
+                <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="luuBien" show-search placeholder="Sắp xếp"
+                    style="width: 150px;" :options="listSort" :filter-option="filterOption"></a-select> -->
                 <!-- <a-select class="mb-2 ms-2 custom-select" v-model:value="xemTheo" show-search placeholder="Xem theo"
                     style="width: 150px;" :options="listXemTheo" :filter-option="filterOption"></a-select> -->
 
-                <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter" @click="showExportModal" :disabled="disabledByRoles">
+                <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter"
+                    @click="showExportModal" :disabled="disabledByRoles">
                     <ExportOutlined class="icon-filler" />
                     <span class="button-text">Xuất excel</span>
                 </a-button>
             </template>
             <!-- Nhập excel button always visible -->
-            <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter" @click="openModalImportExcel = true">
+            <a-button v-if="store.id_roles !== 3" type="" class="d-flex align-items-center btn-filter"
+                @click="openModalImportExcel = true">
                 <ImportOutlined class="icon-filler" />
                 <span class="button-text">Nhập excel</span>
             </a-button>
@@ -303,8 +324,8 @@
         </div>
         <template
             v-if="!store.checkRouter.includes('/quanlysanpham/add') && !store.checkRouter.includes('/quanlysanpham/update')">
-            <a-button v-if="store.id_roles !== 3" type="primary" style="background-color: #f33b47" @click="changeRouter('/admin/quanlysanpham/add')"
-                class="d-flex align-items-center">
+            <a-button v-if="store.id_roles !== 3" type="primary" style="background-color: #f33b47"
+                @click="changeRouter('/admin/quanlysanpham/add')" class="d-flex align-items-center">
                 <PlusOutlined />
                 <span class="button-text">Thêm sản phẩm</span>
             </a-button>
@@ -378,7 +399,8 @@ import { useRoute } from 'vue-router';
 import { message } from 'ant-design-vue';
 import { Upload } from 'ant-design-vue';
 import { storeToRefs } from 'pinia';
-
+// Thêm vào phần import trên cùng
+import { sanPhamService } from '@/services/sanPhamService';
 // Định nghĩa các events
 const emit = defineEmits(['refresh-data']);
 
@@ -386,6 +408,93 @@ const route = useRoute();
 const store = useGbStore();
 const visible = ref(false);
 const value = ref('Hoạt động');
+
+
+// Thêm biến để lưu số lượng sản phẩm dự kiến
+const previewFilterCount = ref(0);
+const isPreviewLoading = ref(false);
+
+// Hàm xem trước kết quả lọc
+const previewFilterResults = async () => {
+    isPreviewLoading.value = true;
+
+    try {
+        // Lấy danh sách tên từ các ID được chọn (giống như trong filterProducts)
+        const listDanhMuc = valueDanhMuc.value.length > 0
+            ? valueDanhMuc.value.map(id => {
+                const danhMuc = danhMucList.value.find(dm => dm.id_danh_muc === id);
+                return danhMuc ? danhMuc.ten_danh_muc : '';
+            }).filter(ten => ten !== '')
+            : [];
+
+        const listThuongHieu = valueThuongHieu.value.length > 0
+            ? valueThuongHieu.value.map(id => {
+                const thuongHieu = thuongHieuList.value.find(th => th.id_thuong_hieu === id);
+                return thuongHieu ? thuongHieu.ten_thuong_hieu : '';
+            }).filter(ten => ten !== '')
+            : [];
+
+        const listChatLieu = valueChatLieu.value.length > 0
+            ? valueChatLieu.value.map(id => {
+                const chatLieu = chatLieuList.value.find(cl => cl.id_chat_lieu === id);
+                return chatLieu ? chatLieu.ten_chat_lieu : '';
+            }).filter(ten => ten !== '')
+            : [];
+
+        const listMauSac = valueMauSac.value.length > 0
+            ? valueMauSac.value.map(id => {
+                const mauSac = mauSacList.value.find(ms => ms.id_mau_sac === id);
+                return mauSac ? mauSac.ten_mau_sac : '';
+            }).filter(ten => ten !== '')
+            : [];
+
+        const listKichThuoc = valueSize.value.length > 0
+            ? valueSize.value.map(id => {
+                const kichThuoc = kichThuocList.value.find(kt => kt.id_kich_thuoc === id);
+                return kichThuoc ? kichThuoc.gia_tri : '';
+            }).filter(giatri => giatri !== '')
+            : [];
+
+        const giaBanMin = value2.value[0];
+        const giaBanMax = value2.value[1];
+
+        // Lấy keyword hiện tại
+        const currentKeyword = store.searchFilterParams?.keyword || '';
+
+        // Gọi API để lấy kết quả xem trước (sử dụng hàm riêng)
+        const response = await sanPhamService.locSanPhamVaChiTietSanPham(
+            currentKeyword,
+            giaBanMin,
+            giaBanMax,
+            listMauSac,
+            listDanhMuc,
+            listThuongHieu,
+            listChatLieu,
+            listKichThuoc
+        );
+
+        // Cập nhật số lượng sản phẩm dự kiến
+        if (response) {
+            if (Array.isArray(response)) {
+                previewFilterCount.value = response.length;
+            } else if (typeof response === 'object' && response.data && Array.isArray(response.data)) {
+                previewFilterCount.value = response.data.length;
+            } else {
+                previewFilterCount.value = 0;
+            }
+        } else {
+            previewFilterCount.value = 0;
+        }
+
+    } catch (error) {
+        console.error('Lỗi khi xem trước kết quả lọc:', error);
+        previewFilterCount.value = 0;
+    } finally {
+        isPreviewLoading.value = false;
+    }
+};
+
+
 
 // Function to update store.checkRouter based on the current route
 const updateCheckRouter = () => {
@@ -479,17 +588,11 @@ watch(() => store.needFilterRefresh, (newValue) => {
 
 // Computed property để lấy giá bán lớn nhất
 const maxPriceFromProducts = computed(() => {
-    if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
-        return 10000000; // Giá trị mặc định nếu chưa có dữ liệu
+    if (store.giaMax) {
+        return store.giaMax; // Giá trị mặc định nếu chưa có dữ liệu
     }
-
-    // Tìm giá bán lớn nhất trong danh sách chi tiết sản phẩm
-    const maxPrice = Math.max(...store.getAllChiTietSanPham.map(item =>
-        item.gia_ban ? Number(item.gia_ban) : 0
-    ));
-
     // Làm tròn đến hàng trăm nghìn gần nhất và thêm khoảng dư
-    return Math.ceil(maxPrice / 100000) * 100000 + 100000;
+    // return Math.ceil(store.giaMax / 100000) * 100000 + 100000;
 });
 
 // Sử dụng mảng để lưu nhiều giá trị
@@ -572,12 +675,23 @@ const importError = ref('');
 const importValidating = ref(false);
 const dataPreviewMode = ref('all');
 
-const showFilter = () => {
+const showFilter = async () => {
     // Kiểm tra dữ liệu trước khi mở bộ lọc
-    checkAndLoadFilterData();
+    await checkAndLoadFilterData();
     visible.value = true;
-};
 
+    // Sau khi mở drawer, tính toán số lượng sản phẩm
+    try {
+        await previewFilterResults();
+    } catch (error) {
+        console.error('Lỗi khi tính toán số lượng sản phẩm:', error);
+    }
+};
+const updatePreview = async () => {
+    if (visible.value) {
+        await previewFilterResults();
+    }
+};
 const onClose = () => {
     visible.value = false;
 };
@@ -644,15 +758,21 @@ onMounted(async () => {
     console.log('Menu Action component mounted');
     try {
         value2.value = [0, maxPriceFromProducts.value];
-        await store.getAllCTSP();
+        // await store.getAllCTSP();
         await store.getAllDM();   // Thay thế loadDanhMuc
         await store.getAllTH();   // Thay thế loadThuongHieu
         await store.getAllCL();   // Thay thế loadChatLieu
         await store.getAllMS();   // Thay thế loadMauSac
         await store.getAllKT();   // Thay thế loadKichThuoc
-
+        await store.getGiaMax();
         // Đăng ký sự kiện lắng nghe filter-data-updated
         window.addEventListener('filter-data-updated', handleFilterDataUpdated);
+
+        // Thêm sự kiện lắng nghe cho search-filter-changed
+        window.addEventListener('search-filter-changed', (event) => {
+            console.log('Nhận sự kiện search-filter-changed:', event.detail);
+            // Bạn có thể thêm xử lý nếu cần
+        });
 
         // Kiểm tra nếu cần refresh bộ lọc
         if (store.needFilterRefresh) {
@@ -664,66 +784,123 @@ onMounted(async () => {
     }
 });
 
-// Hủy đăng ký sự kiện khi component bị hủy
+// Cập nhật onBeforeUnmount để remove event listener
 onBeforeUnmount(() => {
     window.removeEventListener('filter-data-updated', handleFilterDataUpdated);
+    window.removeEventListener('search-filter-changed', () => { });
 });
 
-const filterProducts = () => {
-    console.log('Áp dụng bộ lọc với các giá trị:');
-    console.log('- Danh mục:', valueDanhMuc.value);
-    console.log('- Thương hiệu:', valueThuongHieu.value);
-    console.log('- Chất liệu:', valueChatLieu.value);
-    console.log('- Màu sắc:', valueMauSac.value);
-    console.log('- Kích thước:', valueSize.value);
-    console.log('- Giá:', value2.value);
+const filterProducts = async () => {
+    try {
+        // Đã có sẵn kết quả dự đoán
+        console.log('Áp dụng bộ lọc, dự kiến có', previewFilterCount.value, 'sản phẩm');
 
-    // Chuyển đổi mảng giá trị sang số nếu cần
-    const idDanhMuc = valueDanhMuc.value.map(id => Number(id));
-    const idThuongHieu = valueThuongHieu.value.map(id => Number(id));
-    const idChatLieu = valueChatLieu.value.map(id => Number(id));
-    const idMauSac = valueMauSac.value.map(id => Number(id));
-    const idKichThuoc = valueSize.value.map(id => Number(id));
+        // Các tham số đã được chuẩn bị trong hàm previewFilterResults
+        // Thực hiện tương tự như trước nhưng không cần tính toán lại các tham số
 
-    const filterCriteria = {
-        id_danh_muc: idDanhMuc,
-        id_thuong_hieu: idThuongHieu,
-        id_chat_lieu: idChatLieu,
-        id_mau_sac: idMauSac,
-        id_size: idKichThuoc,
-        minPrice: value2.value[0],
-        maxPrice: value2.value[1]
-    };
+        // Chuyển đổi ID sang tên
+        // Lấy danh sách tên danh mục từ ID được chọn
+        const listDanhMuc = valueDanhMuc.value.length > 0
+            ? valueDanhMuc.value.map(id => {
+                const danhMuc = danhMucList.value.find(dm => dm.id_danh_muc === id);
+                return danhMuc ? danhMuc.ten_danh_muc : '';
+            }).filter(ten => ten !== '')
+            : [];
 
-    console.log('Tiêu chí lọc cuối cùng:', filterCriteria);
+        // Các tham số khác tương tự như cũ
+        const listThuongHieu = valueThuongHieu.value.length > 0
+            ? valueThuongHieu.value.map(id => {
+                const thuongHieu = thuongHieuList.value.find(th => th.id_thuong_hieu === id);
+                return thuongHieu ? thuongHieu.ten_thuong_hieu : '';
+            }).filter(ten => ten !== '')
+            : [];
 
-    // Gọi action lọc sản phẩm trong store
-    store.applyFilter(filterCriteria);
+        const listChatLieu = valueChatLieu.value.length > 0
+            ? valueChatLieu.value.map(id => {
+                const chatLieu = chatLieuList.value.find(cl => cl.id_chat_lieu === id);
+                return chatLieu ? chatLieu.ten_chat_lieu : '';
+            }).filter(ten => ten !== '')
+            : [];
 
-    // Đóng drawer sau khi áp dụng bộ lọc
-    visible.value = false;
+        const listMauSac = valueMauSac.value.length > 0
+            ? valueMauSac.value.map(id => {
+                const mauSac = mauSacList.value.find(ms => ms.id_mau_sac === id);
+                return mauSac ? mauSac.ten_mau_sac : '';
+            }).filter(ten => ten !== '')
+            : [];
 
-    // Hiển thị thông báo
-    message.success('Đã áp dụng bộ lọc');
+        const listKichThuoc = valueSize.value.length > 0
+            ? valueSize.value.map(id => {
+                const kichThuoc = kichThuocList.value.find(kt => kt.id_kich_thuoc === id);
+                return kichThuoc ? kichThuoc.gia_tri : '';
+            }).filter(giatri => giatri !== '')
+            : [];
+
+        const giaBanMin = value2.value[0];
+        const giaBanMax = value2.value[1];
+
+        // Cập nhật đối tượng tìm kiếm và lọc trong store
+        store.updateSearchFilterParams({
+            giaBanMin,
+            giaBanMax,
+            listMauSac,
+            listDanhMuc,
+            listThuongHieu,
+            listChatLieu,
+            listKichThuoc
+        });
+
+        // Áp dụng tìm kiếm và lọc
+        await store.applySearchAndFilter();
+
+        // Đóng drawer
+        visible.value = false;
+
+        // Hiển thị thông báo
+        message.success(`Đã áp dụng bộ lọc, hiển thị ${previewFilterCount.value} sản phẩm`);
+    } catch (error) {
+        console.error('Lỗi khi lọc sản phẩm:', error);
+        message.error('Có lỗi xảy ra khi lọc sản phẩm');
+    }
 };
 
-const resetFilter = () => {
-    console.log('Reset bộ lọc');
-
-    // Reset các giá trị trên giao diện
+// Hàm reset bộ lọc
+const resetFilter = async () => {
+    // Reset các giá trị lọc trong component
     valueDanhMuc.value = [];
     valueThuongHieu.value = [];
     valueChatLieu.value = [];
     valueMauSac.value = [];
     valueSize.value = [];
-    value2.value = [0, 10000000];
+    value2.value = [0, store.giaMax];
 
-    // Reset bộ lọc trong store
-    store.resetFilter();
+    try {
+        // Lưu keyword hiện tại
+        const currentKeyword = store.searchFilterParams.keyword;
 
-    // Hiển thị thông báo
-    message.success('Đã xóa bộ lọc');
+        // Reset tất cả tham số lọc nhưng giữ lại keyword
+        store.updateSearchFilterParams({
+            keyword: currentKeyword,
+            giaBanMin: null,
+            giaBanMax: store.giaMax,
+            listMauSac: [],
+            listDanhMuc: [],
+            listThuongHieu: [],
+            listChatLieu: [],
+            listKichThuoc: []
+        });
+
+        // Áp dụng tìm kiếm và lọc
+        await store.applySearchAndFilter();
+        await previewFilterResults();
+        // Thông báo
+        message.success('Đã reset bộ lọc');
+    } catch (error) {
+        console.error('Lỗi khi reset bộ lọc:', error);
+        message.error('Có lỗi xảy ra khi reset bộ lọc');
+    }
 };
+
 
 const afterOpenChange = bool => {
     console.log('open', bool);
@@ -836,26 +1013,26 @@ const validateExcelData = (data) => {
         // Tạo cấu trúc dữ liệu giống như backend trả về để dễ xử lý
         return {
             sanPham: {
-                ten_san_pham: (row['Tên sản phẩm'] || '').trim(),
+                ten_san_pham: (row['Tên sản phẩm'] || '').toString().trim(),
                 danhMuc: {
-                    ten_danh_muc: (row['Danh mục'] || '').trim()
+                    ten_danh_muc: (row['Danh mục'] || '').toString().trim()
                 },
                 thuongHieu: {
-                    ten_thuong_hieu: (row['Thương hiệu'] || '').trim()
+                    ten_thuong_hieu: (row['Thương hiệu'] || '').toString().trim()
                 },
                 chatLieu: {
-                    ten_chat_lieu: (row['Chất liệu'] || '').trim()
+                    ten_chat_lieu: (row['Chất liệu'] || '').toString().trim()
                 }
             },
             gia_ban: parseFloat(row['Giá bán']) || 0,
             so_luong: parseInt(row['Số lượng']) || 0,
             mauSac: {
-                ma_mau_sac: (row['Màu sắc'] || '').trim(),
-                ten_mau_sac: (row['Màu sắc'] || '').trim()
+                ma_mau_sac: (row['Màu sắc'] || '').toString().trim(),
+                ten_mau_sac: (row['Màu sắc'] || '').toString().trim()
             },
             kichThuoc: {
-                gia_tri: (row['Giá trị kích thước'] || '').trim().split(' ')[0] || '',
-                don_vi: (row['Đơn vị'] || '').trim()
+                gia_tri: String(row['Giá trị kích thước'] || '').trim().split(' ')[0] || '',
+                don_vi: (row['Đơn vị'] || '').toString().trim()
             },
             // trang_thai: row['Trạng thái'] === 'Hoạt động' || row['Trạng thái'] === true
         };
@@ -1071,9 +1248,9 @@ const showExportModal = () => {
     // Kiểm tra và tải thêm dữ liệu chi tiết sản phẩm nếu cần
     if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
         message.info('Đang tải dữ liệu chi tiết sản phẩm...');
-        store.getAllCTSP().then(() => {
-            console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
-        });
+        // store.getAllCTSP().then(() => {
+        //     console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
+        // });
     }
 
     // Hiển thị modal
@@ -1164,7 +1341,7 @@ const handleExportExcel = async () => {
         if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
             try {
                 message.loading('Đang tải dữ liệu chi tiết sản phẩm...');
-                await store.getAllCTSP();
+                // await store.getAllCTSP();
                 console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
             } catch (error) {
                 console.error('Lỗi khi tải chi tiết sản phẩm:', error);
@@ -1312,10 +1489,24 @@ const updateSelectedRows = (rows) => {
     selectedRows.value = rows;
 };
 
+// Thêm phương thức để nhận thông tin phân trang ảo
+const updateVirtualPaginationInfo = (paginationInfo) => {
+    console.log('Đã nhận thông tin phân trang:', paginationInfo);
+    if (!paginationInfo) return;
+
+    // Lưu thông tin phân trang để sử dụng khi lọc
+    const { currentPage, pageSize, total } = paginationInfo;
+
+    // Cập nhật bộ lọc nếu cần
+    // Đảm bảo khi lọc vẫn giữ được thông tin phân trang
+    // và có thể quay lại đúng trang khi bỏ lọc
+};
+
 // Expose để component cha có thể gọi
 defineExpose({
     checkAndLoadFilterData,
-    updateSelectedRows
+    updateSelectedRows,
+    updateVirtualPaginationInfo
 });
 
 // Các hàm tiện ích
