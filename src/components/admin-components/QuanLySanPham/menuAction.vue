@@ -313,12 +313,14 @@
                 </div>
 
                 <template #footer>
-                    <a-button key="back" @click="importExcelModal = false">Hủy</a-button>
-                    <a-button key="submit" type="primary" :loading="uploadLoading" :disabled="countValidRows() === 0"
-                        @click="saveExcelImport">
-                        <save-outlined />
-                        Lưu {{ countValidRows() }} sản phẩm
-                    </a-button>
+                    <div class="d-flex justify-content-end align-items-center">
+                        <a-button key="back" @click="importExcelModal = false">Hủy</a-button>
+                    <a-button key="submit" style="background-color: #f33b47" type="primary" :loading="uploadLoading" :disabled="countValidRows() === 0"
+                            @click="saveExcelImport" class="d-flex align-items-center">
+                            <save-outlined class="icon-filler" />
+                            Lưu {{ countValidRows() }} sản phẩm
+                        </a-button>
+                    </div>
                 </template>
             </a-modal>
         </div>
@@ -615,10 +617,6 @@ const isFiltering = computed(() => {
     return Object.keys(store.filterCriteria).length > 0;
 });
 
-// Lấy số lượng sản phẩm được lọc
-const filteredCount = computed(() => {
-    return store.getFilteredProducts?.length || 0;
-});
 
 // Định nghĩa computed cho các danh sách dropdown
 const danhMucList = computed(() => {
@@ -889,7 +887,8 @@ const resetFilter = async () => {
             listChatLieu: [],
             listKichThuoc: []
         });
-
+        // Đảm bảo reset filterCriteria trong store nếu updateSearchFilterParams không tự xóa
+        store.filterCriteria = {};
         // Áp dụng tìm kiếm và lọc
         await store.applySearchAndFilter();
         await previewFilterResults();
@@ -1326,80 +1325,147 @@ const exportTestExcel = () => {
 const handleExportExcel = async () => {
     try {
         exportLoading.value = true;
+        message.loading({ content: 'Đang chuẩn bị dữ liệu...', key: 'export' });
 
-        // Debug thông tin trước khi xuất
-        console.log('Bắt đầu xuất Excel');
-        console.log('Số lượng sản phẩm trong store:', store.getAllSanPham?.length || 0);
-        console.log('Số lượng chi tiết sản phẩm trong store:', store.getAllChiTietSanPham?.length || 0);
-
-        // Lấy danh sách các trường đã chọn
         const selectedFields = exportFields.value
             .filter(field => field.selected)
             .map(field => field.value);
 
-        // Tải dữ liệu chi tiết sản phẩm nếu chưa có
-        if (!store.getAllChiTietSanPham || store.getAllChiTietSanPham.length === 0) {
-            try {
-                message.loading('Đang tải dữ liệu chi tiết sản phẩm...');
-                // await store.getAllCTSP();
-                console.log('Đã tải: ', store.getAllChiTietSanPham?.length || 0, 'chi tiết sản phẩm');
-            } catch (error) {
-                console.error('Lỗi khi tải chi tiết sản phẩm:', error);
-                message.error('Không thể tải dữ liệu chi tiết sản phẩm');
-                exportLoading.value = false;
-                return;
-            }
+        let productsToExport = [];
+        switch (exportSelection.value) {
+            case 'all':
+                productsToExport = await store.getAllSP();
+                break;
+            case 'filtered':
+                productsToExport = store.filteredProductsData || [];
+                break;
+            case 'selected':
+                productsToExport = selectedRows.value || [];
+                break;
         }
 
-        // Lấy danh sách ID sản phẩm cần xuất (nếu người dùng chọn sản phẩm đã lọc hoặc đã chọn)
-        let filteredProductIds = [];
-
-        if (exportSelection.value === 'filtered' && store.getFilteredProducts?.length > 0) {
-            // Xuất các chi tiết sản phẩm của sản phẩm đã lọc
-            filteredProductIds = store.getFilteredProducts.map(p => p.id_san_pham);
-            console.log('Lọc theo sản phẩm đã lọc:', filteredProductIds);
-        } else if (exportSelection.value === 'selected' && selectedRows.value?.length > 0) {
-            // Xuất các chi tiết sản phẩm của sản phẩm đã chọn
-            filteredProductIds = selectedRows.value.map(p => p.id_san_pham);
-            console.log('Lọc theo sản phẩm đã chọn:', filteredProductIds);
-        }
-
-        // Chuẩn bị dữ liệu cho file Excel từ chi tiết sản phẩm
-        let excelData = prepareDetailExcelData(store.getAllChiTietSanPham, selectedFields, filteredProductIds);
-
-        // Kiểm tra xem có dữ liệu sau khi xử lý không
-        if (!excelData || excelData.length === 0) {
-            console.error('Không có dữ liệu chi tiết sản phẩm sau khi xử lý');
-            message.error('Không có dữ liệu hợp lệ để xuất');
-            exportLoading.value = false;
+        if (productsToExport.length === 0) {
+            message.warning('Không có sản phẩm để xuất');
             return;
         }
 
-        console.log('Đã chuẩn bị dữ liệu Excel:', excelData.length, 'dòng');
-        console.log('Mẫu dữ liệu Excel đầu tiên:', excelData[0]);
+        // Log để kiểm tra dữ liệu sản phẩm
+        console.log('Sản phẩm để xuất:', productsToExport);
 
-        // Tạo workbook và worksheet
+        // Lấy chi tiết sản phẩm
+        const chiTietSanPhams = [];
+        for (const product of productsToExport) {
+            try {
+                const ctsp = await store.getCTSPBySanPham(product.id_san_pham);
+                
+                console.log(`Chi tiết sản phẩm cho ${product.id_san_pham}:`, ctsp);
+
+                // Xử lý nhiều trường hợp trả về
+                if (ctsp) {
+                    if (Array.isArray(ctsp)) {
+                        chiTietSanPhams.push(...ctsp);
+                    } else if (typeof ctsp === 'object') {
+                        chiTietSanPhams.push(ctsp);
+                    }
+                }
+            } catch (error) {
+                console.error(`Lỗi khi lấy chi tiết sản phẩm ${product.id_san_pham}:`, error);
+            }
+        }
+
+        console.log('Tổng số chi tiết sản phẩm:', chiTietSanPhams.length);
+
+        // Chuẩn bị dữ liệu Excel
+        const excelData = chiTietSanPhams.map(ct => {
+            const row = {};
+            selectedFields.forEach(field => {
+                switch(field) {
+                    case 'ma_san_pham':
+                        row['Mã sản phẩm'] = ct.ma_san_pham || '';
+                        break;
+                    case 'ten_san_pham':
+                        row['Tên sản phẩm'] = ct.ten_san_pham || '';
+                        break;
+                    case 'id_chi_tiet_san_pham':
+                        row['ID chi tiết SP'] = ct.id_chi_tiet_san_pham || '';
+                        break;
+                    case 'ten_danh_muc':
+                        row['Danh mục'] = ct.ten_danh_muc || '';
+                        break;
+                    case 'ten_thuong_hieu':
+                        row['Thương hiệu'] = ct.ten_thuong_hieu || '';
+                        break;
+                    case 'ten_chat_lieu':
+                        row['Chất liệu'] = ct.ten_chat_lieu || '';
+                        break;
+                    case 'tong_so_luong':
+                        row['Số lượng'] = ct.so_luong || 0;
+                        break;
+                    case 'gia_ban':
+                        row['Giá bán'] = ct.gia_ban || 0;
+                        break;
+                    case 'mau_sac':
+                        row['Màu sắc'] = ct.ten_mau || '';
+                        break;
+                    case 'kich_thuoc':
+                        row['Kích thước'] = ct.gia_tri ? `${ct.gia_tri} ${ct.don_vi || ''}`.trim() : '';
+                        break;
+                    case 'trang_thai':
+                        row['Trạng thái'] = ct.trang_thai || '';
+                        break;
+                    case 'ngay_tao':
+                        row['Ngày tạo'] = ct.ngay_tao || '';
+                        break;
+                    case 'ngay_sua':
+                        row['Ngày sửa'] = ct.ngay_sua || '';
+                        break;
+                    case 'qr_code':
+                        row['QR Code'] = ct.qr_code || '';
+                        break;
+                    case 'mo_ta':
+                        row['Mô tả'] = ct.mo_ta || '';
+                        break;
+                }
+            });
+            return row;
+        });
+
+        console.log('Dữ liệu Excel:', excelData);
+
+        // Xuất Excel
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.json_to_sheet(excelData);
+        
+        // Điều chỉnh độ rộng cột
+        const colWidths = [
+            { wch: 15 },  // Mã sản phẩm
+            { wch: 30 },  // Tên sản phẩm
+            { wch: 15 },  // ID chi tiết SP
+            { wch: 20 },  // Danh mục
+            { wch: 20 },  // Thương hiệu
+            { wch: 20 },  // Chất liệu
+            { wch: 10 },  // Số lượng
+            { wch: 15 },  // Giá bán
+            { wch: 15 },  // Màu sắc
+            { wch: 15 },  // Kích thước
+            { wch: 15 },  // Trạng thái
+            { wch: 15 },  // Ngày tạo
+            { wch: 15 },  // Ngày sửa
+            { wch: 20 },  // QR Code
+            { wch: 30 }   // Mô tả
+        ];
+        ws['!cols'] = colWidths;
 
-        // Thiết lập độ rộng cột
-        const wscols = setColumnWidths(excelData);
-        ws['!cols'] = wscols;
-
-        // Thêm worksheet vào workbook
         XLSX.utils.book_append_sheet(wb, ws, "Chi tiết sản phẩm");
-
-        // Tạo tên file với timestamp hiện tại
+        
         const fileName = `chi-tiet-san-pham-${new Date().toISOString().split('T')[0]}.xlsx`;
-
-        // Xuất file Excel
         XLSX.writeFile(wb, fileName);
 
-        message.success('Xuất Excel thành công!');
+        message.success({ content: `Xuất thành công ${excelData.length} sản phẩm`, key: 'export' });
         exportModalVisible.value = false;
     } catch (error) {
-        console.error('Lỗi khi xuất Excel:', error);
-        message.error('Có lỗi xảy ra khi xuất Excel: ' + error.message);
+        console.error('Lỗi xuất Excel:', error);
+        message.error({ content: 'Xuất Excel thất bại: ' + error.message, key: 'export' });
     } finally {
         exportLoading.value = false;
     }

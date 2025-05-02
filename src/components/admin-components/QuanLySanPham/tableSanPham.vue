@@ -760,7 +760,7 @@ const changeStatusCTSP = async (ctspRecord) => {
                     }
                     return item;
                 });
-               
+
                 // Cập nhật sản phẩm trong drawer nếu đang hiển thị
                 if (currentProduct.value && currentProduct.value.id_san_pham === parentId) {
                     currentProduct.value = {
@@ -882,79 +882,11 @@ const refreshData = async () => {
 // Cập nhật dữ liệu hiển thị khi có sự thay đổi trong filteredProductsData
 watch(() => store.filteredProductsData, (newData) => {
     console.log('Phát hiện thay đổi filteredProductsData trong store:', newData.length, 'sản phẩm');
-    displayData.value = newData;
-}, { deep: true });
-// Hàm tải dữ liệu sản phẩm
-onMounted(async () => {
-    // Add event listener for external sorting
-    window.addEventListener('sort-option-changed', handleExternalSort);
-
-    const startTime = performance.now();
-    isLoading.value = true;
-
-    try {
-        // Kiểm tra xem có cần refresh cache không
-        if (store.justAddedProduct || store.justUpdatedProduct) {
-            // Nếu vừa thêm hoặc sửa sản phẩm, xóa toàn bộ cache
-            clearAllProductsCache();
-            forceRefresh.value = true;
-
-            // Lấy danh sách theo ngày sửa
-            await store.getAllSanPhamNgaySua();
-            store.justAddedProduct = false;
-            store.justUpdatedProduct = false;
-        } else {
-            // Kiểm tra cache trước khi gọi API
-            if (isCacheValid(PRODUCTS_CACHE_KEY)) {
-                console.log('Sử dụng cache cho danh sách sản phẩm');
-                const cachedProducts = getFromCache(PRODUCTS_CACHE_KEY);
-                if (cachedProducts) {
-                    data.value = cachedProducts;
-                    isLoading.value = false;
-                    const endTime = performance.now();
-                    loadTime.value = Math.round(endTime - startTime);
-                    return;
-                }
-            }
-
-            // Nếu không có cache hoặc cache hết hạn, gọi API
-            await store.getAllSP();
-        }
-
-        // Xử lý dữ liệu và lưu vào cache
-        data.value = store.getAllSanPham.map((item, index) => ({
-            stt: index + 1,
-            key: item.id_san_pham,
-            id_san_pham: item.id_san_pham,
-            ma_san_pham: item.ma_san_pham,
-            ten_san_pham: item.ten_san_pham,
-            hinh_anh: item.hinh_anh,
-            chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
-            trang_thai: item.trang_thai,
-            tong_so_luong: item.tong_so_luong || 0,
-            ngay_cap_nhat: item.ngay_cap_nhat || ''
-        }));
-
-        // Lưu vào cache nếu có dữ liệu
-        // if (data.value.length > 0) {
-        //     saveToCache(PRODUCTS_CACHE_KEY, data.value);
-        // }
-
-        const endTime = performance.now();
-        loadTime.value = Math.round(endTime - startTime);
-    } catch (error) {
-        console.error('Lỗi khi tải dữ liệu:', error);
-        message.error('Có lỗi xảy ra khi tải dữ liệu sản phẩm');
-    } finally {
-        isLoading.value = false;
+    if (newData) {
+        displayData.value = newData;
     }
-});
-
-onBeforeUnmount(() => {
-    // Remove event listener
-    window.removeEventListener('sort-option-changed', handleExternalSort);
-});
-
+}, { deep: true });
+//Hàm tải dữ liệu sản phẩm
 const formatCurrency = (value) => {
     if (!value && value !== 0) return '';
     return new Intl.NumberFormat('vi-VN', {
@@ -964,69 +896,8 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
-// Add this function near the formatCurrency function
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
-};
-
-// Hàm làm mới dữ liệu chi tiết
-const fetchData = async () => {
-    try {
-        isLoading.value = true;
-        message.loading({ content: 'Đang cập nhật dữ liệu...', key: 'fetchData' });
-
-        // Xóa cache của sản phẩm hiện tại
-        if (currentProduct.value) {
-            const productId = currentProduct.value.id_san_pham;
-            clearCache(`${CTSP_CACHE_PREFIX}${productId}`);
-
-            // Làm mới dữ liệu CTSP cho sản phẩm hiện tại
-            await store.getCTSPBySanPham(productId);
-            const ctspList = store.getCTSPBySanPhams.map(ctsp => ({
-                key: ctsp.id_chi_tiet_san_pham,
-                id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
-                id_san_pham: productId,
-                ten_san_pham: ctsp.ten_san_pham,
-                hinh_anh: ctsp.hinh_anh,
-                gia_ban: ctsp.gia_ban,
-                mau_sac: ctsp.ten_mau,
-                size: ctsp.gia_tri + ' ' + ctsp.don_vi,
-                so_luong: ctsp.so_luong,
-                trang_thai: ctsp.trang_thai,
-            }));
-
-            // Cập nhật vào Map
-            productCTSPMap.value.set(productId, ctspList);
-
-            // Cập nhật cache mới
-            // saveToCache(`${CTSP_CACHE_PREFIX}${productId}`, ctspList);
-        }
-
-        message.success({ content: 'Dữ liệu đã được cập nhật', key: 'fetchData', duration: 2 });
-    } catch (error) {
-        console.error('Lỗi khi cập nhật dữ liệu:', error);
-        message.error({ content: 'Có lỗi xảy ra khi cập nhật dữ liệu', key: 'fetchData', duration: 2 });
-    } finally {
-        isLoading.value = false;
-    }
-};
-
 // Thêm biến lọc trạng thái
 const statusFilter = ref('');
-
-// Thêm biến đếm số lượng sản phẩm hiển thị
-const filteredCount = computed(() => {
-    if (statusFilter.value) {
-        return displayData.value.length;
-    }
-    return null;
-});
 
 // Thêm biến lọc trạng thái chi tiết sản phẩm
 const ctspStatusFilter = ref('');
@@ -1063,7 +934,7 @@ const filterCTSPByStatus = () => {
 const handleImageError = (e) => {
     const imgElement = e.target;
     console.error('Không thể tải hình ảnh:', e.target.src);
-    imgElement.src = 'https://via.placeholder.com/150?text=No+Image'; // Đường dẫn đến hình ảnh mặc định
+    imgElement.src = 'https://placehold.co/150x150/gray/white?text=No+Image'; // Đường dẫn đến hình ảnh mặc định
     console.log('Không thể tải hình ảnh, đã thay thế bằng ảnh mặc định');
 };
 
@@ -1185,34 +1056,9 @@ const handleMenuActionRefresh = async () => {
     try {
         // Make sure to load the latest data by date
         console.log('Tải dữ liệu sản phẩm mới nhất sau khi import Excel...');
-        await store.getAllSanPhamNgaySua();
-        console.log('Số lượng sản phẩm sau khi refresh:', store.getAllSanPham?.length || 0);
-
-        // Update local data from store
-        data.value = await Promise.all(store.getAllSanPham.map(async (item, index) => {
-            // Get the product prices (highest and lowest)
-            const prices = await getProductPrices(item.id_san_pham);
-
-            return {
-                stt: index + 1,
-                key: item.id_san_pham,
-                id_san_pham: item.id_san_pham,
-                ma_san_pham: item.ma_san_pham,
-                ten_san_pham: item.ten_san_pham,
-                hinh_anh: item.hinh_anh,
-                chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
-                trang_thai: item.trang_thai,
-                tong_so_luong: item.tong_so_luong || 0,
-                gia_cao_nhat: prices.highest,
-                gia_thap_nhat: prices.lowest,
-                ngay_cap_nhat: item.ngay_cap_nhat || '' // Don't use current date as fallback
-            };
-        }));
-
-        // Update cache
-        // if (data.value.length > 0) {
-        //     saveToCache(PRODUCTS_CACHE_KEY, data.value);
-        // }
+        const newData = await store.getAllSanPhamNgaySua();
+        console.log('Số lượng sản phẩm sau khi refresh:', newData?.length || 0);
+        displayData.value = formatProductData(newData);
 
         message.success('Dữ liệu đã được cập nhật sau khi import Excel');
     } catch (error) {
@@ -1221,142 +1067,6 @@ const handleMenuActionRefresh = async () => {
     } finally {
         isLoading.value = false;
         forceRefresh.value = false;
-    }
-};
-
-// Function to get the highest price for a product from its variants
-const getHighestPrice = async (productId) => {
-    try {
-        // First check if we already have loaded CTSP for this product
-        if (productCTSPMap.value.has(productId)) {
-            const variants = productCTSPMap.value.get(productId);
-            if (variants && variants.length > 0) {
-                // Find the highest price among variants
-                return Math.max(...variants.map(variant => variant.gia_ban || 0));
-            }
-            return 0;
-        }
-
-        // If not loaded, load from API or cache
-        const cacheKey = `${CTSP_CACHE_PREFIX}${productId}`;
-        if (!forceRefresh.value && isCacheValid(cacheKey)) {
-            const cachedVariants = getFromCache(cacheKey);
-            if (cachedVariants && cachedVariants.length > 0) {
-                return Math.max(...cachedVariants.map(variant => variant.gia_ban || 0));
-            }
-        }
-
-        // If no cached data, load from API
-        await store.getCTSPBySanPham(productId);
-        const variants = store.getCTSPBySanPhams;
-        if (variants && variants.length > 0) {
-            const formattedVariants = variants.map(ctsp => ({
-                key: ctsp.id_chi_tiet_san_pham,
-                id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
-                id_san_pham: productId,
-                ten_san_pham: ctsp.ten_san_pham,
-                hinh_anh: ctsp.hinh_anh,
-                gia_ban: ctsp.gia_ban,
-                mau_sac: ctsp.ten_mau,
-                size: ctsp.gia_tri + ' ' + ctsp.don_vi,
-                so_luong: ctsp.so_luong,
-                trang_thai: ctsp.trang_thai,
-            }));
-
-            // Store the variants in the map for future use
-            productCTSPMap.value.set(productId, formattedVariants);
-            // saveToCache(cacheKey, formattedVariants);
-
-            return Math.max(...formattedVariants.map(variant => variant.gia_ban || 0));
-        }
-
-        return 0;
-    } catch (error) {
-        console.error('Error getting highest price for product:', error);
-        return 0;
-    }
-};
-
-// Function to get highest and lowest prices for a product from its variants
-const getProductPrices = async (productId) => {
-    try {
-        // First check if we already have loaded CTSP for this product
-        if (productCTSPMap.value.has(productId)) {
-            const variants = productCTSPMap.value.get(productId);
-            if (variants && variants.length > 0) {
-                // Get all prices from variants (ignore 0 or null prices)
-                const prices = variants
-                    .map(variant => variant.gia_ban || 0)
-                    .filter(price => price > 0);
-
-                if (prices.length > 0) {
-                    return {
-                        highest: Math.max(...prices),
-                        lowest: Math.min(...prices)
-                    };
-                }
-                return { highest: 0, lowest: 0 };
-            }
-            return { highest: 0, lowest: 0 };
-        }
-
-        // If not loaded, load from API or cache
-        const cacheKey = `${CTSP_CACHE_PREFIX}${productId}`;
-        if (!forceRefresh.value && isCacheValid(cacheKey)) {
-            const cachedVariants = getFromCache(cacheKey);
-            if (cachedVariants && cachedVariants.length > 0) {
-                const prices = cachedVariants
-                    .map(variant => variant.gia_ban || 0)
-                    .filter(price => price > 0);
-
-                if (prices.length > 0) {
-                    return {
-                        highest: Math.max(...prices),
-                        lowest: Math.min(...prices)
-                    };
-                }
-                return { highest: 0, lowest: 0 };
-            }
-        }
-
-        // If no cached data, load from API
-        await store.getCTSPBySanPham(productId);
-        const variants = store.getCTSPBySanPhams;
-
-        if (variants && variants.length > 0) {
-            const formattedVariants = variants.map(ctsp => ({
-                key: ctsp.id_chi_tiet_san_pham,
-                id_chi_tiet_san_pham: ctsp.id_chi_tiet_san_pham,
-                id_san_pham: productId,
-                ten_san_pham: ctsp.ten_san_pham,
-                hinh_anh: ctsp.hinh_anh,
-                gia_ban: ctsp.gia_ban,
-                mau_sac: ctsp.ten_mau,
-                size: ctsp.gia_tri + ' ' + ctsp.don_vi,
-                so_luong: ctsp.so_luong,
-                trang_thai: ctsp.trang_thai,
-            }));
-
-            // Store the variants in the map for future use
-            productCTSPMap.value.set(productId, formattedVariants);
-            // saveToCache(cacheKey, formattedVariants);
-
-            const prices = formattedVariants
-                .map(variant => variant.gia_ban || 0)
-                .filter(price => price > 0);
-
-            if (prices.length > 0) {
-                return {
-                    highest: Math.max(...prices),
-                    lowest: Math.min(...prices)
-                };
-            }
-        }
-
-        return { highest: 0, lowest: 0 };
-    } catch (error) {
-        console.error('Error getting prices for product:', error);
-        return { highest: 0, lowest: 0 };
     }
 };
 
@@ -1413,6 +1123,20 @@ const handleExternalSort = (event) => {
         }, 100);
     }
 };
+const formatProductData = (products) => {
+    return products.map((item, index) => ({
+        stt: index + 1,
+        key: item.id_san_pham,
+        id_san_pham: item.id_san_pham,
+        ma_san_pham: item.ma_san_pham || '',
+        ten_san_pham: item.ten_san_pham || '',
+        hinh_anh: item.hinh_anh || '',
+        chi_muc: (item.ten_danh_muc || '') + "/" + (item.ten_thuong_hieu || '') + "/" + (item.ten_chat_lieu || ''),
+        trang_thai: item.trang_thai || '',
+        tong_so_luong: item.tong_so_luong || 0,
+        ngay_cap_nhat: item.ngay_cap_nhat || ''
+    }));
+};
 onMounted(async () => {
     const startTime = performance.now();
     isLoading.value = true;
@@ -1426,16 +1150,26 @@ onMounted(async () => {
 
         // Kiểm tra xem đã có dữ liệu lọc chưa
         if (store.filteredProductsData && store.filteredProductsData.length > 0) {
-            displayData.value = [...store.filteredProductsData];
-            console.log('Khởi tạo displayData với filteredProductsData:', displayData.value.length, 'sản phẩm');
+            console.log("Có dữ liệu lọc+++++++++++++++++++++--------------------")
+            console.log(store.justAddedProduct + "+++++++++++++++++++++--------------------Dữ liệu khi sửa xong")
+            if(!store.justAddedProduct){
+                displayData.value = formatProductData(store.filteredProductsData);
+                console.log('Khởi tạo displayData với filteredProductsData:', displayData.value.length, 'sản phẩm');
+            }else{
+                await store.getAllSanPhamNgaySua();
+                displayData.value = formatProductData(store.getAllSanPham);
+                console.log('Theo ngày sửa');
+            }
+            
         } else {
             // Logic tải dữ liệu từ cache hoặc API
-            if (store.justAddedProduct || store.justUpdatedProduct) {
+            if (store.justAddedProduct) {
                 clearAllProductsCache();
                 forceRefresh.value = true;
                 await store.getAllSanPhamNgaySua();
+                displayData.value = formatProductData(store.getAllSanPham);
                 store.justAddedProduct = false;
-                store.justUpdatedProduct = false;
+
             } else {
                 if (isCacheValid(PRODUCTS_CACHE_KEY)) {
                     console.log('Sử dụng cache cho danh sách sản phẩm');
@@ -1450,23 +1184,8 @@ onMounted(async () => {
                 }
                 await store.getAllSP();
             }
-
-            // Xử lý dữ liệu từ API
-            const formattedData = store.getAllSanPham.map((item, index) => ({
-                stt: index + 1,
-                key: item.id_san_pham,
-                id_san_pham: item.id_san_pham,
-                ma_san_pham: item.ma_san_pham,
-                ten_san_pham: item.ten_san_pham,
-                hinh_anh: item.hinh_anh,
-                chi_muc: (item.ten_danh_muc || '') + "/" + (item.ten_thuong_hieu || '') + "/" + (item.ten_chat_lieu || ''),
-                trang_thai: item.trang_thai,
-                tong_so_luong: item.tong_so_luong || 0,
-                ngay_cap_nhat: item.ngay_cap_nhat || ''
-            }));
-
-            data.value = formattedData;
-            displayData.value = formattedData;
+            data.value = formatProductData(store.getAllSanPham);
+            displayData.value = formatProductData(store.getAllSanPham);
         }
 
         loadTime.value = Math.round(performance.now() - startTime);
@@ -1485,75 +1204,6 @@ onUnmounted(() => {
     console.log('Đã hủy đăng ký sự kiện');
 });
 // Add the event listener to the existing onMounted function
-onMounted(async () => {
-    // Add event listener for external sorting
-    window.addEventListener('sort-option-changed', handleExternalSort);
-
-    const startTime = performance.now();
-    isLoading.value = true;
-
-    try {
-        // Kiểm tra xem có cần refresh cache không
-        if (store.justAddedProduct || store.justUpdatedProduct) {
-            // Nếu vừa thêm hoặc sửa sản phẩm, xóa toàn bộ cache
-            clearAllProductsCache();
-            forceRefresh.value = true;
-
-            // Lấy danh sách theo ngày sửa
-            await store.getAllSanPhamNgaySua();
-            store.justAddedProduct = false;
-            store.justUpdatedProduct = false;
-        } else {
-            // Kiểm tra cache trước khi gọi API
-            if (isCacheValid(PRODUCTS_CACHE_KEY)) {
-                console.log('Sử dụng cache cho danh sách sản phẩm');
-                const cachedProducts = getFromCache(PRODUCTS_CACHE_KEY);
-                if (cachedProducts) {
-                    data.value = cachedProducts;
-                    isLoading.value = false;
-                    const endTime = performance.now();
-                    loadTime.value = Math.round(endTime - startTime);
-                    return;
-                }
-            }
-
-            // Nếu không có cache hoặc cache hết hạn, gọi API
-            await store.getAllSP();
-        }
-
-        // Xử lý dữ liệu và lưu vào cache
-        data.value = store.getAllSanPham.map((item, index) => ({
-            stt: index + 1,
-            key: item.id_san_pham,
-            id_san_pham: item.id_san_pham,
-            ma_san_pham: item.ma_san_pham,
-            ten_san_pham: item.ten_san_pham,
-            hinh_anh: item.hinh_anh,
-            chi_muc: item.ten_danh_muc + "/" + item.ten_thuong_hieu + "/" + item.ten_chat_lieu,
-            trang_thai: item.trang_thai,
-            tong_so_luong: item.tong_so_luong || 0,
-            ngay_cap_nhat: item.ngay_cap_nhat || ''
-        }));
-
-        // Lưu vào cache nếu có dữ liệu
-        // if (data.value.length > 0) {
-        //     saveToCache(PRODUCTS_CACHE_KEY, data.value);
-        // }
-
-        const endTime = performance.now();
-        loadTime.value = Math.round(endTime - startTime);
-    } catch (error) {
-        console.error('Lỗi khi tải dữ liệu:', error);
-        message.error('Có lỗi xảy ra khi tải dữ liệu sản phẩm');
-    } finally {
-        isLoading.value = false;
-    }
-});
-
-onBeforeUnmount(() => {
-    // Remove event listener
-    window.removeEventListener('sort-option-changed', handleExternalSort);
-});
 </script>
 <style scoped>
 :deep(.ctsp-table) {

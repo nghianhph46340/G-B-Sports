@@ -72,64 +72,15 @@
                     </a-upload>
                 </a-form-item>
 
-                <a-form-item label="Mô tả" name="mo_ta">
-                    <a-typography-paragraph editable :content="formState.mo_ta"
-                        @change="content => formState.mo_ta = content" />
-                    <div class="rich-editor border rounded p-2">
-                        <div class="toolbar d-flex flex-wrap gap-1 mb-2 border-bottom pb-2">
-                            <a-button size="small" @click="applyFormat('bold')">
-                                <template #icon>
-                                    <BoldOutlined />
-                                </template>
-                            </a-button>
-                            <a-button size="small" @click="applyFormat('italic')">
-                                <template #icon>
-                                    <ItalicOutlined />
-                                </template>
-                            </a-button>
-                            <a-button size="small" @click="applyFormat('underline')">
-                                <template #icon>
-                                    <UnderlineOutlined />
-                                </template>
-                            </a-button>
-                            <a-button size="small" @click="applyFormat('strikethrough')">
-                                <template #icon>
-                                    <StrikethroughOutlined />
-                                </template>
-                            </a-button>
-                            <a-divider type="vertical" />
-                            <a-dropdown :trigger="['click']">
-                                <a-button size="small">
-                                    <span>Font Size</span>
-                                    <DownOutlined />
-                                </a-button>
-                                <template #overlay>
-                                    <a-menu>
-                                        <a-menu-item v-for="size in [12, 14, 16, 18, 20, 24, 28, 32]" :key="size"
-                                            @click="applyFormat('fontSize', size + 'px')">{{ size }}px</a-menu-item>
-                                    </a-menu>
-                                </template>
-                            </a-dropdown>
-                            <a-divider type="vertical" />
-                            <a-button size="small" @click="applyFormat('justifyLeft')">
-                                <template #icon>
-                                    <AlignLeftOutlined />
-                                </template>
-                            </a-button>
-                            <a-button size="small" @click="applyFormat('justifyCenter')">
-                                <template #icon>
-                                    <AlignCenterOutlined />
-                                </template>
-                            </a-button>
-                            <a-button size="small" @click="applyFormat('justifyRight')">
-                                <template #icon>
-                                    <AlignRightOutlined />
-                                </template>
-                            </a-button>
-                        </div>
-                        <div class="editor-content" contenteditable="true" ref="editorRef" @input="handleEditorInput"
-                            style="min-height: 120px; max-height: 300px; overflow-y: auto"></div>
-                    </div>
+                <a-form-item label="Mô tả sản phẩm" name="mo_ta">
+                    <QuillEditor
+                        v-model:content="formState.mo_ta"
+                        contentType="html"
+                        toolbar="full" 
+                        theme="snow"
+                        placeholder="Nhập mô tả sản phẩm..."
+                        class="editor-container"
+                    />
                 </a-form-item>
 
                 <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
@@ -794,6 +745,8 @@ import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import axiosInstance from '@/config/axiosConfig';
 import { testService } from '@/services/testService';
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
 const store = useGbStore();
 const router = useRouter();
@@ -1122,8 +1075,8 @@ const validateProductName = async (rule, value) => {
 
     // Kiểm tra nếu tên sản phẩm chứa ký tự đặc biệt
     // Cho phép chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc
-    if (!/^[a-zA-Z0-9À-ỹ\s\-\.,()]+$/.test(normalizedValue)) {
-        return Promise.reject('Tên sản phẩm chỉ được chứa chữ cái, số, dấu cách, dấu gạch ngang, dấu chấm, dấu phẩy và dấu ngoặc');
+    if (!/^(?=.*[a-zA-ZÀ-ỹ])[a-zA-Z0-9À-ỹ\s\-\.,()/&+'"\[\]®™©℠$€£¥₫°²³%+×÷±µ=]+$/.test(normalizedValue)) {
+        return Promise.reject('Tên sản phẩm phải chứa ít nhất một ký tự chữ cái và chỉ được chứa các ký tự cho phép');
     }
 
     // Chuẩn hóa tên sản phẩm - loại bỏ khoảng trắng thừa và dấu
@@ -2502,7 +2455,10 @@ const onFinish = async () => {
         await store.getSizeList();
 
         // Đánh dấu vừa thêm sản phẩm mới
-        store.justAddedProduct = true;
+        await store.getAllSanPhamNgaySua();
+        // Đánh dấu vừa thêm sản phẩm mới
+        store.changeAction(true);
+        localStorage.setItem('justAddedProduct', 'true');
         // Đánh dấu cần refresh bộ lọc
         store.needFilterRefresh = true;
 
@@ -3469,5 +3425,117 @@ const handleProductImageRemove = async (file) => {
     .size-table td {
         padding: 6px 4px;
     }
+}
+
+/* Style cho editor */
+.editor-container {
+  height: 300px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+}
+
+.ql-toolbar {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-color: #f6f6f6;
+  border-color: #d9d9d9;
+}
+
+.ql-container {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-color: #d9d9d9;
+  min-height: 250px;
+}
+
+.ql-editor {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Thêm hiệu ứng hover/focus */
+.ql-container:hover, .ql-toolbar:hover {
+  border-color: #f33b47;
+}
+
+/* Style phù hợp với theme của ứng dụng */
+.ql-toolbar .ql-stroke {
+  stroke: #333;
+}
+
+.ql-toolbar .ql-fill {
+  fill: #333;
+}
+
+.ql-toolbar button:hover .ql-stroke {
+  stroke: #f33b47;
+}
+
+.ql-toolbar button:hover .ql-fill {
+  fill: #f33b47;
+}
+
+.ql-toolbar button.ql-active .ql-stroke {
+  stroke: #f33b47;
+}
+
+.ql-toolbar button.ql-active .ql-fill {
+  fill: #f33b47;
+}
+
+/* Rich Text Editor styles */
+.editor-container {
+  height: 300px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+:deep(.ql-toolbar) {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-color: #f6f6f6;
+  border-color: #d9d9d9;
+}
+
+:deep(.ql-container) {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-color: #d9d9d9;
+  min-height: 250px;
+}
+
+:deep(.ql-editor) {
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+:deep(.ql-container:hover), :deep(.ql-toolbar:hover) {
+  border-color: #f33b47;
+}
+
+:deep(.ql-toolbar .ql-stroke) {
+  stroke: #333;
+}
+
+:deep(.ql-toolbar .ql-fill) {
+  fill: #333;
+}
+
+:deep(.ql-toolbar button:hover .ql-stroke) {
+  stroke: #f33b47;
+}
+
+:deep(.ql-toolbar button:hover .ql-fill) {
+  fill: #f33b47;
+}
+
+:deep(.ql-toolbar button.ql-active .ql-stroke) {
+  stroke: #f33b47;
+}
+
+:deep(.ql-toolbar button.ql-active .ql-fill) {
+  fill: #f33b47;
 }
 </style>

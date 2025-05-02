@@ -507,7 +507,14 @@ export const useGbStore = defineStore('gbStore', {
         console.error(error)
       }
     },
-    ////////////-----------------Sản phẩm-------------------////////////
+    ////////////-----------------Sản phẩm Action-------------------////////////
+    //update Data
+    setFilteredProductsData(data) {
+      this.filteredProductsData = data; // Tạo mảng mới để đảm bảo reactive
+    },
+    changeAction(status) {
+      this.justAddedProduct = status;
+    },
     // Reset tham số tìm kiếm và lọc  
     resetSearchFilterParams() {
       console.log('Reset params tìm kiếm/lọc');
@@ -526,9 +533,20 @@ export const useGbStore = defineStore('gbStore', {
     updateSearchFilterParams(params) {
       console.log('Cập nhật params tìm kiếm/lọc:', params);
       this.searchFilterParams = {
-        ...this.searchFilterParams,
+        // ...this.searchFilterParams,
         ...params
       };
+      // Cập nhật filterCriteria cho biến isFiltering hoạt động
+    this.filterCriteria = {};
+    
+    // Thêm các tiêu chí vào filterCriteria nếu có giá trị
+    if (params.listDanhMuc?.length > 0) this.filterCriteria.danhMuc = params.listDanhMuc;
+    if (params.listThuongHieu?.length > 0) this.filterCriteria.thuongHieu = params.listThuongHieu;
+    if (params.listChatLieu?.length > 0) this.filterCriteria.chatLieu = params.listChatLieu;
+    if (params.listMauSac?.length > 0) this.filterCriteria.mauSac = params.listMauSac;
+    if (params.listKichThuoc?.length > 0) this.filterCriteria.kichThuoc = params.listKichThuoc;
+    if (params.giaBanMin > 0 || params.giaBanMax < this.giaMax) this.filterCriteria.gia = true;
+      
     },
     //Lấy danh sách sản phẩm theo sản phẩm
     async getSanPhamBySP(tenSanPham) {
@@ -728,6 +746,7 @@ export const useGbStore = defineStore('gbStore', {
         return
       } else {
         this.getAllSanPham = sanPhamNgaySua
+        return sanPhamNgaySua
       }
     },
     //Chuyển trạng thái chi tiết sản phẩm
@@ -2473,8 +2492,9 @@ export const useGbStore = defineStore('gbStore', {
               ctsp.hinh_anh_list = []
             }
           }
-
           this.getCTSPBySanPhams = getCTSPBySanPhamRespone
+          return getCTSPBySanPhamRespone;
+          
         }
       } catch (error) {
         console.error('Lỗi khi lấy chi tiết sản phẩm và hình ảnh:', error)
@@ -3320,7 +3340,39 @@ export const useGbStore = defineStore('gbStore', {
     async applySearchAndFilter() {
       try {
         console.log('Áp dụng tìm kiếm và lọc với params:', this.searchFilterParams);
-
+        //Xét xem có dữ liệu cờ không
+        const justAddedProduct = localStorage.getItem('justAddedProduct');
+        
+        if (justAddedProduct === 'true' || this.justAddedProduct === 'true') {
+          console.log('Phát hiện dữ liệu mới từ localStorage, lấy dữ liệu mới nhất');
+          
+          // Lấy dữ liệu theo ngày sửa
+          const newData = await this.getAllSanPhamNgaySua();
+          
+          // Đảm bảo dữ liệu trả về là mảng
+          if (newData && Array.isArray(newData)) {
+            this.filteredProductsData = newData;
+          } else {
+            console.warn('getAllSanPhamNgaySua() không trả về mảng:', newData);
+            this.filteredProductsData = this.getAllSanPham || [];
+          }
+          
+          // Xóa cờ từ localStorage sau khi đã lấy dữ liệu
+          localStorage.removeItem('justAddedProduct');
+          this.justAddedProduct = false;
+          
+          // Phát sự kiện để thông báo có dữ liệu mới
+          window.dispatchEvent(new CustomEvent('search-filter-changed', {
+            detail: {
+              results: this.filteredProductsData,
+              params: this.searchFilterParams,
+              source: 'newData'
+            }
+          }));
+          
+          console.log('Đã phát sự kiện search-filter-changed với dữ liệu mới');
+          return this.filteredProductsData;
+        }
         // Destructuring các tham số
         const {
           keyword,
@@ -3332,7 +3384,6 @@ export const useGbStore = defineStore('gbStore', {
           listChatLieu,
           listKichThuoc
         } = this.searchFilterParams;
-
         // Gọi API với các tham số
         const response = await this.locAndTimKiemSanPhamVaChiTietSanPham(
           keyword,
@@ -3357,7 +3408,6 @@ export const useGbStore = defineStore('gbStore', {
         } else {
           this.filteredProductsData = [];
         }
-
         console.log('Kết quả tìm kiếm/lọc:', this.filteredProductsData.length, 'sản phẩm');
 
         // Phát sự kiện để thông báo thay đổi
