@@ -5,7 +5,6 @@ import test from './test-router.js';
 import sell from './sell-router.js';  
 import dangNhapDangKy from './dangNhapDangKy.js';
 import Unauthorized403 from '@/components/admin-components/Error/error.vue';
-
 const routes = [...home, ...admin, ...test, ...sell, ...dangNhapDangKy, {
   path: '/unauthorized',
   name: 'unauthorized',

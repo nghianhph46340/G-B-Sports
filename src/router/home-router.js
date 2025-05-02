@@ -1,3 +1,5 @@
+// import { name } from '@vue/eslint-config-prettier/skip-formatting';
+
 const home = [
     {
         path: '/',
@@ -51,6 +53,21 @@ const home = [
                 path: "hoTro",
                 name: "hoTro",
                 component: () => import('@/views/web/CuaHang/HoTro.vue')
+            },
+            {
+                path: "danhSachSanPham",
+                name: "danhSachSanPham",
+                component:() => import('@/views/web/SanPham.vue')
+            },
+            {
+                path: "sanPham",
+                name: "sanPham",
+                component:() => import('@/views/web/SanPham.vue')
+            },
+            {
+                path: "sanPham/:tenSanPham",
+                name: "sanPham",
+                component:() => import('@/views/web/SanPham.vue')
             }
         ]
     }

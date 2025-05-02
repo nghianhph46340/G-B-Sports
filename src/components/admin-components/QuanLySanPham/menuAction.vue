@@ -836,9 +836,10 @@ const filterProducts = async () => {
 
         const giaBanMin = value2.value[0];
         const giaBanMax = value2.value[1];
-
+        const keyword = store.searchFilterParams.keyword;
         // Cập nhật đối tượng tìm kiếm và lọc trong store
         store.updateSearchFilterParams({
+            keyword,
             giaBanMin,
             giaBanMax,
             listMauSac,

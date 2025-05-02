@@ -153,6 +153,55 @@ export const useGbStore = defineStore('gbStore', {
 
   ///Đầu mút2
   actions: {
+    // List sản phẩm theo tên sản phẩm(trang sản phẩm)
+    async getSanPhamByTenSP(keywords) {
+      console.log('Gọi getSanPhamByTenSP với:', keywords);
+      let tenSanPham = '';
+      if (Array.isArray(keywords)) {
+        tenSanPham = keywords.join(',');
+      } else if (typeof keywords === 'string') {
+        tenSanPham = keywords;
+      }
+      const data = await sanPhamService.getSanPhamByTenSP(tenSanPham);
+      // Map lại field nếu cần
+      this.listSanPhamBanHang = data.map(item => ({
+        id: item.id_san_pham,
+        name: item.ten_san_pham,
+        price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+        oldPrice: Number(item.gia_max || 0),
+        brand: item.ten_thuong_hieu,
+        image: item.hinh_anh,
+        gender: item.gioi_tinh || '',
+        type: item.ten_danh_muc || '',
+        colors: item.mau_sac ? item.mau_sac.split(',') : [],
+        rating: item.danh_gia || 0,
+        reviews: item.so_luong_danh_gia || 0,
+      }));
+    },
+    // List sản phẩm theo tên danh mục(trang sản phẩm)
+    async getSanPhamByTenDM(keywords) {
+      let tenDanhMuc = '';
+      if (Array.isArray(keywords)) {
+        tenDanhMuc = keywords.join(',');
+      } else if (typeof keywords === 'string') {
+        tenDanhMuc = keywords;
+      }
+      // Nếu tenDanhMuc là '', backend nên trả về tất cả sản phẩm
+      const data = await sanPhamService.getSanPhamByTenDM(tenDanhMuc);
+      this.listSanPhamBanHang = data.map(item => ({
+        id: item.id_san_pham,
+        name: item.ten_san_pham,
+        price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+        oldPrice: Number(item.gia_max || 0),
+        brand: item.ten_thuong_hieu,
+        image: item.hinh_anh,
+        gender: item.gioi_tinh || '',
+        type: item.ten_danh_muc || '',
+        colors: item.mau_sac ? item.mau_sac.split(',') : [],
+        rating: item.danh_gia || 0,
+        reviews: item.so_luong_danh_gia || 0,
+      }));
+    },
     //Giỏ hàng của khấch hàng có tài khoản
     async getGioHangByIdKH(idKH, idCTSP, soLuong) {
       try {
@@ -537,16 +586,16 @@ export const useGbStore = defineStore('gbStore', {
         ...params
       };
       // Cập nhật filterCriteria cho biến isFiltering hoạt động
-    this.filterCriteria = {};
-    
-    // Thêm các tiêu chí vào filterCriteria nếu có giá trị
-    if (params.listDanhMuc?.length > 0) this.filterCriteria.danhMuc = params.listDanhMuc;
-    if (params.listThuongHieu?.length > 0) this.filterCriteria.thuongHieu = params.listThuongHieu;
-    if (params.listChatLieu?.length > 0) this.filterCriteria.chatLieu = params.listChatLieu;
-    if (params.listMauSac?.length > 0) this.filterCriteria.mauSac = params.listMauSac;
-    if (params.listKichThuoc?.length > 0) this.filterCriteria.kichThuoc = params.listKichThuoc;
-    if (params.giaBanMin > 0 || params.giaBanMax < this.giaMax) this.filterCriteria.gia = true;
-      
+      this.filterCriteria = {};
+
+      // Thêm các tiêu chí vào filterCriteria nếu có giá trị
+      if (params.listDanhMuc?.length > 0) this.filterCriteria.danhMuc = params.listDanhMuc;
+      if (params.listThuongHieu?.length > 0) this.filterCriteria.thuongHieu = params.listThuongHieu;
+      if (params.listChatLieu?.length > 0) this.filterCriteria.chatLieu = params.listChatLieu;
+      if (params.listMauSac?.length > 0) this.filterCriteria.mauSac = params.listMauSac;
+      if (params.listKichThuoc?.length > 0) this.filterCriteria.kichThuoc = params.listKichThuoc;
+      if (params.giaBanMin > 0 || params.giaBanMax < this.giaMax) this.filterCriteria.gia = true;
+
     },
     //Lấy danh sách sản phẩm theo sản phẩm
     async getSanPhamBySP(tenSanPham) {
@@ -563,6 +612,8 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
+    //Lấy danh sách sản phẩm theo danh mục
+
     //Lấy sản phẩm theo id
     async getSanPhamById(id) {
       const sanPhamByIds = await sanPhamService.getSanPhamById(id)
@@ -735,7 +786,7 @@ export const useGbStore = defineStore('gbStore', {
         return
       } else {
         this.cTSPBySanPhamFull = cTSPBySanPhamFull
-        console.log(this.cTSPBySanPhamFull)
+        console.log('hehe: ', this.cTSPBySanPhamFull)
       }
     },
     async getAllSanPhamNgaySua() {
@@ -2478,7 +2529,7 @@ export const useGbStore = defineStore('gbStore', {
           }
           this.getCTSPBySanPhams = getCTSPBySanPhamRespone
           return getCTSPBySanPhamRespone;
-          
+
         }
       } catch (error) {
         console.error('Lỗi khi lấy chi tiết sản phẩm và hình ảnh:', error)
@@ -2869,7 +2920,7 @@ export const useGbStore = defineStore('gbStore', {
               matches = false
             }
           }
-          await this.getGiaMax()  
+          await this.getGiaMax()
           if (matches && filterCriteria.maxPrice < this.giaMax) {
             // Chuyển đổi giá bán sang kiểu số nếu là chuỗi
             const giaBan =
@@ -3326,13 +3377,13 @@ export const useGbStore = defineStore('gbStore', {
         console.log('Áp dụng tìm kiếm và lọc với params:', this.searchFilterParams);
         //Xét xem có dữ liệu cờ không
         const justAddedProduct = localStorage.getItem('justAddedProduct');
-        
+
         if (justAddedProduct === 'true' || this.justAddedProduct === 'true') {
           console.log('Phát hiện dữ liệu mới từ localStorage, lấy dữ liệu mới nhất');
-          
+
           // Lấy dữ liệu theo ngày sửa
           const newData = await this.getAllSanPhamNgaySua();
-          
+
           // Đảm bảo dữ liệu trả về là mảng
           if (newData && Array.isArray(newData)) {
             this.filteredProductsData = newData;
@@ -3340,11 +3391,11 @@ export const useGbStore = defineStore('gbStore', {
             console.warn('getAllSanPhamNgaySua() không trả về mảng:', newData);
             this.filteredProductsData = this.getAllSanPham || [];
           }
-          
+
           // Xóa cờ từ localStorage sau khi đã lấy dữ liệu
           localStorage.removeItem('justAddedProduct');
           this.justAddedProduct = false;
-          
+
           // Phát sự kiện để thông báo có dữ liệu mới
           window.dispatchEvent(new CustomEvent('search-filter-changed', {
             detail: {
@@ -3353,7 +3404,7 @@ export const useGbStore = defineStore('gbStore', {
               source: 'newData'
             }
           }));
-          
+
           console.log('Đã phát sự kiện search-filter-changed với dữ liệu mới');
           return this.filteredProductsData;
         }
@@ -3422,6 +3473,30 @@ export const useGbStore = defineStore('gbStore', {
     resetSearchAndFilter() {
       this.filteredProductsData = [];
       this.getAllSanPhamNgaySua(); // Tải lại tất cả sản phẩm
+
+    },
+
+    // Xử lý trả hàng
+    async processReturn(returnData) {
+      try {
+        const result = await hoaDonService.processReturn(returnData);
+        if (result.thanh_cong) {
+          return {
+            success: true,
+            id_tra_hang: result.id_tra_hang
+          };
+        } else {
+          toast.error(result.message || 'Xử lý trả hàng thất bại');
+          return {
+            success: false,
+            thong_bao: result.message || 'Xử lý trả hàng thất bại'
+          };
+        }
+      } catch (error) {
+        console.error('Lỗi khi xử lý trả hàng:', error);
+        toast.error('Có lỗi xảy ra khi xử lý trả hàng');
+        throw error;
+      }
     }
   },
   persist: {

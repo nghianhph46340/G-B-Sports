@@ -33,10 +33,10 @@
                     <img src="../images/banner/Banner-PC-3.png" alt="">
                 </div>
                 <div class="borderImage">
-                    <img src="../images/banner/Banner-PC-4.png" alt="">
+                    <img src="../images/banner/banner1.webp" alt="">
                 </div>
                 <div class="borderImage">
-                    <img src="../images/banner/Banner-PC-5.png" alt="">
+                    <img src="../images/banner/slider_2.jpg" alt="">
                 </div>
             </a-carousel>
         </div>

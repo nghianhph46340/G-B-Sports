@@ -2,7 +2,7 @@
     <div class="best-selling-products" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container p-0">
             <div class="section-header">
-                <h4 class="section-title">Giày và phụ kiện bán chạy</h4>
+                <h4 class="section-title">Giày và tất HOT nhất</h4>
                 <div class="section-divider"></div>
             </div>
 
@@ -167,7 +167,7 @@ const showArrows = ref(false);
 
 // Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
 onMounted(async () => {
-    await store.getSanPhamBySP('giày');
+    await store.getSanPhamBySP('giày,tất');
     // Chuyển đổi dữ liệu từ API sang định dạng phù hợp với template
     if (store.listSanPhamBanHang && store.listSanPhamBanHang.length > 0) {
         bestSellingProducts.value = store.listSanPhamBanHang.map(item => ({

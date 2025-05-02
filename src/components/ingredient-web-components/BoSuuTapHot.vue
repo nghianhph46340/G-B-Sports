@@ -19,16 +19,13 @@
                     <img src="../../images/icon-hot/Frame 19.webp" alt="">
                 </a>
                 <a href="nav-link" class="collection-item">
-                    <img src="../../images/icon-hot/Frame 22.webp" alt="">
-                </a>
-                <a href="nav-link" class="collection-item">
-                    <img src="../../images/icon-hot/Frame 21.webp" alt="">
+                    <img src="../../images/icon-hot/Frame 26.webp" alt="">
                 </a>
                 <a href="nav-link" class="collection-item">
                     <img src="../../images/icon-hot/Frame 25.webp" alt="">
                 </a>
                 <a href="nav-link" class="collection-item">
-                    <img src="../../images/icon-hot/Frame 27.webp" alt="">
+                    <img src="../../images/icon-hot/Frame 21.webp" alt="">
                 </a>
                 <a href="nav-link" class="collection-item">
                     <img src="../../images/icon-hot/Frame 28 (2).webp" alt="">
