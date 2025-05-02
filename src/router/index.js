@@ -45,7 +45,8 @@ router.beforeEach((to, from, next) => {
           to.name === 'admin-quan-ly-hoa-don' || 
           to.name === 'profile' || 
           to.name === 'admin-quan-ly-san-pham' ||
-          to.name === 'admin-hoa-don-chi-tiet' ) { // Thêm đường dẫn profile
+          to.name === 'admin-hoa-don-chi-tiet' ||
+          to.name === 'traHang') { // Thêm đường dẫn profile
         next(); // Cho phép truy cập
       } else if (to.path === '/admin') {
         next('/admin/banhang'); // Chuyển hướng về trang bán hàng
