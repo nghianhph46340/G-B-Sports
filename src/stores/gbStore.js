@@ -914,6 +914,20 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
+    async locHoaDon(keyword, tuNgay, denNgay, trangThai, loaiHoaDon, page = 0, size = 5) {
+      try {
+        const response = await hoaDonService.locHD(keyword, tuNgay, denNgay, trangThai, loaiHoaDon, page, size);
+        if (response.error) {
+          throw new Error(response.message || 'Không thể lấy dữ liệu hóa đơn.');
+        }
+        this.getAllHoaDonArr = response.content;
+        this.currentHoaDon = response.number;
+        this.totalHoaDon = response.totalPages;
+      } catch (error) {
+        console.error('Lỗi khi tìm kiếm hóa đơn:', error);
+        toast.error('Có lỗi xảy ra')
+      }
+    },
     async filterByDate(tuNgay, denNgay, page = 0, size = 5) {
       try {
         console.log('Từ ngày: ' + tuNgay + 'Đến ngày: ' + denNgay)
@@ -1025,10 +1039,10 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
-    async updateCustomerInfo(maHoaDon, ttkh) {
+    async updateCustomerInfo(maHoaDon, ttkh, phiVanChuyen) {
       try {
         const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || ''
-        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, { ...ttkh, nhanVienDoi })
+        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, { ...ttkh, nhanVienDoi }, phiVanChuyen)
         if (response.error) {
           toast.error('Cập nhật thông tin khách hàng thất bại')
           return
@@ -1086,14 +1100,13 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra khi thêm sản phẩm')
       }
     },
-    async removeProductFromInvoice(maHoaDon, idCTSP, soLuong) {
+    async removeProductFromInvoice(maHoaDon, idCTSP) {
       try {
         const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || ''
         const noiDungDoi = 'Xóa sản phẩm khỏi hóa đơn' // Giá trị mặc định
         const response = await hoaDonService.removeProductFromInvoice(
           maHoaDon,
           idCTSP,
-          soLuong,
           nhanVienDoi,
           noiDungDoi,
         )

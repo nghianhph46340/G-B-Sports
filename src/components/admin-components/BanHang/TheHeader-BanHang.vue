@@ -242,7 +242,11 @@
                             <!-- <label class="form-label">Địa chỉ nhận hàng</label>
                             <input type="text" class="form-control mb-2" placeholder="Nhập địa chỉ"
                                 v-model="activeTabData.hd.dia_chi"> -->
-                            <label class="form-label">Phí vận chuyển (VNĐ)</label>
+                            <!-- <label class="form-label">Phí vận chuyển (VNĐ)</label> -->
+                            <div class="form-label-with-logo">
+                                <label class="form-label">Phí vận chuyển (VNĐ)</label>
+                                <img src="../../../images/logo/logo_GHTK.png" alt="GHTK Logo" class="ghtk-logo" />
+                            </div>
                             <a-input-number v-model:value="activeTabData.hd.phi_van_chuyen" :min="0"
                                 :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                                 :parser="value => value.replace(/\$\s?|(,*)/g, '')" placeholder="Nhập phí vận chuyển"
@@ -1857,5 +1861,17 @@ const handlePhuongThucChange = async () => {
 .qr-scanner-modal :deep(.ant-modal-body) {
     padding: 16px;
     text-align: center;
+}
+.form-label-with-logo {
+    display: flex;
+    align-items: center;
+    gap: 18px; /* Khoảng cách giữa logo và label */
+    margin-bottom: 8px; /* Khoảng cách dưới */
+}
+
+.ghtk-logo {
+    width: 100px; /* Chiều rộng logo */
+    height: 24px; /* Chiều cao logo */
+    object-fit: contain; /* Đảm bảo logo không bị méo */
 }
 </style>

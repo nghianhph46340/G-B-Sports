@@ -4,21 +4,27 @@
         <div class="d-flex align-items-center gap-2">
             <a-form-item name="range-time-picker" label="Thời gian" class="mb-0">
                 <a-range-picker v-model:value="formState['range-time-picker']" show-time format="DD-MM-YYYY HH:mm:ss"
-                    value-format="YYYY-MM-DD HH:mm:ss" :placeholder="['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']"
-                    @change="handleDateChange" />
+                    value-format="YYYY-MM-DD HH:mm:ss" :placeholder="['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']" />
             </a-form-item>
-            <button class="btn btn-outline-primary d-flex align-items-center" style="height: 32px" @click="filterData">
-                Lọc
-            </button>
         </div>
-        <div class="search-container">
-            <input type="text" class="form-control" placeholder="Tìm kiếm hóa đơn..." v-model="searchKeyword"
-                @input="handleSearch" />
+        <div class="d-flex gap-3">
+            <label class="fw-bold">Loại hóa đơn:</label>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="tatCa" value="Tất cả" v-model="selectedLoaiHoaDon"
+                    @change="handleLoaiHoaDonChange" />
+                <label class="form-check-label" for="tatCa">Tất cả</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="offline" value="Offline" v-model="selectedLoaiHoaDon"
+                    @change="handleLoaiHoaDonChange" />
+                <label class="form-check-label" for="offline">Offline</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" id="online" value="Online" v-model="selectedLoaiHoaDon"
+                    @change="handleLoaiHoaDonChange" />
+                <label class="form-check-label" for="online">Online</label>
+            </div>
         </div>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
-        <h5 class="fw-bold mb-0" style="color: #f33b47;">📋 Danh sách đơn hàng</h5>
         <div class="d-flex align-items-center">
             <label for="limitSelect" class="me-2 fw-medium text-muted mb-0">Hiển thị:</label>
             <select id="limitSelect" class="form-select form-select-sm w-auto" v-model="pageSize"
@@ -27,6 +33,13 @@
                 <option value="10">10</option>
                 <option value="20">20</option>
             </select>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+        <h5 class="fw-bold mb-0" style="color: #f33b47;">📋 Danh sách đơn hàng</h5>
+        <div class="search-container">
+            <input type="text" class="form-control" placeholder="Tìm kiếm hóa đơn..." v-model="searchKeyword"
+                @input="handleSearch" />
         </div>
     </div>
 
@@ -56,6 +69,7 @@
                 <tr>
                     <th scope="col">#</th>
                     <th scope="col">Mã hoá đơn</th>
+                    <th scope="col">Ngày tạo</th>
                     <th scope="col">Khách hàng</th>
                     <th scope="col">Tổng tiền(VNĐ)</th>
                     <th scope="col">Phương thức thanh toán</th>
@@ -69,16 +83,16 @@
                 <tr v-for="(hoaDon, index) in store.getAllHoaDonArr" :key="hoaDon.id_hoa_don">
                     <td>{{ index + 1 }}</td>
                     <td>{{ hoaDon.ma_hoa_don }}</td>
+                    <td>{{ formatDateTime(hoaDon.ngay_tao) }}</td>
                     <td>
                         {{ hoaDon.ho_ten }} <br>
                         {{ hoaDon.sdt_nguoi_nhan }} <br>
-                        {{ hoaDon.dia_chi }}
+                        <!-- {{ hoaDon.dia_chi }} -->
                     </td>
                     <td>{{ formatCurrency(hoaDon.tong_tien_sau_giam) }}</td>
                     <td>{{ hoaDon.hinh_thuc_thanh_toan }}</td>
                     <td>{{ hoaDon.trang_thai }}</td>
                     <td>{{ hoaDon.phuong_thuc_nhan_hang }}</td>
-                    <!-- <td>{{ hoaDon.loai_hoa_don }}</td> -->
                     <td>
                         <span :class="{
                             'status-online': hoaDon.loai_hoa_don === 'Online',
@@ -97,7 +111,8 @@
             </tbody>
             <tbody>
                 <tr v-if="!store.getAllHoaDonArr || store.getAllHoaDonArr.length === 0">
-                    <td colspan="9" class="text-center">Không tìm thấy hóa đơn</td>
+                    <td colspan="10" class="text-center" style="color: #f33b47;">Không tìm thấy hóa đơn bạn muốn tìm!
+                    </td>
                 </tr>
                 <tr v-else v-for="(hoaDon, index) in store.getAllHoaDonArr" :key="hoaDon.id_hoa_don">
                     <!-- Nội dung hiện tại -->
@@ -129,6 +144,7 @@ const searchKeyword = ref('');
 let intervalId = null;
 const pageSize = ref(5);
 const valueTrangThaiDonHang = ref('Tất cả');
+const selectedLoaiHoaDon = ref('Tất cả');
 const trangThaiDonHangOptions = ref([
     { label: 'Chờ xác nhận', value: 'Chờ xác nhận' },
     // { label: 'Đã cập nhật', value: 'Đã cập nhật' },
@@ -155,7 +171,15 @@ const formatCurrency = (value) => {
     if (value === null || value === undefined) return '0';
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Thêm ' VNĐ' nếu cần
 };
-
+const formatDateTime = (date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+const handleLoaiHoaDonChange = async () => {
+    console.log(`Loại hóa đơn đã chọn: ${selectedLoaiHoaDon.value}`);
+    await fetchData(0);
+};
 const countByTrangThai = ref({});
 
 const totalHoaDonCount = computed(() => {
@@ -179,8 +203,7 @@ const calculateCounts = () => {
 };
 // Hàm xử lý tìm kiếm
 const handleSearch = () => {
-    store.searchHoaDon(searchKeyword.value, 0, pageSize.value);
-    // calculateCounts();
+    fetchData(0);
 };
 
 // Theo dõi thay đổi của `searchKeyword` để tự động tìm kiếm
@@ -190,20 +213,31 @@ watch(searchKeyword, (newKeyword) => {
         fetchData(0);
     }
 });
+watch(() => formState['range-time-picker'], async (newRange) => {
+    const [tuNgay, denNgay] = newRange || [];
+    if (tuNgay && denNgay) {
+        console.log('Tự động tìm kiếm với khoảng thời gian:', tuNgay, denNgay);
+        await fetchData(0);
+    } else {
+        console.log('Xóa khoảng thời gian, lấy lại tất cả hóa đơn');
+        await fetchData(0);
+    }
+});
 
 const fetchData = async (page = 0) => {
     store.currentHoaDon = page;
-
-    if (searchKeyword.value.trim()) {
-        // Nếu có từ khóa tìm kiếm, gọi API tìm kiếm
-        await store.searchHoaDon(searchKeyword.value, page, pageSize.value);
-    } else if (valueTrangThaiDonHang.value === 'Tất cả') {
-        // Lấy tất cả hóa đơn nếu không chọn trạng thái cụ thể
-        await store.getAllHoaDon(page, pageSize.value);
-    } else {
-        // Lọc hóa đơn theo trạng thái đã chọn
-        await store.filterByTrangThai(valueTrangThaiDonHang.value, page, pageSize.value);
-    }
+    const [tuNgay, denNgay] = formState['range-time-picker'] || [];
+    const loaiHoaDon = selectedLoaiHoaDon.value === 'Tất cả' ? '' : selectedLoaiHoaDon.value;
+    const trangThai = valueTrangThaiDonHang.value === 'Tất cả' ? '' : valueTrangThaiDonHang.value;
+    await store.locHoaDon(
+        searchKeyword.value,
+        tuNgay || '',
+        denNgay || '',
+        trangThai,
+        loaiHoaDon,
+        page,
+        pageSize.value
+    );
 
     // Cập nhật số lượng hóa đơn theo trạng thái
     // calculateCounts();
@@ -224,30 +258,30 @@ const filterData = async () => {
         return;
     }
     isFilteringByDate.value = true; // Bật trạng thái lọc theo ngày
-    await store.filterByDate(tuNgay, denNgay, 0, pageSize.value);
+    await fetchData(0);
     // calculateCounts();
 };
-const handleDateChange = (value) => {
-    if (!value || value.length === 0) {
-        // Nếu giá trị bị xóa, hủy trạng thái lọc
-        resetFilters();
-    }
-};
-const resetFilters = async () => {
-    valueTrangThaiDonHang.value = 'Tất cả';
-    formState['range-time-picker'] = [];
-    isFilteringByDate.value = false; // Tắt trạng thái lọc theo ngày
-    await fetchData(0); // Lấy lại tất cả hóa đơn
-};
+// const handleDateChange = (value) => {
+//     if (!value || value.length === 0) {
+//         // Nếu giá trị bị xóa, hủy trạng thái lọc
+//         resetFilters();
+//     }
+// };
+// const resetFilters = async () => {
+//     valueTrangThaiDonHang.value = 'Tất cả';
+//     formState['range-time-picker'] = [];
+//     isFilteringByDate.value = false; // Tắt trạng thái lọc theo ngày
+//     // Thêm reset các bộ lọc khác
+//     searchKeyword.value = '';
+//     selectedLoaiHoaDon.value = 'Tất cả';
+//     await fetchData(0); // Lấy lại tất cả hóa đơn
+// };
 
 onMounted(async () => {
     await fetchData(0); // Mặc định lấy tất cả hóa đơn
     // Tự động cập nhật danh sách hóa đơn sau mỗi 5 giây
     intervalId = setInterval(async () => {
-        if (!isFilteringByDate.value) {
-            // Chỉ làm mới nếu không lọc theo ngày
-            await fetchData(store.currentHoaDon);
-        }
+        await fetchData(store.currentHoaDon);
     }, 5000);
 });
 onUnmounted(() => {
@@ -285,60 +319,83 @@ onUnmounted(() => {
 .status-strip {
     display: flex;
     flex-wrap: wrap;
-    gap: 0; /* Không có khoảng cách giữa các nút */
+    gap: 0;
+    /* Không có khoảng cách giữa các nút */
     justify-content: center;
     margin-top: 16px;
-    border-bottom: 2px solid #dcdcdc; /* Đường viền dưới */
+    border-bottom: 2px solid #dcdcdc;
+    /* Đường viền dưới */
 }
 
 /* Nút trạng thái */
 .status-strip .btn {
     flex: 1;
-    min-width: 140px; /* Đảm bảo nút không quá nhỏ */
+    min-width: 140px;
+    /* Đảm bảo nút không quá nhỏ */
     height: 40px;
     font-size: 14px;
     font-weight: bold;
-    text-transform: uppercase; /* Chữ in hoa */
-    border: none; /* Loại bỏ viền mặc định */
-    border-top-left-radius: 8px; /* Bo góc trên trái */
-    border-top-right-radius: 8px; /* Bo góc trên phải */
-    border-bottom: 2px solid transparent; /* Đường viền dưới mặc định */
-    transition: all 0.3s ease-in-out; /* Hiệu ứng hover */
+    text-transform: uppercase;
+    /* Chữ in hoa */
+    border: none;
+    /* Loại bỏ viền mặc định */
+    border-top-left-radius: 8px;
+    /* Bo góc trên trái */
+    border-top-right-radius: 8px;
+    /* Bo góc trên phải */
+    border-bottom: 2px solid transparent;
+    /* Đường viền dưới mặc định */
+    transition: all 0.3s ease-in-out;
+    /* Hiệu ứng hover */
     cursor: pointer;
-    background-color: #e9ecef; /* Màu nền xám nhạt */
-    color: #495057; /* Màu chữ đậm */
+    background-color: #e9ecef;
+    /* Màu nền xám nhạt */
+    color: #495057;
+    /* Màu chữ đậm */
     text-align: center;
     display: flex;
     align-items: center;
-    justify-content: center; /* Đảm bảo chữ nằm giữa nút */
+    justify-content: center;
+    /* Đảm bảo chữ nằm giữa nút */
 }
 
 /* Nút trạng thái đang được chọn */
 .status-strip .btn-primary {
-    background-color: #ffffff; /* Nền trắng */
-    color: #007bff; /* Màu xanh dương đậm */
-    border-bottom: 2px solid #007bff; /* Đường viền dưới xanh dương */
+    background-color: #ffffff;
+    /* Nền trắng */
+    color: #f33b47;
+    /* Màu xanh dương đậm */
+    border-bottom: 2px solid #f33b47;
+    /* Đường viền dưới xanh dương */
     font-weight: bold;
 }
 
 /* Nút trạng thái chưa được chọn */
 .status-strip .btn-outline-primary {
-    background-color: #f8f9fa; /* Nền xám nhạt */
-    color: #6c757d; /* Màu chữ xám */
-    border-bottom: 2px solid #dcdcdc; /* Đường viền dưới nhạt */
+    background-color: #f8f9fa;
+    /* Nền xám nhạt */
+    color: #6c757d;
+    /* Màu chữ xám */
+    border-bottom: 2px solid #dcdcdc;
+    /* Đường viền dưới nhạt */
 }
 
 /* Hover cho nút chưa được chọn */
 .status-strip .btn-outline-primary:hover {
-    background-color: #ffffff; /* Nền trắng khi hover */
-    color: #007bff; /* Màu xanh dương khi hover */
-    border-bottom: 2px solid #007bff; /* Đường viền dưới xanh dương khi hover */
+    background-color: #ffffff;
+    /* Nền trắng khi hover */
+    color: #f33b47;
+    /* Màu xanh dương khi hover */
+    border-bottom: 2px solid #f33b47;
+    /* Đường viền dưới xanh dương khi hover */
 }
 
 /* Hover cho nút đang được chọn */
 .status-strip .btn-primary:hover {
-    background-color: #ffffff; /* Giữ nguyên nền trắng */
-    color: #0056b3; /* Màu xanh dương đậm hơn */
+    background-color: #ffffff;
+    /* Giữ nguyên nền trắng */
+    color: #f33b47;
+    /* Màu xanh dương đậm hơn */
 }
 
 /* Badge hiển thị số lượng */
@@ -354,10 +411,12 @@ onUnmounted(() => {
     height: 24px;
     line-height: 24px;
     border-radius: 50%;
-    background-color: #007bff; /* Màu xanh dương */
+    background-color: #007bff;
+    /* Màu xanh dương */
     color: white;
     font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Đổ bóng cho badge */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    /* Đổ bóng cho badge */
 }
 
 .d-flex {
@@ -374,6 +433,7 @@ onUnmounted(() => {
     height: 32px;
     /* Đảm bảo chiều cao bằng với nút lọc */
     font-size: 14px;
+    color: #f33b47;
 }
 
 /* Trạng thái Online */
@@ -402,5 +462,38 @@ onUnmounted(() => {
     text-align: center;
     background-color: rgba(40, 167, 69, 0.1);
     /* Nền xanh lá nhạt */
+}
+
+.form-check-input {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid #f33b47;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    background-color: white;
+}
+
+.form-check-input:checked::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background-color: #f33b47;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.form-check-input:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+.form-check-input:focus-visible {
+    box-shadow: none;
+    outline: none;
 }
 </style>
