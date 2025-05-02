@@ -223,21 +223,7 @@ const normalizeString = (str, mode = 'default') => {
     }
 };
 
-// Thêm hàm kiểm tra tên nhân viên
-const validateTenNhanVien = (ten) => {
-    const normalizedTen = normalizeString(ten);
-    const hasNonNumber = /[^0-9]/.test(normalizedTen);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(normalizedTen);
-    return normalizedTen.length >= 2 && normalizedTen.length <= 50 && hasNonNumber && !hasSpecialChar;
-};
 
-// Thêm hàm kiểm tra địa chỉ cụ thể
-const validateDiaChi = (diaChi) => {
-    const normalizedDiaChi = normalizeString(diaChi);
-    const hasNonNumber = /[^0-9]/.test(normalizedDiaChi);
-    const hasInvalidChar = /[@$!^%&*<>{}]/.test(normalizedDiaChi);
-    return normalizedDiaChi.length >= 2 && normalizedDiaChi.length <= 100 && hasNonNumber && !hasInvalidChar;
-};
 
 const validateForm = () => {
     let isValid = true;
@@ -258,8 +244,8 @@ const validateForm = () => {
         errors.tenNhanVien.push('Vui lòng nhập tên nhân viên');
         isValid = false;
     } else {
-        if (formData.tenNhanVien.length < 2 || formData.tenNhanVien.length > 50) {
-            errors.tenNhanVien.push('Tên nhân viên phải từ 2 đến 50 ký tự');
+        if (formData.tenNhanVien.length < 2 || formData.tenNhanVien.length > 100) {
+            errors.tenNhanVien.push('Tên nhân viên phải từ 2 đến 100 ký tự');
             isValid = false;
         }
         if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(formData.tenNhanVien)) {
@@ -270,6 +256,12 @@ const validateForm = () => {
             errors.tenNhanVien.push('Tên nhân viên không được chứa số');
             isValid = false;
         }
+    }
+
+    // Check giới tính
+    if (formData.gioiTinh === null || formData.gioiTinh === undefined || formData.gioiTinh === '') {
+        errors.gioiTinh.push('Vui lòng chọn giới tính');
+        isValid = false;
     }
 
     // Check ngày sinh

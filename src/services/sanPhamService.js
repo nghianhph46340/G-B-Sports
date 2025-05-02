@@ -520,6 +520,34 @@ const giaMax = async () => {
     return response.data
   } catch (error) {
     console.error('Lỗi khi lấy giá max:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy giá max',
+    }
+  }
+}
+const getSanPhamByTenSP = async (tenSanPham) => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'getSanPhamByTenSP?tenSanPham=' + tenSanPham)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm',
+    }
+  }
+}
+const getSanPhamByTenDM  = async (tenDanhMuc) => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'getSanPhamByTenDM?tenDanhMuc=' + tenDanhMuc)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm',
+    }
   }
 }
 export const sanPhamService = {
@@ -567,5 +595,7 @@ export const sanPhamService = {
   updateDanhMuc,
   updateKichThuoc,
   locSanPhamVaChiTietSanPham,
-  giaMax
+  giaMax,
+  getSanPhamByTenSP,
+  getSanPhamByTenDM
 }

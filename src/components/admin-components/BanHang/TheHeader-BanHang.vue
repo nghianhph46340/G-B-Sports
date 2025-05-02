@@ -771,6 +771,10 @@ const calculatedChange = computed(() => {
 });
 
 const isPaymentDisabled = computed(() => {
+    if (currentInvoiceItems.value.length === 0) {
+        return true; // Không có sản phẩm nào trong hóa đơn
+        
+    }
     if (activeTabData.value?.hd?.hinh_thuc_thanh_toan === 'Tiền mặt') {
         const total = activeTabData.value.hd.tong_tien_sau_giam || 0;
         const cash = tienKhachDua.value || 0;

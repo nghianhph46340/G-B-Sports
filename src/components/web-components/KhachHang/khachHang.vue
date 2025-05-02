@@ -618,7 +618,7 @@
         <a-button type="primary" :loading="updateCustomerModal.loading" @click="saveCustomerInfo">Lưu</a-button>
       </div>
     </a-modal>
-  </div>
+    </div>
 </template>
 
 <script setup>

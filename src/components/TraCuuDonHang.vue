@@ -49,7 +49,7 @@
                             <h2>Thông tin đơn hàng #{{ thongTinHoaDon.ma_hoa_don }}</h2>
                             <p v-if="thongTinHoaDon.ma_hoa_don">Ngày đặt hàng: {{
                                 dinhDangNgayGio(thongTinHoaDon.ngay_tao)
-                                }}
+                            }}
                             </p>
                         </div>
                         <div :class="['order-status', `status-${currentStatus?.code || 'pending'}`]">
@@ -153,6 +153,12 @@
                 </div>
             </div>
 
+            <!-- Component in hóa đơn (ẩn mặc định) -->
+            <div style="display: none;">
+                <print-invoice ref="printInvoiceRef" :hoa-don="thongTinHoaDon"
+                    :hoa-don-chi-tiet="thongTinHoaDonChiTiet" />
+            </div>
+
             <!-- FAQ Section -->
             <div class="tracking-faqs">
                 <h2>Các câu hỏi thường gặp</h2>
@@ -217,6 +223,7 @@ const trackingCode = ref('');
 const dangTai = ref(false);
 const daTimKiem = ref(false);
 const timThayDonHang = ref(false);
+const isLoading = ref(false);
 
 // Dữ liệu mẫu cho đơn hàng - Trong ứng dụng thực tế, dữ liệu này sẽ được lấy từ API
 const donHang = reactive({
@@ -302,6 +309,7 @@ const coTheHuyDonHang = computed(() => {
 const hienThiKetQuaTimKiem = async () => {
     try {
         dangTai.value = true;
+        isLoading.value = true;
 
         // Gọi API và kiểm tra response
         const thongTinHoaDonResponse = await banHangOnlineService.getThongTinHoaDon(trackingCode.value);
@@ -324,9 +332,11 @@ const hienThiKetQuaTimKiem = async () => {
         // Kiểm tra mã hóa đơn
         if (trackingCode.value === thongTinHoaDon.value.ma_hoa_don) {
             timThayDonHang.value = true;
+            dataLoaded.value = true;
             message.success('Tìm thấy thông tin đơn hàng!');
         } else {
             timThayDonHang.value = false;
+            dataLoaded.value = false;
             message.error('Không tìm thấy đơn hàng với mã bạn đã nhập!');
         }
     } catch (error) {
@@ -334,6 +344,7 @@ const hienThiKetQuaTimKiem = async () => {
         message.error('Có lỗi xảy ra khi tìm kiếm đơn hàng');
     } finally {
         dangTai.value = false;
+        isLoading.value = false;
     }
 };
 
@@ -1605,6 +1616,10 @@ const inHoaDon = async () => {
 .order-actions .ant-btn-primary {
     background: linear-gradient(135deg, #3f6ad8, #25b0ed);
     border: none;
+}
+
+.order-actions .ant-btn-primary:hover {
+    background: linear-gradient(135deg, #25b0ed, #3f6ad8);
 }
 
 .order-actions .ant-btn-danger {

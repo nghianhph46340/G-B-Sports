@@ -57,44 +57,40 @@ watch(searchInput, (newValue) => {
 });
 
 // Hàm xử lý tìm kiếm
+// Hàm xử lý tìm kiếm
 const handleSearch = async () => {
-    if (!searchInput.value || searchInput.value.trim() === '') {
-        clearSearchResults();
-        return;
-    }
-
+  // Giữ lại các bộ lọc hiện tại
+  const currentFilters = { ...store.searchFilterParams };
+  
+  if (!searchInput.value || searchInput.value.trim() === '') {
+    // Nếu ô tìm kiếm trống, chỉ xóa keyword, giữ nguyên các bộ lọc
+    currentFilters.keyword = '';
+    store.updateSearchFilterParams(currentFilters);
+  } else {
+    // Cập nhật keyword nhưng giữ nguyên các bộ lọc
+    currentFilters.keyword = searchInput.value;
+    store.updateSearchFilterParams(currentFilters);
+    
     console.log('Đang tìm kiếm với từ khóa:', searchInput.value);
-
-    try {
-        // Tìm kiếm dựa trên route hiện tại
-        if (route.name === 'admin-quan-ly-san-pham') {
-            // Cập nhật keyword trong đối tượng searchFilterParams, giữ nguyên các tham số lọc khác
-            store.updateSearchFilterParams({ keyword: searchInput.value });
-            
-            // Áp dụng tìm kiếm và lọc với tất cả tham số
-            await store.applySearchAndFilter();
-            
-            console.log('Kết quả tìm kiếm:', store.filteredProductsData);
-            console.log('Số lượng sản phẩm tìm thấy:', store.filteredProductsData.length);
-        }
-        else if (route.name === 'admin-quan-ly-nhan-vien') {
-            // Xử lý tìm kiếm nhân viên như cũ
-            store.searchs = searchInput.value;
-            await store.searchNhanVien(searchInput.value, 0, 5);
-            console.log('Kết quả tìm kiếm nhân viên:', store.nhanVienSearch);
-        }
-        else if (route.name === 'admin-quan-ly-khach-hang') {
-            // Xử lý tìm kiếm khách hàng như cũ
-            store.searchs = searchInput.value;
-            await store.getAllKhachHang(0, 3, searchInput.value, null);
-            console.log('Kết quả tìm kiếm khách hàng:', store.khachHangSearch);
-        }
-        else {
-            console.log('Chức năng tìm kiếm chưa được hỗ trợ cho route này:', route.name);
-        }
-    } catch (error) {
-        console.error('Lỗi khi tìm kiếm:', error);
-    }
+    console.log('Các bộ lọc hiện tại:', currentFilters);
+  }
+  
+  try {
+    // Áp dụng cả tìm kiếm và lọc
+    await store.applySearchAndFilter();
+    
+    // Phát sự kiện để thông báo thay đổi
+    window.dispatchEvent(new CustomEvent('search-filter-changed', {
+      detail: { 
+        results: store.filteredProductsData,
+        keyword: searchInput.value
+      }
+    }));
+    
+    console.log('Kết quả tìm kiếm và lọc:', store.filteredProductsData.length, 'sản phẩm');
+  } catch (error) {
+    console.error('Lỗi khi tìm kiếm:', error);
+  }
 };
 </script>
 
