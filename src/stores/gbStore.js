@@ -142,6 +142,38 @@ export const useGbStore = defineStore('gbStore', {
 
   ///Đầu mút2
     actions: {
+      // Sản phẩm siêu sale
+    // Thêm action mới cho siêu sale
+    async getSanPhamSieuSale() {
+      try {
+        this.isLoading = true;
+        this.error = null;
+        
+        const data = await sanPhamService.getSanPhamSieuSale();
+        if (!data.error) {
+          this.listSanPhamBanHang = data.map(item => ({
+            id: item.id_san_pham,
+            name: item.ten_san_pham,
+            price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+            oldPrice: Number(item.gia_max || 0),
+            brand: item.ten_thuong_hieu,
+            image: item.hinh_anh,
+            gender: item.gioi_tinh || '',
+            type: item.ten_danh_muc || '',
+            colors: item.mau_sac ? item.mau_sac.split(',') : [],
+            rating: item.danh_gia || 0,
+            reviews: item.so_luong_danh_gia || 0,
+          }));
+        } else {
+          this.error = data.message;
+        }
+      } catch (error) {
+        this.error = error.message;
+        console.error('Lỗi khi lấy sản phẩm siêu sale:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
 // List sản phẩm theo tên sản phẩm(trang sản phẩm)
       async getSanPhamByTenSP(keywords) {
         console.log('Gọi getSanPhamByTenSP với:', keywords);
@@ -3394,4 +3426,6 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
   },
+
+
 })

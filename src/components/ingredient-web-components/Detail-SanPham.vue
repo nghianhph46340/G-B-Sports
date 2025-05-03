@@ -274,97 +274,8 @@
             </div>
         </div>
 
-        <!-- Sản phẩm tương tự -->
-        <div class="rec-related-products-section" ref="recommendedProductsRef">
-          <h2 class="rec-related-section-title">Sản phẩm tương tự</h2>
-          <div class="rec-carousel-container" @mouseenter="showRecArrows = true" @mouseleave="showRecArrows = false">
-            <button class="rec-custom-arrow rec-prev-arrow" @click="prevRecSlide" :class="{ 'visible': showRecArrows }">
-              <left-outlined />
-            </button>
-            <button class="rec-custom-arrow rec-next-arrow" @click="nextRecSlide" :class="{ 'visible': showRecArrows }">
-              <right-outlined />
-            </button>
-            <a-carousel ref="recCarousel" dots-class="custom-dots">
-              <div v-for="(slideGroup, groupIndex) in recProductSlides" :key="groupIndex">
-                <div class="row rec-related-products-grid">
-                  <div class="col rec-product-card" v-for="(rec, index) in slideGroup" :key="index"
-                    @mouseenter="activeRecProduct = rec.id" @mouseleave="activeRecProduct = null">
-                    <div class="rec-product-image-container">
-                      <img class="rec-product-image" :src="rec.image" alt="Product image">
-                      <div class="rec-discount-badge" v-if="rec.discountPercent">
-                        -{{ rec.discountPercent }}%
-                      </div>
-                      <div class="rec-product-overlay" :class="{ 'active': activeRecProduct === rec.id }">
-                        <div class="rec-overlay-buttons">
-                          <router-link
-                            :to="{ name: 'sanPhamDetail-BanHang', params: { id: rec.id } }"
-                            class="rec-overlay-btn view-btn">
-                            <eye-outlined />
-                            <span>Xem</span>
-                          </router-link>
-                          <button class="rec-overlay-btn cart-btn" @click="showRecProductDetail(rec)">
-                            <shopping-cart-outlined />
-                            <span>Thêm</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="rec-product-info">
-                      <div class="rec-product-price-row">
-                        <span class="rec-product-price">{{ rec.price }}</span>
-                        <span class="rec-product-old-price" v-if="rec.oldPrice">{{ rec.oldPrice }}</span>
-                        <span class="rec-product-discount" v-if="rec.discount">{{ rec.discount }}</span>
-                      </div>
-                      <h6 class="rec-product-name">{{ rec.name }}</h6>
-                      <div class="rec-product-meta">
-                        <span class="rec-product-brand">{{ rec.brand }}</span>
-                        <div class="rec-product-rating">
-                          <star-filled />
-                          <span>{{ rec.rating }} ({{ rec.reviews }})</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </a-carousel>
-          </div>
-          <!-- Modal xem nhanh sản phẩm tương tự -->
-          <a-modal v-model:visible="recModalVisible" :title="selectedRecProduct?.name" width="800px" :footer="null"
-            @cancel="handleRecModalCancel" :zIndex="9999" :maskStyle="{ zIndex: 9998 }" :wrapStyle="{ zIndex: 9999 }" centered
-            :style="{ top: '20px' }">
-            <div class="rec-product-detail-modal">
-              <div class="rec-product-detail-content">
-                <div class="rec-product-images">
-                  <div class="rec-main-image">
-                    <img :src="selectedRecProduct?.image" :alt="selectedRecProduct?.name">
-                  </div>
-                </div>
-                <div class="rec-product-info-detail">
-                  <div class="rec-price-section">
-                    <span class="rec-current-price">{{ selectedRecProduct?.price }}</span>
-                    <span class="rec-old-price" v-if="selectedRecProduct?.oldPrice">{{ selectedRecProduct?.oldPrice }}</span>
-                    <span class="rec-discount-badge" v-if="selectedRecProduct?.discount">{{ selectedRecProduct?.discount }}</span>
-                  </div>
-                  <div class="rec-brand-section">
-                    <span class="rec-brand-label">Thương hiệu:</span>
-                    <span class="rec-brand-value">{{ selectedRecProduct?.brand }}</span>
-                  </div>
-                  <div class="rec-rating-section">
-                    <div class="rec-rating">
-                      <star-filled />
-                      <span>{{ selectedRecProduct?.rating }} ({{ selectedRecProduct?.reviews }})</span>
-                    </div>
-                  </div>
-                  <div class="rec-description-section">
-                    <h4>Mô tả sản phẩm</h4>
-                    <p>{{ selectedRecProduct?.description || 'Chưa có mô tả chi tiết' }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a-modal>
-        </div>
+       
+         
 
         <!-- Modal xem ảnh toàn màn hình -->
         <div class="fullscreen-modal" v-if="showFullscreen" @click="showFullscreen = false">
@@ -1540,12 +1451,23 @@ const buyNow = () => {
 
     // Lấy URL hình ảnh an toàn
     let imageUrl = '';
-    if (product.value.hinh_anh && product.value.hinh_anh.length > 0) {
-        if (product.value.hinh_anh[currentImageIndex.value] && product.value.hinh_anh[currentImageIndex.value].url) {
+    if (product.value) {
+        // Kiểm tra nếu hinh_anh là string (trường hợp 1 ảnh)
+        if (typeof product.value.hinh_anh === 'string') {
+            imageUrl = product.value.hinh_anh;
+        }
+        // Kiểm tra nếu hinh_anh là mảng (trường hợp nhiều ảnh)
+        else if (Array.isArray(product.value.hinh_anh) && product.value.hinh_anh.length > 0) {
+            if (product.value.hinh_anh[currentImageIndex.value]?.url) {
             imageUrl = product.value.hinh_anh[currentImageIndex.value].url;
         } else {
-            // Nếu không có URL, lấy hình ảnh đầu tiên
-            imageUrl = product.value.hinh_anh[0]?.url || '';
+                // Nếu phần tử hiện tại không có URL, thử lấy URL trực tiếp
+                imageUrl = product.value.hinh_anh[currentImageIndex.value] || product.value.hinh_anh[0] || '';
+            }
+        }
+        // Nếu không có ảnh, dùng ảnh mặc định
+        if (!imageUrl) {
+            imageUrl = 'http://res.cloudinary.com/dtwsqkqpc/image/upload/v1742823877/oionww3qsqhfwvuvxeko.jpg';
         }
     }
 
@@ -2522,6 +2444,9 @@ const handleRecModalCancel = () => {
   recModalVisible.value = false;
   selectedRecProduct.value = null;
 };
+
+// Khai báo sectionRef
+const sectionRef = ref(null);
 
 </script>
 
