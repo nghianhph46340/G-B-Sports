@@ -5,17 +5,17 @@
                 <div class="logo-section col-sm-2 align-items-center">
                     <img src="../images/logo/logo2.png" @click="chuyenTrang('/home')" class="logo-image img-fluid ms-2"
                         alt="GB Sports Logo">
-                    <!-- <div class="language-selector col-sm-3 d-flex justify-content-center align-items-center">
-                        <span class="h-100 langue" @click="store.getLangue(store.check)">
-                            {{ !store.changeLanguage.nguoiDung ? 'EN' : store.language }}
-                        </span>
-                    </div> -->
                 </div>
                 <div class="search-section col-sm-6">
                     <div class="search-container d-flex align-items-center">
                         <Search class="search-icon ms-3" />
-                        <input type="text" @click="store.showModal(true)" class="search-input form-control"
-                            placeholder="Bạn đang muốn tìm kiếm gì?">
+                        <input 
+                            type="text" 
+                            v-model="searchKeyword"
+                            @keyup.enter="handleSearch"
+                            class="search-input form-control"
+                            placeholder="Bạn đang muốn tìm kiếm gì?"
+                        >
                     </div>
                     <TheHeaderSearchModal />
                 </div>
@@ -95,9 +95,10 @@ const animatedIcon = ref(null);
 const cartItemCount = ref(0); // Số lượng sản phẩm trong giỏ hàng
 const router = useRouter();
 const showMenu = ref(false);
+const searchKeyword = ref('');
 
 const displayName = computed(() => {
-    if (store.isLoggedIn && store.userDetails) {
+    if (store.isLoggedIn && store.userDetails || sessionStorage.getItem('userDetails')) {
         return store.userDetails.tenKhachHang;
     }
     return store.changeLanguage.nguoiDung || 'Đăng nhập';
@@ -185,6 +186,35 @@ const updateCartCount = async () => {
 const navigateTo = (path) => {
     showMenu.value = false; // Đóng dropdown
     chuyenTrang(path); // Chuyển trang
+};
+
+// Thêm hàm xử lý tìm kiếm
+const handleSearch = async () => {
+    if (!searchKeyword.value.trim()) return;
+
+    try {
+        store.isProductLoading = true;
+        // Gọi API tìm kiếm và lưu kết quả vào store
+        await store.getSanPhamByTenSP(searchKeyword.value);
+        
+        // Đóng modal search nếu đang mở
+        store.showModal(false);
+        
+        // Điều hướng đến trang danh sách sản phẩm
+        await router.push({
+            path: '/danhSachSanPham',
+            query: { 
+                filter: searchKeyword.value 
+            }
+        });
+
+        // Reset input sau khi tìm kiếm
+        searchKeyword.value = '';
+    } catch (error) {
+        console.error('Lỗi khi tìm kiếm:', error);
+    } finally {
+        store.isProductLoading = false;
+    }
 };
 
 // Cập nhật lại onMounted để thêm listener document.click

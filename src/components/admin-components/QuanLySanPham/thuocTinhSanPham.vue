@@ -508,20 +508,20 @@ const colorColumns = [
         key: 'status',
         width: '15%'
     },
-    {
-        title: 'Ngày tạo',
-        dataIndex: 'ngay_tao',
-        key: 'ngay_tao',
-        width: '15%',
-        render: (text) => dayjs(text).format('DD/MM/YYYY HH:mm')
-    },
-    {
-        title: 'Ngày sửa',
-        dataIndex: 'ngay_sua',
-        key: 'ngay_sua',
-        width: '15%',
-        render: (text) => text ? dayjs(text).format('DD/MM/YYYY HH:mm') : ''
-    },
+    // {
+    //     title: 'Ngày tạo',
+    //     dataIndex: 'ngay_tao',
+    //     key: 'ngay_tao',
+    //     width: '15%',
+    //     render: (text) => dayjs(text).format('DD/MM/YYYY HH:mm')
+    // },
+    // {
+    //     title: 'Ngày sửa',
+    //     dataIndex: 'ngay_sua',
+    //     key: 'ngay_sua',
+    //     width: '15%',
+    //     render: (text) => text ? dayjs(text).format('DD/MM/YYYY HH:mm') : ''
+    // },
     {
         title: 'Thao tác',
         key: 'action',
@@ -555,20 +555,20 @@ const sizeColumns = [
         key: 'status',
         width: '15%'
     },
-    {
-        title: 'Ngày tạo',
-        dataIndex: 'ngay_tao',
-        key: 'ngay_tao',
-        width: '15%',
-        render: (text) => dayjs(text).format('DD/MM/YYYY HH:mm')
-    },
-    {
-        title: 'Ngày sửa',
-        dataIndex: 'ngay_sua',
-        key: 'ngay_sua',
-        width: '15%',
-        render: (text) => text ? dayjs(text).format('DD/MM/YYYY HH:mm') : ''
-    },
+    // {
+    //     title: 'Ngày tạo',
+    //     dataIndex: 'ngay_tao',
+    //     key: 'ngay_tao',
+    //     width: '15%',
+    //     render: (text) => dayjs(text).format('DD/MM/YYYY HH:mm')
+    // },
+    // {
+    //     title: 'Ngày sửa',
+    //     dataIndex: 'ngay_sua',
+    //     key: 'ngay_sua',
+    //     width: '15%',
+    //     render: (text) => text ? dayjs(text).format('DD/MM/YYYY HH:mm') : ''
+    // },
     {
         title: 'Thao tác',
         key: 'action',

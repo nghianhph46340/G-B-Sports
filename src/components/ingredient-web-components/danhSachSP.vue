@@ -5,7 +5,7 @@
       <a-breadcrumb class="breadcrumb">
         <a-breadcrumb-item @click="goHome" style="cursor:pointer">Trang chủ</a-breadcrumb-item>
         <a-breadcrumb-item>
-          {{ getBreadcrumbLabel(filterKeywords) }}
+          {{ getBreadcrumbLabel }}
         </a-breadcrumb-item>
       </a-breadcrumb>
     </div>
@@ -75,85 +75,95 @@
 
       <!-- Danh sách sản phẩm -->
       <section class="product-list">
-        <div class="list-header">
-          <span>{{ filteredProducts.length }} Sản phẩm</span>
-          <a-select v-model:value="sortBy" style="width: 160px">
-            <a-select-option value="default">Sắp xếp theo</a-select-option>
-            <a-select-option value="price-asc">Giá tăng dần</a-select-option>
-            <a-select-option value="price-desc">Giá giảm dần</a-select-option>
-          </a-select>
-        </div>
-        <a-row :gutter="[24, 24]">
-          <a-col
-            v-for="product in displayedProducts"
-            :key="product.id"
-            :xs="24" :sm="12" :md="8" :lg="6"
-          >
-            <div class="product-card" @mouseenter="activeProduct = product.id" @mouseleave="activeProduct = null">
-              <div class="product-image-container">
-                <img class="product-image" :src="product.image" alt="Product image">
-                <div class="discount-badge" v-if="product.oldPrice">
-                  -{{ Math.round(100 * (1 - product.price / product.oldPrice)) }}%
-                </div>
-                <div class="product-overlay" :class="{ 'active': activeProduct === product.id }">
-                  <div class="overlay-buttons">
-                    <button class="overlay-btn view-btn" @click="router.push('/sanphamdetail/'+product.id)">
-                      <eye-outlined />
-                      <span>Xem</span>
-                    </button>
-                    <button class="overlay-btn cart-btn">
-                      <shopping-cart-outlined />
-                      <span>Thêm</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="product-info">
-                <div class="product-price-row">
-                  <span class="product-price">{{ formatCurrency(product.price) }}</span>
-                  <span class="product-old-price" v-if="product.oldPrice">{{ formatCurrency(product.oldPrice) }}</span>
-                  <span class="product-discount" v-if="product.oldPrice">
-                    -{{ Math.round(100 * (1 - product.price / product.oldPrice)) }}%
-                  </span>
-                </div>
-                <h6 class="product-name">{{ product.name }}</h6>
-                <div class="product-meta">
-                  <span class="product-brand">{{ product.brand }}</span>
-                  <div class="product-rating">
-                    <star-filled />
-                    <span>{{ product.rating || 0 }} ({{ product.reviews || 0 }})</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a-col>
-        </a-row>
-
-        <!-- Thay thế phần nút Xem thêm cũ bằng đoạn code này -->
-        <div v-if="hasMoreProducts" class="load-more-section">
-          <!-- Phần preview sản phẩm tiếp theo -->
-          <div class="next-products-preview">
-            <a-row :gutter="[24, 24]">
-              <a-col v-for="product in nextProducts" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6">
-                <div class="product-card preview-card">
-                  <div class="product-image-container">
-                    <img class="product-image" :src="product.image" alt="Product preview">
-                  </div>
-                </div>
-              </a-col>
-            </a-row>
+        <!-- Hiển thị loading khi đang tải sản phẩm -->
+        <div v-if="store.isProductLoading" class="loading-container">
+          <div class="loading-spinner">
+            <div class="spinner"></div>
           </div>
-          
-          <!-- Nút xem thêm dạng text -->
-          <button class="text-load-more" @click="loadMore">
-            Xem thêm
-            <down-outlined class="down-icon" />
-          </button>
+          <div class="loading-text">Đang tải sản phẩm...</div>
         </div>
 
-        <!-- Thông báo không có sản phẩm -->
-        <div v-if="displayedProducts.length === 0" class="empty-state">
-          <a-empty description="Không có sản phẩm nào phù hợp" />
+        <div v-else>
+          <div class="list-header">
+            <span>{{ filteredProducts.length }} Sản phẩm</span>
+            <a-select v-model:value="sortBy" style="width: 160px">
+              <a-select-option value="default">Sắp xếp theo</a-select-option>
+              <a-select-option value="price-asc">Giá tăng dần</a-select-option>
+              <a-select-option value="price-desc">Giá giảm dần</a-select-option>
+            </a-select>
+          </div>
+          <a-row :gutter="[24, 24]">
+            <a-col
+              v-for="product in displayedProducts"
+              :key="product.id"
+              :xs="24" :sm="12" :md="8" :lg="6"
+            >
+              <div class="product-card" @mouseenter="activeProduct = product.id" @mouseleave="activeProduct = null">
+                <div class="product-image-container">
+                  <img class="product-image" :src="product.image" alt="Product image">
+                  <div class="discount-badge" v-if="product.oldPrice">
+                    -{{ Math.round(100 * (1 - product.price / product.oldPrice)) }}%
+                  </div>
+                  <div class="product-overlay" :class="{ 'active': activeProduct === product.id }">
+                    <div class="overlay-buttons">
+                      <button class="overlay-btn view-btn" @click="router.push('/sanphamdetail/'+product.id)">
+                        <eye-outlined />
+                        <span>Xem</span>
+                      </button>
+                      <button class="overlay-btn cart-btn">
+                        <shopping-cart-outlined />
+                        <span>Thêm</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="product-info">
+                  <div class="product-price-row">
+                    <span class="product-price">{{ formatCurrency(product.price) }}</span>
+                    <span class="product-old-price" v-if="product.oldPrice">{{ formatCurrency(product.oldPrice) }}</span>
+                    <span class="product-discount" v-if="product.oldPrice">
+                      -{{ Math.round(100 * (1 - product.price / product.oldPrice)) }}%
+                    </span>
+                  </div>
+                  <h6 class="product-name">{{ product.name }}</h6>
+                  <div class="product-meta">
+                    <span class="product-brand">{{ product.brand }}</span>
+                    <div class="product-rating">
+                      <star-filled />
+                      <span>{{ product.rating || 0 }} ({{ product.reviews || 0 }})</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </a-col>
+          </a-row>
+
+          <!-- Thay thế phần nút Xem thêm cũ bằng đoạn code này -->
+          <div v-if="hasMoreProducts" class="load-more-section">
+            <!-- Phần preview sản phẩm tiếp theo -->
+            <div class="next-products-preview">
+              <a-row :gutter="[24, 24]">
+                <a-col v-for="product in nextProducts" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6">
+                  <div class="product-card preview-card">
+                    <div class="product-image-container">
+                      <img class="product-image" :src="product.image" alt="Product preview">
+                    </div>
+                  </div>
+                </a-col>
+              </a-row>
+            </div>
+            
+            <!-- Nút xem thêm dạng text -->
+            <button class="text-load-more" @click="loadMore">
+              Xem thêm
+              <down-outlined class="down-icon" />
+            </button>
+          </div>
+
+          <!-- Thông báo không có sản phẩm -->
+          <div v-if="displayedProducts.length === 0" class="empty-state">
+            <a-empty description="Không có sản phẩm nào phù hợp" />
+          </div>
         </div>
       </section>
     </div>
@@ -194,6 +204,8 @@ const selectedPrice = ref([minPrice, maxPrice]);
 const selectedColors = ref([]);
 const sortBy = ref('default');
 
+const searchQuery = ref('');
+
 // Lấy keyword từ query (có thể là string hoặc mảng)
 const filterKeywords = ref(
   Array.isArray(route.query.filter)
@@ -212,6 +224,76 @@ watch(() => route.query.filter, (newVal) => {
       : [];
 });
 
+// Thêm watch để theo dõi query search
+watch(
+  () => route.query.search,
+  async (newSearchQuery) => {
+    if (newSearchQuery) {
+      try {
+        store.isProductLoading = true;
+        // Reset các filter khi có tìm kiếm mới
+        selectedTypes.value = [];
+        selectedGender.value = null;
+        selectedBrands.value = [];
+        selectedPrice.value = [minPrice, maxPrice];
+        selectedColors.value = [];
+        
+        // Gọi API tìm kiếm
+        await store.getSanPhamByTenSP(newSearchQuery);
+      } catch (error) {
+        console.error('Lỗi khi tìm kiếm:', error);
+      } finally {
+        store.isProductLoading = false;
+      }
+    }
+  },
+  { immediate: true }
+);
+
+// Thêm watch để theo dõi thay đổi route.query
+watch(
+  () => route.query.filter,
+  async (newFilter) => {
+    if (newFilter) {
+      try {
+        store.isProductLoading = true;
+        // Reset các filter hiện tại
+        selectedTypes.value = [];
+        selectedGender.value = null;
+        selectedBrands.value = [];
+        selectedPrice.value = [minPrice, maxPrice];
+        selectedColors.value = [];
+        
+        // Cập nhật filterKeywords để hiển thị đúng breadcrumb
+        filterKeywords.value = [newFilter];
+        
+        // Gọi API tìm kiếm nếu chưa có dữ liệu
+        if (!store.listSanPhamBanHang?.length) {
+          await store.getSanPhamByTenSP(newFilter);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tìm kiếm:', error);
+      } finally {
+        store.isProductLoading = false;
+      }
+    }
+  },
+  { immediate: true }
+);
+
+// Theo dõi khi danh sách sản phẩm thay đổi
+watch(() => store.listSanPhamBanHang, (newProducts) => {
+  if (newProducts) {
+    // Cập nhật breadcrumb nếu đang trong chế độ tìm kiếm
+    filterKeywords.value = [];
+    // Reset các bộ lọc khi có kết quả tìm kiếm mới
+    selectedTypes.value = [];
+    selectedGender.value = null;
+    selectedBrands.value = [];
+    selectedPrice.value = [minPrice, maxPrice];
+    selectedColors.value = [];
+  }
+}, { immediate: true });
 
 // Toggle color chọn
 function toggleColor(color) {
@@ -237,25 +319,25 @@ const filteredProducts = computed(() => {
   // Định nghĩa các danh mục
   const categoryKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
   
-  // Định nghĩa các loại sản phẩm
-  const productTypeKeywords = ['Quần', 'Áo', 'Váy','Tank top'];
+// Định nghĩa các loại sản phẩm
+const productTypeKeywords = ['Quần', 'Áo', 'Váy','Tank top'];
 
-  // Tách filter thành 2 loại
-  const categoryFilters = filterKeywords.value.filter(kw => categoryKeywords.includes(kw));
-  const productTypeFilters = filterKeywords.value.filter(kw => productTypeKeywords.includes(kw));
+// Tách filter thành 2 loại
+const categoryFilters = filterKeywords.value.filter(kw => categoryKeywords.includes(kw));
+const productTypeFilters = filterKeywords.value.filter(kw => productTypeKeywords.includes(kw));
 
-  return store.listSanPhamBanHang.filter(product => {
-    // Kiểm tra theo danh mục (type)
-    const matchCategory = categoryFilters.length === 0 || 
-      categoryFilters.some(kw => product.type && product.type.toLowerCase().includes(kw.toLowerCase()));
+return store.listSanPhamBanHang.filter(product => {
+  // Kiểm tra theo danh mục (type)
+  const matchCategory = categoryFilters.length === 0 || 
+    categoryFilters.some(kw => product.type && product.type.toLowerCase().includes(kw.toLowerCase()));
 
-    // Kiểm tra theo tên sản phẩm
-    const matchProductType = productTypeFilters.length === 0 ||
-      productTypeFilters.some(kw => product.name && product.name.toLowerCase().includes(kw.toLowerCase()));
+  // Kiểm tra theo tên sản phẩm
+  const matchProductType = productTypeFilters.length === 0 ||
+    productTypeFilters.some(kw => product.name && product.name.toLowerCase().includes(kw.toLowerCase()));
 
-    // Phải thỏa mãn cả 2 điều kiện
-    return matchCategory && matchProductType;
-  });
+  // Phải thỏa mãn cả 2 điều kiện
+  return matchCategory && matchProductType;
+});
 });
 
 const sortedAndFilteredProducts = computed(() => {
@@ -321,19 +403,20 @@ function getBreadcrumbLabel(filterKeywords) {
   const sportsKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
 
   // Kiểm tra nếu filter chứa bất kỳ từ khóa môn thể thao nào
-  if (filterKeywords.some(kw => sportsKeywords.includes(kw))) {
+  if (filterKeywords.value.some(kw => sportsKeywords.includes(kw))) {
     return 'Môn thể thao';
   }
 
   // Kiểm tra các trường hợp còn lại
   for (const group of breadcrumbMap) {
-    if (group.keywords.length && filterKeywords.length === 1 && group.keywords.includes(filterKeywords[0])) {
+    if (group.keywords.length && filterKeywords.value.length === 1 && group.keywords.includes(filterKeywords.value[0])) {
       return group.label;
     }
   }
 
-  return filterKeywords[0] || 'Tất cả sản phẩm';
+  return filterKeywords.value[0] || 'Tất cả sản phẩm';
 }
+;
 
 function fetchProductsByFilter(filter) {
   if (filter === 'supersale') {
@@ -366,7 +449,6 @@ watch(() => route.query.filter, (newFilter) => {
   fetchProductsByFilter(newFilter);
 });
 
-// Thêm vào phần khai báo biến trong script setup
 const itemsPerPage = 20; // Số sản phẩm mỗi trang
 const currentPage = ref(1); // Trang hiện tại
 const showLoadMore = ref(true); // Hiển thị nút "Xem thêm"
@@ -376,7 +458,6 @@ const displayedProducts = computed(() => {
   return sortedAndFilteredProducts.value.slice(0, endIndex);
 });
 
-// Kiểm tra còn sản phẩm để hiển thị không
 const hasMoreProducts = computed(() => {
   return displayedProducts.value.length < sortedAndFilteredProducts.value.length;
 });
@@ -390,7 +471,6 @@ const loadMore = () => {
   }
 };
 
-// Thêm watch để reset currentPage khi filter hoặc route thay đổi
 watch([
   () => route.query.filter,
   selectedTypes,
@@ -403,7 +483,6 @@ watch([
   currentPage.value = 1;
 });
 
-// Thêm computed property này
 const nextProducts = computed(() => {
   const startIndex = currentPage.value * itemsPerPage;
   const endIndex = startIndex + 4; // Chỉ lấy 4 sản phẩm để preview
@@ -706,5 +785,43 @@ const nextProducts = computed(() => {
 
 .preview-card .product-image {
   height: 100%;
+}
+
+/* CSS cho loading spinner */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 300px;
+}
+
+.loading-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(58, 134, 255, 0.2);
+  border-top-color: #3a86ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  margin-top: 16px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #3a86ff;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

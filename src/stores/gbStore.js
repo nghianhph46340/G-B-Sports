@@ -46,6 +46,8 @@ export const useGbStore = defineStore('gbStore', {
     //Giỏ hàng và thanh toán
     checkoutItems: [], //Dữ liệu sản phẩm mua ngay
     justAddedProduct: false, // Thêm flag để đánh dấu vừa thêm sản phẩm mới
+    maxSoLuongSP: 0,
+    trangThaiCTSP: null,
     // Cập nhật cấu trúc cho tìm kiếm và lọc
     currentFilter: null, // Bộ lọc hiện tại
     needFilterRefresh: false, // Flag để đánh dấu khi nào cần refresh dữ liệu bộ lọc
@@ -149,6 +151,7 @@ export const useGbStore = defineStore('gbStore', {
 
     // Thêm vào phần state
     filteredProductsData: [],
+    isProductLoading: false, // Thêm state để quản lý trạng thái loading sản phẩm
   }),
 
   ///Đầu mút2
@@ -234,7 +237,32 @@ export const useGbStore = defineStore('gbStore', {
           reviews: item.so_luong_danh_gia || 0,
         }));
       },
+    // lấy số lượng còn lại của sản phẩm theo ID
+    async getMaxSoLuongSP(idCTSP) {
+      const response = await banHangOnlineService.maxSoLuongSP(idCTSP);
+      this.maxSoLuongSP = response;
+    },
+    async getTrangThaiCTSP(idCTSP) {
+      try {
+        const response = await banHangOnlineService.getTrangThaiCTSP(idCTSP);
+        this.trangThaiCTSP = response;
+        console.log('trangThaiCTSP: ', this.trangThaiCTSP);
+        return response; // Trả về trực tiếp giá trị từ API
+      } catch (error) {
+        console.error('Lỗi khi lấy trạng thái CTSP:', error);
+        return false; // Trả về false nếu có lỗi
+      }
+    },
     //Giỏ hàng của khấch hàng có tài khoản
+    async getGioHang(idKhachHang) {
+      const response = await banHangOnlineService.getGioHang(idKhachHang)
+      console.log('response: ', response)
+      if (response) {
+        this.gioHang = response
+      } else {
+        this.gioHang = []
+      }
+    },
     async getGioHangByIdKH(idKH, idCTSP, soLuong) {
       try {
         const response = await banHangOnlineService.themGioHangByIdKH(idKH, idCTSP, soLuong)
@@ -3545,7 +3573,12 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra khi xử lý trả hàng');
         throw error;
       }
-    }
+    },
+
+    // Thêm action để quản lý trạng thái loading
+    setProductLoading(status) {
+      this.isProductLoading = status;
+    },
   },
   persist: {
     enabled: true,

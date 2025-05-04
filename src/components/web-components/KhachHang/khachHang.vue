@@ -43,29 +43,29 @@
                           <span class="favorites-count">{{ favoriteProducts }}</span>
                         </div>
                         <a-menu class="favorites-dropdown-menu">
-                          < <a-menu-item v-if="favoritesList.length === 0" disabled>
+                          <a-menu-item v-if="favoritesList.length === 0" disabled>
                             <div class="favorites-loading">
                               <a-spin size="small" />
                               <span>Đang tải danh sách...</span>
                             </div>
-                            </a-menu-item>
-                            <a-menu-item v-for="item in favoritesList" :key="item.id_chi_tiet_san_pham"
-                              @click="goToProductDetail(item)">
-                              <div class="favorite-product-item">
-                                <div class="favorite-product-image">
-                                  <img :src="item.hinh_anh" :alt="item.ten_san_pham" />
-                                </div>
-                                <div class="favorite-product-info">
-                                  <div class="product-name">{{ item.ten_san_pham }}</div>
-                                  <div class="product-details">
-                                    <span v-if="item.ten_mau_sac">{{ item.ten_mau_sac }}</span>
-                                    <span v-if="item.gia_tri && item.ten_mau_sac"> - {{ item.gia_tri }}</span>
-                                    <span v-if="item.gia_tri && !item.ten_mau_sac">{{ item.gia_tri }}</span>
-                                  </div>
-                                  <div class="product-price">{{ formatCurrency(item.gia_ban) }}</div>
-                                </div>
+                          </a-menu-item>
+                          <a-menu-item v-for="item in favoritesList" :key="item.id_chi_tiet_san_pham"
+                            @click="goToProductDetail(item)">
+                            <div class="favorite-product-item">
+                              <div class="favorite-product-image">
+                                <img :src="item.hinh_anh" :alt="item.ten_san_pham" />
                               </div>
-                            </a-menu-item>
+                              <div class="favorite-product-info">
+                                <div class="product-name">{{ item.ten_san_pham }}</div>
+                                <div class="product-details">
+                                  <span v-if="item.ten_mau_sac">{{ item.ten_mau_sac }}</span>
+                                  <span v-if="item.gia_tri && item.ten_mau_sac"> - {{ item.gia_tri }}</span>
+                                  <span v-if="item.gia_tri && !item.ten_mau_sac">{{ item.gia_tri }}</span>
+                                </div>
+                                <div class="product-price">{{ formatCurrency(item.gia_ban) }}</div>
+                              </div>
+                            </div>
+                          </a-menu-item>
                         </a-menu>
                       </div>
                     </template>
@@ -173,7 +173,7 @@
                             <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
                               tiết</a-button>
                             <a-button type="primary" size="small" @click="showUpdateCustomerModal(item)"
-                              v-if="['Chờ xác nhận', 'Đã xác nhận', 'Chờ đóng gói'].includes(item.trang_thai)">Cập nhật
+                              v-if="['Chờ xác nhận'].includes(item.trang_thai)">Cập nhật
                               KH</a-button>
                           </div>
                         </a-col>
@@ -202,14 +202,11 @@
                         <a-col :span="8" style="text-align: right">
                           <p>Tổng tiền: {{ formatCurrency(item.tong_tien_sau_giam) }}</p>
                           <div style="display: flex; gap: 8px; justify-content: flex-end">
-                            <div style="display: flex; gap: 8px; justify-content: flex-end">
-                              <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
-                                tiết</a-button>
-                              <a-button type="primary" size="small" @click="showUpdateCustomerModal(item)"
-                                v-if="['Chờ xác nhận', 'Đã xác nhận', 'Chờ đóng gói'].includes(item.trang_thai)">Cập
-                                nhật KH</a-button>
-                            </div>
-
+                            <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
+                              tiết</a-button>
+                            <a-button type="primary" size="small" @click="showUpdateCustomerModal(item)"
+                              v-if="['Chờ xác nhận'].includes(item.trang_thai)">Cập nhật
+                              KH</a-button>
                           </div>
                         </a-col>
                       </a-row>
@@ -218,6 +215,7 @@
                 </template>
               </a-list>
             </a-tab-pane>
+
             <!-- Tab Đã xác nhận -->
             <a-tab-pane key="confirmed" tab="Đã xác nhận">
               <a-empty v-if="confirmedOrders.length === 0" description="Không có đơn hàng nào đã xác nhận" />
@@ -238,7 +236,6 @@
                           <div style="display: flex; gap: 8px; justify-content: flex-end">
                             <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
                               tiết</a-button>
-
                           </div>
                         </a-col>
                       </a-row>
@@ -268,7 +265,6 @@
                           <div style="display: flex; gap: 8px; justify-content: flex-end">
                             <a-button type="primary" size="small" @click="viewOrderDetail(item.id_hoa_don)">Chi
                               tiết</a-button>
-
                           </div>
                         </a-col>
                       </a-row>
@@ -277,8 +273,6 @@
                 </template>
               </a-list>
             </a-tab-pane>
-
-
 
             <!-- Tab Đang giao -->
             <a-tab-pane key="shipping" tab="Đang giao">
@@ -397,8 +391,6 @@
           </a-list>
         </a-card>
 
-
-
         <!-- Đổi mật khẩu -->
         <a-card v-if="selectedMenu.includes('password')" title="Đổi mật khẩu">
           <a-form :model="passwordForm" layout="vertical">
@@ -471,10 +463,9 @@
         </div>
       </div>
     </a-modal>
-
-    <!-- Modal chi tiết đơn hàng -->
+    <!-- Template modal chi tiết đơn hàng đã được cập nhật -->
     <a-modal v-model:visible="orderDetailModal.visible" :title="`Chi tiết đơn hàng: ${orderDetailModal.maHoaDon}`"
-      :footer="null" :width="600" class="order-detail-modal" centered>
+      :footer="null" :width="800" class="order-detail-modal" centered>
       <a-spin :spinning="orderDetailModal.loading">
         <div v-if="orderDetailModal.data" class="modal-content">
           <!-- Thông tin chung -->
@@ -543,6 +534,10 @@
                 <template v-else-if="column.dataIndex === 'thanh_tien'">
                   {{ formatCurrency(record.gia * record.so_luong) }}
                 </template>
+                <template v-else-if="column.dataIndex === 'actions'">
+                  <a-button v-if="orderDetailModal.data.trang_thai === 'Hoàn thành'" type="primary" size="small"
+                    @click="goToProductReview(record)">Đánh giá</a-button>
+                </template>
               </template>
             </a-table>
           </div>
@@ -566,7 +561,8 @@
               <div class="summary-item total-row">
                 <span>Tổng thanh toán:</span>
                 <span class="total-value">{{ formatCurrency(calculateProductTotal() +
-                  (orderDetailModal.data.phi_van_chuyen || 0) - (orderDetailModal.data.giam_gia || 0)) }}</span>
+                  (orderDetailModal.data.phi_van_chuyen
+                    || 0) - (orderDetailModal.data.giam_gia || 0)) }}</span>
               </div>
             </div>
           </div>
@@ -581,9 +577,10 @@
           @click="cancelOrder(orderDetailModal.data.id_hoa_don)" class="btn-cancel">
           Hủy đơn hàng
         </a-button>
-    
       </div>
     </a-modal>
+
+    <!-- Modal cập nhật thông tin khách hàng -->
     <a-modal v-model:visible="updateCustomerModal.visible" title="Cập nhật thông tin khách hàng" :footer="null"
       :width="550" class="mt-5">
       <a-form :model="updateCustomerModal.data" layout="vertical">
@@ -607,8 +604,47 @@
         </a-row>
         <a-row :gutter="16">
           <a-col :span="24">
-            <a-form-item label="Địa chỉ">
-              <a-input v-model:value="updateCustomerModal.data.dia_chi" placeholder="Nhập địa chỉ" />
+            <a-form-item label="Số nhà, đường" :validate-status="updateCustomerModal.addressValidation.status"
+              :help="updateCustomerModal.addressValidation.message">
+              <a-input v-model:value="updateCustomerModal.data.soNha" placeholder="Nhập số nhà, tên đường"
+                @change="validateAddress" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="Tỉnh/Thành phố">
+              <a-select v-model:value="updateCustomerModal.data.provinceCode" placeholder="Chọn Tỉnh/Thành phố"
+                style="width: 100%" @change="handleProvinceChangeForUpdate">
+                <a-select-option v-for="province in provinces" :key="province.code" :value="province.code">
+                  {{ province.name }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="Quận/Huyện">
+              <a-select v-model:value="updateCustomerModal.data.districtCode" placeholder="Chọn Quận/Huyện"
+                style="width: 100%" :disabled="!updateCustomerModal.data.provinceCode"
+                @change="handleDistrictChangeForUpdate">
+                <a-select-option v-for="district in districts" :key="district.code" :value="district.code">
+                  {{ district.name }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="24">
+            <a-form-item label="Phường/Xã">
+              <a-select v-model:value="updateCustomerModal.data.wardCode" placeholder="Chọn Phường/Xã"
+                style="width: 100%" :disabled="!updateCustomerModal.data.districtCode">
+                <a-select-option v-for="ward in wards" :key="ward.code" :value="ward.code">
+                  {{ ward.name }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
         </a-row>
@@ -618,7 +654,7 @@
         <a-button type="primary" :loading="updateCustomerModal.loading" @click="saveCustomerInfo">Lưu</a-button>
       </div>
     </a-modal>
-    </div>
+  </div>
 </template>
 
 <script setup>
@@ -644,6 +680,7 @@ import { khachHangService } from '@/services/khachHangService';
 import { hoaDonService } from '@/services/hoaDonService';
 import { favoriteService } from '@/services/favoriteService';
 import { toast } from 'vue3-toastify';
+import { banHangService } from '@/services/banHangService';
 
 // Add a global center message for consistent UX
 if (!window.centerMessage) {
@@ -687,126 +724,6 @@ if (!window.centerMessage) {
   };
 }
 
-const updateCustomerModal = reactive({
-  visible: false,
-  loading: false,
-  data: {
-    ma_hoa_don: '',
-    ho_ten: '',
-    sdt_nguoi_nhan: '',
-    dia_chi: ''
-  },
-  nameValidation: {
-    status: '',
-    message: ''
-  },
-  phoneValidation: {
-    status: '',
-    message: ''
-  }
-});
-
-const showUpdateCustomerModal = (order) => {
-  updateCustomerModal.data.ma_hoa_don = order.ma_hoa_don;
-  updateCustomerModal.data.ho_ten = order.ho_ten || '';
-  updateCustomerModal.data.sdt_nguoi_nhan = order.sdt_nguoi_nhan || '';
-  updateCustomerModal.data.dia_chi = order.dia_chi || '';
-  updateCustomerModal.visible = true;
-};
-
-const validateUpdateCustomerName = () => {
-  const specialCharsAndNumbers = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?0-9]/;
-  updateCustomerModal.data.ho_ten = updateCustomerModal.data.ho_ten.trim().replace(/\s+/g, ' ');
-  if (updateCustomerModal.data.ho_ten.length > 100) {
-    updateCustomerModal.nameValidation.status = 'error';
-    updateCustomerModal.nameValidation.message = 'Tên khách hàng không được vượt quá 100 ký tự';
-    return false;
-  }
-  if (updateCustomerModal.data.ho_ten.length < 2) {
-    updateCustomerModal.nameValidation.status = 'error';
-    updateCustomerModal.nameValidation.message = 'Tên khách hàng không được nhỏ hơn 2 ký tự';
-    return false;
-  }
-  if (!updateCustomerModal.data.ho_ten) {
-    updateCustomerModal.nameValidation.status = 'error';
-    updateCustomerModal.nameValidation.message = 'Vui lòng nhập tên';
-    return false;
-  }
-  if (specialCharsAndNumbers.test(updateCustomerModal.data.ho_ten)) {
-    updateCustomerModal.nameValidation.status = 'error';
-    updateCustomerModal.nameValidation.message = 'Tên khách hàng không được chứa số hoặc ký tự đặc biệt';
-    return false;
-  }
-  updateCustomerModal.nameValidation.status = 'success';
-  updateCustomerModal.nameValidation.message = '';
-  return true;
-};
-
-const validateUpdateCustomerPhone = () => {
-  const phoneRegex = /^[0-9]{10}$/;
-  const hasLetters = /[a-zA-Z]/;
-  const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
-  updateCustomerModal.data.sdt_nguoi_nhan = updateCustomerModal.data.sdt_nguoi_nhan.trim().replace(/\s+/g, '');
-  if (!updateCustomerModal.data.sdt_nguoi_nhan) {
-    updateCustomerModal.phoneValidation.status = 'error';
-    updateCustomerModal.phoneValidation.message = 'Vui lòng nhập số điện thoại';
-    return false;
-  }
-  if (hasLetters.test(updateCustomerModal.data.sdt_nguoi_nhan)) {
-    updateCustomerModal.phoneValidation.status = 'error';
-    updateCustomerModal.phoneValidation.message = 'Số điện thoại không được chứa chữ cái';
-    return false;
-  }
-  if (hasSpecialChars.test(updateCustomerModal.data.sdt_nguoi_nhan)) {
-    updateCustomerModal.phoneValidation.status = 'error';
-    updateCustomerModal.phoneValidation.message = 'Số điện thoại không được chứa ký tự đặc biệt';
-    return false;
-  }
-  if (updateCustomerModal.data.sdt_nguoi_nhan.length > 10) {
-    updateCustomerModal.phoneValidation.status = 'error';
-    updateCustomerModal.phoneValidation.message = 'Số điện thoại không được vượt quá 10 chữ số';
-    return false;
-  }
-  if (!phoneRegex.test(updateCustomerModal.data.sdt_nguoi_nhan)) {
-    updateCustomerModal.phoneValidation.status = 'error';
-    updateCustomerModal.phoneValidation.message = 'Số điện thoại phải có đúng 10 chữ số';
-    return false;
-  }
-  updateCustomerModal.phoneValidation.status = 'success';
-  updateCustomerModal.phoneValidation.message = '';
-  return true;
-};
-
-const saveCustomerInfo = async () => {
-  validateUpdateCustomerName();
-  validateUpdateCustomerPhone();
-  if (updateCustomerModal.nameValidation.status === 'error' || updateCustomerModal.phoneValidation.status === 'error') {
-    window.centerMessage.error('Vui lòng kiểm tra lại thông tin');
-    return;
-  }
-  updateCustomerModal.loading = true;
-  try {
-    const response = await axiosInstance.post('/api/khach-hang/update-order-info', {
-      maHoaDon: updateCustomerModal.data.ma_hoa_don,
-      hoTen: updateCustomerModal.data.ho_ten,
-      sdtNguoiNhan: updateCustomerModal.data.sdt_nguoi_nhan,
-      diaChi: updateCustomerModal.data.dia_chi
-    });
-    if (response.data.success) {
-      window.centerMessage.success('Cập nhật thông tin khách hàng thành công');
-      updateCustomerModal.visible = false;
-      await fetchOrders();
-    } else {
-      window.centerMessage.error(response.data.message || 'Cập nhật thất bại');
-    }
-  } catch (error) {
-    console.error('Lỗi khi cập nhật thông tin khách hàng:', error);
-    window.centerMessage.error('Có lỗi xảy ra khi cập nhật');
-  } finally {
-    updateCustomerModal.loading = false;
-  }
-};
-
 // Router và store
 const router = useRouter();
 const store = useGbStore();
@@ -829,26 +746,43 @@ const userInfo = reactive({
 // Thêm state loading cho nút cập nhật
 const isUpdating = ref(false);
 
-// Danh sách đơn hàng và địa chỉ
+// Danh sách đơn hàng, địa chỉ và sản phẩm yêu thích
 const orders = ref([]);
 const addresses = ref([]);
 const favoriteProducts = ref(0);
 const favoritesList = ref([]);
 
-// Computed properties cho các trạng thái đơn hàng
-// Computed properties cho các trạng thái đơn hàng
-const allOrders = computed(() => orders.value);
-const pendingOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'chờ xác nhận'));
-const confirmedOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'đã xác nhận'));
-const packingOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'chờ đóng gói'));
-const shippingOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'đang giao'));
-const completedOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'hoàn thành'));
-const cancelledOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'đã hủy'));
-// Form đổi mật khẩu
-const passwordForm = reactive({
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
+// Dữ liệu cho địa chỉ
+const provinces = ref([]);
+const districts = ref([]);
+const wards = ref([]);
+
+// State cho modal cập nhật thông tin khách hàng
+const updateCustomerModal = reactive({
+  visible: false,
+  loading: false,
+  data: {
+    ma_hoa_don: '',
+    ho_ten: '',
+    sdt_nguoi_nhan: '',
+    dia_chi: '',
+    soNha: '',
+    provinceCode: '',
+    districtCode: '',
+    wardCode: ''
+  },
+  nameValidation: {
+    status: '',
+    message: ''
+  },
+  phoneValidation: {
+    status: '',
+    message: ''
+  },
+  addressValidation: {
+    status: '',
+    message: ''
+  }
 });
 
 // State cho modal địa chỉ
@@ -877,10 +811,47 @@ const orderDetailModal = reactive({
   products: []
 });
 
-// Dữ liệu cho địa chỉ
-const provinces = ref([]);
-const districts = ref([]);
-const wards = ref([]);
+// Computed properties cho các trạng thái đơn hàng
+const allOrders = computed(() => orders.value);
+const pendingOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'chờ xác nhận'));
+const confirmedOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'đã xác nhận'));
+const packingOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'chờ đóng gói'));
+const shippingOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'đang giao'));
+const completedOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'hoàn thành'));
+const cancelledOrders = computed(() => orders.value.filter(o => o.trang_thai.toLowerCase() === 'đã hủy'));
+
+// Form đổi mật khẩu
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+
+// Validation states
+const nameValidation = reactive({
+  status: '',
+  message: ''
+});
+
+const phoneValidation = reactive({
+  status: '',
+  message: ''
+});
+
+const birthdayValidation = reactive({
+  status: '',
+  message: ''
+});
+
+// Kiểm tra tính hợp lệ của form
+const isFormValid = computed(() => {
+  return nameValidation.status !== 'error' &&
+    phoneValidation.status !== 'error' &&
+    birthdayValidation.status !== 'error' &&
+    userInfo.name &&
+    userInfo.phone &&
+    userInfo.birthday;
+});
 
 // Format ngày
 const formatDate = (date) => {
@@ -936,8 +907,13 @@ const orderProductColumns = [
     width: 100,
     align: 'right',
   },
+  {
+    title: 'Hành động',
+    dataIndex: 'actions',
+    width: 100,
+    align: 'center',
+  },
 ];
-
 // Hàm tính tổng tiền sản phẩm
 const calculateProductTotal = () => {
   if (!orderDetailModal.products || orderDetailModal.products.length === 0) return 0;
@@ -946,32 +922,6 @@ const calculateProductTotal = () => {
     return total + itemTotal;
   }, 0);
 };
-
-// Validation states
-const nameValidation = reactive({
-  status: '',
-  message: ''
-});
-
-const phoneValidation = reactive({
-  status: '',
-  message: ''
-});
-
-const birthdayValidation = reactive({
-  status: '',
-  message: ''
-});
-
-// Kiểm tra tính hợp lệ của form
-const isFormValid = computed(() => {
-  return nameValidation.status !== 'error' &&
-    phoneValidation.status !== 'error' &&
-    birthdayValidation.status !== 'error' &&
-    userInfo.name &&
-    userInfo.phone &&
-    userInfo.birthday;
-});
 
 // Validate họ tên
 const validateName = () => {
@@ -1062,8 +1012,329 @@ const validateBirthday = () => {
   return true;
 };
 
-// lềnh sửa mới
-// Cập nhật thông tin
+// Validate họ tên trong modal cập nhật khách hàng
+const validateUpdateCustomerName = () => {
+  const specialCharsAndNumbers = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?0-9]/;
+  updateCustomerModal.data.ho_ten = updateCustomerModal.data.ho_ten.trim().replace(/\s+/g, ' ');
+  if (updateCustomerModal.data.ho_ten.length > 100) {
+    updateCustomerModal.nameValidation.status = 'error';
+    updateCustomerModal.nameValidation.message = 'Tên khách hàng không được vượt quá 100 ký tự';
+    return false;
+  }
+  if (updateCustomerModal.data.ho_ten.length < 2) {
+    updateCustomerModal.nameValidation.status = 'error';
+    updateCustomerModal.nameValidation.message = 'Tên khách hàng không được nhỏ hơn 2 ký tự';
+    return false;
+  }
+  if (!updateCustomerModal.data.ho_ten) {
+    updateCustomerModal.nameValidation.status = 'error';
+    updateCustomerModal.nameValidation.message = 'Vui lòng nhập tên';
+    return false;
+  }
+  if (specialCharsAndNumbers.test(updateCustomerModal.data.ho_ten)) {
+    updateCustomerModal.nameValidation.status = 'error';
+    updateCustomerModal.nameValidation.message = 'Tên khách hàng không được chứa số hoặc ký tự đặc biệt';
+    return false;
+  }
+  updateCustomerModal.nameValidation.status = 'success';
+  updateCustomerModal.nameValidation.message = '';
+  return true;
+};
+
+// Validate số điện thoại trong modal cập nhật khách hàng
+const validateUpdateCustomerPhone = () => {
+  const phoneRegex = /^[0-9]{10}$/;
+  const hasLetters = /[a-zA-Z]/;
+  const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+  updateCustomerModal.data.sdt_nguoi_nhan = updateCustomerModal.data.sdt_nguoi_nhan.trim().replace(/\s+/g, '');
+  if (!updateCustomerModal.data.sdt_nguoi_nhan) {
+    updateCustomerModal.phoneValidation.status = 'error';
+    updateCustomerModal.phoneValidation.message = 'Vui lòng nhập số điện thoại';
+    return false;
+  }
+  if (hasLetters.test(updateCustomerModal.data.sdt_nguoi_nhan)) {
+    updateCustomerModal.phoneValidation.status = 'error';
+    updateCustomerModal.phoneValidation.message = 'Số điện thoại không được chứa chữ cái';
+    return false;
+  }
+  if (hasSpecialChars.test(updateCustomerModal.data.sdt_nguoi_nhan)) {
+    updateCustomerModal.phoneValidation.status = 'error';
+    updateCustomerModal.phoneValidation.message = 'Số điện thoại không được chứa ký tự đặc biệt';
+    return false;
+  }
+  if (updateCustomerModal.data.sdt_nguoi_nhan.length > 10) {
+    updateCustomerModal.phoneValidation.status = 'error';
+    updateCustomerModal.phoneValidation.message = 'Số điện thoại không được vượt quá 10 chữ số';
+    return false;
+  }
+  if (!phoneRegex.test(updateCustomerModal.data.sdt_nguoi_nhan)) {
+    updateCustomerModal.phoneValidation.status = 'error';
+    updateCustomerModal.phoneValidation.message = 'Số điện thoại phải có đúng 10 chữ số';
+    return false;
+  }
+  updateCustomerModal.phoneValidation.status = 'success';
+  updateCustomerModal.phoneValidation.message = '';
+  return true;
+};
+
+// Validate số nhà
+const validateAddress = () => {
+  updateCustomerModal.data.soNha = updateCustomerModal.data.soNha.trim().replace(/\s+/g, ' ');
+  const specialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|.<>?~`]/; // Ký tự đặc biệt không cho phép
+
+  if (!updateCustomerModal.data.soNha) {
+    updateCustomerModal.addressValidation.status = 'error';
+    updateCustomerModal.addressValidation.message = 'Vui lòng nhập số nhà, tên đường';
+    return false;
+  }
+  if (updateCustomerModal.data.soNha.length > 200) {
+    updateCustomerModal.addressValidation.status = 'error';
+    updateCustomerModal.addressValidation.message = 'Địa chỉ không được vượt quá 200 ký tự';
+    return false;
+  }
+  if (specialChars.test(updateCustomerModal.data.soNha)) {
+    updateCustomerModal.addressValidation.status = 'error';
+    updateCustomerModal.addressValidation.message = 'Số nhà, tên đường không được chứa ký tự đặc biệt';
+    return false;
+  }
+  updateCustomerModal.addressValidation.status = 'success';
+  updateCustomerModal.addressValidation.message = '';
+  return true;
+};
+
+// Hàm phân tích địa chỉ
+const parseAddress = (address) => {
+  if (!address) return { soNha: '', ward: '', district: '', province: '' };
+
+  // Giả định địa chỉ có định dạng: "Số nhà, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố"
+  const parts = address.split(',').map(part => part.trim());
+  if (parts.length < 4) {
+    return { soNha: parts[0] || '', ward: '', district: '', province: '' };
+  }
+
+  return {
+    soNha: parts[0],
+    ward: parts[1],
+    district: parts[2],
+    province: parts[3]
+  };
+};
+
+// Hiển thị modal cập nhật thông tin khách hàng
+const showUpdateCustomerModal = async (order) => {
+  try {
+    // Reset modal data
+    updateCustomerModal.data = {
+      ma_hoa_don: order.ma_hoa_don,
+      ho_ten: order.ho_ten || '',
+      sdt_nguoi_nhan: order.sdt_nguoi_nhan || '',
+      dia_chi: order.dia_chi || '',
+      soNha: '',
+      provinceCode: '',
+      districtCode: '',
+      wardCode: ''
+    };
+    updateCustomerModal.nameValidation = { status: '', message: '' };
+    updateCustomerModal.phoneValidation = { status: '', message: '' };
+    updateCustomerModal.addressValidation = { status: '', message: '' };
+
+    // Phân tích địa chỉ
+    const parsedAddress = parseAddress(order.dia_chi);
+    updateCustomerModal.data.soNha = parsedAddress.soNha;
+
+    // Đảm bảo danh sách tỉnh/thành phố đã được tải
+    if (!provinces.value.length) {
+      await loadProvinces();
+    }
+
+    // Tìm tỉnh/thành phố
+    const province = provinces.value.find(p => p.name === parsedAddress.province);
+    if (province) {
+      updateCustomerModal.data.provinceCode = province.code;
+
+      // Tải danh sách quận/huyện
+      await handleProvinceChangeForUpdate(province.code);
+
+      // Tìm quận/huyện
+      const district = districts.value.find(d => d.name === parsedAddress.district);
+      if (district) {
+        updateCustomerModal.data.districtCode = district.code;
+
+        // Tải danh sách phường/xã
+        await handleDistrictChangeForUpdate(district.code);
+
+        // Tìm phường/xã
+        const ward = wards.value.find(w => w.name === parsedAddress.ward);
+        if (ward) {
+          updateCustomerModal.data.wardCode = ward.code;
+        }
+      }
+    }
+
+    // Mở modal
+    updateCustomerModal.visible = true;
+  } catch (error) {
+    console.error('Lỗi khi hiển thị modal cập nhật khách hàng:', error);
+    window.centerMessage.error('Không thể tải thông tin địa chỉ');
+  }
+};
+
+// Xử lý khi chọn tỉnh/thành phố trong modal cập nhật
+const handleProvinceChangeForUpdate = async (value) => {
+  updateCustomerModal.data.districtCode = '';
+  updateCustomerModal.data.wardCode = '';
+  districts.value = [];
+  wards.value = [];
+  try {
+    const response = await fetch(`https://provinces.open-api.vn/api/p/${value}?depth=2`);
+    const data = await response.json();
+    districts.value = data.districts || [];
+  } catch (error) {
+    console.error('Lỗi khi tải quận/huyện:', error);
+    window.centerMessage.error('Không thể tải danh sách quận/huyện');
+  }
+};
+
+// Xử lý khi chọn quận/huyện trong modal cập nhật
+const handleDistrictChangeForUpdate = async (value) => {
+  updateCustomerModal.data.wardCode = '';
+  wards.value = [];
+  try {
+    const response = await fetch(`https://provinces.open-api.vn/api/d/${value}?depth=2`);
+    const data = await response.json();
+    wards.value = data.wards || [];
+  } catch (error) {
+    console.error('Lỗi khi tải phường/xã:', error);
+    window.centerMessage.error('Không thể tải danh sách phường/xã');
+  }
+};
+
+// Hàm tính phí vận chuyển
+const calculatePhiVanChuyen = async () => {
+  try {
+    // Kiểm tra dữ liệu hợp lệ
+    if (!orderDetailModal.data || !orderDetailModal.data.tong_tien_sau_giam) {
+      console.error('Missing order data for shipping fee calculation');
+      return 0;
+    }
+
+    // Điều kiện miễn phí vận chuyển
+    if (orderDetailModal.data.tong_tien_sau_giam >= 2000000) {
+      console.log('Miễn phí vận chuyển: Tổng tiền >= 2,000,000 VNĐ');
+      return 0;
+    }
+
+    const weight = 500; // 500g mỗi sản phẩm
+    const tongTienHoaDon = orderDetailModal.data.tong_tien_sau_giam - (orderDetailModal.data.phi_van_chuyen || 0);
+    const provinceName = provinces.value.find(p => p.code === updateCustomerModal.data.provinceCode)?.name || '';
+    const districtName = districts.value.find(d => d.code === updateCustomerModal.data.districtCode)?.name || '';
+
+    if (!updateCustomerModal.data || !provinceName || !districtName) {
+      console.warn('⚠️ Không có địa chỉ giao hàng hợp lệ, phí = 0');
+      console.log('Địa chỉ cụ thể:', updateCustomerModal.data.soNha, districtName, provinceName, weight, tongTienHoaDon, orderDetailModal.data.tong_tien_sau_giam);
+      return 0;
+    }
+
+    // Gọi API tính phí vận chuyển
+    const phiShip = await banHangService.tinhPhiShip(
+      'Hà Nội',
+      'Nam Từ Liêm',
+      provinceName,
+      districtName,
+      weight,
+      tongTienHoaDon
+    );
+
+    console.log('Địa chỉ cụ thể:', updateCustomerModal.data.soNha, districtName, provinceName);
+    console.log('Dữ liệu:', districtName, provinceName, weight, tongTienHoaDon, orderDetailModal.data.tong_tien_sau_giam, orderDetailModal.data.phi_van_chuyen);
+    console.log('Phí ship:', phiShip.fee);
+
+    return phiShip.fee || 0;
+  } catch (error) {
+    console.error('Lỗi khi tính phí vận chuyển:', error);
+    toast.error('Có lỗi xảy ra khi tính phí vận chuyển');
+    return 0;
+  }
+};
+
+// Lưu thông tin khách hàng
+const saveCustomerInfo = async () => {
+  // Validate dữ liệu
+  validateUpdateCustomerName();
+  validateUpdateCustomerPhone();
+  validateAddress();
+
+  // Kiểm tra các trường địa chỉ
+  if (!updateCustomerModal.data.provinceCode || !updateCustomerModal.data.districtCode || !updateCustomerModal.data.wardCode) {
+    window.centerMessage.error('Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện, Phường/Xã');
+    return;
+  }
+
+  if (
+    updateCustomerModal.nameValidation.status === 'error' ||
+    updateCustomerModal.phoneValidation.status === 'error' ||
+    updateCustomerModal.addressValidation.status === 'error'
+  ) {
+    window.centerMessage.error('Vui lòng kiểm tra lại thông tin');
+    return;
+  }
+
+  // Ghép chuỗi địa chỉ
+  const provinceName = provinces.value.find(p => p.code === updateCustomerModal.data.provinceCode)?.name || '';
+  const districtName = districts.value.find(d => d.code === updateCustomerModal.data.districtCode)?.name || '';
+  const wardName = wards.value.find(w => w.code === updateCustomerModal.data.wardCode)?.name || '';
+  const fullAddress = `${updateCustomerModal.data.soNha}, ${wardName}, ${districtName}, ${provinceName}`;
+  updateCustomerModal.data.dia_chi = fullAddress.trim();
+
+  updateCustomerModal.loading = true;
+  try {
+    // Tính phí vận chuyển mới
+    const phiVanChuyen = await calculatePhiVanChuyen();
+    console.log('Phí vận chuyển tính được:', phiVanChuyen);
+
+    // Gửi yêu cầu cập nhật thông tin khách hàng
+    const response = await axiosInstance.post(
+      '/api/khach-hang/update-order-info',
+      {
+        maHoaDon: updateCustomerModal.data.ma_hoa_don,
+        hoTen: updateCustomerModal.data.ho_ten,
+        sdtNguoiNhan: updateCustomerModal.data.sdt_nguoi_nhan,
+        diaChi: updateCustomerModal.data.dia_chi
+      },
+      {
+        params: {
+          phiVanChuyen: phiVanChuyen
+        }
+      }
+    );
+
+    if (response.data.success) {
+      window.centerMessage.success('Cập nhật thông tin khách hàng thành công');
+      updateCustomerModal.visible = false;
+
+      // Cập nhật lại danh sách đơn hàng
+      await fetchOrders();
+
+      // Cập nhật chi tiết đơn hàng trong modal nếu đang mở
+      if (orderDetailModal.visible && orderDetailModal.data?.ma_hoa_don === updateCustomerModal.data.ma_hoa_don) {
+        orderDetailModal.data.ho_ten = updateCustomerModal.data.ho_ten;
+        orderDetailModal.data.sdt_nguoi_nhan = updateCustomerModal.data.sdt_nguoi_nhan;
+        orderDetailModal.data.dia_chi = updateCustomerModal.data.dia_chi;
+        orderDetailModal.data.phi_van_chuyen = phiVanChuyen;
+        orderDetailModal.data.tong_tien_sau_giam = calculateProductTotal() + phiVanChuyen - (orderDetailModal.data.giam_gia || 0);
+      }
+    } else {
+      window.centerMessage.error(response.data.message || 'Cập nhật thất bại');
+    }
+  } catch (error) {
+    console.error('Lỗi khi cập nhật thông tin khách hàng:', error);
+    window.centerMessage.error('Có lỗi xảy ra khi cập nhật');
+  } finally {
+    updateCustomerModal.loading = false;
+  }
+};
+
+// Cập nhật thông tin cá nhân
 const updateProfile = async (event) => {
   if (event) event.preventDefault();
   validateName();
@@ -1085,10 +1356,8 @@ const updateProfile = async (event) => {
         const loadingMessage = window.centerMessage.loading('Đang cập nhật thông tin...');
         isUpdating.value = true;
         try {
-          // Lấy danh sách địa chỉ hiện tại từ store hoặc API
           let diaChiList = store.userDetails.diaChiList || [];
           if (!diaChiList.length) {
-            // Nếu store không có địa chỉ, lấy từ API hoặc từ addresses.value
             const currentAddresses = await khachHangService.fetchDiaChiByKhachHangId(store.userDetails.idKhachHang);
             diaChiList = currentAddresses.map((diaChi) => ({
               idDiaChiKhachHang: diaChi.id_dia_chi_khach_hang || diaChi.idDiaChiKhachHang,
@@ -1109,19 +1378,17 @@ const updateProfile = async (event) => {
             ngaySinh: userInfo.birthday.toDate(),
             email: userInfo.email,
             trangThai: store.userDetails.trangThai || 'Đang hoạt động',
-            diaChiList: diaChiList, // Sử dụng danh sách địa chỉ hiện tại
+            diaChiList: diaChiList,
           };
-          console.log('Đang gửi yêu cầu cập nhật...', updateData);
           const result = await store.suaKhachHang(updateData);
           loadingMessage();
           if (result) {
-            // Cập nhật lại store.userDetails với dữ liệu mới
             store.userDetails.tenKhachHang = userInfo.name.trim();
             store.userDetails.soDienThoai = userInfo.phone.trim();
             store.userDetails.ngaySinh = userInfo.birthday.toDate();
-            store.userDetails.diaChiList = diaChiList; // Cập nhật danh sách địa chỉ trong store
+            store.userDetails.diaChiList = diaChiList;
             window.centerMessage.success('Cập nhật thông tin thành công!');
-            await fetchAddresses(); // Tải lại danh sách địa chỉ để đảm bảo đồng bộ
+            await fetchAddresses();
           } else {
             window.centerMessage.error('Cập nhật thông tin không thành công!');
           }
@@ -1240,7 +1507,8 @@ const viewOrderDetail = async (orderId) => {
       const productsResponse = await axiosInstance.get(`/admin/qlhd/get-products/${order.ma_hoa_don}`);
       if (productsResponse.data && Array.isArray(productsResponse.data)) {
         orderDetailModal.products = productsResponse.data.map(item => ({
-          id_chi_tiet_san_pham: item.id_chi_tiet_san_pham || item.ma_san_pham,
+          id_san_pham: item.id_san_pham,
+          id_chi_tiet_san_pham: item.id_chi_tiet_san_pham,
           ten_san_pham: item.ten_san_pham,
           hinh_anh: item.hinh_anh || '/image/logo/logo.png',
           so_luong: item.so_luong,
@@ -1264,10 +1532,19 @@ const viewOrderDetail = async (orderId) => {
   }
 };
 
+// 3. Thêm hàm goToProductReview
+const goToProductReview = (record) => {
+  if (!record.id_san_pham || record.id_san_pham <= 0) {
+    console.error('ID sản phẩm không hợp lệ:', record);
+    message.error('Không thể tìm thấy ID sản phẩm');
+    return;
+  }
+  router.push(`/sanphamdetail/${record.id_san_pham}?variant=${record.id_chi_tiet_san_pham}`);
+};
+
 // Hủy đơn hàng
 const cancelOrder = async (orderId) => {
   try {
-    // Hiển thị modal xác nhận trước khi hủy
     Modal.confirm({
       title: 'Xác nhận hủy đơn',
       content: 'Bạn có chắc chắn muốn hủy đơn hàng này không?',
@@ -1275,30 +1552,19 @@ const cancelOrder = async (orderId) => {
       cancelText: 'Hủy',
       centered: true,
       async onOk() {
-        // Hiển thị loading khi đang xử lý
         const loadingMessage = message.loading('Đang xử lý...', 0);
-
         try {
-          // Gọi API để hủy đơn hàng
           const result = await axiosInstance.put(`/admin/qlhd/huy-don/${orderId}`);
-
-          // Đóng loading message
           loadingMessage();
-
           if (result.data.success) {
-            // Hiển thị thông báo thành công
             message.success('Đơn hàng đã được hủy thành công');
-
-            // Đóng modal chi tiết đơn hàng nếu đang mở
             orderDetailModal.visible = false;
-
-            // Cập nhật lại danh sách đơn hàng
             await fetchOrders();
           } else {
             message.error(result.data.message || 'Không thể hủy đơn hàng');
           }
         } catch (error) {
-          loadingMessage(); // Đóng loading message nếu có lỗi
+          loadingMessage();
           console.error('Lỗi khi hủy đơn hàng:', error);
           message.error('Có lỗi xảy ra khi hủy đơn hàng');
         }
@@ -1309,8 +1575,6 @@ const cancelOrder = async (orderId) => {
     message.error('Có lỗi xảy ra khi xử lý yêu cầu');
   }
 };
-
-
 
 // Xử lý địa chỉ
 const showAddAddressModal = () => {
@@ -1516,18 +1780,14 @@ const fetchOrders = async () => {
     return;
   }
   try {
-    console.log('Đang lấy đơn hàng cho idKhachHang:', store.userDetails.idKhachHang);
     const loadingMsg = window.centerMessage.loading('Đang tải danh sách đơn hàng...', 0);
     const response = await axiosInstance.get(`/admin/qlhd/khach-hang/${store.userDetails.idKhachHang}`);
     loadingMsg();
-    console.log('API response:', response.data);
     if (response.data && Array.isArray(response.data)) {
       orders.value = response.data.map(order => ({
         ...order,
         trang_thai: order.trang_thai.trim().replace(/\s+/g, ' ')
       }));
-      console.log('Danh sách đơn hàng:', orders.value);
-      console.log('Trạng thái đơn hàng:', orders.value.map(o => o.trang_thai));
     } else {
       orders.value = [];
       window.centerMessage.warning('Bạn chưa có đơn hàng nào');
@@ -1579,7 +1839,6 @@ const fetchFavoriteProducts = async () => {
     window.centerMessage.error('Không thể tải danh sách sản phẩm yêu thích');
   }
 };
-
 // Chuyển hướng đến chi tiết sản phẩm
 const goToProductDetail = (product) => {
   if (!product.id_san_pham || product.id_san_pham <= 0) {
@@ -1853,7 +2112,7 @@ watch(selectedMenu, (newVal) => {
 
 /* Styles for order detail modal */
 .order-detail-modal :deep(.ant-modal) {
-  max-width: 600px;
+  max-width: 800px !important;
   width: 100% !important;
 }
 
