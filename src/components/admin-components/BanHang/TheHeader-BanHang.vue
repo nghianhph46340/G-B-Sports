@@ -158,13 +158,13 @@
                     </div>
                     <div class="mb-3">
                         <div class="row align-items-center">
-                        <label for="idKhachHang" class="form-label col-6">
-                            Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || activeTabData.hd.ho_ten || 'Khách lẻ'
-                            }}
-                        </label>
-                        <div class="col 4">
-                            <a-button type="primary" @click="showModal">Chọn khách hàng</a-button>
-                        </div>
+                            <label for="idKhachHang" class="form-label col-6">
+                                Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || activeTabData.hd.ho_ten || 'Khách lẻ'
+                                }}
+                            </label>
+                            <div class="col 4">
+                                <a-button type="primary" @click="showModal">Chọn khách hàng</a-button>
+                            </div>
                         </div>
                         <div class="row mb-3">
                             <!-- <div class="col-2">
@@ -174,55 +174,53 @@
                             <div class="col-8">
 
                                 <div v-if="!activeTabData.hd.isKhachLe"> -->
-                                    
 
-                                    <a-modal v-model:open="open" title="Danh sách khách hàng" @ok="handleOk"
-                                        width="1000px">
-                                        <template #footer>
-                                            <a-button key="back" @click="handleCancel">Quay lại</a-button>
-                                            <a-button key="submit" type="primary" :loading="loading"
-                                                @click="handleOk">Xác
-                                                nhận</a-button>
-                                        </template>
-                                        <div v-if="danhSachKhachHang.length === 0" class="text-center py-4">
-                                            <a-empty :image="simpleImage" />
-                                        </div>
-                                        <div v-else>
-                                            <div class="table-responsive mt-4" ref="scrollContainer"
-                                                style="max-height: 400px; overflow-y: auto" @scroll="handleScroll">
-                                                <table class="table table-hover">
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">STT</th>
-                                                            <th scope="col">Tên khách hàng</th>
-                                                            <th scope="col">Giới tính</th>
-                                                            <th scope="col">Số điện thoại</th>
-                                                            <th scope="col">Địa chỉ</th>
-                                                            <th scope="col">Thao tác</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr v-for="(khachHang, index) in danhSachKhachHang"
-                                                            :key="khachHang.idKhachHang">
-                                                            <td>{{ index + 1 }}</td>
 
-                                                            <td>{{ khachHang.tenKhachHang }}</td>
-                                                            <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
-                                                            <td>{{ khachHang.soDienThoai }}</td>
-                                                            <td>{{ khachHang.diaChi }}</td>
-                                                            <td>
-                                                                <a-button size="small" type="link"
-                                                                    @click="chonKhachHang(khachHang)">Chọn</a-button>
-                                                            </td>
-                                                            <td></td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                            <a-modal v-model:open="open" title="Danh sách khách hàng" @ok="handleOk" width="1000px">
+                                <template #footer>
+                                    <a-button key="back" @click="handleCancel">Quay lại</a-button>
+                                    <a-button key="submit" type="primary" :loading="loading" @click="handleOk">Xác
+                                        nhận</a-button>
+                                </template>
+                                <div v-if="danhSachKhachHang.length === 0" class="text-center py-4">
+                                    <a-empty :image="simpleImage" />
+                                </div>
+                                <div v-else>
+                                    <div class="table-responsive mt-4" ref="scrollContainer"
+                                        style="max-height: 400px; overflow-y: auto" @scroll="handleScroll">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">STT</th>
+                                                    <th scope="col">Tên khách hàng</th>
+                                                    <th scope="col">Giới tính</th>
+                                                    <th scope="col">Số điện thoại</th>
+                                                    <th scope="col">Địa chỉ</th>
+                                                    <th scope="col">Thao tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(khachHang, index) in danhSachKhachHang"
+                                                    :key="khachHang.idKhachHang">
+                                                    <td>{{ index + 1 }}</td>
 
-                                        </div>
-                                    </a-modal>
-                                <!-- </div> -->
+                                                    <td>{{ khachHang.tenKhachHang }}</td>
+                                                    <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
+                                                    <td>{{ khachHang.soDienThoai }}</td>
+                                                    <td>{{ khachHang.diaChi }}</td>
+                                                    <td>
+                                                        <a-button size="small" type="link"
+                                                            @click="chonKhachHang(khachHang)">Chọn</a-button>
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </a-modal>
+                            <!-- </div> -->
                             <!-- </div> -->
                         </div>
 
@@ -1410,9 +1408,12 @@ const da = ref([]);
 
 // --- Lifecycle Hooks ---
 onMounted(async () => {
+    // Kiểm tra luuTTKHBH ngay khi component được gắn
+    await checkAndApplyLocalData();
     await loadData(); // Gọi lần đầu
     stopQrScanner();
     setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
+
 
     const checkPaymentStatus = localStorage.getItem('checkPaymentStatus');
     if (checkPaymentStatus === 'true') {
@@ -1448,7 +1449,7 @@ onMounted(async () => {
             localStorage.removeItem('checkPaymentStatus');
         }
     }
-    
+
 });
 
 async function loadData() {
@@ -1532,10 +1533,57 @@ watch(() => searchQuery, (newVal) => {
     }
 })
 
+let intervalId = null;
+
+const startChecking = () => {
+    intervalId = setInterval(() => {
+        const checkluuTTKHBH = localStorage.getItem('luuTTKHBH');
+        if (checkluuTTKHBH) {
+            console.log("Dữ liệu từ localStorage:", JSON.parse(checkluuTTKHBH));
+            checkAndApplyLocalData(); // Gọi hàm xử lý
+            refreshHoaDon(activeTabData.value.hd.id_hoa_don);
+            clearInterval(intervalId); // Dừng kiểm tra sau khi thỏa mãn
+        }
+    }, 1000); // Kiểm tra mỗi giây
+};
+
+// Gọi hàm khi cần
+startChecking();
+
 watch(searchQuery, (newQuery) => {
     handleSearchInput(newQuery);
     dropdownVisible.value = true;
 });
+
+const isLoading = ref(false);
+
+// Hàm kiểm tra luuTTKHBH với timeout
+const checkAndApplyLocalData = async () => {
+    const checkluuTTKHBH = JSON.parse(localStorage.getItem('luuTTKHBH'));
+    if (checkluuTTKHBH === true) {
+        console.log("Phát hiện luuTTKHBH = true, chờ 500ms để làm mới dữ liệu...");
+        isLoading.value = true;
+        // Chờ 500ms để đảm bảo API addKHHD hoàn tất
+        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            const idHoaDon = activeTabData.value.hd.id_hoa_don;
+            console.log("ID hóa đơn để làm mới:", idHoaDon);
+            await refreshHoaDon(idHoaDon);
+            await handlePhuongThucChange();
+            message.success("Đã làm mới thông tin hóa đơn!");
+        } catch (error) {
+            console.error("Lỗi khi làm mới dữ liệu:", error);
+            message.error("Không thể làm mới dữ liệu hóa đơn!");
+        } finally {
+            localStorage.removeItem('luuTTKHBH');
+            isLoading.value = false;
+        }
+    } else {
+        console.log("Không tìm thấy luuTTKHBH trong localStorage.");
+    }
+};
+
+
 
 
 function tachDiaChi(addressString) {
@@ -1934,7 +1982,8 @@ const handlePhuongThucChange = async () => {
     flex-wrap: wrap;
     width: 100%;
     margin: 0;
-    padding: 10px 0; /* Padding to match header */
+    padding: 10px 0;
+    /* Padding to match header */
 }
 
 /* Row Layout */
@@ -1944,11 +1993,13 @@ const handlePhuongThucChange = async () => {
     gap: 16px;
     margin: 0;
     padding: 0;
-    align-items: stretch; /* Đảm bảo bảng và form có chiều cao bằng nhau */
+    align-items: stretch;
+    /* Đảm bảo bảng và form có chiều cao bằng nhau */
 }
 
 /* Columns */
-.col-8, .col-4 {
+.col-8,
+.col-4 {
     flex: 1;
     min-width: 0;
     padding: 0;
@@ -1957,11 +2008,13 @@ const handlePhuongThucChange = async () => {
 }
 
 .col-8 {
-    flex: 2; /* Bảng chiếm 2/3 không gian */
+    flex: 2;
+    /* Bảng chiếm 2/3 không gian */
 }
 
 .col-4 {
-    flex: 1; /* Form chiếm 1/3 không gian */
+    flex: 1;
+    /* Form chiếm 1/3 không gian */
     min-width: 300px;
 }
 
@@ -1970,11 +2023,14 @@ const handlePhuongThucChange = async () => {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    height: auto; /* Chiều cao động dựa trên nội dung */
-    min-height: 350px; /* Chiều cao tối thiểu để căn với form */
+    height: auto;
+    /* Chiều cao động dựa trên nội dung */
+    min-height: 350px;
+    /* Chiều cao tối thiểu để căn với form */
     overflow-y: auto;
     margin: 0;
-    flex: 1; /* Đảm bảo bảng chiếm toàn bộ không gian có sẵn */
+    flex: 1;
+    /* Đảm bảo bảng chiếm toàn bộ không gian có sẵn */
 }
 
 .table {
@@ -2020,11 +2076,15 @@ form {
     background: #ffffff;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    height: auto; /* Chiều cao động dựa trên nội dung */
-    min-height: 350px; /* Chiều cao tối thiểu để căn với bảng */
-    overflow-y: auto; /* Cho phép cuộn nếu nội dung vượt quá */
+    height: auto;
+    /* Chiều cao động dựa trên nội dung */
+    min-height: 350px;
+    /* Chiều cao tối thiểu để căn với bảng */
+    overflow-y: auto;
+    /* Cho phép cuộn nếu nội dung vượt quá */
     margin: 0;
-    flex: 1; /* Đảm bảo form chiếm toàn bộ không gian có sẵn */
+    flex: 1;
+    /* Đảm bảo form chiếm toàn bộ không gian có sẵn */
 }
 
 /* Form Inputs */
@@ -2067,24 +2127,29 @@ label.form-label {
 }
 
 :deep(.form-check-input) {
-    appearance: none; /* Loại bỏ kiểu mặc định của trình duyệt */
+    appearance: none;
+    /* Loại bỏ kiểu mặc định của trình duyệt */
     width: 16px;
     height: 16px;
     border: 2px solid #d9d9d9;
-    border-radius: 50%; /* Làm tròn nút radio */
+    border-radius: 50%;
+    /* Làm tròn nút radio */
     transition: all 0.3s ease;
     margin-right: 8px;
-    margin-top: 0; /* Đảm bảo không bị thụt vào */
+    margin-top: 0;
+    /* Đảm bảo không bị thụt vào */
     background-color: #fff;
     cursor: pointer;
     vertical-align: middle;
-    flex-shrink: 0; /* Ngăn nút radio bị co lại */
+    flex-shrink: 0;
+    /* Ngăn nút radio bị co lại */
 }
 
 :deep(.form-check-input:checked) {
     background-color: #f33b47;
     border-color: #f33b47;
-    box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2); /* Hiệu ứng khi chọn */
+    box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2);
+    /* Hiệu ứng khi chọn */
 }
 
 :deep(.form-check-label) {
@@ -2092,8 +2157,10 @@ label.form-label {
     color: #1f1f1f;
     line-height: 1.5;
     margin-bottom: 0;
-    cursor: pointer; /* Thêm con trỏ để nhấn vào nhãn */
-    vertical-align: middle; /* Căn giữa nhãn với nút radio */
+    cursor: pointer;
+    /* Thêm con trỏ để nhấn vào nhãn */
+    vertical-align: middle;
+    /* Căn giữa nhãn với nút radio */
 }
 
 /* Remove unnecessary margins */
@@ -2131,13 +2198,16 @@ label.form-label {
         gap: 16px;
     }
 
-    .col-8, .col-4 {
+    .col-8,
+    .col-4 {
         flex: 100%;
     }
 
-    .table-responsive, form {
+    .table-responsive,
+    form {
         height: auto;
-        min-height: 200px; /* Adjusted for mobile */
+        min-height: 200px;
+        /* Adjusted for mobile */
     }
 
     :deep(.form-check-inline) {
