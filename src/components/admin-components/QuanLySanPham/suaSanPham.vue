@@ -10,9 +10,9 @@
                 </a-form-item>
                 <a-form-item label="Tên sản phẩm" name="ten_san_pham" :rules="[
                     { required: true, message: 'Vui lòng nhập tên sản phẩm!' },
-                    
+                    { validator: validateProductName }
                 ]">
-                    <a-input readonly v-model:value="formState.ten_san_pham" />
+                    <a-input v-model:value="formState.ten_san_pham" />
                 </a-form-item>
 
                 <a-form-item label="Danh mục" name="id_danh_muc"
@@ -45,14 +45,8 @@
                 </a-form-item>
 
                 <a-form-item label="Mô tả" name="mo_ta">
-                    <QuillEditor
-                        v-model:content="formState.mo_ta"
-                        contentType="html"
-                        toolbar="full" 
-                        theme="snow"
-                        placeholder="Nhập mô tả sản phẩm..."
-                        class="editor-container"
-                    />
+                    <a-textarea v-model:value="formState.mo_ta" :rows="4" placeholder="Nhập mô tả sản phẩm"
+                        :maxLength="500" show-count />
                 </a-form-item>
 
                 <a-form-item label="Hình ảnh" name="hinh_anh">
@@ -216,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, readonly } from 'vue';
+import { ref, reactive, onMounted, watch } from 'vue';
 import { PlusOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue';
 import { message, Modal } from 'ant-design-vue';
 import { useGbStore } from '@/stores/gbStore';
@@ -224,8 +218,6 @@ import { useRouter } from 'vue-router';
 import { useRoute } from 'vue-router';
 import axiosInstance from '@/config/axiosConfig';
 import { testService } from '@/services/testService';
-import { QuillEditor } from '@vueup/vue-quill';
-import '@vueup/vue-quill/dist/vue-quill.snow.css';
 const store = useGbStore();
 const router = useRouter();
 const route = useRoute();
@@ -708,12 +700,10 @@ const onFinish = async () => {
 
         // Thông báo thành công và chuyển hướng
         message.success('Cập nhật sản phẩm và biến thể thành công!');
-        //  await store.getAllSanPhamNgaySua();
-        //todo: cập nhật lại dữ liệu mới nhất
         await store.getAllSanPhamNgaySua();
+
         // Đánh dấu vừa thêm sản phẩm mới
-        store.changeAction(true);
-        localStorage.setItem('justAddedProduct', 'true');
+        store.justAddedProduct = true;
         router.push('/admin/quanlysanpham');
     } catch (error) {
         console.error('Chi tiết lỗi:', error);
@@ -1412,60 +1402,5 @@ const resetForm = () => {
 
 .ant-empty {
     margin: 32px 0;
-}
-
-/* Rich Text Editor styles */
-.editor-container {
-  height: 300px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-}
-
-:deep(.ql-toolbar) {
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-  background-color: #f6f6f6;
-  border-color: #d9d9d9;
-}
-
-:deep(.ql-container) {
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  border-color: #d9d9d9;
-  min-height: 250px;
-}
-
-:deep(.ql-editor) {
-  font-family: 'Roboto', sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-:deep(.ql-container:hover), :deep(.ql-toolbar:hover) {
-  border-color: #f33b47;
-}
-
-:deep(.ql-toolbar .ql-stroke) {
-  stroke: #333;
-}
-
-:deep(.ql-toolbar .ql-fill) {
-  fill: #333;
-}
-
-:deep(.ql-toolbar button:hover .ql-stroke) {
-  stroke: #f33b47;
-}
-
-:deep(.ql-toolbar button:hover .ql-fill) {
-  fill: #f33b47;
-}
-
-:deep(.ql-toolbar button.ql-active .ql-stroke) {
-  stroke: #f33b47;
-}
-
-:deep(.ql-toolbar button.ql-active .ql-fill) {
-  fill: #f33b47;
 }
 </style>

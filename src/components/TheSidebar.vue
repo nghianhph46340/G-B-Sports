@@ -9,10 +9,10 @@
                 <div class="collapse navbar-collapse" id="navbarScroll">
                     <ul class="navbar-nav mx-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 70px;">
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('')">Tất cả sản phẩm</a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('all')">Tất cả sản phẩm</a>
                         </li>
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick(['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'])">Môn thể thao</a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('Sport')">Môn thể thao</a>
                         </li>
                         <li class="nav-item me-lg-5">
                             <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('Nam')">Nam</a>
@@ -21,11 +21,10 @@
                             <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('Nữ')">Nữ</a>
                         </li>
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" style="cursor: pointer;" aria-current="page"
-                                href="#">Siêu sale sập sàn
-                            </a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSieuSaleClick">Siêu sale sập sàn</a>
                         </li>
                     </ul>
+                    <span v-if="isLoading" style="color:#3a86ff; font-weight:600;">Đang tải sản phẩm...</span>
                 </div>
             </div>
         </nav>
@@ -37,17 +36,42 @@
 import { ChevronDown } from 'lucide-vue-next';
 import { useGbStore } from '../stores/gbStore';
 import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 
 const router = useRouter();
 const store = useGbStore();
+const isLoading = ref(false);
 
-// Truyền 1 hoặc nhiều keyword (dạng mảng hoặc chuỗi)
+// Giữ lại hàm handleSidebarClick cho các mục khác
 async function handleSidebarClick(keywords) {
-  store.setProductLoading(true);
-  await store.getSanPhamByTenDM(keywords);
-  store.setProductLoading(false);
-  // Truyền keyword qua query, nếu là mảng sẽ thành filter[]=a&filter[]=b
-  router.push({ name: 'danhSachSanPham', query: { filter: keywords } });
+  isLoading.value = true;
+  if (keywords === 'all') {
+    await store.getSanPhamByTenDM('');
+  } else if (keywords === 'Sport') {
+    const sports = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
+    await store.getSanPhamByTenDM(sports);
+  } else {
+    await store.getSanPhamByTenDM(keywords);
+  }
+  isLoading.value = false;
+  router.push({ path: 'danhSachSanPham', query: { filter: keywords } });
+}
+
+// Đơn giản hóa hàm handleSieuSaleClick, chỉ lấy sản phẩm và chuyển trang
+async function handleSieuSaleClick() {
+  try {
+    isLoading.value = true;
+    await store.getSanPhamSieuSale();
+    console.log('Đã lấy sản phẩm siêu sale'); // Log để kiểm tra
+    router.push({ 
+      path: 'danhSachSanPham', 
+      query: { filter: 'supersale' } 
+    });
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm siêu sale:', error);
+  } finally {
+    isLoading.value = false;
+  }
 }
 </script>
 

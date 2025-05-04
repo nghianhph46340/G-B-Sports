@@ -20,12 +20,8 @@
                                 <div class="section-divider"></div>
                             </div>
                             <ul class="trending-list">
-                                <li class="trending-item" 
-                                    v-for="(item, index) in trendingSearches" 
-                                    :key="index"
-                                    @mouseenter="hoverItem = index" 
-                                    @mouseleave="hoverItem = null"
-                                    @click="handleSearchSuggestion(item)">
+                                <li class="trending-item" v-for="(item, index) in trendingSearches" :key="index"
+                                    @mouseenter="hoverItem = index" @mouseleave="hoverItem = null">
                                     <div class="trending-item-content">
                                         <Search :class="{ 'search-icon-highlight': hoverItem === index }" />
                                         <span class="trending-text">{{ item }}</span>
@@ -154,20 +150,6 @@ const suggestedProducts = ref([
 const popularTags = ref([
     'Thể thao nam', 'Thể thao nữ', 'Giày chạy bộ', 'Áo thun', 'Quần short', 'Phụ kiện gym', 'Sale 50%'
 ]);
-
-const handleSearchSuggestion = async (keyword) => {
-  try {
-    store.isProductLoading = true;
-    // Gọi API tìm kiếm từ store
-    await store.getSanPhamByTenSP(keyword);
-    // Đóng modal
-    store.showModal(false);
-  } catch (error) {
-    console.error('Lỗi khi tìm kiếm:', error);
-  } finally {
-    store.isProductLoading = false;
-  }
-};
 </script>
 
 <style scoped>
