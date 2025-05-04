@@ -124,60 +124,40 @@
                         </div>
 
                         <div class="payment-method-item">
-                            <a-radio value="online" class="payment-radio">
+                            <a-radio value="vnpay" class="payment-radio">
                                 <div class="payment-content">
                                     <div class="payment-icon">
                                         <credit-card-outlined />
                                     </div>
                                     <div class="payment-info">
-                                        <p class="payment-name">Thanh toán trực tuyến</p>
-                                        <p class="payment-desc">Thanh toán qua VNPAY, Momo, thẻ ngân hàng</p>
+                                        <p class="payment-name">VNPAY</p>
+                                        <p class="payment-desc">Thanh toán qua VNPAY</p>
+                                    </div>
+                                    <div class="payment-logo">
+                                        <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Icon-VNPAY-QR.png"
+                                            alt="VNPAY" class="online-logo" />
+                                    </div>
+                                </div>
+                            </a-radio>
+                        </div>
+
+                        <div class="payment-method-item">
+                            <a-radio value="payos" class="payment-radio">
+                                <div class="payment-content">
+                                    <div class="payment-icon">
+                                        <credit-card-outlined />
+                                    </div>
+                                    <div class="payment-info">
+                                        <p class="payment-name">PayOs</p>
+                                        <p class="payment-desc">Thanh toán qua PayOs</p>
+                                    </div>
+                                    <div class="payment-logo">
+                                        <img src="../images/icon/logoVietQR.png" style="width: 60px; height: 60px;" alt="Payos" class="online-logo" />
                                     </div>
                                 </div>
                             </a-radio>
                         </div>
                     </a-radio-group>
-
-                    <!-- Online Payment Options (shown only if online payment is selected) -->
-                    <div v-if="selectedPaymentMethod === 'online'" class="online-payment-options">
-                        <a-radio-group v-model:value="selectedOnlineMethod" class="online-methods">
-                            <div class="online-method-item">
-                                <a-radio value="vnpay" class="online-radio">
-                                    <div class="online-content">
-                                        <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Icon-VNPAY-QR.png"
-                                            alt="VNPAY" class="online-logo" />
-                                        <span>VNPAY</span>
-                                    </div>
-                                </a-radio>
-                            </div>
-                            <div class="online-method-item">
-                                <a-radio value="payos" class="online-radio">
-                                    <div class="online-content">
-                                        <img src="../images/icon/depositphotos_593773014-stock-illustration-ruble-money-icon-shadow-russian-899359828.jpg"
-                                            alt="Payos" class="online-logo" />
-                                        <span>PayOs</span>
-                                    </div>
-                                </a-radio>
-                            </div>
-                            <div class="online-method-item">
-                                <a-radio value="momo" class="online-radio">
-                                    <div class="online-content">
-                                        <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
-                                            alt="Momo" class="online-logo" />
-                                        <span>Ví MoMo</span>
-                                    </div>
-                                </a-radio>
-                            </div>
-                            <div class="online-method-item">
-                                <a-radio value="bank" class="online-radio">
-                                    <div class="online-content">
-                                        <bank-outlined />
-                                        <span>Thẻ ATM/Internet Banking</span>
-                                    </div>
-                                </a-radio>
-                            </div>
-                        </a-radio-group>
-                    </div>
                 </div>
 
                 <div class="section-box">
@@ -220,7 +200,7 @@
                                 <div class="coupon-info">
                                     <div class="coupon-badge">
                                         <span class="coupon-type">{{ coupon.loai === 'percent' ? 'GIẢM %' : 'GIẢM GIÁ'
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                     <div class="coupon-details">
                                         <p class="coupon-value">{{ coupon.loai === 'percent' ? `Giảm ${coupon.gia_tri}%`
@@ -410,8 +390,8 @@ const customerAddresses = ref([]);
 const selectedAddressId = ref(1);
 
 // Payment methods
-const selectedPaymentMethod = ref('cod');
-const selectedOnlineMethod = ref('vnpay');
+const selectedPaymentMethod = ref('');
+// const selectedOnlineMethod = ref('vnpay');
 
 // Order note
 const orderNote = ref('');
@@ -535,7 +515,7 @@ const calculateShippingFee = async () => {
     try {
         console.log("khách hàng hahahahaha", customer.value)
         const kh = customer.value
-        
+
         // Kiểm tra điều kiện trước khi gọi API
         if (!kh.tinh_thanh_pho || !kh.quan_huyen) {
             console.log("Chưa đủ thông tin địa chỉ để tính phí ship");
@@ -549,7 +529,7 @@ const calculateShippingFee = async () => {
             shippingFee.value = 0;
             return;
         }
-        
+
         const result = await banHangService.tinhPhiShip(
             "Hà Nội", // pickProvince
             "Nam Từ Liêm", // pickDistrict
@@ -558,7 +538,7 @@ const calculateShippingFee = async () => {
             500,
             subtotal.value
         );
-        
+
         // Kiểm tra result và fee có tồn tại không
         if (result && typeof result.fee !== 'undefined') {
             console.log("Phi ship", result.fee);
@@ -752,6 +732,15 @@ const calculateOrderTotals = () => {
     // Tạo đối tượng hóa đơn đầy đủ với tất cả thông tin cần thiết
     const currentDate = new Date();
 
+    // Xác định phương thức thanh toán
+    let paymentMethod = {
+        loai: selectedPaymentMethod.value === 'cod' ? 'cod' : 'online',
+        chi_tiet: selectedPaymentMethod.value,
+        ten: selectedPaymentMethod.value === 'cod' 
+             ? 'Thanh toán khi nhận hàng' 
+             : (selectedPaymentMethod.value === 'vnpay' ? 'VNPAY' : 'PayOS')
+    };
+
     const invoice = {
         // Thông tin đơn hàng
         hoaDon: {
@@ -774,21 +763,9 @@ const calculateOrderTotals = () => {
             tong_tien_thanh_toan: grandTotal.value,
             ho_ten: customer.value.ho_ten,
             ghi_chu: orderNote.value,
-            hinh_thuc_thanh_toan: selectedPaymentMethod.value === 'online' ? 'Chuyển khoản' : 'Tiền mặt',
+            hinh_thuc_thanh_toan: selectedPaymentMethod.value === 'cod' ? 'Tiền mặt' : 'Chuyển khoản',
             // Thông tin thanh toán
-            phuong_thuc_thanh_toan: {
-                loai: selectedPaymentMethod.value,
-                chi_tiet: selectedPaymentMethod.value === 'online' ? selectedOnlineMethod.value : 'cod',
-                ten: selectedPaymentMethod.value === 'online'
-                    ? (selectedOnlineMethod.value === 'vnpay'
-                        ? 'VNPAY'
-                        : selectedOnlineMethod.value === 'momo'
-                            ? 'Ví MoMo'
-                            : selectedOnlineMethod.value === 'payos'
-                                ? 'PayOS'
-                                : 'Thẻ ATM/Internet Banking')
-                    : 'Thanh toán khi nhận hàng'
-            },
+            phuong_thuc_thanh_toan: paymentMethod,
             // Tổng tiền đơn hàng
             tong_tien: {
                 tam_tinh: Number(subtotal.value || 0),
@@ -831,6 +808,12 @@ const placeOrder = async () => {
         // Validate form
         await customerForm.value.validate();
 
+        // Kiểm tra phương thức thanh toán
+        if (!selectedPaymentMethod.value) {
+            message.warning('Vui lòng chọn phương thức thanh toán');
+            return;
+        }
+
         placing.value = true;
 
         // Tạo đối tượng hóa đơn đầy đủ
@@ -849,123 +832,24 @@ const placeOrder = async () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         // Handle different payment methods
-        if (selectedPaymentMethod.value === 'online') {
-            if (selectedOnlineMethod.value === 'payos') {
-                try {
-
-                    hoaDon.isChuyen = true;
-                    console.log('Hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
-                    localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
-                    localStorage.setItem('hoaDonChiTiet', JSON.stringify(orderData.hoaDonChiTiet));
-
-                    // Đặt URL callback để xử lý sau khi thanh toán
-                    const returnUrl = window.location.origin + '/payment-callback';
-                    orderData.payment_info.returnUrl = returnUrl;
-
-                    // Chuyển đến trang thanh toán PayOS
-                    // await thanhToanService.handlePayOSPayment(orderData.payment_info);
-                    const responseThanhToan = await thanhToanService.handlePayOSPayment(orderData.payment_info);
-                    console.log('Response từ payos:', responseThanhToan);
-                    localStorage.setItem('responseThanhToan', JSON.stringify(responseThanhToan));
-
-                    // Lưu ý: Code sau đây sẽ không chạy ngay lập tức vì người dùng sẽ bị chuyển hướng
-                    // Xử lý callback sẽ được thực hiện ở trang payment-callback
-                } catch (error) {
-                    console.error('Lỗi khi xử lý thanh toán PayOS:', error);
-                    message.error('Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau.');
-                }
-            } else if (selectedOnlineMethod.value === 'vnpay') {
-                // Redirect to VNPAY payment gateway
-                message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
-
-                // Gán isChuyen = true cho hoaDon
-                hoaDon.isChuyen = true;
-
-                // Log hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
-
-                const response = await banHangOnlineService.createOrder(hoaDon);
-                const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
-                console.log('Response từ server:', response);
-                console.log('Response chi tiết từ server:', responseChiTiet);
-
-                // Lưu hóa đơn đã được cập nhật vào localStorage
-                localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
-                if (response && responseChiTiet) {
-                    // Lấy danh sách sản phẩm đã thanh toán
-                    const paidProducts = orderData.hoaDonChiTiet.map(item => {
-                        return {
-                            id: item.chiTietSanPham.id_chi_tiet_san_pham,
-                            quantity: item.so_luong
-                        };
-                    });
-
-                    console.log('Sản phẩm đã thanh toán:', paidProducts);
-
-                    // Lấy giỏ hàng hiện tại
-                    const currentCart = JSON.parse(localStorage.getItem('gb-sport-cart') || '[]');
-                    console.log('Giỏ hàng hiện tại:', currentCart);
-
-                    // Tạo bản sao giỏ hàng để xử lý
-                    const updatedCart = [];
-                    
-                    // Xử lý từng sản phẩm trong giỏ hàng
-                    currentCart.forEach(cartItem => {
-                        // Tìm sản phẩm tương ứng trong danh sách đã thanh toán
-                        const paidItem = paidProducts.find(paid => paid.id === cartItem.id);
-                        
-                        if (paidItem) {
-                            // Nếu sản phẩm có trong đơn hàng, trừ số lượng
-                            const remainingQuantity = cartItem.quantity - paidItem.quantity;
-                            
-                            // Chỉ giữ lại trong giỏ hàng nếu số lượng > 0
-                            if (remainingQuantity > 0) {
-                                updatedCart.push({
-                                    ...cartItem,
-                                    quantity: remainingQuantity
-                                });
-                            }
-                        } else {
-                            // Nếu sản phẩm không có trong đơn hàng, giữ nguyên
-                            updatedCart.push(cartItem);
-                        }
-                    });
-
-                    console.log('Giỏ hàng sau khi cập nhật:', updatedCart);
-
-                    if (updatedCart.length > 0) {
-                        // Nếu còn sản phẩm trong giỏ hàng, cập nhật lại giỏ hàng
-                        localStorage.setItem('gb-sport-cart', JSON.stringify(updatedCart));
-                    } else {
-                        // Nếu không còn sản phẩm nào, xóa giỏ hàng
-                        localStorage.removeItem('gb-sport-cart');
-                    }
-                }
-                // Đặt URL callback để xử lý sau khi thanh toán
-                const returnUrl = window.location.origin + '/payment-callback';
-                orderData.payment_info.returnUrl = returnUrl;
-
-                // Implement VNPAY payment logic here
-            } else if (selectedOnlineMethod.value === 'momo') {
-                // Redirect to Momo payment gateway
-                message.info('Đang chuyển hướng đến cổng thanh toán Momo...');
-                // Implement Momo payment logic here
-            } else {
-                // Handle bank payment
-                message.info('Đang chuyển hướng đến cổng thanh toán ngân hàng...');
-                // Implement bank payment logic here
-            }
-        } else {
+        if (selectedPaymentMethod.value === 'cod') {
             // COD payment - immediately mark as ordered
             try {
                 // Tạo hóa đơn trong hệ thống
                 const response = await banHangOnlineService.createOrder(hoaDon);
-                const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                let responseChiTiet;
+                if (store.getIsThanhToanMuaNgay()) {
+                    responseChiTiet = await banHangOnlineService.createOrderChiTietMuaNgay(orderData.hoaDonChiTiet);
+                } else {
+                    responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                }
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);
 
                 // Lưu mã hóa đơn vào localStorage
                 if (response && response.ma_hoa_don) {
                     localStorage.setItem('lastOrderCode', response.ma_hoa_don);
+                    store.setIsThanhToanMuaNgay(false);
                 }
 
                 // Cập nhật trạng thái đơn hàng
@@ -1006,16 +890,16 @@ const placeOrder = async () => {
 
                     // Tạo bản sao giỏ hàng để xử lý
                     const updatedCart = [];
-                    
+
                     // Xử lý từng sản phẩm trong giỏ hàng
                     currentCart.forEach(cartItem => {
                         // Tìm sản phẩm tương ứng trong danh sách đã thanh toán
                         const paidItem = paidProducts.find(paid => paid.id === cartItem.id);
-                        
+
                         if (paidItem) {
                             // Nếu sản phẩm có trong đơn hàng, trừ số lượng
                             const remainingQuantity = cartItem.quantity - paidItem.quantity;
-                            
+
                             // Chỉ giữ lại trong giỏ hàng nếu số lượng > 0
                             if (remainingQuantity > 0) {
                                 updatedCart.push({
@@ -1043,6 +927,111 @@ const placeOrder = async () => {
                 console.error('Lỗi khi tạo đơn hàng COD:', error);
                 message.error('Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại sau.');
             }
+        } else if (selectedPaymentMethod.value === 'payos') {
+            try {
+                hoaDon.isChuyen = true;
+                hoaDon.hinh_thuc_thanh_toan = 'Chuyển khoản';
+                hoaDon.phuong_thuc_thanh_toan = {
+                    loai: 'online',
+                    chi_tiet: 'payos',
+                    ten: 'PayOS'
+                };
+                console.log('Hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
+                localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
+                localStorage.setItem('hoaDonChiTiet', JSON.stringify(orderData.hoaDonChiTiet));
+                localStorage.setItem('isThanhToanMuaNgay', store.getIsThanhToanMuaNgay());
+                // Đặt URL callback để xử lý sau khi thanh toán
+                const returnUrl = window.location.origin + '/payment-callback';
+                orderData.payment_info.returnUrl = returnUrl;
+
+                // Chuyển đến trang thanh toán PayOS
+                const responseThanhToan = await thanhToanService.handlePayOSPayment(orderData.payment_info);
+                console.log('Response từ payos:', responseThanhToan);
+                localStorage.setItem('responseThanhToan', JSON.stringify(responseThanhToan));
+            } catch (error) {
+                console.error('Lỗi khi xử lý thanh toán PayOS:', error);
+                message.error('Có lỗi xảy ra khi xử lý thanh toán. Vui lòng thử lại sau.');
+            }
+        } else if (selectedPaymentMethod.value === 'vnpay') {
+            // Redirect to VNPAY payment gateway
+            message.info('Đang chuyển hướng đến cổng thanh toán VNPAY...');
+
+            // Gán isChuyen = true cho hoaDon
+            hoaDon.isChuyen = true;
+            hoaDon.hinh_thuc_thanh_toan = 'Chuyển khoản';
+            hoaDon.phuong_thuc_thanh_toan = {
+                loai: 'online',
+                chi_tiet: 'vnpay',
+                ten: 'VNPAY'
+            };
+
+            const response = await banHangOnlineService.createOrder(hoaDon);
+            let responseChiTiet;
+            if (store.getIsThanhToanMuaNgay()) {
+                responseChiTiet = await banHangOnlineService.createOrderChiTietMuaNgay(orderData.hoaDonChiTiet);
+            } else {
+                responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+            }
+            console.log('Response từ server:', response);
+            console.log('Response chi tiết từ server:', responseChiTiet);
+            if (response && responseChiTiet) {
+                store.setIsThanhToanMuaNgay(false);
+            }
+            // Lưu hóa đơn đã được cập nhật vào localStorage
+            localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
+            if (response && responseChiTiet) {
+                // Lấy danh sách sản phẩm đã thanh toán
+                const paidProducts = orderData.hoaDonChiTiet.map(item => {
+                    return {
+                        id: item.chiTietSanPham.id_chi_tiet_san_pham,
+                        quantity: item.so_luong
+                    };
+                });
+
+                console.log('Sản phẩm đã thanh toán:', paidProducts);
+
+                // Lấy giỏ hàng hiện tại
+                const currentCart = JSON.parse(localStorage.getItem('gb-sport-cart') || '[]');
+                console.log('Giỏ hàng hiện tại:', currentCart);
+
+                // Tạo bản sao giỏ hàng để xử lý
+                const updatedCart = [];
+
+                // Xử lý từng sản phẩm trong giỏ hàng
+                currentCart.forEach(cartItem => {
+                    // Tìm sản phẩm tương ứng trong danh sách đã thanh toán
+                    const paidItem = paidProducts.find(paid => paid.id === cartItem.id);
+
+                    if (paidItem) {
+                        // Nếu sản phẩm có trong đơn hàng, trừ số lượng
+                        const remainingQuantity = cartItem.quantity - paidItem.quantity;
+
+                        // Chỉ giữ lại trong giỏ hàng nếu số lượng > 0
+                        if (remainingQuantity > 0) {
+                            updatedCart.push({
+                                ...cartItem,
+                                quantity: remainingQuantity
+                            });
+                        }
+                    } else {
+                        // Nếu sản phẩm không có trong đơn hàng, giữ nguyên
+                        updatedCart.push(cartItem);
+                    }
+                });
+
+                console.log('Giỏ hàng sau khi cập nhật:', updatedCart);
+
+                if (updatedCart.length > 0) {
+                    // Nếu còn sản phẩm trong giỏ hàng, cập nhật lại giỏ hàng
+                    localStorage.setItem('gb-sport-cart', JSON.stringify(updatedCart));
+                } else {
+                    // Nếu không còn sản phẩm nào, xóa giỏ hàng
+                    localStorage.removeItem('gb-sport-cart');
+                }
+            }
+            // Đặt URL callback để xử lý sau khi thanh toán
+            const returnUrl = window.location.origin + '/payment-callback';
+            orderData.payment_info.returnUrl = returnUrl;
         }
 
         placing.value = false;
@@ -1783,6 +1772,19 @@ const displayVouchers = computed(() => {
 .payment-desc {
     font-size: 13px;
     color: #666;
+}
+
+.payment-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.payment-logo img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
 }
 
 /* Online payment methods */

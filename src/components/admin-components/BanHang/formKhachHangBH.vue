@@ -145,33 +145,44 @@ const validateForm = () => {
     });
     errors.diaChiErrors = formData.diaChiList.map(() => ({}));
 
-    // Kiểm tra tên khách hàng
-    const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/; // Chỉ cho phép chữ cái và khoảng trắng
-    if (!formData.tenKhachHang.trim()) {
-        errors.tenKhachHang = 'Vui lòng nhập tên khách hàng';
+    // Chuẩn hóa các trường văn bản
+    formData.tenKhachHang = formData.tenKhachHang?.replace(/\s+/g, ' ').trim() || '';
+    formData.soDienThoai = formData.soDienThoai?.replace(/\s+/g, '').trim() || '';
+    formData.email = formData.email?.replace(/\s+/g, '').trim() || '';
+
+    // Validate họ tên (từ backend: NotBlank, Size max 100, Pattern chỉ chữ cái)
+    if (!formData.tenKhachHang) {
+        errors.tenKhachHang = 'Tên khách hàng không được để trống';
         isValid = false;
-    } else if (!nameRegex.test(formData.tenKhachHang)) {
-        errors.tenKhachHang = 'Tên không được chứa ký tự đặc biệt';
+    } else if (!/^[a-zA-Z\s\u00C0-\u1EF9]+$/.test(formData.tenKhachHang)) {
+        errors.tenKhachHang = 'Tên chỉ được chứa chữ cái';
+        isValid = false;
+    } else if (formData.tenKhachHang.length > 100) {
+        errors.tenKhachHang = 'Tên khách hàng không được vượt quá 100 ký tự';
+        isValid = false;
+    } else if (formData.tenKhachHang.length < 2) {
+        errors.tenKhachHang = 'Tên khách hàng không được nhỏ hơn 2 ký tự';
         isValid = false;
     }
 
-    // Kiểm tra số điện thoại
-    const phoneRegex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
-    if (!formData.soDienThoai.trim()) {
-        errors.soDienThoai = 'Vui lòng nhập số điện thoại';
+    // Validate số điện thoại (từ backend: NotBlank, Pattern 0\d{9})
+    if (!formData.soDienThoai) {
+        errors.soDienThoai = 'Số điện thoại không được để trống';
         isValid = false;
-    } else if (!phoneRegex.test(formData.soDienThoai)) {
-        errors.soDienThoai = 'Số điện thoại không hợp lệ (VD: 0912345678)';
+    } else if (!validatePhoneNumber(formData.soDienThoai)) {
+        errors.soDienThoai = 'Số điện thoại phải bắt đầu bằng 0 và đúng 10 chữ số (VD: 0912345678)';
         isValid = false;
     }
 
-    // Kiểm tra email
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-    if (!formData.email.trim()) {
-        errors.email = 'Vui lòng nhập email';
+    // Validate email (từ backend: NotBlank, Email, Size max 100)
+    if (!formData.email) {
+        errors.email = 'Email không được để trống';
         isValid = false;
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!validateEmail(formData.email)) {
         errors.email = 'Email không hợp lệ (VD: example@gmail.com)';
+        isValid = false;
+    } else if (formData.email.length > 100) {
+        errors.email = 'Email không được vượt quá 100 ký tự';
         isValid = false;
     }
 
@@ -196,6 +207,17 @@ const validateForm = () => {
     });
 
     return isValid;
+};
+
+const validatePhoneNumber = (phone) => {
+  const cleanedPhone = phone.replace(/\s+/g, '');
+  const regex = /^(0)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])[0-9]{7}$/;
+  return regex.test(cleanedPhone);
+};
+
+const validateEmail = (email) => {
+  const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  return regex.test(email);
 };
 
 const loadProvinces = async () => {
@@ -284,55 +306,47 @@ const resetForm = () => {
 };
 
 const themKhachHang = async () => {
-    if (!validateForm()) {
-        toast.error('Vui lòng điền đầy đủ và chính xác thông tin!');
-        return;
+  if (!validateForm()) {
+    toast.error('Vui lòng điền đầy đủ và chính xác thông tin!');
+    return;
+  }
+
+  const dataToSend = { ...formData };
+  console.log("datagui:", dataToSend);
+  try {
+    const result = await gbStore.themKhachHangBH(dataToSend);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const idHoaDon = gbStore.getCurrentHoaDonId();
+    const diaChiList = formData.diaChiList.map(diaChi => {
+      return `${diaChi.soNha}, ${diaChi.xaPhuong}, ${diaChi.quanHuyen}, ${diaChi.tinhThanhPho}`;
+    });
+    await gbStore.addKHHD(idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
+    localStorage.setItem('luuTTKHBH', JSON.stringify(true));
+    localStorage.setItem('khachHangBH', JSON.stringify(dataToSend));
+    if (result) {
+      toast.success('Thêm khách hàng thành công!', {
+        autoClose: 2000,
+        position: 'top-right'
+      });
     }
-
-    const dataToSend = { ...formData };
-
-    try {
-        const result = await gbStore.themKhachHangBH(dataToSend);
-        const idHoaDon = gbStore.getCurrentHoaDonId()
-        console.log('idHoaDon', idHoaDon)
-        const diaChiList = formData.diaChiList.map(diaChi => {
-            return `${diaChi.soNha}, ${diaChi.xaPhuong}, ${diaChi.quanHuyen}, ${diaChi.tinhThanhPho}`;
-        });
-
-        console.log('Địa chỉ gộp:', diaChiList);
-
-        // Thực hiện logic lưu thông tin (ví dụ: gửi dữ liệu đến API)
-        const dataToSend = {
-            ...formData,
-            diaChiList, // Thêm chuỗi địa chỉ gộp vào dữ liệu gửi đi
-            idHoaDon,  // Thêm ID hóa đơn
-        };
-
-        console.log('Dữ liệu gửi đi:', dataToSend);
-
-        console.log('Lưu thông tin khách hàng:', idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
-
-        await gbStore.addKHHD(idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
-        localStorage.setItem('luuTTKHBH', JSON.stringify(true));
-        if (result) {
-            toast.success('Thêm khách hàng thành công!', {
-                autoClose: 2000,
-                position: 'top-right'
-            });
-        }
-    } catch (error) {
-        console.error('Lỗi khi thêm khách hàng:', error);
-        // Kiểm tra lỗi từ backend
-        if (error.response && error.response.data && error.response.data.error) {
-            if (error.response.data.error.includes('Email đã được sử dụng')) {
-                errors.email = 'Email đã được sử dụng!';
-            } else {
-                toast.error(error.response.data.error); // Hiển thị lỗi khác từ backend
-            }
-        } else {
-            toast.error('Có lỗi xảy ra khi thêm khách hàng');
-        }
+  } catch (error) {
+    console.error('Lỗi khi thêm khách hàng:', error);
+    console.log('Error object:', error);
+    console.log('Response:', error.response);
+    console.log('Message:', error.message);
+    if (error.response && error.response.data && error.response.data.error) {
+      if (error.response.data.error.includes('Email đã được sử dụng')) {
+        errors.email = 'Email đã được sử dụng!';
+        toast.error('Email đã được sử dụng!');
+      } else if (error.response.data.error.includes('Mã khách hàng đã tồn tại')) {
+        toast.error('Mã khách hàng đã tồn tại!');
+      } else {
+        toast.error(error.response.data.error);
+      }
+    } else {
+      toast.error(`Có lỗi xảy ra: ${error.message || 'Không thể kết nối đến server'}`);
     }
+  }
 };
 const luuThongTin = async () => {
     if (!validateForm()) {

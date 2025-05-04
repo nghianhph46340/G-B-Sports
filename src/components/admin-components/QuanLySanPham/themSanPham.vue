@@ -812,16 +812,6 @@ onBeforeUnmount(() => {
     mounted.value = false;
 });
 
-// Function to handle rich text editor
-const applyFormat = (command, value) => {
-    document.execCommand(command, false, value);
-    editorRef.value.focus();
-    updateFormStateFromEditor();
-};
-
-const handleEditorInput = () => {
-    updateFormStateFromEditor();
-};
 
 const updateFormStateFromEditor = () => {
     if (editorRef.value) {
@@ -2303,7 +2293,6 @@ const onFinish = async () => {
         // 1.5 Save all new sizes used in variants
         const usedSizeIds = new Set(variants.value.map(v => v.id_kich_thuoc));
         const newSizeIds = Array.from(usedSizeIds).filter(id => id.toString().startsWith('temp_'));
-
         for (const tempSizeId of newSizeIds) {
             const sizeItem = newLocalAttributes.kichThuoc.find(item => item.id_kich_thuoc === tempSizeId);
             if (sizeItem) {
@@ -3539,3 +3528,4 @@ const handleProductImageRemove = async (file) => {
   fill: #f33b47;
 }
 </style>
+

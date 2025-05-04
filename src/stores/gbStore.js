@@ -152,6 +152,8 @@ export const useGbStore = defineStore('gbStore', {
     // Thêm vào phần state
     filteredProductsData: [],
     isProductLoading: false, // Thêm state để quản lý trạng thái loading sản phẩm
+    //Biến check có phải thanh toán mua ngay không
+    isThanhToanMuaNgay: false,
   }),
 
   ///Đầu mút2
@@ -187,6 +189,23 @@ export const useGbStore = defineStore('gbStore', {
       } finally {
         this.isLoading = false;
       }
+    },
+    //Tạo hóa đơn chi tiết mua ngay
+    async createOrderChiTietMuaNgay(hoaDonChiTiet) {
+      const response = await banHangOnlineService.createOrderChiTietMuaNgay(hoaDonChiTiet);
+      if (response) {
+        this.isThanhToanMuaNgay = true;
+      } else {
+        this.isThanhToanMuaNgay = false;
+      }
+    },
+    //Chuyển biến thanh toán mua ngay
+    setIsThanhToanMuaNgay(value) {
+      this.isThanhToanMuaNgay = value;
+    },
+    //Lấy biến thanh toán mua ngay
+    getIsThanhToanMuaNgay() {
+      return this.isThanhToanMuaNgay;
     },
 // List sản phẩm theo tên sản phẩm(trang sản phẩm)
       async getSanPhamByTenSP(keywords) {
@@ -1658,12 +1677,22 @@ export const useGbStore = defineStore('gbStore', {
     // Lấy danh sách khách hàng
 
     async themKhachHangBH(khachHangData) {
-      const response = await khachHangService.themKhachHangBH(khachHangData)
-      if (response.error) {
-        throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng bán hàng') // Ném lỗi để component xử lý
+      try {
+        console.log('API themKhachHangBH input:', khachHangData);
+        const response = await khachHangService.themKhachHangBH(khachHangData);
+        console.log('API themKhachHangBH response:', response);
+        if (response.error) {
+          const errorMessage = typeof response.error === 'string' ? response.error : 'Có lỗi không xác định từ server';
+          throw new Error(errorMessage);
+        }
+        await this.getAllKhachHang(this.currentKhachHang, 10000);
+        return response.khachHang;
+      } catch (error) {
+        console.error('Lỗi trong themKhachHangBH:', error);
+        console.log('Error response:', error.response);
+        console.log('Error message:', error.message);
+        throw error; // Truyền lỗi lên để frontend xử lý
       }
-      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
-      return response.khachHang // Trả về thông tin khách hàng vừa thêm
     },
 
     // Lấy danh sách khách hàng
@@ -1715,7 +1744,7 @@ export const useGbStore = defineStore('gbStore', {
       if (response.error) {
         throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng') // Ném lỗi để component xử lý
       }
-      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
+      await this.getAllKhachHang(this.currentKhachHang, 5) // Làm mới danh sách
       return response.khachHang // Trả về thông tin khách hàng vừa thêm
     },
 

@@ -82,6 +82,12 @@ const getTrangThaiCTSP = async (idCTSP) => {
         return false;
     }
 }
+//Tạo hóa đơn chi tiết mua ngay
+const createOrderChiTietMuaNgay = async (hoaDonChiTiet) => {
+    const response = await axiosInstance.post('/banhangweb/taoHoaDonChiTietMuaNgay', hoaDonChiTiet);
+    console.log('[SERVICE] Kết quả tạo hóa đơn chi tiết mua ngay:', response.data);
+    return response.data;
+}
 export const banHangOnlineService = {
     createOrder,
     createOrderChiTiet,
@@ -96,6 +102,7 @@ export const banHangOnlineService = {
     themGioHangByIdKH,
     xoaSoLuongSPGH,
     maxSoLuongSP,
-    getTrangThaiCTSP
+    getTrangThaiCTSP,
+    createOrderChiTietMuaNgay
 }
 
