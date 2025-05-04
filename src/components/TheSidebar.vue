@@ -9,54 +9,70 @@
                 <div class="collapse navbar-collapse" id="navbarScroll">
                     <ul class="navbar-nav mx-auto my-2 my-lg-0 navbar-nav-scroll" style="--bs-scroll-height: 70px;">
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" @mouseenter="store.showModalSideBar(1)" aria-current="page" href="#">Môn
-                                thể thao
-                                <ChevronDown />
-
-                            </a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('all')">Tất cả sản phẩm</a>
                         </li>
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" @mouseenter="store.showModalSideBar(2)" aria-current="page" href="#">Nam
-                                <ChevronDown />
-                            </a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('Sport')">Môn thể thao</a>
                         </li>
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" @mouseenter="store.showModalSideBar(3)" aria-current="page" href="#">Nữ
-                                <ChevronDown />
-                            </a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('Nam')">Nam</a>
                         </li>
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" @mouseenter="store.showModalSideBar(4)" aria-current="page" href="#">Phụ
-                                kiện
-                                <ChevronDown />
-                            </a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSidebarClick('Nữ')">Nữ</a>
                         </li>
                         <li class="nav-item me-lg-5">
-                            <a class="nav-link" @mouseenter="store.showModalSideBar(5)" aria-current="page"
-                                href="#">Siêu sale sập sàn
-                                <ChevronDown />
-                            </a>
+                            <a class="nav-link" style="cursor: pointer;" @click.prevent="handleSieuSaleClick">Siêu sale sập sàn</a>
                         </li>
                     </ul>
-
+                    <span v-if="isLoading" style="color:#3a86ff; font-weight:600;">Đang tải sản phẩm...</span>
                 </div>
             </div>
         </nav>
-        <TheSidebarChill1 />
-        <TheSidebarChill2 />
-        <TheSidebarChill3 />
-        <TheSidebarChill4 />
+
     </div>
 </template>
 
 <script setup>
 import { ChevronDown } from 'lucide-vue-next';
 import { useGbStore } from '../stores/gbStore';
-import TheSidebarChill1 from './TheSidebarChill1.vue';
-import TheSidebarChill2 from './TheSidebarChill2.vue';
-import TheSidebarChill3 from './TheSidebarChill3.vue';
-import TheSidebarChill4 from './TheSidebarChill4.vue';
-const store = useGbStore()
+import { useRouter } from 'vue-router';
+import { ref } from 'vue';
+
+const router = useRouter();
+const store = useGbStore();
+const isLoading = ref(false);
+
+// Giữ lại hàm handleSidebarClick cho các mục khác
+async function handleSidebarClick(keywords) {
+  isLoading.value = true;
+  if (keywords === 'all') {
+    await store.getSanPhamByTenDM('');
+  } else if (keywords === 'Sport') {
+    const sports = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
+    await store.getSanPhamByTenDM(sports);
+  } else {
+    await store.getSanPhamByTenDM(keywords);
+  }
+  isLoading.value = false;
+  router.push({ path: 'danhSachSanPham', query: { filter: keywords } });
+}
+
+// Đơn giản hóa hàm handleSieuSaleClick, chỉ lấy sản phẩm và chuyển trang
+async function handleSieuSaleClick() {
+  try {
+    isLoading.value = true;
+    await store.getSanPhamSieuSale();
+    console.log('Đã lấy sản phẩm siêu sale'); // Log để kiểm tra
+    router.push({ 
+      path: 'danhSachSanPham', 
+      query: { filter: 'supersale' } 
+    });
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm siêu sale:', error);
+  } finally {
+    isLoading.value = false;
+  }
+}
 </script>
 
 <style scoped>

@@ -522,6 +522,42 @@ const giaMax = async () => {
     console.error('Lỗi khi lấy giá max:', error)
   }
 }
+const getSanPhamByTenSP = async (tenSanPham) => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'getSanPhamByTenSP?tenSanPham=' + tenSanPham)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm',
+    }
+  }
+}
+const getSanPhamByTenDM  = async (tenDanhMuc) => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'getSanPhamByTenDM?tenDanhMuc=' + tenDanhMuc)
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết sản phẩm:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy chi tiết sản phẩm',
+    }
+  }
+}
+const getSanPhamSieuSale = async () => {
+  try {
+    const response = await axiosInstance.get(qlsp + 'getSanPhamSieuSale')
+    return response.data
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm siêu sale:', error)
+    return {
+      error: true,
+      message: error.message || 'Có lỗi xảy ra khi lấy sản phẩm siêu sale',
+    }
+  }
+}
 export const sanPhamService = {
   getAllSanPham,
   getAllChiTietSanPham,
@@ -567,5 +603,8 @@ export const sanPhamService = {
   updateDanhMuc,
   updateKichThuoc,
   locSanPhamVaChiTietSanPham,
-  giaMax
+  giaMax,
+  getSanPhamByTenSP,
+  getSanPhamByTenDM,
+  getSanPhamSieuSale
 }

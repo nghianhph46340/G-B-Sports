@@ -2,7 +2,7 @@
     <div class="best-selling-products" ref="sectionRef" :class="{ 'visible': isVisible }">
         <div class="container p-0">
             <div class="section-header">
-                <h4 class="section-title">Quần thể thao bán chạy</h4>
+                <h4 class="section-title">Quần thể thao HOT nhất</h4>
                 <div class="section-divider"></div>
             </div>
 

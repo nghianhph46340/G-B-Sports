@@ -5,15 +5,12 @@
                 <div class="marquee-text">
                     <span class="marquee-item marquee-item-star"><i class="fas fa-star"></i> Chào mừng đến với gian hàng
                         của chúng tôi</span>
-                    <span class="marquee-separator"><i class="fas fa-circle"></i></span>
-                    <span class="marquee-item marquee-item-fire"><i class="fas fa-fire"></i> Giảm giá lên đến 100% cho
+                        <span class="marquee-separator"><i class="fas fa-circle"></i></span>
+                        <span class="marquee-item marquee-item-fire"><i class="fas fa-fire"></i> Giảm giá lên đến 30% cho
                         nhiều sản phẩm</span>
                     <span class="marquee-separator"><i class="fas fa-circle"></i></span>
                     <span class="marquee-item marquee-item-truck"><i class="fas fa-shipping-fast"></i> Miễn phí vận
-                        chuyển cho đơn hàng trên 500K</span>
-                    <span class="marquee-separator"><i class="fas fa-circle"></i></span>
-                    <span class="marquee-item marquee-item-gift"><i class="fas fa-gift"></i> Nhận ngay quà tặng khi mua
-                        2 sản phẩm trở lên</span>
+                        chuyển cho đơn hàng trên 2.000.000đ</span>
                 </div>
             </div>
         </div>
@@ -33,10 +30,10 @@
                     <img src="../images/banner/Banner-PC-3.png" alt="">
                 </div>
                 <div class="borderImage">
-                    <img src="../images/banner/Banner-PC-4.png" alt="">
+                    <img src="../images/banner/banner1.webp" alt="">
                 </div>
                 <div class="borderImage">
-                    <img src="../images/banner/Banner-PC-5.png" alt="">
+                    <img src="../images/banner/slider_2.jpg" alt="">
                 </div>
             </a-carousel>
         </div>

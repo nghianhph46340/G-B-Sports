@@ -5,44 +5,38 @@
         <BoSuuTapHot />
         <DanhMucSanPham />
         <SanPhamBanChay />
-        <MonTheThaoPhoBien />
         <SanPhamMoiChoTatCa />
         <AoTheThaoBanChay />
         <QuanTheThaoBanChay />
-        <GiayVaPhuKienBanChay />
         <ThuongHieuSanPham />
     </div>
-    <ChatWidget :customerId="'1'" :staffId="'1'" senderType="CUSTOMER" :anou="false" />
+    <!-- <ChatWidget :customerId="'1'" :staffId="'1'" senderType="CUSTOMER" :anou="false" /> -->
 </template>
 
 <script>
 import TheBaner from '@/components/TheBaner.vue';
 import SanPhamBanChay from '@/components/ingredient-web-components/SanPhamBanChay.vue';
-import MonTheThaoPhoBien from '@/components/ingredient-web-components/MonTheThaoPhoBien.vue';
 import BoSuuTapHot from '@/components/ingredient-web-components/BoSuuTapHot.vue';
 import SanPhamMoiChoTatCa from '@/components/ingredient-web-components/SanPhamMoiChoTatCa.vue';
 import AoTheThaoBanChay from '@/components/ingredient-web-components/AoTheThaoBanChay.vue';
 import QuanTheThaoBanChay from '@/components/ingredient-web-components/QuanTheThaoBanChay.vue';
-import GiayVaPhuKienBanChay from '@/components/ingredient-web-components/GiayVaPhuKienBanChay.vue';
 import DanhMucSanPham from '@/components/ingredient-web-components/DanhMucSanPham.vue';
 import ThuongHieuSanPham from '@/components/ingredient-web-components/ThuongHieuSanPham.vue';
 import TheNoitification from '@/components/TheNoitification.vue';
-import ChatWidget from '@/components/ChatWidge/ChatWidget.vue';
+// import ChatWidget from '@/components/ChatWidge/ChatWidget.vue';
 
 export default {
     components: {
         TheBaner,
         AoTheThaoBanChay,
         QuanTheThaoBanChay,
-        GiayVaPhuKienBanChay,
         SanPhamBanChay,
-        MonTheThaoPhoBien,
         BoSuuTapHot,
         SanPhamMoiChoTatCa,
         DanhMucSanPham,
         ThuongHieuSanPham,
         TheNoitification,
-        ChatWidget
+        // ChatWidget
     }
 }
 </script>

@@ -5,14 +5,16 @@
                 <h4 class="section-title text-center">[New] Sản phẩm mới cho tất cả</h4>
                 <div class="section-divider"></div>
                 <div class="banner-row row mt-4">
-                    <div class="col-md-4 banner-col">
-                        <img src="../../images/banerSale/saleNam.webp" alt="Sale Nam" class="banner-image">
+                      
+                    <div class="col-md-1">
                     </div>
-                    <div class="col-md-4 banner-col">
-                        <img src="../../images/banerSale/saleNu.webp" alt="Sale Nữ" class="banner-image">
+                    <div class="col-md-5 banner-col" style="cursor: pointer;">
+                        <img @click.prevent="handleSidebarClick('Nam')" src="../../images/banerSale/saleNam.webp" alt="Sale Nam" class="banner-image">
                     </div>
-                    <div class="col-md-4 banner-col">
-                        <img src="../../images/banerSale/saleTreEm.webp" alt="Sale Trẻ Em" class="banner-image">
+                    <div class="col-md-5 banner-col" style="cursor: pointer;">
+                        <img @click.prevent="handleSidebarClick(['Nữ'])" src="../../images/banerSale/saleNu.webp" alt="Sale Nữ" class="banner-image">
+                    </div>
+                    <div class="col-md-1">
                     </div>
                 </div>
             </div>
@@ -23,10 +25,22 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useIntersectionObserver } from '@vueuse/core';
-
+import { useRouter } from 'vue-router';
+import { useGbStore } from '../../stores/gbStore';
 const sectionRef = ref(null);
 const isVisible = ref(false);
+const router = useRouter();
+const store = useGbStore();
+const isLoading = ref(false);
 
+// Truyền 1 hoặc nhiều keyword (dạng mảng hoặc chuỗi)
+async function handleSidebarClick(keywords) {
+  isLoading.value = true;
+  await store.getSanPhamByTenDM(keywords);
+  isLoading.value = false;
+  // Truyền keyword qua query, nếu là mảng sẽ thành filter[]=a&filter[]=b
+  router.push({ name: 'danhSachSanPham', query: { filter: keywords } });
+}
 // Sử dụng Intersection Observer để theo dõi khi phần tử xuất hiện trong viewport
 onMounted(() => {
     const { stop } = useIntersectionObserver(
