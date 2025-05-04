@@ -54,7 +54,7 @@ async function handleSidebarClick(keywords) {
     await store.getSanPhamByTenDM(keywords);
   }
   isLoading.value = false;
-  router.push({ path: 'danhSachSanPham', query: { filter: keywords } });
+  router.push({ path: '/danhSachSanPham', query: { filter: keywords } });
 }
 
 // Đơn giản hóa hàm handleSieuSaleClick, chỉ lấy sản phẩm và chuyển trang
@@ -64,7 +64,7 @@ async function handleSieuSaleClick() {
     await store.getSanPhamSieuSale();
     console.log('Đã lấy sản phẩm siêu sale'); // Log để kiểm tra
     router.push({ 
-      path: 'danhSachSanPham', 
+      path: '/danhSachSanPham', 
       query: { filter: 'supersale' } 
     });
   } catch (error) {
