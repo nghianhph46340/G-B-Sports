@@ -159,7 +159,7 @@
                                     </div>
                                 </a-radio>
                             </div>
-                            <div class="online-method-item">
+                            <!-- <div class="online-method-item">
                                 <a-radio value="momo" class="online-radio">
                                     <div class="online-content">
                                         <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
@@ -175,7 +175,7 @@
                                         <span>Thẻ ATM/Internet Banking</span>
                                     </div>
                                 </a-radio>
-                            </div>
+                            </div> -->
                         </a-radio-group>
                     </div>
                 </div>
