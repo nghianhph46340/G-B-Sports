@@ -129,7 +129,7 @@
                 </a-col>
             </a-row>
 
-            <div class="text-center mt-4 mb-4" @click="navigateTo('/danhSachSanPham?filter=')">
+            <div class="text-center mt-4 mb-4" @click="navigateTo('/danhSachSanPham?filter=all')">
                 <a-button type="primary" size="large">XEM TẤT CẢ SẢN PHẨM</a-button>
             </div>
         </section>
@@ -213,12 +213,12 @@
 
                             <div class="contact-item">
                                 <phone-outlined />
-                                <p>0987 654 321</p>
+                                <p>0989 864 737</p>
                             </div>
 
                             <div class="contact-item">
                                 <mail-outlined />
-                                <p>info@gbsports.com</p>
+                                <p>chinhhtph46334@fpt.edu.vn</p>
                             </div>
 
                             <div class="contact-item">
