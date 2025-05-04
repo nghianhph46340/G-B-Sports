@@ -141,6 +141,8 @@ import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import { Empty } from 'ant-design-vue';
+import { toast } from 'vue3-toastify';
+import { debounce } from 'lodash';
 
 const router = useRouter();
 const store = useGbStore();
@@ -172,7 +174,7 @@ const fetchData = async (page = 0) => {
       size: pageSize.value,
     });
 
-    if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '') {
+    if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '' && store.khuyenMaiSearchs.length >= 2) {
       await store.searchKhuyenMai(store.khuyenMaiSearchs, page, pageSize.value);
     } else if (minPrice.value || maxPrice.value) {
       await store.timKiemKhuyenMaiByPrice(minPrice.value || '', maxPrice.value || '', page, pageSize.value);
@@ -213,8 +215,7 @@ const offKhuyenMai = async (id) => {
 const dataKhuyenMai = computed(() => {
   let data = [];
   if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '') {
-    // Chỉ lấy dữ liệu từ khuyenMaiSearch khi tìm kiếm, nếu không có thì trả về mảng rỗng
-    data = store.khuyenMaiSearch.length > 0 ? [...store.khuyenMaiSearch] : [];
+    data = store.khuyenMaiSearch.length > 0 ? [...store.khuyenMaiSearch] : [...store.getAllKhuyenMaiArr];
   } else {
     data = [...store.getAllKhuyenMaiArr];
   }
@@ -247,13 +248,13 @@ const formatDate = (dateStr) => {
   });
 };
 
-watch(() => store.khuyenMaiSearchs, async (newValue) => {
+watch(() => store.khuyenMaiSearchs, debounce(async (newValue) => {
   if (!newValue || newValue.trim() === '') {
-    await fetchData(0);
-  } else {
-    await fetchData(0); // Gọi fetchData ngay khi có thay đổi tìm kiếm
+    await store.getAllKhuyenMai(0, pageSize.value);
+  } else if (newValue.length >= 2) {
+    await store.searchKhuyenMai(newValue, 0, pageSize.value);
   }
-});
+}, 500));
 
 watch([minPrice, maxPrice], async () => {
   await fetchData(0);
