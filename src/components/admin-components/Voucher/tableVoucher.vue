@@ -47,9 +47,9 @@
       <div class="col-md-5 d-flex align-items-center flex-nowrap">
         <label class="me-2" style="white-space: nowrap;">Giá trị giảm tối đa:</label>
         <div class="d-flex flex-nowrap w-100">
-          <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="1">
+          <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="1" @keyup.enter="fetchData(0)">
           <span class="align-self-center">-</span>
-          <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="1">
+          <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="1" @keyup.enter="fetchData(0)">
         </div>
       </div>
       <div class="col-md-6 d-flex align-items-center mt-2">
@@ -252,9 +252,7 @@ watch(() => store.voucherSearchs, async (newValue) => {
   }
 });
 
-watch([minPrice, maxPrice], async () => {
-  await fetchData(0);
-});
+
 
 watch([startDate, endDate], async () => {
   await fetchData(0);

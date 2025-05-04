@@ -57,7 +57,7 @@
                         <div class="icon-container">
                             <User class="nav-icon" :class="{ 'icon-animated': animatedIcon === 'user' }" />
                         </div>
-                        <span class="nav-text">{{ displayName }}</span>
+                        <span class="nav-text">{{ displayName }} </span>
 
                         <!-- User dropdown menu -->
                         <div v-if="store.isLoggedIn && showMenu" class="user-dropdown">

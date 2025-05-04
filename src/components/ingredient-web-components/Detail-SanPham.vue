@@ -279,8 +279,8 @@
             </div>
         </div>
 
-        <!-- Sản phẩm tương tự -->
-        <div class="rec-related-products-section" ref="recommendedProductsRef">
+       <!-- Sản phẩm tương tự -->
+       <div class="rec-related-products-section" ref="recommendedProductsRef">
           <h2 class="rec-related-section-title">Sản phẩm tương tự</h2>
           <div class="rec-carousel-container" @mouseenter="showRecArrows = true" @mouseleave="showRecArrows = false">
             <button class="rec-custom-arrow rec-prev-arrow" @click="prevRecSlide" :class="{ 'visible': showRecArrows }">
@@ -370,6 +370,7 @@
             </div>
           </a-modal>
         </div>
+         
 
         <!-- Modal xem ảnh toàn màn hình -->
         <div class="fullscreen-modal" v-if="showFullscreen" @click="showFullscreen = false">
@@ -1856,6 +1857,40 @@ const handleTabFocusRefresh = () => {
     }
 };
 
+// lềnh thêm mới
+watch(selectedVariant, () => {
+  if (selectedVariant.value) {
+    checkWishlistStatus();
+  }
+});
+
+// Kiểm tra trạng thái yêu thích từ server và localStorage
+const checkWishlistStatus = async () => {
+    try {
+        if (!store.userDetails || !store.userDetails.idKhachHang || !selectedVariant.value) {
+            isInWishlist.value = false;
+            return;
+        }
+
+        const idKhachHang = store.userDetails.idKhachHang;
+        const idChiTietSanPham = selectedVariant.value.id_chi_tiet_san_pham;
+
+        const response = await favoriteService.checkFavoriteStatus(idKhachHang, idChiTietSanPham);
+        if (response.status === 'success') {
+            isInWishlist.value = response.isFavorite;
+            product.value.so_luot_yeu_thich = response.totalFavorites;
+            saveWishlistToLocalStorage(idChiTietSanPham, response.isFavorite);
+        }
+    } catch (error) {
+        console.error('Lỗi khi kiểm tra trạng thái yêu thích:', error);
+        // Fallback to localStorage
+        if (selectedVariant.value) {
+            const wishlist = JSON.parse(localStorage.getItem('gb-sport-wishlist') || '[]');
+            isInWishlist.value = wishlist.includes(selectedVariant.value.id_chi_tiet_san_pham);
+        }
+    }
+};
+
 // Hàm xử lý khi visibility thay đổi (chuyển tab)
 const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
@@ -2634,6 +2669,8 @@ const handleRecModalCancel = () => {
   selectedRecProduct.value = null;
 };
 
+// Khai báo sectionRef
+const sectionRef = ref(null);
 // Hàm để thêm sản phẩm vào giỏ hàng (đổi tên từ addToCart thành addToCartDetail)
 const addToCartDetail = async (idChiTietSanPham, quantityToAdd) => {
     try {
@@ -2760,6 +2797,55 @@ const addToCartDetail = async (idChiTietSanPham, quantityToAdd) => {
             placement: 'topRight',
             duration: 3
         });
+    }
+};
+
+// Xử lý thêm vào danh sách yêu thích
+const toggleWishlist = async () => {
+    try {
+        if (!store.userDetails || !store.userDetails.idKhachHang) {
+            message.warning('Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích');
+            return;
+        }
+
+        if (!selectedVariant.value) {
+            message.warning('Vui lòng chọn biến thể sản phẩm trước khi thêm vào yêu thích');
+            return;
+        }
+
+        const idKhachHang = store.userDetails.idKhachHang;
+        const idChiTietSanPham = selectedVariant.value.id_chi_tiet_san_pham;
+        const oldWishlistState = isInWishlist.value;
+
+        // Optimistic update
+        isInWishlist.value = !isInWishlist.value;
+
+        try {
+            let response;
+            if (isInWishlist.value) {
+                response = await favoriteService.addToFavorite(idKhachHang, idChiTietSanPham);
+                if (response.status === 'success') {
+                    message.success('Đã thêm vào danh sách yêu thích');
+                    product.value.so_luot_yeu_thich = response.totalFavorites;
+                    saveWishlistToLocalStorage(idChiTietSanPham, true);
+                }
+            } else {
+                response = await favoriteService.removeFromFavorite(idKhachHang, idChiTietSanPham);
+                if (response.status === 'success') {
+                    message.success('Đã xóa khỏi danh sách yêu thích');
+                    product.value.so_luot_yeu_thich = response.totalFavorites;
+                    saveWishlistToLocalStorage(idChiTietSanPham, false);
+                }
+            }
+        } catch (error) {
+            console.error('Lỗi khi thao tác với danh sách yêu thích:', error);
+            message.error(error.response?.data?.message || 'Có lỗi xảy ra khi thực hiện thao tác');
+            isInWishlist.value = oldWishlistState; // Restore previous state
+        }
+    } catch (error) {
+        console.error('Lỗi:', error);
+        message.error('Đã xảy ra lỗi không mong muốn');
+        isInWishlist.value = !isInWishlist.value; // Revert UI state
     }
 };
 

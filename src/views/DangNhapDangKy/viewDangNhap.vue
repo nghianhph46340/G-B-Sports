@@ -75,7 +75,7 @@
                             <i class="fas fa-envelope"></i> Email
                         </label>
                         <input type="email" id="forgot-email" v-model="forgotEmail" class="form-control"
-                            placeholder="Nhập email của bạn" required :disabled="!isTokenValid" />
+                            placeholder="Nhập email của bạn" required  />
                     </div>
 
                     <div class="form-group">

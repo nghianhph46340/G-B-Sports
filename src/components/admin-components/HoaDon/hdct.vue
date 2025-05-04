@@ -30,8 +30,23 @@
 
                     <!-- Main status steps (always show all 5 possible statuses) -->
                     <div class="timeline-steps">
+                        <!-- Render các trạng thái động từ lịch sử trạng thái -->
+                        <div v-for="(status, index) in filteredTrangThaiHistory" :key="index" class="timeline-step"
+                            :class="{
+                                'active': store.hoaDonDetail.trang_thai === status.trang_thai,
+                                'completed': isStatusCompleted(status.trang_thai),
+                                'cancelled': status.trang_thai === 'Đã hủy'
+                            }">
+                            <div class="timeline-icon">
+                                <i :class="getIconForStatus(status.trang_thai)"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h4>{{ status.trang_thai }}</h4>
+                                <p v-if="status.ngay_chuyen">{{ formatDate(status.ngay_chuyen) }}</p>
+                            </div>
+                        </div>
                         <!-- Chờ xác nhận -->
-                        <div class="timeline-step" :class="{
+                        <!-- <div class="timeline-step" :class="{
                             'active': store.hoaDonDetail.trang_thai === 'Chờ xác nhận',
                             'completed': isStatusCompleted('Chờ xác nhận')
                         }">
@@ -43,10 +58,10 @@
                                 <p v-if="getStatusDate('Chờ xác nhận')">{{ formatDate(getStatusDate('Chờ xác nhận')) }}
                                 </p>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Đã xác nhận -->
-                        <div class="timeline-step" :class="{
+                        <!-- <div class="timeline-step" :class="{
                             'active': store.hoaDonDetail.trang_thai === 'Đã xác nhận',
                             'completed': isStatusCompleted('Đã xác nhận')
                         }">
@@ -58,10 +73,10 @@
                                 <p v-if="getStatusDate('Đã xác nhận')">{{ formatDate(getStatusDate('Đã xác nhận')) }}
                                 </p>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Chờ đóng gói -->
-                        <div class="timeline-step" :class="{
+                        <!-- <div class="timeline-step" :class="{
                             'active': store.hoaDonDetail.trang_thai === 'Chờ đóng gói',
                             'completed': isStatusCompleted('Chờ đóng gói')
                         }">
@@ -73,10 +88,10 @@
                                 <p v-if="getStatusDate('Chờ đóng gói')">{{ formatDate(getStatusDate('Chờ đóng gói')) }}
                                 </p>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Đang giao -->
-                        <div class="timeline-step" :class="{
+                        <!-- <div class="timeline-step" :class="{
                             'active': store.hoaDonDetail.trang_thai === 'Đang giao',
                             'completed': isStatusCompleted('Đang giao')
                         }">
@@ -87,10 +102,10 @@
                                 <h4>Đang giao</h4>
                                 <p v-if="getStatusDate('Đang giao')">{{ formatDate(getStatusDate('Đang giao')) }}</p>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Hoàn thành -->
-                        <div class="timeline-step" :class="{
+                        <!-- <div class="timeline-step" :class="{
                             'active': store.hoaDonDetail.trang_thai === 'Hoàn thành',
                             'completed': isStatusCompleted('Hoàn thành')
                         }">
@@ -101,10 +116,10 @@
                                 <h4>Hoàn thành</h4>
                                 <p v-if="getStatusDate('Hoàn thành')">{{ formatDate(getStatusDate('Hoàn thành')) }}</p>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Đã hủy - chỉ hiển thị khi đơn hàng bị hủy -->
-                        <div v-if="store.hoaDonDetail.trang_thai === 'Đã hủy'" class="timeline-step cancelled active">
+                        <!-- <div v-if="store.hoaDonDetail.trang_thai === 'Đã hủy'" class="timeline-step cancelled active">
                             <div class="timeline-icon">
                                 <i class="fas fa-times-circle"></i>
                             </div>
@@ -112,9 +127,9 @@
                                 <h4>Đã hủy</h4>
                                 <p v-if="getStatusDate('Đã hủy')">{{ formatDate(getStatusDate('Đã hủy')) }}</p>
                             </div>
-                        </div>
+                        </div> -->
                         <!-- Trả hàng -->
-                        <div class="timeline-step" :class="{
+                        <!-- <div class="timeline-step" :class="{
                             'active': store.hoaDonDetail.trang_thai === 'Trả hàng',
                         }">
                             <div class="timeline-icon">
@@ -124,7 +139,7 @@
                                 <h4>Trả hàng</h4>
                                 <p v-if="getStatusDate('Trả hàng')">{{ formatDate(getStatusDate('Trả hàng')) }}</p>
                             </div>
-                        </div>
+                        </div> -->
 
                     </div>
 
@@ -232,7 +247,17 @@
             <a-row :gutter="16">
                 <a-col :md="24">
                     <div class="info-box">
-                        <h5>Thông tin đơn hàng</h5>
+                        <a-row>
+                            <a-col :span="12">
+                                <h5>Thông tin đơn hàng</h5>
+                            </a-col>
+                            <a-col :span="12" style="text-align: right;"><span :class="{
+                                'status-online': store.hoaDonDetail.loai_hoa_don === 'Online',
+                                'status-offline': store.hoaDonDetail.loai_hoa_don === 'Offline'
+                            }">{{ store.hoaDonDetail.loai_hoa_don }}
+                                </span>
+                            </a-col>
+                        </a-row>
                         <hr>
                         <a-row :gutter="16">
                             <a-col :span="12">
@@ -338,13 +363,15 @@
                                 <a-col :md="4" style="text-align: right;color: red;">
                                     <p>- {{
                                         formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
-                                            (store.hoaDonDetail.phi_van_chuyen || 0) -
-                                            (store.hoaDonDetail.tong_tien_sau_giam ||
-                                                0)) }} VNĐ</p>
+                                        (store.hoaDonDetail.phi_van_chuyen || 0) -
+                                        (store.hoaDonDetail.tong_tien_sau_giam ||
+                                        0)) }} VNĐ</p>
                                 </a-col>
                             </a-row>
-                            <a-row>
-                                <a-col :md="16"></a-col>
+                            <a-row v-if="store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng'">
+                                <a-col :md="16">
+                                    <img src="../../../images/logo/logo_GHTK.png" alt="GHTK Logo" class="ghtk-logo" />
+                                </a-col>
                                 <a-col :md="4" style="text-align: left;">
                                     <p>Phí vận chuyển:</p>
                                 </a-col>
@@ -363,7 +390,8 @@
                             </a-row>
                             <!-- Dòng text thanh toán thêm -->
                             <a-row
-                                v-if="store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0">
+                                v-if="store.hoaDonDetail?.loai_hoa_don === 'Online' && store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0
+                                    || store.hoaDonDetail?.loai_hoa_don === 'Offline' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && store.chiTietHoaDons[0]?.phu_thu > 0">
                                 <a-col :md="16"></a-col>
                                 <a-col :md="4" style="text-align: left;">
                                     <p style="color: #f5222d;">Đã thanh toán: </p>
@@ -374,7 +402,8 @@
                                 </a-col>
                             </a-row>
                             <a-row
-                                v-if="store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0">
+                                v-if="store.hoaDonDetail?.loai_hoa_don === 'Online' && store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0
+                                    || store.hoaDonDetail?.loai_hoa_don === 'Offline' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && store.chiTietHoaDons[0]?.phu_thu > 0">
                                 <a-col :md="12"></a-col>
                                 <a-col :md="12" style="text-align: left;">
                                     <p style="color: #f5222d;">Vui lòng thanh toán thêm {{
@@ -442,9 +471,9 @@
                                 <a-col :md="4" style="text-align: right;color: red;">
                                     <p>- {{
                                         formatCurrency((store.hoaDonDetail.tong_tien_truoc_giam || 0) +
-                                            (store.hoaDonDetail.phi_van_chuyen || 0) -
-                                            (store.hoaDonDetail.tong_tien_sau_giam ||
-                                                0)) }} VNĐ</p>
+                                        (store.hoaDonDetail.phi_van_chuyen || 0) -
+                                        (store.hoaDonDetail.tong_tien_sau_giam ||
+                                        0)) }} VNĐ</p>
                                 </a-col>
                             </a-row>
                             <a-row>
@@ -529,8 +558,8 @@
                                 <a-col :md="4" style="text-align: right;">
                                     <h6>{{
                                         formatCurrency((store.hoaDonDetail.tong_tien_sau_giam) -
-                                            (store.traHangs.reduce((total,
-                                                traHang) => total + traHang.tong_tien_hoan, 0)))}} VNĐ</h6>
+                                        (store.traHangs.reduce((total,
+                                        traHang) => total + traHang.tong_tien_hoan, 0)))}} VNĐ</h6>
                                 </a-col>
                             </a-row>
                         </div>
@@ -631,7 +660,6 @@
                                     <a-button type="primary" html-type="submit" style="margin-right:10px">Lưu</a-button>
                                     <a-button type="default" @click="closeDrawer"
                                         style="margin-right:auto">Hủy</a-button>
-                                    <a-button type="default" @click="editedCustomer">Xóa form</a-button>
                                 </a-form-item>
                             </a-form>
                         </a-drawer>
@@ -744,20 +772,20 @@
                 :title="popupType === 'decrease' ? 'Giảm số lượng' : 'Tăng số lượng'" :footer="null">
                 <div class="popup-input">
                     <label>
-                        <span v-if="shouldCalculateSoLuongTon">Số lượng
+                        <span v-if="shouldCalculateSoLuongTon">Số lượng sản phẩm
                             (Khả dụng: {{ popupType === 'decrease' ? currentProduct.so_luong :
                                 calculateSoLuongTon(currentProduct)
                             }})
                         </span>
-                        <span v-else>Số lượng
-                            (Tổng: {{ popupType === 'decrease' ? currentProduct.so_luong :
-                                currentProduct.so_luong_con_lai }})
+                        <span v-else>Số lượng sản phẩm
+                            (Khả dụng: {{ popupType === 'decrease' ? currentProduct.so_luong :
+                            currentProduct.so_luong_con_lai || 0 }})
                         </span>
                     </label>
                     <label style="width: 100px;">Số lượng:</label>
                     <a-input-number v-if="shouldCalculateSoLuongTon" style="width: 150px;" type="number"
                         v-model:value="quantityChange" :min="0"
-                        :max="popupType === 'decrease' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : currentProduct.so_luong)" />
+                        :max="popupType === 'decrease' ?currentProduct.so_luong : (shouldCalculateSoLuongTon ? calculateSoLuongTon(currentProduct) : currentProduct.so_luong)" />
                     <a-input-number v-else style="width: 150px;" type="number" v-model:value="quantityChange" :min="0"
                         :max="popupType === 'decrease' ? currentProduct.so_luong : (shouldCalculateSoLuongTon ? currentProduct.so_luong : currentProduct.so_luong_con_lai)" />
                 </div>
@@ -772,10 +800,10 @@
             <div class="notification">
                 <template v-if="store.hoaDonDetail.trang_thai?.toLowerCase() === 'trả hàng'">
                     HOÀN THÀNH ĐƠN HÀNG {{
-                        formatCurrency(
-                            store.hoaDonDetail.tong_tien_sau_giam -
-                            store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0)
-                        )
+                    formatCurrency(
+                    store.hoaDonDetail.tong_tien_sau_giam -
+                    store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0)
+                    )
                     }} VNĐ
                 </template>
                 <template v-else>
@@ -805,6 +833,8 @@ import QRCode from 'qrcode';
 
 // Ant Design Vue components
 import { Row as ARow, Col as ACol, Button as AButton, Divider as ADivider, Form as AForm, FormItem as AFormItem, Input as AInput, Textarea as ATextarea, Table as ATable, Modal as AModal, InputNumber as AInputNumber, Spin as ASpin, message } from 'ant-design-vue';
+import { banHangService } from '@/services/banHangService';
+import { hoaDonService } from '@/services/hoaDonService';
 
 const store = useGbStore();
 const route = useRoute();
@@ -834,7 +864,7 @@ const productPopupColumns = [
     { title: 'Danh mục', dataIndex: 'ten_danh_muc', key: 'ten_danh_muc', width: '15%' },
     { title: 'Màu sắc', dataIndex: 'ten_mau', key: 'ten_mau', width: '8%' },
     { title: 'Size', dataIndex: 'gia_tri', key: 'gia_tri', width: '7%' },
-    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: '8%' },
+    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: '8%'},
     { title: 'Giá bán(VNĐ)', key: 'gia_ban', width: '10%' },
     // { title: 'Trạng thái', dataIndex: 'trang_thai', key: 'trang_thai', width: '8%' },
     { title: 'Số lượng mua', key: 'so_luong_mua', width: '20%' },
@@ -1072,11 +1102,18 @@ const handleHuyenChange = async (value) => {
     }
 };
 const validateCustomerInfo = () => {
+    const hoTen = editedCustomer.value.hoTen.trim();
     // Kiểm tra các trường bắt buộc không được để trống
-    if (!editedCustomer.value.hoTen) {
+    if (!hoTen) {
         message.error('Vui lòng nhập tên người nhận!');
         return false;
-    } else if (editedCustomer.value.hoTen.length > 60) {
+    } else if (!/^[\p{L}]+([\s][\p{L}]+)*$/u.test(hoTen)) {
+        message.error('Tên người nhận không hợp lệ!');
+        return false;
+    } else if (hoTen.length < 4) {
+        message.error('Tên người nhận phải có ít nhất 4 ký tự!');
+        return false;
+    } else if (hoTen.length > 60) {
         message.error('Tên người nhận không được vượt quá 60 ký tự!');
         return false;
     }
@@ -1125,8 +1162,8 @@ const saveCustomerInfo = () => {
     }
     AModal.confirm({
         title: 'Xác nhận',
-        content: 'Bạn có đồng ý sửa thông tin khách hàng không?',
-        onOk: () => {
+        content: 'Phí vận chuyển có thể tăng lên khi bạn thay đổi thông tin địa chỉ nhận hàng. Bạn có đồng ý sửa thông tin khách hàng không?',
+        onOk: async () => {
             // Ghép địa chỉ từ các trường
             if (
                 editedCustomer.value.tinh &&
@@ -1139,13 +1176,16 @@ const saveCustomerInfo = () => {
                 editedCustomer.value.diaChi = editedCustomer.value.diaChiCuThe || '';
             }
 
+            // Tính phí vận chuyển
+            const phiVanChuyen = await calculatePhiVanChuyen(true);
+            console.log('Phí vận chuyển tính được khi cập nhật thông tin địa chỉ:', phiVanChuyen);
             // Gọi hàm cập nhật thông tin khách hàng
             store.updateCustomerInfo(store.hoaDonDetail.ma_hoa_don, {
                 hoTen: editedCustomer.value.hoTen,
                 email: editedCustomer.value.email,
                 sdtNguoiNhan: editedCustomer.value.sdtNguoiNhan,
                 diaChi: editedCustomer.value.diaChi,
-            });
+            }, phiVanChuyen);
             closeDrawer();
         },
     });
@@ -1163,13 +1203,13 @@ const sortedTrangThaiHistory = computed(() => {
     });
 });
 
-const getIconForStatus = (trangThai) => {
-    const statusSteps = store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng'
-        ? storePickupStatusSteps
-        : defaultStatusSteps;
-    const status = statusSteps.find(s => s.backendStatus === trangThai);
-    return status ? status.icon : 'fas fa-question'; // Icon mặc định nếu không tìm thấy
-};
+// const getIconForStatus = (trangThai) => {
+//     const statusSteps = store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Nhận tại cửa hàng'
+//         ? storePickupStatusSteps
+//         : defaultStatusSteps;
+//     const status = statusSteps.find(s => s.backendStatus === trangThai);
+//     return status ? status.icon : 'fas fa-question'; // Icon mặc định nếu không tìm thấy
+// };
 
 const isCompletedOrCancelled = computed(() => {
     const trangThai = store.hoaDonDetail?.trang_thai;
@@ -1185,7 +1225,14 @@ const cannotCancel = computed(() => {
 });
 const cannotDecreaseOrRemoveProduct = computed(() => {
     const hinhThucThanhToan = store.hoaDonDetail?.hinh_thuc_thanh_toan;
-    return hinhThucThanhToan === 'Chuyển khoản';
+    const loaiHoaDon = store.hoaDonDetail?.loai_hoa_don;
+    if (loaiHoaDon === 'Offline' || (loaiHoaDon === 'Online' && hinhThucThanhToan === 'Chuyển khoản')) {
+        return true;
+    }
+    if (loaiHoaDon === 'Online' && hinhThucThanhToan === 'Tiền mặt') {
+        return false;
+    }
+    return true;
 });
 
 
@@ -1374,7 +1421,7 @@ const calculateSoLuongTon = (record) => {
     const soLuongHienCo = hdct ? hdct.so_luong : 0;
 
     const soLuongTon = (soLuongBanDau || 0) - soLuongHienCo;
-    console.log('record.id_chi_tiet_san_pham:', record.id_chi_tiet_san_pham, 'soLuongBanDau:', soLuongBanDau, 'soLuongHienCo:', soLuongHienCo, 'soLuongTon:', soLuongTon);
+    // console.log('record.id_chi_tiet_san_pham:', record.id_chi_tiet_san_pham, 'soLuongBanDau:', soLuongBanDau, 'soLuongHienCo:', soLuongHienCo, 'soLuongTon:', soLuongTon);
     return Math.max(soLuongTon, 0);
 };
 // Tính tổng số lượng sản phẩm trong hóa đơn
@@ -1479,6 +1526,11 @@ const addSelectedProducts = async () => {
     await store.getAllCTSP_HD(0, 100, searchKeyword.value);
     // Reset số lượng và đóng popup
     quantities.value = new Array(store.listCTSP_HD.length).fill(0);
+    // Tính phí vận chuyển
+    const phiVanChuyen = await calculatePhiVanChuyen();
+    console.log('Phí vận chuyển tính được khi thêm sản phẩm:', phiVanChuyen);
+    await hoaDonService.updatePhiShip(store.hoaDonDetail.ma_hoa_don, phiVanChuyen);
+    await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
     closeAddProductPopup();
 };
 
@@ -1493,27 +1545,35 @@ const removeProduct = async (item, index) => {
         toast.error('Hóa đơn phải có tối thiểu 1 sản phẩm!');
         return;
     }
-    if (confirm(`Bạn có chắc muốn xóa sản phẩm "${item.ten_san_pham}" khỏi hóa đơn không?`)) {
-        try {
-            const response = await store.removeProductFromInvoice(
-                store.hoaDonDetail.ma_hoa_don,
-                item.id_chi_tiet_san_pham,
-                item.so_luong
-            );
-
-            if (response.error) {
-                toast.error('Xóa sản phẩm khỏi hóa đơn thất bại');
-                return;
+    // Hiển thị modal xác nhận xóa
+    AModal.confirm({
+        title: 'Xác nhận xóa sản phẩm',
+        content: `Bạn có chắc chắn muốn xóa sản phẩm "${item.ten_san_pham}" khỏi hóa đơn không?<br>Phí vận chuyển có thể thay đổi khi bạn xóa sản phẩm.`,
+        onOk: async () => {
+            try {
+                const response = await store.removeProductFromInvoice(
+                    store.hoaDonDetail.ma_hoa_don,
+                    item.id_chi_tiet_san_pham
+                );
+                if (response.error) {
+                    toast.error('Xóa sản phẩm khỏi hóa đơn thất bại');
+                    return;
+                }
+                // Xóa sản phẩm khỏi danh sách
+                store.chiTietHoaDons.splice(index, 1);
+                await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
+                toast.success('Xóa sản phẩm khỏi hóa đơn thành công');
+                // Tính phí vận chuyển
+                const phiVanChuyen = await calculatePhiVanChuyen();
+                console.log('Phí vận chuyển tính được khi xóa sản phẩm:', phiVanChuyen);
+                await hoaDonService.updatePhiShip(store.hoaDonDetail.ma_hoa_don, phiVanChuyen);
+                await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
+            } catch (error) {
+                console.error('Lỗi khi xóa sản phẩm:', error);
+                toast.error('Có lỗi xảy ra khi xóa sản phẩm');
             }
-
-            store.chiTietHoaDons.splice(index, 1);
-            await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
-            toast.success('Xóa sản phẩm khỏi hóa đơn thành công');
-        } catch (error) {
-            console.error('Lỗi khi xóa sản phẩm:', error);
-            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
-        }
-    }
+        },
+    });
 };
 
 const showStatusModal = ref(false);
@@ -1657,6 +1717,10 @@ const showIncreasePopup = async (index) => {
     if (!store.listCTSP_HD || store.listCTSP_HD.length === 0) {
         await store.getAllCTSP_HD(0, 5, '');
     }
+    if (currentProduct.value.so_luong_con_lai === null) {
+        message.error('Sản phẩm này đã hết hàng hoặc đã ngừng bán. Không thể thêm sản phẩm nữa!')
+        return;
+    }
 
     showQuantityPopup.value = true;
 };
@@ -1717,7 +1781,7 @@ const updateQuantity = async () => {
     const change = quantityChange.value;
 
     if (change <= 0) {
-        toast.error('Số lượng thêm tối thiểu là 1');
+        message.error('Vui lòng nhập số lượng, tối thiểu là 1');
         return;
     }
 
@@ -1743,6 +1807,11 @@ const updateQuantity = async () => {
 
             await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
             toast.success(`Đã thêm ${change} sản phẩm thành công`);
+            // Tính phí vận chuyển
+            const phiVanChuyen = await calculatePhiVanChuyen();
+            console.log('Phí vận chuyển tính được khi + số lượng:', phiVanChuyen);
+            await hoaDonService.updatePhiShip(store.hoaDonDetail.ma_hoa_don, phiVanChuyen);
+            await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
         } catch (error) {
             console.error('Lỗi khi thêm số lượng:', error);
             toast.error('Có lỗi xảy ra khi thêm số lượng');
@@ -1770,6 +1839,11 @@ const updateQuantity = async () => {
             }
             await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
             toast.success(`Đã giảm ${change} sản phẩm thành công`);
+            // Tính phí vận chuyển
+            const phiVanChuyen = await calculatePhiVanChuyen();
+            console.log('Phí vận chuyển tính được khi - số lượng:', phiVanChuyen);
+            await hoaDonService.updatePhiShip(store.hoaDonDetail.ma_hoa_don, phiVanChuyen);
+            await store.getHoaDonDetail(store.hoaDonDetail.ma_hoa_don);
         } catch (error) {
             console.error('Lỗi khi giảm số lượng:', error);
             toast.error('Có lỗi xảy ra khi giảm số lượng');
@@ -1855,7 +1929,7 @@ const printInvoice = async () => {
         y = 118; // nếu không có địa chỉ, dòng sản phẩm bắt đầu ngay sau tên khách hàng
     }
     // Danh sách sản phẩm
-    doc.setFontSize(10);
+    doc.setFontSize(12);
     doc.setFont("Roboto", "bold");
     doc.text("Thông tin sản phẩm", 20, y);
     // Tiêu đề bảng
@@ -1874,9 +1948,21 @@ const printInvoice = async () => {
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
     store.chiTietHoaDons.forEach((item, index) => {
-        const productName = `${index + 1}. ${item.ten_san_pham} (Màu: ${item.ten_mau_sac} - Size: ${item.kich_thuoc})`;
-        const productLines = doc.splitTextToSize(productName, 85);
-        doc.text(productLines, 20, y);
+            // Tên sản phẩm
+    const productName = `${index + 1}. ${item.ten_san_pham}`;
+    const colorSize = `(Màu: ${item.ten_mau_sac} - Size: ${item.kich_thuoc})`;
+
+    const productLines = doc.splitTextToSize(productName, 80);
+    const colorSizeLines = doc.splitTextToSize(colorSize, 80);
+
+    doc.text(productLines, 20, y);
+    y += productLines.length * 6; // tăng dòng nếu tên sản phẩm dài
+
+    doc.setFontSize(9);
+    doc.setTextColor(100); // màu xám nhẹ cho dòng (Màu - Size)
+    doc.text(colorSizeLines, 20, y);
+    doc.setFontSize(10);
+    doc.setTextColor(0); // Reset màu và size về bình thường
         doc.text(`${item.so_luong}`, 110, y, { align: "center" });
 
         // Đơn giá
@@ -1911,6 +1997,7 @@ const printInvoice = async () => {
     doc.line(20, y, 190, y);
     // Tổng tiền
     y += 10;
+    if (store.hoaDonDetail.trang_thai?.toLowerCase() !== 'trả hàng'){
     doc.setFontSize(12);
     doc.setFont("Roboto", "normal");
     doc.text(`Tổng tiền hàng:`, 115, y, { align: "left" });
@@ -1923,24 +2010,118 @@ const printInvoice = async () => {
     doc.text(`Giảm giá:`, 115, y, { align: "left" });
     doc.text(`-${formatCurrency(giamGia)} VNĐ`, 190, y, { align: "right" });
 
-    y += 6;
-    doc.text(`Phí vận chuyển:`, 115, y, { align: "left" });
-    doc.text(`+${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 190, y, { align: "right" });
+    if (store.hoaDonDetail.phuong_thuc_nhan_hang === 'Giao hàng') {
+        y += 6;
+        doc.text(`Phí vận chuyển:`, 115, y, { align: "left" });
+        doc.text(`+${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 190, y, { align: "right" });
+    }
 
     y += 6;
     doc.setFont("Roboto", "bold");
     doc.text(`Thành tiền:`, 115, y, { align: "left" });
     doc.text(`${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 190, y, { align: "right" });
     // Thêm dòng Vui lòng thanh toán thêm
-    if (store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0) {
+    if (store.hoaDonDetail?.loai_hoa_don === 'Online' && store.hoaDonDetail?.hinh_thuc_thanh_toan === 'Chuyển khoản' && store.chiTietHoaDons[0]?.phu_thu > 0
+        || store.hoaDonDetail?.loai_hoa_don === 'Offline' && store.hoaDonDetail?.phuong_thuc_nhan_hang === 'Giao hàng' && store.chiTietHoaDons[0]?.phu_thu > 0) {
         y += 6;
         doc.setFont("Roboto", "normal");
         doc.setTextColor(255, 0, 0);
         doc.text(`Vui lòng thanh toán thêm:`, 115, y, { align: "left" });
         doc.text(`${formatCurrency(store.chiTietHoaDons[0]?.phu_thu)} VNĐ`, 190, y, { align: "right" });
         doc.setTextColor(0);
-    }
+    }}
     // Chân trang
+       // Nếu trạng thái là "Trả hàng", thêm danh sách sản phẩm hoàn trả
+       if (store.hoaDonDetail.trang_thai?.toLowerCase() === 'trả hàng' && store.chiTietTraHangs.length > 0) {
+    // Vẽ đường kẻ ngang trước phần sản phẩm hoàn trả
+    doc.setLineWidth(0.2);
+    doc.line(20, y, 190, y);
+
+    // Tiêu đề phần hoàn trả
+    y += 6;
+    doc.setFontSize(12);
+    doc.setFont("Roboto", "bold");
+    doc.text("Thông tin sản phẩm hoàn trả", 20, y);
+
+    // Header bảng
+    // y += 8;
+    doc.setFontSize(10);
+    doc.setFont("Roboto", "bold");
+    doc.text("Số lượng", 110, y, { align: "center" });
+    doc.text("Đơn giá", 140, y, { align: "center" });
+    doc.text("Tổng tiền hoàn", 180, y, { align: "center" });
+
+    // Đường kẻ ngang dưới tiêu đề
+    y += 2;
+    doc.setLineWidth(0.2);
+    doc.line(20, y, 190, y);
+
+    // Danh sách sản phẩm hoàn trả
+    y += 6;
+    doc.setFontSize(10);
+    doc.setFont("Roboto", "normal");
+    store.chiTietTraHangs.forEach((item, index) => {
+    // Tên sản phẩm
+    const productName = `${index + 1}. ${item.ten_san_pham}`;
+    const colorSize = `(Màu: ${item.ten_mau_sac} - Size: ${item.kich_thuoc})`;
+
+    const productLines = doc.splitTextToSize(productName, 80);
+    const colorSizeLines = doc.splitTextToSize(colorSize, 80);
+
+    doc.text(productLines, 20, y);
+    y += productLines.length * 6; // tăng dòng nếu tên sản phẩm dài
+
+    doc.setFontSize(9);
+    doc.setTextColor(100); // màu xám nhẹ cho dòng (Màu - Size)
+    doc.text(colorSizeLines, 20, y);
+    doc.setFontSize(10);
+    doc.setTextColor(0); // Reset màu và size về bình thường
+
+    // Số lượng
+    doc.text(`${item.so_luong}`, 110, y - (colorSizeLines.length - 1) * 6, { align: "center" });
+    // Đơn giá
+    doc.text(`${formatCurrency(item.don_gia)} VNĐ`, 140, y - (colorSizeLines.length - 1) * 6, { align: "center" });
+    // Tổng tiền hoàn
+    doc.text(`${formatCurrency(item.tien_hoan)} VNĐ`, 180, y - (colorSizeLines.length - 1) * 6, { align: "center" });
+
+    y += colorSizeLines.length * 6 + 4; // sau khi xong màu size thì nhảy dòng thêm
+});
+
+    // Đường kẻ ngang sau danh sách
+    doc.setLineWidth(0.2);
+    doc.line(20, y, 190, y);
+
+    // Tổng tiền hoàn trả
+    y += 10;
+    doc.setFontSize(12);
+    doc.setFont("Roboto", "normal");
+    doc.text(`Tổng tiền hàng:`, 90, y);
+    doc.text(`${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 190, y , { align: "right" });
+
+    y += 6;
+    const giamGia = (store.hoaDonDetail.tong_tien_truoc_giam || 0) + (store.hoaDonDetail.phi_van_chuyen || 0) - (store.hoaDonDetail.tong_tien_sau_giam || 0);
+    doc.text(`Giảm giá:`, 90, y);
+    doc.text(`-${formatCurrency(giamGia)} VNĐ`, 190, y, { align: "right" });
+
+    y += 6;
+    doc.text(`Phí vận chuyển:`, 90, y);
+    doc.text(`${formatCurrency(store.hoaDonDetail.phi_van_chuyen || 0)} VNĐ`, 190, y, { align: "right" });
+
+    y += 6;
+    doc.text(`Tổng tiền khách đã thanh toán:`, 90, y);
+    doc.text(`${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam)} VNĐ`, 190, y, { align: "right" });
+
+    y += 6;
+    const tongTienHoan = store.traHangs.reduce((total, traHang) => total + traHang.tong_tien_hoan, 0);
+    doc.text(`Tổng tiền hoàn trả lại khách:`, 90, y);
+    doc.text(`${formatCurrency(tongTienHoan)} VNĐ`, 190, y, { align: "right" });
+
+    y += 6;
+    doc.setFont("Roboto", "bold");
+    const thanhTien = (store.hoaDonDetail.tong_tien_sau_giam || 0) - tongTienHoan;
+    doc.text(`Thành tiền:`, 90, y);
+    doc.text(`${formatCurrency(thanhTien)} VNĐ`, 190, y, { align: "right" });
+}
     y += 10;
     doc.setFontSize(10);
     doc.setFont("Roboto", "normal");
@@ -1955,10 +2136,11 @@ const printInvoice = async () => {
 };
 const validateProductsInInvoice = async () => {
     const invalidProducts = [];
-    // Nếu trạng thái hóa đơn là "Đang giao", bỏ qua kiểm tra
-    if (store.hoaDonDetail.trang_thai === 'Đã xác nhận' || store.hoaDonDetail.trang_thai === 'Chờ đóng gói'
-        || store.hoaDonDetail.trang_thai === 'Đang giao' || store.hoaDonDetail.trang_thai === 'Hoàn thành'
-        || store.hoaDonDetail.trang_thai === 'Đã hủy') {
+    // Lấy trạng thái trước đó (bỏ qua "Đã cập nhật")
+    const previousStatus = getPreviousStatus();
+
+    // Nếu trạng thái trước đó là "Đang giao", "Hoàn thành", hoặc "Đã hủy", bỏ qua kiểm tra
+    if (['Đã xác nhận', 'Chờ đóng gói', 'Đang giao', 'Hoàn thành', 'Đã hủy', 'Trả hàng'].includes(previousStatus)) {
         return;
     }
 
@@ -2005,6 +2187,100 @@ const validateProductsInInvoice = async () => {
                 `Sản phẩm "${product.ten_san_pham}" gặp vấn đề: ${product.reason}`
             );
         });
+    }
+};
+const getPreviousStatus = () => {
+    if (!store.trangThaiHistory || store.trangThaiHistory.length === 0) return null;
+
+    // Lọc bỏ các trạng thái "Đã cập nhật" và sắp xếp theo thời gian
+    const filteredHistory = store.trangThaiHistory
+        .filter(status => status.trang_thai !== 'Đã cập nhật')
+        .sort((a, b) => new Date(b.ngay_chuyen) - new Date(a.ngay_chuyen));
+
+    // Lấy trạng thái gần nhất
+    return filteredHistory.length > 0 ? filteredHistory[0].trang_thai : null;
+};
+// Hàm tách địa chỉ
+const tachDiaChi = (diaChi) => {
+    if (!diaChi) return null;
+    const parts = diaChi.split(', ').map(part => part.trim());
+    if (parts.length < 4) return null;
+    return {
+        tinh: parts[parts.length - 1],
+        huyen: parts[parts.length - 2],
+        xa: parts[parts.length - 3],
+        diaChiCuThe: parts.slice(0, parts.length - 3).join(', '),
+    };
+};
+// Hàm tính phí vận chuyển
+const calculatePhiVanChuyen = async (useEditedCustomer = false) => {
+    if (store.hoaDonDetail.tong_tien_truoc_giam >= 2000000) {
+        return 0;
+    }
+    const weight = 500; // 500g mỗi sản phẩm
+    const tongTienHoaDon = store.hoaDonDetail.tong_tien_sau_giam - store.hoaDonDetail.phi_van_chuyen;
+    // Lấy thông tin địa chỉ
+    let diaChi;
+    if (useEditedCustomer) {
+        // Sử dụng thông tin từ `editedCustomer` khi cập nhật thông tin khách hàng
+        diaChi = editedCustomer.value;
+    } else {
+        // Sử dụng thông tin từ địa chỉ đã lưu trong hóa đơn
+        diaChi = tachDiaChi(store.hoaDonDetail.dia_chi);
+    }
+
+    if (!diaChi || !diaChi.tinh || !diaChi.huyen) {
+        console.warn('⚠️ Không có địa chỉ giao hàng hợp lệ, phí = 0');
+        return 0;
+    }
+
+    try {
+        const phiShip = await banHangService.tinhPhiShip(
+            'Hà Nội',
+            'Nam Từ Liêm',
+            diaChi.tinh,
+            diaChi.huyen,
+            weight,
+            tongTienHoaDon
+        );
+        console.log('Địa chỉ cụ thể: ', diaChi.diaChiCuThe, diaChi.xa, diaChi.huyen, diaChi.tinh)
+        console.log('Dữ liệu: ', diaChi.tinh, diaChi.huyen, weight, tongTienHoaDon, store.hoaDonDetail.tong_tien_sau_giam, store.hoaDonDetail.phi_van_chuyen)
+        console.log('Phí ship: ', phiShip.fee)
+        return phiShip.fee || 0;
+    } catch (error) {
+        console.error('Lỗi khi tính phí vận chuyển:', error);
+        toast.error('Có lỗi xảy ra khi tính phí vận chuyển');
+        return 0;
+    }
+};
+// Computed property để lọc và sắp xếp lịch sử trạng thái (loại bỏ "Đã cập nhật")
+const filteredTrangThaiHistory = computed(() => {
+    if (!store.trangThaiHistory || store.trangThaiHistory.length === 0) return [];
+
+    // Lọc bỏ trạng thái "Đã cập nhật" và sắp xếp theo thời gian tăng dần
+    return store.trangThaiHistory
+        .filter(history => history.trang_thai !== 'Đã cập nhật')
+        .sort((a, b) => new Date(a.ngay_chuyen) - new Date(b.ngay_chuyen));
+});
+// Hàm lấy icon tương ứng với trạng thái
+const getIconForStatus = (status) => {
+    switch (status) {
+        case 'Chờ xác nhận':
+            return 'fas fa-hourglass-start';
+        case 'Đã xác nhận':
+            return 'fas fa-check-circle';
+        case 'Chờ đóng gói':
+            return 'fas fa-box';
+        case 'Đang giao':
+            return 'fas fa-truck';
+        case 'Hoàn thành':
+            return 'fas fa-flag-checkered';
+        case 'Đã hủy':
+            return 'fas fa-times-circle';
+        case 'Trả hàng':
+            return 'fas fa-undo';
+        default:
+            return 'fas fa-question-circle'; // Icon mặc định nếu không xác định được trạng thái
     }
 };
 
@@ -2068,75 +2344,91 @@ const getStatusDate = (status) => {
 
 // Calculate position for update markers based on surrounding main statuses
 const getUpdatePosition = (update) => {
-    if (!update || !update.ngay_chuyen) return 50; // Default to middle
+  if (!update || !update.ngay_chuyen) return 50;
 
-    // Define status points (percentage along timeline)
-    const statusPoints = {
-        'Chờ xác nhận': 0,
-        'Đã xác nhận': 25,
-        'Chờ đóng gói': 50,
-        'Đang giao': 75,
-        'Hoàn thành': 100
-    };
+  const statusPoints = {
+    'Chờ xác nhận': 0,
+    'Đã xác nhận': 25, //20
+    'Chờ đóng gói': 50, //40
+    'Đang giao': 75, //60
+    'Hoàn thành': 100, //80
+    'Trả hàng': 100 //100
+  };
 
-    // Find previous and next non-update statuses
-    const orderedStatuses = [...store.trangThaiHistory].sort(
-        (a, b) => new Date(a.ngay_chuyen) - new Date(b.ngay_chuyen)
-    );
+  const orderedStatuses = [...store.trangThaiHistory]
+    .filter(s => s.ngay_chuyen)
+    .sort((a, b) => new Date(a.ngay_chuyen).getTime() - new Date(b.ngay_chuyen).getTime());
+  
+  const updateIndex = orderedStatuses.findIndex(s =>
+    s.trang_thai === 'Đã cập nhật' &&
+    s.ngay_chuyen === update.ngay_chuyen
+  );
+  if (updateIndex === -1) return 50;
 
-    const updateIndex = orderedStatuses.findIndex(s =>
-        s.trang_thai === 'Đã cập nhật' && s.ngay_chuyen === update.ngay_chuyen
-    );
-
-    if (updateIndex === -1) return 50;
-
-    let prevStatus = null;
-    let nextStatus = null;
-
-    // Look for previous main status
-    for (let i = updateIndex - 1; i >= 0; i--) {
-        if (orderedStatuses[i].trang_thai !== 'Đã cập nhật') {
-            prevStatus = orderedStatuses[i].trang_thai;
-            break;
-        }
+  let prevIndex = -1;
+  for (let i = updateIndex - 1; i >= 0; i--) {
+    if (statusPoints[orderedStatuses[i].trang_thai] !== undefined) {
+      prevIndex = i;
+      break;
     }
+  }
 
-    // Look for next main status
-    for (let i = updateIndex + 1; i < orderedStatuses.length; i++) {
-        if (orderedStatuses[i].trang_thai !== 'Đã cập nhật') {
-            nextStatus = orderedStatuses[i].trang_thai;
-            break;
-        }
+  let nextIndex = -1;
+  for (let i = updateIndex + 1; i < orderedStatuses.length; i++) {
+    if (statusPoints[orderedStatuses[i].trang_thai] !== undefined) {
+      nextIndex = i;
+      break;
     }
+  }
 
-    // Calculate position
-    if (prevStatus && statusPoints[prevStatus] !== undefined) {
-        if (nextStatus && statusPoints[nextStatus] !== undefined) {
-            // Between two main statuses
-            const prevPoint = statusPoints[prevStatus];
-            const nextPoint = statusPoints[nextStatus];
-            const range = nextPoint - prevPoint;
+  if (prevIndex !== -1 && nextIndex !== -1) {
+    const prev = orderedStatuses[prevIndex];
+    const next = orderedStatuses[nextIndex];
 
-            // Position proportionally based on time between statuses
-            const prevDate = new Date(orderedStatuses.find(s => s.trang_thai === prevStatus).ngay_chuyen);
-            const nextDate = new Date(orderedStatuses.find(s => s.trang_thai === nextStatus).ngay_chuyen);
-            const updateDate = new Date(update.ngay_chuyen);
+    const prevPoint = statusPoints[prev.trang_thai];
+    const nextPoint = statusPoints[next.trang_thai];
 
-            const totalDuration = nextDate - prevDate;
-            if (totalDuration <= 0) return prevPoint + range / 2; // Middle point as fallback
+    const prevDate = new Date(prev.ngay_chuyen);
+    const nextDate = new Date(next.ngay_chuyen);
+    const updateDate = new Date(update.ngay_chuyen);
 
-            const updateProgress = (updateDate - prevDate) / totalDuration;
-            return prevPoint + (range * updateProgress);
-        } else {
-            // After a main status with no next main status yet
-            return statusPoints[prevStatus] + 12.5; // Halfway to next point
-        }
-    } else if (nextStatus) {
-        // Before first main status
-        return statusPoints[nextStatus] - 12.5; // Halfway from previous point
+    const total = nextDate - prevDate;
+    const progress = updateDate - prevDate;
+
+    if (total > 0 && progress >= 0) {
+      let position = prevPoint + ((nextPoint - prevPoint) * (progress / total));
+      
+      const tolerance = 4;
+      if (Math.abs(position - prevPoint) < tolerance) {
+        position = prevPoint + tolerance;
+      } else if (Math.abs(position - nextPoint) < tolerance) {
+        position = nextPoint - tolerance;
+      }
+      
+      return Math.max(0, Math.min(100, position));
+    } else {
+      return (prevPoint + nextPoint) / 2;
     }
+  }
 
-    return 50; // Default middle position
+  if (prevIndex !== -1) {
+    let position = statusPoints[orderedStatuses[prevIndex].trang_thai] + 12.5;
+    const tolerance = 5;
+    if (Math.abs(position - statusPoints[orderedStatuses[prevIndex].trang_thai]) < tolerance) {
+      position += tolerance;
+    }
+    return Math.max(0, Math.min(100, position));
+  }
+  if (nextIndex !== -1) {
+    let position = statusPoints[orderedStatuses[nextIndex].trang_thai] - 12.5;
+    const tolerance = 5;
+    if (Math.abs(position - statusPoints[orderedStatuses[nextIndex].trang_thai]) < tolerance) {
+      position -= tolerance;
+    }
+    return Math.max(0, Math.min(100, position));
+  }
+
+  return 50;
 };
 </script>
 
@@ -2812,7 +3104,7 @@ const getUpdatePosition = (update) => {
 
 .update-tooltip {
     position: absolute;
-    top: -82px;
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%) scale(0);
     min-width: 180px;
@@ -2864,7 +3156,7 @@ const getUpdatePosition = (update) => {
 }
 
 /* Animation for active status */
-/* @keyframes pulse-blue {
+@keyframes pulse-blue {
     0% {
         box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.5);
     }
@@ -2876,7 +3168,7 @@ const getUpdatePosition = (update) => {
     100% {
         box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
     }
-} */
+}
 
 /* Responsive styles */
 /* @media (max-width: 992px) {
@@ -2925,6 +3217,42 @@ const getUpdatePosition = (update) => {
         font-size: 12px;
         /* Kích thước chữ nhỏ hơn */
     }
+}
+
+.status-online {
+    display: inline-block;
+    padding: 4px 8px;
+    border: 2px solid #007bff;
+    /* Màu xanh dương */
+    border-radius: 12px;
+    color: #007bff;
+    font-weight: bold;
+    text-align: center;
+    background-color: rgba(0, 123, 255, 0.1);
+    /* Nền xanh nhạt */
+}
+
+/* Trạng thái Offline */
+.status-offline {
+    display: inline-block;
+    padding: 4px 8px;
+    border: 2px solid #28a745;
+    /* Màu xanh lá */
+    border-radius: 12px;
+    color: #28a745;
+    font-weight: bold;
+    text-align: center;
+    background-color: rgba(40, 167, 69, 0.1);
+    /* Nền xanh lá nhạt */
+}
+
+.ghtk-logo {
+    width: 100px;
+    /* Chiều rộng logo */
+    height: 20px;
+    /* Chiều cao logo */
+    object-fit: contain;
+    /* Đảm bảo logo không bị méo */
 }
 
 /* ------------------------------------------------------------------------------ */

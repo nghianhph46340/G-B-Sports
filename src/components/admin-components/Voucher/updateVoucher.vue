@@ -1,4 +1,3 @@
-<!-- src/views/admin/Voucher/UpdateVoucher.vue -->
 <template>
   <div class="container-fluid">
     <h3 class="fw-bold mb-4" style="color: #f33b47;">Cập Nhật Voucher</h3>
@@ -8,13 +7,13 @@
         <div class="col-md-6">
           <label for="maVoucher" class="form-label">Mã Voucher</label>
           <input type="text" class="form-control" id="maVoucher" v-model="voucher.maVoucher" disabled
-                 :class="{ 'is-invalid': errors.maVoucher }" @input="validateMaVoucher">
+                 :class="{ 'is-invalid': errors.maVoucher }">
           <div class="text-danger" v-if="errors.maVoucher">{{ errors.maVoucher }}</div>
         </div>
         <div class="col-md-6">
           <label for="tenVoucher" class="form-label">Tên Voucher</label>
           <input type="text" class="form-control" id="tenVoucher" v-model="voucher.tenVoucher" required
-                 :class="{ 'is-invalid': errors.tenVoucher }" @input="validateTenVoucher">
+                 :class="{ 'is-invalid': errors.tenVoucher }" @input="handleTenVoucherInput">
           <div class="text-danger" v-if="errors.tenVoucher">{{ errors.tenVoucher }}</div>
         </div>
         <div class="col-md-6">
@@ -29,14 +28,20 @@
         </div>
         <div class="col-md-6">
           <label for="giaTriGiam" class="form-label">Giá trị giảm</label>
-          <input type="number" class="form-control" id="giaTriGiam" v-model="voucher.giaTriGiam" min="0" step="1" required
-                 :class="{ 'is-invalid': errors.giaTriGiam }" @input="validateGiaTriGiam">
+          <div class="input-group">
+            <input type="text" class="form-control" id="giaTriGiam" v-model="displayGiaTriGiam" required
+                   :class="{ 'is-invalid': errors.giaTriGiam }" @input="handleCurrencyInput('giaTriGiam', $event)">
+            <span class="input-group-text">{{ voucher.kieuGiamGia === 'Phần trăm' ? '%' : '₫' }}</span>
+          </div>
           <div class="text-danger" v-if="errors.giaTriGiam">{{ errors.giaTriGiam }}</div>
         </div>
         <div class="col-md-6">
           <label for="giaTriToiThieu" class="form-label">Giá trị tối thiểu</label>
-          <input type="number" class="form-control" id="giaTriToiThieu" v-model="voucher.giaTriToiThieu" min="0" step="1"
-                 :class="{ 'is-invalid': errors.giaTriToiThieu }" @input="validateGiaTriToiThieu">
+          <div class="input-group">
+            <input type="text" class="form-control" id="giaTriToiThieu" v-model="displayGiaTriToiThieu"
+                   :class="{ 'is-invalid': errors.giaTriToiThieu }" @input="handleCurrencyInput('giaTriToiThieu', $event)">
+            <span class="input-group-text">₫</span>
+          </div>
           <div class="text-danger" v-if="errors.giaTriToiThieu">{{ errors.giaTriToiThieu }}</div>
         </div>
         <div class="col-md-6">
@@ -47,8 +52,12 @@
         </div>
         <div class="col-md-6">
           <label for="giaTriToiDa" class="form-label">Giá trị tối đa</label>
-          <input type="number" class="form-control" id="giaTriToiDa" v-model="voucher.giaTriToiDa" min="0" step="1" required
-                 :disabled="voucher.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }" @input="validateGiaTriToiDa">
+          <div class="input-group">
+            <input type="text" class="form-control" id="giaTriToiDa" v-model="displayGiaTriToiDa" required
+                   :disabled="voucher.kieuGiamGia === 'Tiền mặt'" :class="{ 'is-invalid': errors.giaTriToiDa }"
+                   @input="handleCurrencyInput('giaTriToiDa', $event)">
+            <span class="input-group-text">₫</span>
+          </div>
           <div class="text-danger" v-if="errors.giaTriToiDa">{{ errors.giaTriToiDa }}</div>
         </div>
         <div class="col-md-6">
@@ -78,8 +87,9 @@
     <div v-else>Loading...</div>
   </div>
 </template>
+
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
@@ -103,13 +113,18 @@ const errors = ref({
   ngayHetHan: '',
 });
 
+// Display values for formatted inputs
+const displayGiaTriGiam = ref('');
+const displayGiaTriToiThieu = ref('');
+const displayGiaTriToiDa = ref('');
+
 onMounted(async () => {
   const id = route.params.id;
   try {
     const voucherData = await store.getVoucherById(id);
     const adjustToLocalTime = (dateStr) => {
       const date = new Date(dateStr);
-      const offset = 7 * 60;
+      const offset = 7 * 60; // Adjust for UTC+7
       const localDate = new Date(date.getTime() + offset * 60 * 1000);
       return localDate.toISOString().slice(0, 16);
     };
@@ -128,6 +143,11 @@ onMounted(async () => {
       moTa: voucherData.moTa,
     };
     originalMaVoucher.value = voucherData.maVoucher;
+
+    // Initialize display values
+    displayGiaTriGiam.value = formatCurrency(voucher.value.giaTriGiam);
+    displayGiaTriToiThieu.value = formatCurrency(voucher.value.giaTriToiThieu);
+    displayGiaTriToiDa.value = formatCurrency(voucher.value.giaTriToiDa);
   } catch (error) {
     console.error('Lỗi khi lấy chi tiết voucher:', error);
     toast.error('Không thể tải thông tin voucher', { autoClose: 3000 });
@@ -135,22 +155,59 @@ onMounted(async () => {
   }
 });
 
-const formatDateTimeLocal = (date) => {
-  if (!date) return '';
-  const d = new Date(date);
-  return d.toISOString().slice(0, 16);
+// Format number to VND currency (e.g., 1000000 -> 1.000.000)
+const formatCurrency = (value, includeCurrency = false) => {
+  if (value === null || value === '' || isNaN(value)) return '';
+  const formatted = new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  }).format(value);
+  return includeCurrency ? `${formatted} ₫` : formatted;
+};
+
+// Parse currency input (e.g., "1.000.000" -> 1000000)
+const parseCurrency = (value) => {
+  if (!value) return null;
+  return parseFloat(value.replace(/\./g, '').replace(',', '.')) || null;
+};
+
+// Handle currency input for giaTriGiam, giaTriToiThieu, giaTriToiDa
+const handleCurrencyInput = (field, event) => {
+  const rawValue = event.target.value.replace(/\./g, '');
+  const parsedValue = parseCurrency(rawValue);
+  voucher.value[field] = parsedValue;
+  if (field === 'giaTriGiam') {
+    displayGiaTriGiam.value = formatCurrency(parsedValue);
+    validateGiaTriGiam();
+  }
+  if (field === 'giaTriToiThieu') {
+    displayGiaTriToiThieu.value = formatCurrency(parsedValue);
+    validateGiaTriToiThieu();
+  }
+  if (field === 'giaTriToiDa') {
+    displayGiaTriToiDa.value = formatCurrency(parsedValue);
+    validateGiaTriToiDa();
+  }
+};
+
+// Handle tenVoucher input to trim only
+const handleTenVoucherInput = () => {
+  voucher.value.tenVoucher = voucher.value.tenVoucher.trim();
+  validateTenVoucher();
 };
 
 const validateMaVoucher = () => {
-  if (!voucher.value.maVoucher || voucher.value.maVoucher.trim() === '') {
+  if (!voucher.value.maVoucher) {
     errors.value.maVoucher = 'Mã voucher không được để trống!';
+  } else if (!/^[a-zA-Z0-9]+$/.test(voucher.value.maVoucher)) {
+    errors.value.maVoucher = 'Mã voucher chỉ được chứa chữ cái và số!';
   } else {
     errors.value.maVoucher = '';
   }
 };
 
 const validateTenVoucher = () => {
-  if (!voucher.value.tenVoucher || voucher.value.tenVoucher.trim() === '') {
+  if (!voucher.value.tenVoucher) {
     errors.value.tenVoucher = 'Tên voucher không được để trống!';
   } else {
     errors.value.tenVoucher = '';
@@ -158,11 +215,11 @@ const validateTenVoucher = () => {
 };
 
 const validateGiaTriGiam = () => {
-  const giaTri = parseFloat(voucher.value.giaTriGiam) || 0;
-  if (!voucher.value.giaTriGiam || giaTri <= 0) {
+  const giaTri = voucher.value.giaTriGiam;
+  if (giaTri === null || isNaN(giaTri) || giaTri <= 0) {
     errors.value.giaTriGiam = 'Giá trị giảm phải lớn hơn 0!';
   } else if (giaTri > 5000000) {
-    errors.value.giaTriGiam = 'Giá trị giảm không được lớn hơn 5,000,000!';
+    errors.value.giaTriGiam = `Giá trị giảm không được lớn hơn ${formatCurrency(5000000, true)}!`;
   } else if (voucher.value.kieuGiamGia === 'Phần trăm' && giaTri > 100) {
     errors.value.giaTriGiam = 'Giá trị giảm không được vượt quá 100 khi chọn Phần trăm!';
   } else {
@@ -171,16 +228,17 @@ const validateGiaTriGiam = () => {
 
   if (voucher.value.kieuGiamGia === 'Tiền mặt') {
     voucher.value.giaTriToiDa = giaTri;
+    displayGiaTriToiDa.value = formatCurrency(giaTri);
     validateGiaTriToiDa();
   }
 };
 
 const validateGiaTriToiThieu = () => {
-  const giaTri = parseFloat(voucher.value.giaTriToiThieu) || 0;
+  const giaTri = voucher.value.giaTriToiThieu || 0;
   if (giaTri < 0) {
     errors.value.giaTriToiThieu = 'Giá trị tối thiểu không được nhỏ hơn 0!';
   } else if (giaTri > 5000000) {
-    errors.value.giaTriToiThieu = 'Giá trị tối thiểu không được lớn hơn 5,000,000!';
+    errors.value.giaTriToiThieu = `Giá trị tối thiểu không được lớn hơn ${formatCurrency(5000000, true)}!`;
   } else {
     errors.value.giaTriToiThieu = '';
   }
@@ -188,21 +246,25 @@ const validateGiaTriToiThieu = () => {
 
 const validateSoLuong = () => {
   const soLuong = parseInt(voucher.value.soLuong) || 0;
-  if (!voucher.value.soLuong || soLuong < 0) {
-    errors.value.soLuong = 'Số lượng không được nhỏ hơn 0!';
+  if (voucher.value.soLuong === null || soLuong <= 0) {
+    errors.value.soLuong = 'Số lượng phải lớn hơn 0!';
   } else if (soLuong > 5000000) {
-    errors.value.soLuong = 'Số lượng không được lớn hơn 5,000,000!';
+    errors.value.soLuong = `Số lượng không được lớn hơn ${formatCurrency(5000000)}!`;
   } else {
     errors.value.soLuong = '';
   }
 };
 
 const validateGiaTriToiDa = () => {
-  const giaTri = parseFloat(voucher.value.giaTriToiDa) || 0;
-  if (giaTri < 0) {
-    errors.value.giaTriToiDa = 'Giá trị tối đa không được nhỏ hơn 0!';
+  const giaTri = voucher.value.giaTriToiDa || 0;
+  if (voucher.value.kieuGiamGia === 'Tiền mặt') {
+    voucher.value.giaTriToiDa = voucher.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatCurrency(voucher.value.giaTriGiam);
+    errors.value.giaTriToiDa = '';
+  } else if (giaTri <= 0) {
+    errors.value.giaTriToiDa = 'Giá trị tối đa phải lớn hơn 0!';
   } else if (giaTri > 5000000) {
-    errors.value.giaTriToiDa = 'Giá trị tối đa không được lớn hơn 5,000,000!';
+    errors.value.giaTriToiDa = `Giá trị tối đa không được lớn hơn ${formatCurrency(5000000, true)}!`;
   } else {
     errors.value.giaTriToiDa = '';
   }
@@ -235,6 +297,34 @@ const validateDates = () => {
 
 const hasErrors = computed(() => {
   return Object.values(errors.value).some(error => error !== '');
+});
+
+// Watch kieuGiamGia and giaTriGiam to sync giaTriToiDa
+watch(() => voucher.value?.kieuGiamGia, () => {
+  if (voucher.value.kieuGiamGia === 'Tiền mặt') {
+    voucher.value.giaTriToiDa = voucher.value.giaTriGiam;
+    displayGiaTriToiDa.value = formatCurrency(voucher.value.giaTriGiam);
+  }
+  validateKieuGiamGia();
+});
+
+watch(() => voucher.value?.giaTriGiam, (newValue) => {
+  displayGiaTriGiam.value = formatCurrency(newValue);
+  if (voucher.value.kieuGiamGia === 'Tiền mặt') {
+    voucher.value.giaTriToiDa = newValue;
+    displayGiaTriToiDa.value = formatCurrency(newValue);
+  }
+  validateGiaTriGiam();
+});
+
+watch(() => voucher.value?.giaTriToiThieu, (newValue) => {
+  displayGiaTriToiThieu.value = formatCurrency(newValue);
+  validateGiaTriToiThieu();
+});
+
+watch(() => voucher.value?.giaTriToiDa, (newValue) => {
+  displayGiaTriToiDa.value = formatCurrency(newValue);
+  validateGiaTriToiDa();
 });
 
 const submitForm = async () => {
@@ -271,22 +361,27 @@ const submitForm = async () => {
 
 <style scoped>
 .btn-primary {
-background-color: #d02c39;
-border-color: #d02c39;
-font-weight: bold;
+  background-color: #d02c39;
+  border-color: #d02c39;
+  font-weight: bold;
 }
 
 .btn-primary:hover {
-background-color: #f33b47;
-border-color: #f33b47;
+  background-color: #f33b47;
+  border-color: #f33b47;
 }
 
 .is-invalid {
-border-color: #dc3545;
+  border-color: #dc3545;
 }
 
 .text-danger {
-font-size: 0.875em;
-margin-top: 0.25rem;
+  font-size: 0.875em;
+  margin-top: 0.25rem;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
 }
 </style>

@@ -37,17 +37,50 @@
 import { ChevronDown } from 'lucide-vue-next';
 import { useGbStore } from '../stores/gbStore';
 import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 
 const router = useRouter();
 const store = useGbStore();
+const isLoading = ref(false);
 
 // Truyền 1 hoặc nhiều keyword (dạng mảng hoặc chuỗi)
 async function handleSidebarClick(keywords) {
+<<<<<<< HEAD
   store.setProductLoading(true);
   await store.getSanPhamByTenDM(keywords);
   store.setProductLoading(false);
   // Truyền keyword qua query, nếu là mảng sẽ thành filter[]=a&filter[]=b
   router.push({ name: 'danhSachSanPham', query: { filter: keywords } });
+=======
+  isLoading.value = true;
+  if (keywords === 'all') {
+    await store.getSanPhamByTenDM('');
+  } else if (keywords === 'Sport') {
+    const sports = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
+    await store.getSanPhamByTenDM(sports);
+  } else {
+    await store.getSanPhamByTenDM(keywords);
+  }
+  isLoading.value = false;
+  router.push({ path: '/danhSachSanPham', query: { filter: keywords } });
+}
+
+// Đơn giản hóa hàm handleSieuSaleClick, chỉ lấy sản phẩm và chuyển trang
+async function handleSieuSaleClick() {
+  try {
+    isLoading.value = true;
+    await store.getSanPhamSieuSale();
+    console.log('Đã lấy sản phẩm siêu sale'); // Log để kiểm tra
+    router.push({ 
+      path: '/danhSachSanPham', 
+      query: { filter: 'supersale' } 
+    });
+  } catch (error) {
+    console.error('Lỗi khi lấy sản phẩm siêu sale:', error);
+  } finally {
+    isLoading.value = false;
+  }
+>>>>>>> 1cdc2339346774a5caa9a7214f7012a4e80b799d
 }
 </script>
 

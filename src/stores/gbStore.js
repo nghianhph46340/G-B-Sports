@@ -175,55 +175,55 @@ export const useGbStore = defineStore('gbStore', {
     getIsThanhToanMuaNgay() {
       return this.isThanhToanMuaNgay;
     },
-    // List sản phẩm theo tên sản phẩm(trang sản phẩm)
-    async getSanPhamByTenSP(keywords) {
-      console.log('Gọi getSanPhamByTenSP với:', keywords);
-      let tenSanPham = '';
-      if (Array.isArray(keywords)) {
-        tenSanPham = keywords.join(',');
-      } else if (typeof keywords === 'string') {
-        tenSanPham = keywords;
-      }
-      const data = await sanPhamService.getSanPhamByTenSP(tenSanPham);
-      // Map lại field nếu cần
-      this.listSanPhamBanHang = data.map(item => ({
-        id: item.id_san_pham,
-        name: item.ten_san_pham,
-        price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
-        oldPrice: Number(item.gia_max || 0),
-        brand: item.ten_thuong_hieu,
-        image: item.hinh_anh,
-        gender: item.gioi_tinh || '',
-        type: item.ten_danh_muc || '',
-        colors: item.mau_sac ? item.mau_sac.split(',') : [],
-        rating: item.danh_gia || 0,
-        reviews: item.so_luong_danh_gia || 0,
-      }));
-    },
-    // List sản phẩm theo tên danh mục(trang sản phẩm)
-    async getSanPhamByTenDM(keywords) {
-      let tenDanhMuc = '';
-      if (Array.isArray(keywords)) {
-        tenDanhMuc = keywords.join(',');
-      } else if (typeof keywords === 'string') {
-        tenDanhMuc = keywords;
-      }
-      // Nếu tenDanhMuc là '', backend nên trả về tất cả sản phẩm
-      const data = await sanPhamService.getSanPhamByTenDM(tenDanhMuc);
-      this.listSanPhamBanHang = data.map(item => ({
-        id: item.id_san_pham,
-        name: item.ten_san_pham,
-        price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
-        oldPrice: Number(item.gia_max || 0),
-        brand: item.ten_thuong_hieu,
-        image: item.hinh_anh,
-        gender: item.gioi_tinh || '',
-        type: item.ten_danh_muc || '',
-        colors: item.mau_sac ? item.mau_sac.split(',') : [],
-        rating: item.danh_gia || 0,
-        reviews: item.so_luong_danh_gia || 0,
-      }));
-    },
+// List sản phẩm theo tên sản phẩm(trang sản phẩm)
+      async getSanPhamByTenSP(keywords) {
+        console.log('Gọi getSanPhamByTenSP với:', keywords);
+        let tenSanPham = '';
+        if (Array.isArray(keywords)) {
+          tenSanPham = keywords.join(',');
+        } else if (typeof keywords === 'string') {
+          tenSanPham = keywords;
+        }
+        const data = await sanPhamService.getSanPhamByTenSP(tenSanPham);
+        // Map lại field nếu cần
+        this.listSanPhamBanHang = data.map(item => ({
+          id: item.id_san_pham,
+          name: item.ten_san_pham,
+          price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+          oldPrice: Number(item.gia_max || 0),
+          brand: item.ten_thuong_hieu,
+          image: item.hinh_anh,
+          gender: item.gioi_tinh || '',
+          type: item.ten_danh_muc || '',
+          colors: item.mau_sac ? item.mau_sac.split(',') : [],
+          rating: item.danh_gia || 0,
+          reviews: item.so_luong_danh_gia || 0,
+        }));
+      },  
+      // List sản phẩm theo tên danh mục(trang sản phẩm)
+      async getSanPhamByTenDM(keywords) {
+        let tenDanhMuc = '';
+        if (Array.isArray(keywords)) {
+          tenDanhMuc = keywords.join(',');
+        } else if (typeof keywords === 'string') {
+          tenDanhMuc = keywords;
+        }
+        // Nếu tenDanhMuc là '', backend nên trả về tất cả sản phẩm
+        const data = await sanPhamService.getSanPhamByTenDM(tenDanhMuc);
+        this.listSanPhamBanHang = data.map(item => ({
+          id: item.id_san_pham,
+          name: item.ten_san_pham,
+          price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+          oldPrice: Number(item.gia_max || 0),
+          brand: item.ten_thuong_hieu,
+          image: item.hinh_anh,
+          gender: item.gioi_tinh || '',
+          type: item.ten_danh_muc || '',
+          colors: item.mau_sac ? item.mau_sac.split(',') : [],
+          rating: item.danh_gia || 0,
+          reviews: item.so_luong_danh_gia || 0,
+        }));
+      },
     // lấy số lượng còn lại của sản phẩm theo ID
     async getMaxSoLuongSP(idCTSP) {
       const response = await banHangOnlineService.maxSoLuongSP(idCTSP);
@@ -1133,6 +1133,20 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
+    async locHoaDon(keyword, tuNgay, denNgay, trangThai, loaiHoaDon, page = 0, size = 5) {
+      try {
+        const response = await hoaDonService.locHD(keyword, tuNgay, denNgay, trangThai, loaiHoaDon, page, size);
+        if (response.error) {
+          throw new Error(response.message || 'Không thể lấy dữ liệu hóa đơn.');
+        }
+        this.getAllHoaDonArr = response.content;
+        this.currentHoaDon = response.number;
+        this.totalHoaDon = response.totalPages;
+      } catch (error) {
+        console.error('Lỗi khi tìm kiếm hóa đơn:', error);
+        toast.error('Có lỗi xảy ra')
+      }
+    },
     async filterByDate(tuNgay, denNgay, page = 0, size = 5) {
       try {
         console.log('Từ ngày: ' + tuNgay + 'Đến ngày: ' + denNgay)
@@ -1244,10 +1258,10 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra')
       }
     },
-    async updateCustomerInfo(maHoaDon, ttkh) {
+    async updateCustomerInfo(maHoaDon, ttkh, phiVanChuyen) {
       try {
         const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || ''
-        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, { ...ttkh, nhanVienDoi })
+        const response = await hoaDonService.updateTTKH_in_HD(maHoaDon, { ...ttkh, nhanVienDoi }, phiVanChuyen)
         if (response.error) {
           toast.error('Cập nhật thông tin khách hàng thất bại')
           return
@@ -1305,14 +1319,13 @@ export const useGbStore = defineStore('gbStore', {
         toast.error('Có lỗi xảy ra khi thêm sản phẩm')
       }
     },
-    async removeProductFromInvoice(maHoaDon, idCTSP, soLuong) {
+    async removeProductFromInvoice(maHoaDon, idCTSP) {
       try {
         const nhanVienDoi = this.userDetails?.tenNhanVien || this.userInfo?.ten_dang_nhap || ''
         const noiDungDoi = 'Xóa sản phẩm khỏi hóa đơn' // Giá trị mặc định
         const response = await hoaDonService.removeProductFromInvoice(
           maHoaDon,
           idCTSP,
-          soLuong,
           nhanVienDoi,
           noiDungDoi,
         )
@@ -1632,12 +1645,22 @@ export const useGbStore = defineStore('gbStore', {
     // Lấy danh sách khách hàng
 
     async themKhachHangBH(khachHangData) {
-      const response = await khachHangService.themKhachHangBH(khachHangData)
-      if (response.error) {
-        throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng bán hàng') // Ném lỗi để component xử lý
+      try {
+        console.log('API themKhachHangBH input:', khachHangData);
+        const response = await khachHangService.themKhachHangBH(khachHangData);
+        console.log('API themKhachHangBH response:', response);
+        if (response.error) {
+          const errorMessage = typeof response.error === 'string' ? response.error : 'Có lỗi không xác định từ server';
+          throw new Error(errorMessage);
+        }
+        await this.getAllKhachHang(this.currentKhachHang, 10000);
+        return response.khachHang;
+      } catch (error) {
+        console.error('Lỗi trong themKhachHangBH:', error);
+        console.log('Error response:', error.response);
+        console.log('Error message:', error.message);
+        throw error; // Truyền lỗi lên để frontend xử lý
       }
-      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
-      return response.khachHang // Trả về thông tin khách hàng vừa thêm
     },
 
     // Lấy danh sách khách hàng
@@ -1689,7 +1712,7 @@ export const useGbStore = defineStore('gbStore', {
       if (response.error) {
         throw new Error(response.message || 'Có lỗi xảy ra khi thêm khách hàng') // Ném lỗi để component xử lý
       }
-      await this.getAllKhachHang(this.currentKhachHang, 3) // Làm mới danh sách
+      await this.getAllKhachHang(this.currentKhachHang, 5) // Làm mới danh sách
       return response.khachHang // Trả về thông tin khách hàng vừa thêm
     },
 
@@ -2534,6 +2557,9 @@ export const useGbStore = defineStore('gbStore', {
           break
         case '/admin/quanlysanpham/chitietsanpham':
           this.indexMenu = ['5']
+          break
+        case '/admin/traHang':
+          this.indexMenu = ['9']
           break
         default:
           this.indexMenu = ['1']
