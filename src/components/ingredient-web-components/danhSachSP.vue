@@ -5,7 +5,7 @@
       <a-breadcrumb class="breadcrumb">
         <a-breadcrumb-item @click="goHome" style="cursor:pointer">Trang chủ</a-breadcrumb-item>
         <a-breadcrumb-item>
-          {{ getBreadcrumbLabel }}
+          {{ getBreadcrumbLabel(filterKeywords.value) }}
         </a-breadcrumb-item>
       </a-breadcrumb>
     </div>
@@ -21,22 +21,16 @@
         <div class="filter-group">
           <h4>Giới tính</h4>
           <div class="gender-buttons">
-            <a-button 
-              :class="{ 'active-gender': selectedGender === 'nam' }" 
-              @click="selectedGender = selectedGender === 'nam' ? null : 'nam'"
-            >
+            <a-button :class="{ 'active-gender': selectedGender === 'nam' }"
+              @click="selectedGender = selectedGender === 'nam' ? null : 'nam'">
               <man-outlined /> Nam
             </a-button>
-            <a-button 
-              :class="{ 'active-gender': selectedGender === 'nu' }" 
-              @click="selectedGender = selectedGender === 'nu' ? null : 'nu'"
-            >
+            <a-button :class="{ 'active-gender': selectedGender === 'nu' }"
+              @click="selectedGender = selectedGender === 'nu' ? null : 'nu'">
               <woman-outlined /> Nữ
             </a-button>
-            <a-button 
-              :class="{ 'active-gender': selectedGender === 'unisex' }" 
-              @click="selectedGender = selectedGender === 'unisex' ? null : 'unisex'"
-            >
+            <a-button :class="{ 'active-gender': selectedGender === 'unisex' }"
+              @click="selectedGender = selectedGender === 'unisex' ? null : 'unisex'">
               <team-outlined /> Unisex
             </a-button>
           </div>
@@ -88,12 +82,8 @@
         <div class="filter-group">
           <h4>Kích thước</h4>
           <div class="size-options">
-            <a-tag 
-              v-for="size in sizes" 
-              :key="size" 
-              :class="{ 'size-tag-active': selectedSizes.includes(size) }"
-              @click="toggleSize(size)"
-            >
+            <a-tag v-for="size in sizes" :key="size" :class="{ 'size-tag-active': selectedSizes.includes(size) }"
+              @click="toggleSize(size)">
               {{ size }}
             </a-tag>
           </div>
@@ -103,17 +93,9 @@
         <div class="filter-group">
           <h4>Màu sắc</h4>
           <div class="color-options">
-            <div 
-              v-for="color in colors"
-              :key="color.value"
-              class="color-option"
-              :class="{ 'active': selectedColors.includes(color.value) }"
-              @click="toggleColor(color.value)"
-            >
-              <span 
-                class="color-dot"
-                :style="{ backgroundColor: color.value }"
-              ></span>
+            <div v-for="color in colors" :key="color.value" class="color-option"
+              :class="{ 'active': selectedColors.includes(color.value) }" @click="toggleColor(color.value)">
+              <span class="color-dot" :style="{ backgroundColor: color.value }"></span>
               <span class="color-name">{{ color.name }}</span>
             </div>
           </div>
@@ -122,13 +104,8 @@
         <!-- Giá -->
         <div class="filter-group">
           <h4>Khoảng giá</h4>
-          <a-slider
-            v-model:value="selectedPrice"
-            :min="minPrice"
-            :max="maxPrice"
-            range
-            :tip-formatter="formatCurrency"
-          />
+          <a-slider v-model:value="selectedPrice" :min="minPrice" :max="maxPrice" range
+            :tip-formatter="formatCurrency" />
           <div class="price-range">
             <span>{{ formatCurrency(selectedPrice[0]) }}</span>
             <span>-</span>
@@ -167,11 +144,7 @@
             </a-select>
           </div>
           <a-row :gutter="[24, 24]">
-            <a-col
-              v-for="product in displayedProducts"
-              :key="product.id"
-              :xs="24" :sm="12" :md="8" :lg="6"
-            >
+            <a-col v-for="product in displayedProducts" :key="product.id" :xs="24" :sm="12" :md="8" :lg="6">
               <div class="product-card" @mouseenter="activeProduct = product.id" @mouseleave="activeProduct = null">
                 <div class="product-image-container">
                   <img class="product-image" :src="product.image" alt="Product image">
@@ -180,7 +153,7 @@
                   </div>
                   <div class="product-overlay" :class="{ 'active': activeProduct === product.id }">
                     <div class="overlay-buttons">
-                      <button class="overlay-btn view-btn" @click="router.push('/sanphamdetail/'+product.id)">
+                      <button class="overlay-btn view-btn" @click="router.push('/sanphamdetail/' + product.id)">
                         <eye-outlined />
                         <span>Xem</span>
                       </button>
@@ -194,7 +167,8 @@
                 <div class="product-info">
                   <div class="product-price-row">
                     <span class="product-price">{{ formatCurrency(product.price) }}</span>
-                    <span class="product-old-price" v-if="product.oldPrice">{{ formatCurrency(product.oldPrice) }}</span>
+                    <span class="product-old-price" v-if="product.oldPrice">{{ formatCurrency(product.oldPrice)
+                      }}</span>
                     <span class="product-discount" v-if="product.oldPrice">
                       -{{ Math.round(100 * (1 - product.price / product.oldPrice)) }}%
                     </span>
@@ -226,7 +200,7 @@
                 </a-col>
               </a-row>
             </div>
-            
+
             <!-- Nút xem thêm dạng text -->
             <button class="text-load-more" @click="loadMore">
               Xem thêm
@@ -242,7 +216,7 @@
       </section>
     </div>
   </div>
-  
+
 </template>
 
 <script setup>
@@ -336,7 +310,7 @@ watch(
         selectedColors.value = [];
         selectedMaterials.value = [];
         selectedSizes.value = [];
-        
+
         // Gọi API tìm kiếm
         await store.getSanPhamByTenSP(newSearchQuery);
       } catch (error) {
@@ -364,10 +338,10 @@ watch(
         selectedColors.value = [];
         selectedMaterials.value = [];
         selectedSizes.value = [];
-        
+
         // Cập nhật filterKeywords để hiển thị đúng breadcrumb
         filterKeywords.value = [newFilter];
-        
+
         // Gọi API tìm kiếm nếu chưa có dữ liệu
         if (!store.listSanPhamBanHang?.length) {
           await store.getSanPhamByTenSP(newFilter);
@@ -419,7 +393,7 @@ function toggleColor(color) {
 // Lọc sản phẩm từ store theo nhiều keyword
 const filteredProducts = computed(() => {
   if (!store.listSanPhamBanHang) return [];
-  
+
   // Nếu là trang siêu sale, trả về trực tiếp danh sách từ API
   if (filterKeywords.value.includes('supersale')) {
     console.log('Hiển thị sản phẩm siêu sale:', store.listSanPhamBanHang.length);
@@ -427,29 +401,29 @@ const filteredProducts = computed(() => {
   }
 
   console.log('Filter keywords:', filterKeywords.value);
-  
+
   // Định nghĩa các danh mục
   const categoryKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
-  
-// Định nghĩa các loại sản phẩm
-const productTypeKeywords = ['Quần', 'Áo', 'Váy','Tank top'];
 
-// Tách filter thành 2 loại
-const categoryFilters = filterKeywords.value.filter(kw => categoryKeywords.includes(kw));
-const productTypeFilters = filterKeywords.value.filter(kw => productTypeKeywords.includes(kw));
+  // Định nghĩa các loại sản phẩm
+  const productTypeKeywords = ['Quần', 'Áo', 'Váy', 'Tank top'];
 
-return store.listSanPhamBanHang.filter(product => {
-  // Kiểm tra theo danh mục (type)
-  const matchCategory = categoryFilters.length === 0 || 
-    categoryFilters.some(kw => product.type && product.type.toLowerCase().includes(kw.toLowerCase()));
+  // Tách filter thành 2 loại
+  const categoryFilters = filterKeywords.value.filter(kw => categoryKeywords.includes(kw));
+  const productTypeFilters = filterKeywords.value.filter(kw => productTypeKeywords.includes(kw));
 
-  // Kiểm tra theo tên sản phẩm
-  const matchProductType = productTypeFilters.length === 0 ||
-    productTypeFilters.some(kw => product.name && product.name.toLowerCase().includes(kw.toLowerCase()));
+  return store.listSanPhamBanHang.filter(product => {
+    // Kiểm tra theo danh mục (type)
+    const matchCategory = categoryFilters.length === 0 ||
+      categoryFilters.some(kw => product.type && product.type.toLowerCase().includes(kw.toLowerCase()));
 
-  // Phải thỏa mãn cả 2 điều kiện
-  return matchCategory && matchProductType;
-});
+    // Kiểm tra theo tên sản phẩm
+    const matchProductType = productTypeFilters.length === 0 ||
+      productTypeFilters.some(kw => product.name && product.name.toLowerCase().includes(kw.toLowerCase()));
+
+    // Phải thỏa mãn cả 2 điều kiện
+    return matchCategory && matchProductType;
+  });
 });
 
 const sortedAndFilteredProducts = computed(() => {
@@ -487,7 +461,7 @@ const breadcrumbMap = [
     label: 'Tất cả sản phẩm'
   },
   {
-    keywords: ['Quần','Váy'],
+    keywords: ['Quần', 'Váy'],
     label: 'Quần'
   },
   {
@@ -515,20 +489,19 @@ function getBreadcrumbLabel(filterKeywords) {
   const sportsKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
 
   // Kiểm tra nếu filter chứa bất kỳ từ khóa môn thể thao nào
-  if (filterKeywords.value.some(kw => sportsKeywords.includes(kw))) {
+  if (filterKeywords.some(kw => sportsKeywords.includes(kw))) {
     return 'Môn thể thao';
   }
 
   // Kiểm tra các trường hợp còn lại
   for (const group of breadcrumbMap) {
-    if (group.keywords.length && filterKeywords.value.length === 1 && group.keywords.includes(filterKeywords.value[0])) {
+    if (group.keywords.length && filterKeywords.length === 1 && group.keywords.includes(filterKeywords[0])) {
       return group.label;
     }
   }
 
-  return filterKeywords.value[0] || 'Tất cả sản phẩm';
+  return filterKeywords[0] || 'Tất cả sản phẩm';
 }
-;
 
 function fetchProductsByFilter(filter) {
   if (filter === 'supersale') {
@@ -536,7 +509,7 @@ function fetchProductsByFilter(filter) {
     store.getSanPhamSieuSale();
     return;
   }
-  
+
   // Các logic filter khác giữ nguyên
   const categories = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
   const productTypes = ['Quần', 'Áo', 'Váy', 'Tank top'];
@@ -577,7 +550,7 @@ const hasMoreProducts = computed(() => {
 const loadMore = () => {
   const totalProducts = sortedAndFilteredProducts.value.length;
   const currentlyShowing = currentPage.value * itemsPerPage;
-  
+
   if (currentlyShowing < totalProducts) {
     currentPage.value++;
   }
@@ -606,9 +579,9 @@ const nextProducts = computed(() => {
 const applyFilters = () => {
   // Lọc sản phẩm dựa trên các tiêu chí đã chọn
   currentPage.value = 1; // Reset trang về đầu tiên khi lọc
-  
+
   // Có thể thêm logic tìm kiếm API hoặc lọc tại đây
-  
+
   // Thông báo kết quả lọc
   const totalFilteredProducts = filteredProducts.value.length;
   if (totalFilteredProducts > 0) {
@@ -620,7 +593,7 @@ const applyFilters = () => {
 
 const resetFilters = () => {
   selectedTypes.value = [];
-  selectedGender.value = null; 
+  selectedGender.value = null;
   selectedBrands.value = [];
   selectedPrice.value = [minPrice, maxPrice];
   selectedColors.value = [];
@@ -633,34 +606,41 @@ const resetFilters = () => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
 .breadcrumb {
   color: #f80f0fe5;
-  font-family: Montserrat, sans-serif  !important;
+  font-family: Montserrat, sans-serif !important;
 }
+
 .product-list-page {
   max-width: 1300px;
   margin: 0 auto;
   padding: 0 16px;
 }
+
 .header {
   margin-bottom: 24px;
 }
+
 .title-row {
   display: flex;
   align-items: center;
   gap: 24px;
   margin-top: 12px;
 }
+
 .category-img {
   width: 80px;
   height: 80px;
   object-fit: cover;
   border-radius: 8px;
 }
+
 .main-content {
   display: flex;
   gap: 32px;
 }
+
 .sidebar {
   width: 300px;
   background: #fff;
@@ -757,7 +737,9 @@ const resetFilters = () => {
 }
 
 /* Thương hiệu và loại sản phẩm */
-.brand-container, .product-type-container, .material-container {
+.brand-container,
+.product-type-container,
+.material-container {
   max-height: 150px;
   overflow-y: auto;
   padding-right: 10px;
@@ -782,7 +764,9 @@ const resetFilters = () => {
   background: #ccc;
 }
 
-.brand-checkbox, .type-checkbox, .material-checkbox {
+.brand-checkbox,
+.type-checkbox,
+.material-checkbox {
   margin-bottom: 10px;
 }
 
@@ -943,12 +927,14 @@ const resetFilters = () => {
 .product-list {
   flex: 1;
 }
+
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
 }
+
 .product-card {
   background: #fff;
   border-radius: 8px;
@@ -959,15 +945,18 @@ const resetFilters = () => {
   transition: box-shadow 0.2s;
   margin-bottom: 20px;
 }
+
 .product-card:hover {
   box-shadow: 0 4px 16px #e6e6e6;
 }
+
 .product-image-container {
   position: relative;
   overflow: hidden;
   border-radius: 8px;
   margin-bottom: 12px;
 }
+
 .product-image {
   width: 100%;
   height: 220px;
@@ -975,9 +964,11 @@ const resetFilters = () => {
   border-radius: 8px;
   transition: transform 0.5s ease;
 }
+
 .product-card:hover .product-image {
   transform: scale(1.05);
 }
+
 .discount-badge {
   position: absolute;
   top: 10px;
@@ -990,6 +981,7 @@ const resetFilters = () => {
   border-radius: 4px;
   z-index: 2;
 }
+
 .product-overlay {
   position: absolute;
   bottom: -50px;
@@ -1000,14 +992,17 @@ const resetFilters = () => {
   transition: all 0.3s ease;
   opacity: 0;
 }
+
 .product-overlay.active {
   bottom: 0;
   opacity: 1;
 }
+
 .overlay-buttons {
   display: flex;
   justify-content: space-around;
 }
+
 .overlay-btn {
   display: flex;
   align-items: center;
@@ -1022,33 +1017,40 @@ const resetFilters = () => {
   cursor: pointer;
   transition: all 0.2s ease;
 }
+
 .overlay-btn span {
   margin-left: 5px;
 }
+
 .overlay-btn:hover {
   background: #3a86ff;
   color: white;
 }
+
 .product-info {
   padding: 0 5px;
 }
+
 .product-price-row {
   display: flex;
   align-items: center;
   margin-bottom: 8px;
 }
+
 .product-price {
   font-size: 15px;
   font-weight: 600;
   color: #333;
   margin-right: 8px;
 }
+
 .product-old-price {
   font-size: 12px;
   color: #999;
   text-decoration: line-through;
   margin-right: 8px;
 }
+
 .product-discount {
   font-size: 11px;
   font-weight: 600;
@@ -1057,6 +1059,7 @@ const resetFilters = () => {
   padding: 2px 6px;
   border-radius: 10px;
 }
+
 .product-name {
   font-size: 14px;
   font-weight: 600;
@@ -1070,31 +1073,37 @@ const resetFilters = () => {
   line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+
 .product-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .product-brand {
   font-size: 12px;
   font-weight: 500;
   color: #666;
 }
+
 .product-rating {
   display: flex;
   align-items: center;
   font-size: 12px;
   color: #666;
 }
+
 .product-rating :deep(svg) {
   color: #ffc107;
   margin-right: 3px;
   font-size: 14px;
 }
+
 .empty-state {
   margin-top: 48px;
   text-align: center;
 }
+
 .price-range {
   display: flex;
   justify-content: space-between;
@@ -1102,6 +1111,7 @@ const resetFilters = () => {
   color: #666;
   margin-top: 4px;
 }
+
 .load-more-section {
   position: relative;
   margin: 32px 0;
@@ -1122,13 +1132,11 @@ const resetFilters = () => {
   left: 0;
   right: 0;
   height: 100%;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.8) 30%,
-    rgba(255, 255, 255, 0.9) 50%,
-    rgba(255, 255, 255, 1) 100%
-  );
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.8) 30%,
+      rgba(255, 255, 255, 0.9) 50%,
+      rgba(255, 255, 255, 1) 100%);
   pointer-events: none;
 }
 
