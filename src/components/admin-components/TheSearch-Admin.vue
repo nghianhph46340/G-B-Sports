@@ -18,6 +18,18 @@ const store = useGbStore();
 const route = useRoute();
 const searchInput = ref('');
 
+// Hàm chuẩn hóa chuỗi tìm kiếm: xóa khoảng trắng thừa ở đầu, cuối và giữa các từ
+const formatSearchString = (text) => {
+    if (!text) return '';
+    // Xóa khoảng trắng ở đầu và cuối, sau đó thay thế nhiều khoảng trắng liên tiếp bằng một khoảng trắng
+    return text.trim().replace(/\s+/g, ' ');
+};
+
+// Chuỗi tìm kiếm đã được xử lý
+const formattedSearchInput = computed(() => {
+    return formatSearchString(searchInput.value);
+});
+
 // Hàm xóa kết quả tìm kiếm
 const clearSearchResults = () => {
     if (route.name === 'admin-quan-ly-san-pham') {
@@ -57,21 +69,23 @@ watch(searchInput, (newValue) => {
 });
 
 // Hàm xử lý tìm kiếm
-// Hàm xử lý tìm kiếm
 const handleSearch = async () => {
+  // Lấy chuỗi tìm kiếm đã được xử lý
+  const formattedValue = formattedSearchInput.value;
+  
   // Giữ lại các bộ lọc hiện tại
   const currentFilters = { ...store.searchFilterParams };
   
-  if (!searchInput.value || searchInput.value.trim() === '') {
+  if (!formattedValue) {
     // Nếu ô tìm kiếm trống, chỉ xóa keyword, giữ nguyên các bộ lọc
     currentFilters.keyword = '';
     store.updateSearchFilterParams(currentFilters);
   } else {
     // Cập nhật keyword nhưng giữ nguyên các bộ lọc
-    currentFilters.keyword = searchInput.value;
+    currentFilters.keyword = formattedValue;
     store.updateSearchFilterParams(currentFilters);
     
-    console.log('Đang tìm kiếm với từ khóa:', searchInput.value);
+    console.log('Đang tìm kiếm với từ khóa:', formattedValue);
     console.log('Các bộ lọc hiện tại:', currentFilters);
   }
   
@@ -83,7 +97,7 @@ const handleSearch = async () => {
     window.dispatchEvent(new CustomEvent('search-filter-changed', {
       detail: { 
         results: store.filteredProductsData,
-        keyword: searchInput.value
+        keyword: formattedValue
       }
     }));
     
@@ -91,6 +105,9 @@ const handleSearch = async () => {
   } catch (error) {
     console.error('Lỗi khi tìm kiếm:', error);
   }
+  
+  // Cập nhật giá trị hiển thị trong ô tìm kiếm để người dùng thấy chuỗi đã được chuẩn hóa
+  searchInput.value = formattedValue;
 };
 </script>
 

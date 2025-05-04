@@ -533,10 +533,23 @@ const shippingFee = ref(0);
 
 const calculateShippingFee = async () => {
     try {
-
         console.log("khách hàng hahahahaha", customer.value)
         const kh = customer.value
+        
+        // Kiểm tra điều kiện trước khi gọi API
+        if (!kh.tinh_thanh_pho || !kh.quan_huyen) {
+            console.log("Chưa đủ thông tin địa chỉ để tính phí ship");
+            shippingFee.value = 0;
+            return;
+        }
 
+        // Kiểm tra subtotal trước
+        if (subtotal.value >= 2000000) {
+            console.log("Đơn hàng trên 2 triệu, miễn phí vận chuyển");
+            shippingFee.value = 0;
+            return;
+        }
+        
         const result = await banHangService.tinhPhiShip(
             "Hà Nội", // pickProvince
             "Nam Từ Liêm", // pickDistrict
@@ -545,10 +558,15 @@ const calculateShippingFee = async () => {
             500,
             subtotal.value
         );
-
-        console.log("Phi ship", result.value);
-
-        shippingFee.value = result.fee;
+        
+        // Kiểm tra result và fee có tồn tại không
+        if (result && typeof result.fee !== 'undefined') {
+            console.log("Phi ship", result.fee);
+            shippingFee.value = result.fee;
+        } else {
+            console.log("API không trả về phí ship hợp lệ:", result);
+            shippingFee.value = 0;
+        }
     } catch (error) {
         console.error('Lỗi khi tính phí vận chuyển:', error);
         shippingFee.value = 0; // Gán giá trị mặc định nếu có lỗi
@@ -863,8 +881,7 @@ const placeOrder = async () => {
                 // Gán isChuyen = true cho hoaDon
                 hoaDon.isChuyen = true;
 
-                // Log hóa đơn sau khi đã thay đổi để kiểm tra
-                console.log('Hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
+                // Log hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
 
                 const response = await banHangOnlineService.createOrder(hoaDon);
                 const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
@@ -877,7 +894,8 @@ const placeOrder = async () => {
                     // Lấy danh sách sản phẩm đã thanh toán
                     const paidProducts = orderData.hoaDonChiTiet.map(item => {
                         return {
-                            id: item.chiTietSanPham.id_chi_tiet_san_pham
+                            id: item.chiTietSanPham.id_chi_tiet_san_pham,
+                            quantity: item.so_luong
                         };
                     });
 
@@ -887,9 +905,29 @@ const placeOrder = async () => {
                     const currentCart = JSON.parse(localStorage.getItem('gb-sport-cart') || '[]');
                     console.log('Giỏ hàng hiện tại:', currentCart);
 
-                    // Lọc giỏ hàng, chỉ giữ lại những sản phẩm chưa thanh toán
-                    const updatedCart = currentCart.filter(cartItem => {
-                        return !paidProducts.some(paidItem => paidItem.id === cartItem.id);
+                    // Tạo bản sao giỏ hàng để xử lý
+                    const updatedCart = [];
+                    
+                    // Xử lý từng sản phẩm trong giỏ hàng
+                    currentCart.forEach(cartItem => {
+                        // Tìm sản phẩm tương ứng trong danh sách đã thanh toán
+                        const paidItem = paidProducts.find(paid => paid.id === cartItem.id);
+                        
+                        if (paidItem) {
+                            // Nếu sản phẩm có trong đơn hàng, trừ số lượng
+                            const remainingQuantity = cartItem.quantity - paidItem.quantity;
+                            
+                            // Chỉ giữ lại trong giỏ hàng nếu số lượng > 0
+                            if (remainingQuantity > 0) {
+                                updatedCart.push({
+                                    ...cartItem,
+                                    quantity: remainingQuantity
+                                });
+                            }
+                        } else {
+                            // Nếu sản phẩm không có trong đơn hàng, giữ nguyên
+                            updatedCart.push(cartItem);
+                        }
                     });
 
                     console.log('Giỏ hàng sau khi cập nhật:', updatedCart);
@@ -955,7 +993,8 @@ const placeOrder = async () => {
                     // Lấy danh sách sản phẩm đã thanh toán
                     const paidProducts = orderData.hoaDonChiTiet.map(item => {
                         return {
-                            id: item.chiTietSanPham.id_chi_tiet_san_pham
+                            id: item.chiTietSanPham.id_chi_tiet_san_pham,
+                            quantity: item.so_luong
                         };
                     });
 
@@ -965,9 +1004,29 @@ const placeOrder = async () => {
                     const currentCart = JSON.parse(localStorage.getItem('gb-sport-cart') || '[]');
                     console.log('Giỏ hàng hiện tại:', currentCart);
 
-                    // Lọc giỏ hàng, chỉ giữ lại những sản phẩm chưa thanh toán
-                    const updatedCart = currentCart.filter(cartItem => {
-                        return !paidProducts.some(paidItem => paidItem.id === cartItem.id);
+                    // Tạo bản sao giỏ hàng để xử lý
+                    const updatedCart = [];
+                    
+                    // Xử lý từng sản phẩm trong giỏ hàng
+                    currentCart.forEach(cartItem => {
+                        // Tìm sản phẩm tương ứng trong danh sách đã thanh toán
+                        const paidItem = paidProducts.find(paid => paid.id === cartItem.id);
+                        
+                        if (paidItem) {
+                            // Nếu sản phẩm có trong đơn hàng, trừ số lượng
+                            const remainingQuantity = cartItem.quantity - paidItem.quantity;
+                            
+                            // Chỉ giữ lại trong giỏ hàng nếu số lượng > 0
+                            if (remainingQuantity > 0) {
+                                updatedCart.push({
+                                    ...cartItem,
+                                    quantity: remainingQuantity
+                                });
+                            }
+                        } else {
+                            // Nếu sản phẩm không có trong đơn hàng, giữ nguyên
+                            updatedCart.push(cartItem);
+                        }
                     });
 
                     console.log('Giỏ hàng sau khi cập nhật:', updatedCart);

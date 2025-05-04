@@ -66,6 +66,22 @@ const xoaSoLuongSPGH = async (idKH, idCTSP, soLuong) => {
     const response = await axiosInstance.delete('/gioHangWeb/deleteGHByIdKH?idKH=' + idKH + '&idCTSP=' + idCTSP + '&soLuong=' + soLuong);
     return response.data;
 }
+// lấy số lượng còn lại của sản phẩm theo ID
+const maxSoLuongSP = async (idCTSP) => {
+    const response = await axiosInstance.get('/gioHangWeb/maxSoLuong?idCTSP=' + idCTSP);
+    return response.data;
+}
+const getTrangThaiCTSP = async (idCTSP) => {
+    try {
+        console.log('[SERVICE] Bắt đầu lấy trạng thái CTSP:', idCTSP);
+        const response = await axiosInstance.get('/banhangweb/trangThaiCTSP?idCTSP=' + idCTSP);
+        console.log('[SERVICE] Kết quả API trạng thái CTSP:', response.data, typeof response.data);
+        return response.data;
+    } catch (error) {
+        console.error('[SERVICE] Lỗi khi lấy trạng thái CTSP:', error);
+        return false;
+    }
+}
 export const banHangOnlineService = {
     createOrder,
     createOrderChiTiet,
@@ -78,6 +94,8 @@ export const banHangOnlineService = {
     getDanhSachDiaChi,
     voucherByGiaTruyen,
     themGioHangByIdKH,
-    xoaSoLuongSPGH
+    xoaSoLuongSPGH,
+    maxSoLuongSP,
+    getTrangThaiCTSP
 }
 

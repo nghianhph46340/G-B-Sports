@@ -26,7 +26,6 @@
                             </a>
                         </li>
                     </ul>
-                    <span v-if="isLoading" style="color:#3a86ff; font-weight:600;">Đang tải sản phẩm...</span>
                 </div>
             </div>
         </nav>
@@ -38,17 +37,15 @@
 import { ChevronDown } from 'lucide-vue-next';
 import { useGbStore } from '../stores/gbStore';
 import { useRouter } from 'vue-router';
-import { ref } from 'vue';
 
 const router = useRouter();
 const store = useGbStore();
-const isLoading = ref(false);
 
 // Truyền 1 hoặc nhiều keyword (dạng mảng hoặc chuỗi)
 async function handleSidebarClick(keywords) {
-  isLoading.value = true;
+  store.setProductLoading(true);
   await store.getSanPhamByTenDM(keywords);
-  isLoading.value = false;
+  store.setProductLoading(false);
   // Truyền keyword qua query, nếu là mảng sẽ thành filter[]=a&filter[]=b
   router.push({ name: 'danhSachSanPham', query: { filter: keywords } });
 }
