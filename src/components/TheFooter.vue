@@ -28,7 +28,7 @@
                     <div class="contact-info">
                         <p class="contact-item">
                             <span class="contact-label">Hotline:</span>
-                            <span class="contact-value">0989 864 737</span>
+                            <span class="contact-value">1900 1009</span>
                         </p>
                         <p class="contact-item">
                             <span class="contact-label">Địa chỉ:</span>
@@ -37,9 +37,21 @@
                         </p>
                         <p class="contact-item">
                             <span class="contact-label">Email:</span>
-                            <span class="contact-value">chinhhtph46334@fpt.edu.vn</span>
+                            <span class="contact-value">IQvodoi@gmail.com</span>
                         </p>
                     </div>
+                </div>
+
+                <div class="footer-section">
+                    <h3 class="footer-heading">Hướng dẫn mua hàng</h3>
+                    <ul class="footer-links">
+                        <li><a href="#" class="footer-link">Trang chủ</a></li>
+                        <li><a href="#" class="footer-link">Giới thiệu</a></li>
+                        <li><a href="#" class="footer-link">Danh mục</a></li>
+                        <li><a href="#" class="footer-link">Tin tức</a></li>
+                        <li><a href="#" class="footer-link">Liên hệ</a></li>
+                        <li><a href="#" class="footer-link">Hướng dẫn sử dụng</a></li>
+                    </ul>
                 </div>
 
                 <div class="footer-section">
@@ -50,20 +62,10 @@
                         <li><a href="#" class="footer-link">Thắc mắc</a></li>
                         <li><a href="#" class="footer-link">Đóng góp</a></li>
                     </ul>
-                    
-                </div>
-                <div class="footer-section">
-                    <h3 class="footer-heading">Cửa hàng</h3>
-                    <ul class="footer-links">
-                        <li @click="router.push('/home')" style="cursor: pointer;"><a class="footer-link">Trang chủ</a></li>
-                        <li @click="router.push('/cuaHang')" style="cursor: pointer;"><a class="footer-link">Giới thiệu</a></li>
-                        <li @click="router.push('/hoTro')" style="cursor: pointer;"><a class="footer-link">Liên hệ</a></li>
-                    </ul>
                     <div class="certification">
                         <img src="../images/logo/boCongThuong.webp" alt="Bộ Công Thương" class="certification-img">
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -74,9 +76,9 @@
 </template>
 
 <script setup>
-import { useRouter, useRoute } from 'vue-router';
-const router = useRouter();
-
+import { Facebook } from 'lucide-vue-next';
+import { Instagram } from 'lucide-vue-next';
+import { Youtube } from 'lucide-vue-next';
 </script>
 
 <style scoped>

@@ -107,7 +107,7 @@ onMounted(() => {
     height: 100%;
     display: flex;
     align-items: center;
-    animation: marquee 15s linear infinite;
+    animation: marquee 10s linear infinite;
 }
 
 .marquee-text {
