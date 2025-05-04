@@ -1425,7 +1425,9 @@ onMounted(async () => {
                 if (paystatus.status === "PAID") {
                     console.log("Paid:", idhdpay);
                     await store.trangThaiDonHang(idhdpay);
+                    router.push('/admin/banhang');
                     toast.success('Thanh toán thành công');
+                    await refreshHoaDon(idhdpay);
                 } else if (paystatus.status === "PENDING") {
                     console.log("Pending:", idhdpay);
                     toast.warning('Thanh toán đang chờ xử lý');
@@ -1444,6 +1446,7 @@ onMounted(async () => {
             localStorage.removeItem('checkPaymentStatus');
         }
     }
+    
 });
 
 async function loadData() {

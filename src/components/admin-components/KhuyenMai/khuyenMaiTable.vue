@@ -44,13 +44,13 @@
         </select>
       </div>
       <div class="col-md-5 d-flex align-items-center flex-nowrap">
-        <label class="me-2" style="white-space: nowrap;">Giá trị giảm tối đa:</label>
-        <div class="d-flex flex-nowrap w-100">
-          <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="1">
-          <span class="align-self-center">-</span>
-          <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="1">
-        </div>
+      <label class="me-2" style="white-space: nowrap;">Giá trị giảm tối đa:</label>
+      <div class="d-flex flex-nowrap w-100">
+        <input type="number" class="form-control me-2" v-model="minPrice" placeholder="Min" min="0" step="1" @keyup.enter="fetchData(0)">
+        <span class="align-self-center">-</span>
+        <input type="number" class="form-control ms-2" v-model="maxPrice" placeholder="Max" min="0" step="1" @keyup.enter="fetchData(0)">
       </div>
+    </div>
       <div class="col-md-6 d-flex align-items-center mt-2">
         <label class="me-2" style="white-space: nowrap;">Ngày:</label>
         <input type="datetime-local" class="form-control w-50" v-model="startDate">
@@ -141,6 +141,8 @@ import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { useRouter } from 'vue-router';
 import { Empty } from 'ant-design-vue';
+import { toast } from 'vue3-toastify';
+import { debounce } from 'lodash';
 
 const router = useRouter();
 const store = useGbStore();
@@ -172,7 +174,7 @@ const fetchData = async (page = 0) => {
       size: pageSize.value,
     });
 
-    if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '') {
+    if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '' && store.khuyenMaiSearchs.length >= 2) {
       await store.searchKhuyenMai(store.khuyenMaiSearchs, page, pageSize.value);
     } else if (minPrice.value || maxPrice.value) {
       await store.timKiemKhuyenMaiByPrice(minPrice.value || '', maxPrice.value || '', page, pageSize.value);
@@ -213,7 +215,6 @@ const offKhuyenMai = async (id) => {
 const dataKhuyenMai = computed(() => {
   let data = [];
   if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '') {
-    // Chỉ lấy dữ liệu từ khuyenMaiSearch khi tìm kiếm, nếu không có thì trả về mảng rỗng
     data = store.khuyenMaiSearch.length > 0 ? [...store.khuyenMaiSearch] : [];
   } else {
     data = [...store.getAllKhuyenMaiArr];
@@ -247,17 +248,15 @@ const formatDate = (dateStr) => {
   });
 };
 
-watch(() => store.khuyenMaiSearchs, async (newValue) => {
+watch(() => store.khuyenMaiSearchs, debounce(async (newValue) => {
   if (!newValue || newValue.trim() === '') {
-    await fetchData(0);
-  } else {
-    await fetchData(0); // Gọi fetchData ngay khi có thay đổi tìm kiếm
+    await store.getAllKhuyenMai(0, pageSize.value);
+  } else if (newValue.length >= 2) {
+    await store.searchKhuyenMai(newValue, 0, pageSize.value);
   }
-});
+}, 500));
 
-watch([minPrice, maxPrice], async () => {
-  await fetchData(0);
-});
+
 
 watch([startDate, endDate], async () => {
   await fetchData(0);

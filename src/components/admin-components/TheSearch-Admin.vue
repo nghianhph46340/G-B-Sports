@@ -70,6 +70,11 @@ watch(searchInput, (newValue) => {
 
 // Hàm xử lý tìm kiếm
 const handleSearch = async () => {
+    // Lấy chuỗi tìm kiếm đã được xử lý
+    const formattedValue = formattedSearchInput.value;
+
+    // Giữ lại các bộ lọc hiện tại
+    const currentFilters = { ...store.searchFilterParams };
     if (!searchInput.value || searchInput.value.trim() === '') {
         // Nếu ô tìm kiếm trống, xóa kết quả tìm kiếm
         clearSearchResults();
@@ -81,8 +86,38 @@ const handleSearch = async () => {
     try {
         // Tìm kiếm dựa trên route hiện tại
         if (route.name === 'admin-quan-ly-san-pham') {
-            await store.searchSP(searchInput.value);
-            console.log('Kết quả tìm kiếm sản phẩm:', store.getFilteredProducts.length);
+            if (!formattedValue) {
+                // Nếu ô tìm kiếm trống, chỉ xóa keyword, giữ nguyên các bộ lọc
+                currentFilters.keyword = '';
+                store.updateSearchFilterParams(currentFilters);
+            } else {
+                // Cập nhật keyword nhưng giữ nguyên các bộ lọc
+                currentFilters.keyword = formattedValue;
+                store.updateSearchFilterParams(currentFilters);
+
+                console.log('Đang tìm kiếm với từ khóa:', formattedValue);
+                console.log('Các bộ lọc hiện tại:', currentFilters);
+            }
+
+            try {
+                // Áp dụng cả tìm kiếm và lọc
+                await store.applySearchAndFilter();
+
+                // Phát sự kiện để thông báo thay đổi
+                window.dispatchEvent(new CustomEvent('search-filter-changed', {
+                    detail: {
+                        results: store.filteredProductsData,
+                        keyword: formattedValue
+                    }
+                }));
+
+                console.log('Kết quả tìm kiếm và lọc:', store.filteredProductsData.length, 'sản phẩm');
+            } catch (error) {
+                console.error('Lỗi khi tìm kiếm:', error);
+            }
+
+            // Cập nhật giá trị hiển thị trong ô tìm kiếm để người dùng thấy chuỗi đã được chuẩn hóa
+            searchInput.value = formattedValue;
         }
         else if (route.name === 'admin-quan-ly-nhan-vien') {
             // Cập nhật giá trị tìm kiếm vào store cho các route khác
@@ -103,7 +138,10 @@ const handleSearch = async () => {
     } catch (error) {
         console.error('Lỗi khi tìm kiếm:', error);
     }
+
+
 };
+
 </script>
 
 <style scoped>
