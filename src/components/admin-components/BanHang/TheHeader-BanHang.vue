@@ -1360,6 +1360,7 @@ const confirmPrint = async (shouldPrint) => {
         try {
             await store.trangThaiDonHang(activeTabData.value.hd.id_hoa_don);
             message.success('Thanh toán tiền mặt thành công!');
+            localStorage.removeItem('khachHangBH')
             window.location.href = 'http://localhost:5173/admin/banhang';
         } catch (error) {
             console.error('Lỗi khi thanh toán:', error);
@@ -1379,6 +1380,7 @@ const confirmPrint = async (shouldPrint) => {
             }
             localStorage.setItem('checkPaymentStatus', 'true');
             localStorage.setItem('idHDPayMent', JSON.stringify(activeTabData.value.hd.id_hoa_don));
+            localStorage.removeItem('khachHangBH')
             console.log(payment_info);
             await thanhToanService.handlePayOSPayment(payment_info);
 

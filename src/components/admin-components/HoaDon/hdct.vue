@@ -860,12 +860,12 @@ const productColumnsHoan = [
 const productPopupColumns = [
     { title: 'STT', key: 'stt', width: '2%' },
     { title: 'Hình ảnh', dataIndex: 'hinh_anh', key: 'hinh_anh', width: '10%' },
-    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham', width: '20%', sorter: (a, b) => a.ten_san_pham.localeCompare(b.ten_san_pham), sortDirections: ['ascend', 'descend'], },
+    { title: 'Tên sản phẩm', dataIndex: 'ten_san_pham', key: 'ten_san_pham', width: '20%' },
     { title: 'Danh mục', dataIndex: 'ten_danh_muc', key: 'ten_danh_muc', width: '15%' },
     { title: 'Màu sắc', dataIndex: 'ten_mau', key: 'ten_mau', width: '8%' },
     { title: 'Size', dataIndex: 'gia_tri', key: 'gia_tri', width: '7%' },
-    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: '8%', sorter: (a, b) => a.so_luong - b.so_luong, sortDirections: ['ascend', 'descend'], },
-    { title: 'Giá bán(VNĐ)', key: 'gia_ban', width: '10%', sorter: (a, b) => a.gia_ban - b.gia_ban, sortDirections: ['ascend', 'descend'], },
+    { title: 'Số lượng', dataIndex: 'so_luong', key: 'so_luong', width: '8%'},
+    { title: 'Giá bán(VNĐ)', key: 'gia_ban', width: '10%' },
     // { title: 'Trạng thái', dataIndex: 'trang_thai', key: 'trang_thai', width: '8%' },
     { title: 'Số lượng mua', key: 'so_luong_mua', width: '20%' },
 ];

@@ -340,6 +340,8 @@ const luuThongTin = async () => {
 
     gbStore.addKHHD(idHoaDon, null, diaChiList, formData.tenKhachHang, formData.soDienThoai, formData.email);
 
+    localStorage.setItem('luuTTKHBH', JSON.stringify(true));
+
     toast.success('Lưu thông tin khách hàng thành công!', {
         autoClose: 2000,
         position: 'top-right'
