@@ -19,10 +19,10 @@
                         <div class="notification-right">
                             <h1 class="notification-title">Siêu Sale Sập Sàn!</h1>
                             <div class="notification-discount">
-                                <span class="discount-value">30%</span>
+                                <span class="discount-value">100%</span>
                                 <span class="discount-text">OFF</span>
                             </div>
-                            <p class="notification-description">Chỉ trong hôm nay - Giảm đến 30% cho tất cả sản phẩm</p>
+                            <p class="notification-description">Chỉ trong hôm nay - Giảm đến 50% cho tất cả sản phẩm</p>
 
                             <div class="notification-timer">
                                 <p>Ưu đãi kết thúc sau:</p>

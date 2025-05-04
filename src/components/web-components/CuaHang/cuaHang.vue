@@ -129,7 +129,7 @@
                 </a-col>
             </a-row>
 
-            <div class="text-center mt-4 mb-4" @click="navigateTo('/danhSachSanPham?filter=')">
+            <div class="text-center mt-4 mb-4">
                 <a-button type="primary" size="large">XEM TẤT CẢ SẢN PHẨM</a-button>
             </div>
         </section>

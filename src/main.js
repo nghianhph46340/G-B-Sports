@@ -21,7 +21,6 @@ import { useGbStore } from '@/stores/gbStore';
 
 
 const app = createApp(App)
-
 const pinia = createPinia();
 app.use(router);
 app.use(Carousel);

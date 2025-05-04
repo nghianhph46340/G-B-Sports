@@ -10,7 +10,7 @@
         <QuanTheThaoBanChay />
         <ThuongHieuSanPham />
     </div>
-    <!-- <ChatWidget :customerId="'1'" :staffId="'1'" senderType="CUSTOMER" :anou="false" /> -->
+    <ChatWidget :customerId="'1'" :staffId="'1'" senderType="CUSTOMER" :anou="false" />
 </template>
 
 <script>
@@ -23,7 +23,7 @@ import QuanTheThaoBanChay from '@/components/ingredient-web-components/QuanTheTh
 import DanhMucSanPham from '@/components/ingredient-web-components/DanhMucSanPham.vue';
 import ThuongHieuSanPham from '@/components/ingredient-web-components/ThuongHieuSanPham.vue';
 import TheNoitification from '@/components/TheNoitification.vue';
-// import ChatWidget from '@/components/ChatWidge/ChatWidget.vue';
+import ChatWidget from '@/components/ChatWidge/ChatWidget.vue';
 
 export default {
     components: {
@@ -36,7 +36,7 @@ export default {
         DanhMucSanPham,
         ThuongHieuSanPham,
         TheNoitification,
-        // ChatWidget
+        ChatWidget
     }
 }
 </script>

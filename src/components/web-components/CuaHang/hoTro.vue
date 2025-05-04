@@ -34,17 +34,25 @@
                             <phone-outlined />
                         </div>
                         <h3>Gọi điện</h3>
-                        <p>0989 864 737</p>
+                        <p>0987 654 321</p>
                         <span class="time">(8:00 - 21:00 mỗi ngày)</span>
                     </div>
 
+                    <div class="support-option">
+                        <div class="option-icon">
+                            <message-outlined />
+                        </div>
+                        <h3>Live Chat</h3>
+                        <p>Chat trực tiếp với nhân viên</p>
+                        <a-button type="primary" @click="openChat">Chat ngay</a-button>
+                    </div>
 
                     <div class="support-option">
                         <div class="option-icon">
                             <mail-outlined />
                         </div>
                         <h3>Email</h3>
-                        <p>chinhhtph46334@fpt.edu.vn</p>
+                        <p>info@gbsports.com</p>
                         <span class="time">(Phản hồi trong 24h)</span>
                     </div>
 
@@ -54,7 +62,7 @@
                         </div>
                         <h3>Cửa hàng</h3>
                         <p>Ghé thăm cửa hàng G&B SPORTS</p>
-                        <a-button @click="router.push('/cuaHang')">Xem địa chỉ</a-button>
+                        <a-button>Xem địa chỉ</a-button>
                     </div>
                 </div>
             </div>
@@ -96,6 +104,8 @@
                                     <ul>
                                         <li>Thanh toán khi nhận hàng (COD)</li>
                                         <li>Chuyển khoản ngân hàng</li>
+                                        <li>Thẻ tín dụng/ghi nợ (Visa, MasterCard)</li>
+                                        <li>Ví điện tử (Momo, ZaloPay, VNPay)</li>
                                     </ul>
                                 </a-collapse-panel>
                             </a-collapse>
@@ -105,8 +115,9 @@
                                 <a-collapse-panel header="Thời gian giao hàng là bao lâu?" key="1">
                                     <p>Thời gian giao hàng phụ thuộc vào địa điểm của bạn:</p>
                                     <ul>
-                                        <li>Nội thành Hà Nội: 1-2 ngày làm việc</li>
-                                        <li>Các tỉnh thành khác: 3-7 ngày làm việc</li>
+                                        <li>Nội thành Hà Nội, TP. HCM: 1-2 ngày làm việc</li>
+                                        <li>Các tỉnh thành khác: 2-5 ngày làm việc</li>
+                                        <li>Vùng sâu vùng xa: 5-7 ngày làm việc</li>
                                     </ul>
                                     <p>Lưu ý: Thời gian giao hàng có thể bị ảnh hưởng bởi điều kiện thời tiết hoặc các
                                         sự kiện bất khả kháng.</p>
@@ -115,11 +126,38 @@
                                     <p>Chi phí vận chuyển được tính dựa trên trọng lượng đơn hàng và khoảng cách giao
                                         hàng:</p>
                                     <ul>
-                                        <li>Miễn phí vận chuyển cho đơn hàng từ 2.000.000đ</li>
-                                        <li>Nội thành Hà Nội: 22.000đ</li>
-                                        <li>Các tỉnh thành khác: 30.000đ - 70.000đ</li>
+                                        <li>Miễn phí vận chuyển cho đơn hàng từ 500.000đ</li>
+                                        <li>Nội thành Hà Nội, TP. HCM: 30.000đ</li>
+                                        <li>Các tỉnh thành khác: 40.000đ - 60.000đ</li>
                                     </ul>
                                     <p>Chi phí vận chuyển sẽ được hiển thị chính xác khi bạn thanh toán.</p>
+                                </a-collapse-panel>
+                            </a-collapse>
+                        </a-tab-pane>
+                        <a-tab-pane key="return" tab="Đổi trả">
+                            <a-collapse accordion>
+                                <a-collapse-panel header="Chính sách đổi trả như thế nào?" key="1">
+                                    <p>G&B SPORTS áp dụng chính sách đổi trả trong vòng 15 ngày kể từ ngày nhận hàng,
+                                        với các điều kiện sau:</p>
+                                    <ul>
+                                        <li>Sản phẩm còn nguyên tem mác, chưa qua sử dụng</li>
+                                        <li>Còn đầy đủ bao bì, hộp đựng như ban đầu</li>
+                                        <li>Có hóa đơn mua hàng hoặc phiếu giao hàng</li>
+                                    </ul>
+                                    <p>Chúng tôi không hỗ trợ đổi trả cho các sản phẩm đã qua sử dụng, đã giặt là hoặc
+                                        có dấu hiệu hư hỏng do người dùng.</p>
+                                </a-collapse-panel>
+                                <a-collapse-panel header="Làm thế nào để đổi hoặc trả sản phẩm?" key="2">
+                                    <p>Để đổi hoặc trả sản phẩm, bạn vui lòng:</p>
+                                    <ol>
+                                        <li>Liên hệ với chúng tôi qua số điện thoại 0987 654 321 hoặc email
+                                            info@gbsports.com</li>
+                                        <li>Cung cấp thông tin đơn hàng và lý do đổi/trả</li>
+                                        <li>Nhận hướng dẫn về cách thức gửi lại sản phẩm</li>
+                                        <li>Đóng gói sản phẩm cẩn thận và gửi lại theo hướng dẫn</li>
+                                    </ol>
+                                    <p>Sau khi nhận được sản phẩm, chúng tôi sẽ kiểm tra và xử lý yêu cầu đổi/trả của
+                                        bạn trong vòng 3-5 ngày làm việc.</p>
                                 </a-collapse-panel>
                             </a-collapse>
                         </a-tab-pane>
@@ -148,7 +186,7 @@
                             <phone-outlined />
                             <div>
                                 <h4>Đường dây nóng</h4>
-                                <p>0989 864 737</p>
+                                <p>0987 654 321</p>
                             </div>
                         </div>
 
@@ -156,7 +194,7 @@
                             <mail-outlined />
                             <div>
                                 <h4>Email hỗ trợ</h4>
-                                <p>chinhhtph46334@fpt.edu.vn</p>
+                                <p>info@gbsports.com</p>
                             </div>
                         </div>
 
@@ -169,11 +207,9 @@
                         </div>
 
                         <div class="social-links">
-                            <a href="https://www.facebook.com/profile.php?id=100014810557839" class="social-link"><facebook-outlined /></a>
-                            <a href="https://zalo.me/0989864737" class="social-link" title="Zalo">
-                             <img src="../../../images/icons8-zalo-50 (1)_preview_rev_1.png" alt="">
-                            </a>
-                            <a href="https://www.instagram.com/hawin_syney/profilecard/?igsh=aG13dDhhZTJtNm41" class="social-link"><instagram-outlined /></a>
+                            <a href="#" class="social-link"><facebook-outlined /></a>
+                            <a href="#" class="social-link"><instagram-outlined /></a>
+                            <a href="#" class="social-link"><youtube-outlined /></a>
                         </div>
                     </div>
 
@@ -234,21 +270,21 @@
                         </div>
                         <h3>Bảo hành sản phẩm</h3>
                         <div class="counter-wrapper">
-                            <span class="counter">365 </span>
+                            <span class="counter" data-target="365">0</span>
                             <span>ngày</span>
                         </div>
                         <p>Tất cả sản phẩm chính hãng tại G&B SPORTS đều được bảo hành theo chính sách của nhà sản xuất,
                             từ 30 đến 365 ngày tùy loại sản phẩm.</p>
                     </div>
 
-                    <!-- <div class="policy-card">
+                    <div class="policy-card">
                         <div class="policy-icon">
                             <swap-outlined />
                         </div>
                         <h3>Đổi size miễn phí</h3>
                         <p>Khách hàng được miễn phí đổi size trong vòng 15 ngày nếu sản phẩm chưa qua sử dụng và còn
                             nguyên tem mác.</p>
-                    </div> -->
+                    </div>
 
                     <div class="policy-card">
                         <div class="policy-icon">
@@ -256,7 +292,7 @@
                         </div>
                         <h3>Giao hàng tận nơi</h3>
                         <p>Giao hàng nhanh chóng trên toàn quốc với chi phí hợp lý. Miễn phí vận chuyển cho đơn hàng từ
-                            2.000.000đ.</p>
+                            500.000đ.</p>
                     </div>
 
                     <div class="policy-card">
@@ -264,7 +300,8 @@
                             <gift-outlined />
                         </div>
                         <h3>Ưu đãi thành viên</h3>
-                        <p>Trở thành thành viên để nhận nhiều ưu đãi, theo dõi đơn hàng, yêu thích sản phẩm.</p>
+                        <p>Trở thành thành viên để nhận nhiều ưu đãi đặc biệt, quà tặng và tích lũy điểm thưởng cho mỗi
+                            lần mua hàng.</p>
                     </div>
                 </div>
             </div>
@@ -302,19 +339,20 @@
 <script setup>
 import {
     PhoneOutlined,
+    MessageOutlined,
     MailOutlined,
     ShopOutlined,
     EnvironmentOutlined,
     ClockCircleOutlined,
     FacebookOutlined,
     InstagramOutlined,
+    YoutubeOutlined,
     SafetyOutlined,
+    SwapOutlined,
     CarOutlined,
     GiftOutlined
 } from '@ant-design/icons-vue';
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-const router = useRouter();
 
 // Refs for sections
 const heroRef = ref(null);
@@ -457,11 +495,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.social-link img {
-  width: 28px;
-  height: 28px;
-  filter: brightness(10) contrast(100) drop-shadow(0 0 2px #fff);
-}
 /* Base styles */
 .support-page {
     font-family: 'Roboto', sans-serif;

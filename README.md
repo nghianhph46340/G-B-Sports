@@ -78,3 +78,6 @@ npm list jspdf qrcode | cat
 npm list | grep -E "jspdf|qrcode"
 
 npm install jspdf-autotable
+#trình soạn thảo văn bản
+npm install @vueup/vue-quill@latest
+npm list @vueup/vue-quill
