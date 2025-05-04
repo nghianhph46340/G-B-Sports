@@ -159,8 +159,7 @@
                     <div class="mb-3">
                         <div class="row align-items-center">
                             <label for="idKhachHang" class="form-label col-6">
-                                Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || activeTabData.hd.ho_ten || 'Khách lẻ'
-                                }}
+                                Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || activeTabData.hd.ho_ten || 'Khách lẻ'}}
                             </label>
                             <div class="col 4">
                                 <a-button type="primary" @click="showModal">Chọn khách hàng</a-button>
@@ -324,7 +323,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, watch, onUnmounted } from 'vue';
 import {
     SearchOutlined,
     FileSearchOutlined,
@@ -1414,6 +1413,11 @@ onMounted(async () => {
     stopQrScanner();
     setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
 
+    // Bắt đầu kiểm tra liên tục
+    startChecking();
+
+    stopQrScanner();
+    setupAutoReloadAtMidnight();
 
     const checkPaymentStatus = localStorage.getItem('checkPaymentStatus');
     if (checkPaymentStatus === 'true') {
@@ -1450,6 +1454,21 @@ onMounted(async () => {
         }
     }
 
+});
+
+// Thiết lập setInterval để kiểm tra luuTTKHBH liên tục
+let intervalId = null;
+const startChecking = () => {
+    intervalId = setInterval(async () => {
+        await checkAndApplyLocalData();
+    }, 1000); // Kiểm tra mỗi 1000ms
+};
+
+// Dọn dẹp interval khi component bị hủy
+onUnmounted(() => {
+    if (intervalId) {
+        clearInterval(intervalId);
+    }
 });
 
 async function loadData() {
@@ -1533,23 +1552,6 @@ watch(() => searchQuery, (newVal) => {
     }
 })
 
-let intervalId = null;
-
-const startChecking = () => {
-    intervalId = setInterval(() => {
-        const checkluuTTKHBH = localStorage.getItem('luuTTKHBH');
-        if (checkluuTTKHBH) {
-            console.log("Dữ liệu từ localStorage:", JSON.parse(checkluuTTKHBH));
-            checkAndApplyLocalData(); // Gọi hàm xử lý
-            refreshHoaDon(activeTabData.value.hd.id_hoa_don);
-            clearInterval(intervalId); // Dừng kiểm tra sau khi thỏa mãn
-        }
-    }, 1000); // Kiểm tra mỗi giây
-};
-
-// Gọi hàm khi cần
-startChecking();
-
 watch(searchQuery, (newQuery) => {
     handleSearchInput(newQuery);
     dropdownVisible.value = true;
@@ -1605,7 +1607,7 @@ function tachDiaChi(addressString) {
 const handlePhuongThucChange = async () => {
     const idHD = activeTabData.value.hd.id_hoa_don;
     const diaChiNhan = activeTabData.value.hd.dia_chi; // chuỗi full địa chỉ
-    const khachHangData = localStorage.getItem('khachHangBH');
+    // const khachHangData = localStorage.getItem('khachHangBH');
     let phiShip = 0;
     const weight = 500; // gram — bạn có thể lấy từ thực tế hàng hóa
     const tongTienHoaDon = activeTabData.value.hd.tong_tien_sau_giam;
