@@ -77,12 +77,12 @@
                 </a-button>
             </a-tooltip>
             <a-tooltip title="Trả hàng">
-                <a-button type="primary" shape="circle" class="action-btn">
+                <a-button type="primary" shape="circle" class="action-btn" @click="changeRoute('/admin/traHang')">
                     <template #icon><rollback-outlined /></template>
                 </a-button>
             </a-tooltip>
             <a-tooltip v-if="store.id_roles !== 3" title="Báo cáo thống kê">
-                <a-button type="primary" shape="circle" class="action-btn">
+                <a-button type="primary" shape="circle" class="action-btn" @click="changeRoute('/admin/')">
                     <template #icon><bar-chart-outlined /></template>
                 </a-button>
             </a-tooltip>
@@ -157,68 +157,65 @@
                         <label class="form-label">Tên nhân viên: {{ activeTabData.hd.ten_nhan_vien }}</label>
                     </div>
                     <div class="mb-3">
-                        <label for="idKhachHang" class="form-label">
-                            Tên khách hàng: {{ activeTabData.hd.ten_khach_hang || activeTabData.hd.ho_ten || 'Khách lẻ'
-                            }}
-                        </label>
+                        <div class="row align-items-center">
+                            <label for="idKhachHang" class="form-label col-6">
+                                Tên khách hàng: 
+                                {{activeTabData.hd.ten_khach_hang||activeTabData.hd.ho_ten||'Khách lẻ'}}
+                            </label>
+                            <div class="col 4">
+                                <a-button type="primary" @click="showModal">Chọn khách hàng</a-button>
+                            </div>
+                        </div>
                         <div class="row mb-3">
-                            <div class="col-2">
-                                <a-switch v-model:checked="activeTabData.hd.isKhachLe" />
-                            </div>
 
-                            <div class="col-8">
 
-                                <div v-if="!activeTabData.hd.isKhachLe">
-                                    <a-button type="primary" @click="showModal">Chọn khách hàng</a-button>
-
-                                    <a-modal v-model:open="open" title="Danh sách khách hàng" @ok="handleOk"
-                                        width="1000px">
-                                        <template #footer>
-                                            <a-button key="back" @click="handleCancel">Quay lại</a-button>
-                                            <a-button key="submit" type="primary" :loading="loading"
-                                                @click="handleOk">Xác
-                                                nhận</a-button>
-                                        </template>
-                                        <div v-if="danhSachKhachHang.length === 0" class="text-center py-4">
-                                            <a-empty :image="simpleImage" />
-                                        </div>
-                                        <div v-else>
-                                            <div class="table-responsive mt-4" ref="scrollContainer"
-                                                style="max-height: 400px; overflow-y: auto" @scroll="handleScroll">
-                                                <table class="table table-hover">
-                                                    <thead>
-                                                        <tr>
-                                                            <th scope="col">STT</th>
-                                                            <th scope="col">Tên khách hàng</th>
-                                                            <th scope="col">Giới tính</th>
-                                                            <th scope="col">Số điện thoại</th>
-                                                            <th scope="col">Địa chỉ</th>
-                                                            <th scope="col">Thao tác</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr v-for="(khachHang, index) in danhSachKhachHang"
-                                                            :key="khachHang.idKhachHang">
-                                                            <td>{{ index + 1 }}</td>
-
-                                                            <td>{{ khachHang.tenKhachHang }}</td>
-                                                            <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
-                                                            <td>{{ khachHang.soDienThoai }}</td>
-                                                            <td>{{ khachHang.diaChi }}</td>
-                                                            <td>
-                                                                <a-button size="small" type="link"
-                                                                    @click="chonKhachHang(khachHang)">Chọn</a-button>
-                                                            </td>
-                                                            <td></td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                        </div>
-                                    </a-modal>
+                            <a-modal v-model:open="open" title="Danh sách khách hàng" @ok="handleOk" width="1000px">
+                                <template #footer>
+                                    <a-button key="back" @click="handleCancel">Quay lại</a-button>
+                                    <a-button key="submit" type="primary" :loading="loading" @click="handleOk">Xác
+                                        nhận</a-button>
+                                </template>
+                                <!-- Thanh tìm kiếm -->
+                                <div class="mb-4">
+                                    <a-input v-model:value="searchQueryKH" style="width: 350px; height: 40px;"
+                                        placeholder="     Tìm kiếm theo tên hoặc số điện thoại"
+                                        @input="handleSearch" />
                                 </div>
-                            </div>
+                                <div v-if="filteredKhachHang.length === 0" class="text-center py-4">
+                                    <a-empty :image="simpleImage" />
+                                </div>
+                                <div v-else>
+                                    <div class="table-responsive mt-4" ref="scrollContainer"
+                                        style="max-height: 400px; overflow-y: auto" @scroll="handleScroll">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">STT</th>
+                                                    <th scope="col">Tên khách hàng</th>
+                                                    <th scope="col">Giới tính</th>
+                                                    <th scope="col">Số điện thoại</th>
+                                                    <th scope="col">Địa chỉ</th>
+                                                    <th scope="col">Thao tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr v-for="(khachHang, index) in filteredKhachHang"
+                                                    :key="khachHang.idKhachHang">
+                                                    <td>{{ index + 1 }}</td>
+                                                    <td>{{ khachHang.tenKhachHang }}</td>
+                                                    <td>{{ khachHang.gioiTinh ? "Nam" : "Nữ" }}</td>
+                                                    <td>{{ khachHang.soDienThoai }}</td>
+                                                    <td>{{ khachHang.diaChi }}</td>
+                                                    <td>
+                                                        <a-button size="small" type="link"
+                                                            @click="chonKhachHang(khachHang)">Chọn</a-button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </a-modal>
                         </div>
 
 
@@ -242,7 +239,11 @@
                             <!-- <label class="form-label">Địa chỉ nhận hàng</label>
                             <input type="text" class="form-control mb-2" placeholder="Nhập địa chỉ"
                                 v-model="activeTabData.hd.dia_chi"> -->
-                            <label class="form-label">Phí vận chuyển (VNĐ)</label>
+                            <!-- <label class="form-label">Phí vận chuyển (VNĐ)</label> -->
+                            <div class="form-label-with-logo">
+                                <label class="form-label">Phí vận chuyển (VNĐ)</label>
+                                <img src="../../../images/logo/logo_GHTK.png" alt="GHTK Logo" class="ghtk-logo" />
+                            </div>
                             <a-input-number v-model:value="activeTabData.hd.phi_van_chuyen" :min="0"
                                 :formatter="value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
                                 :parser="value => value.replace(/\$\s?|(,*)/g, '')" placeholder="Nhập phí vận chuyển"
@@ -296,7 +297,7 @@
 
                     <!-- Nút thanh toán với điều kiện vô hiệu hóa -->
                     <button type="submit" class="btn btn-primary w-100" :disabled="isPaymentDisabled">
-                        Tạo đơn hàng & Thanh toán
+                        Thanh toán
                     </button>
                     <a-modal v-model:open="showPrintConfirm" title="Xác nhận in hóa đơn" @ok="confirmPrint(true)"
                         @cancel="confirmPrint(false)">
@@ -317,7 +318,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, watch, onUnmounted } from 'vue';
 import {
     SearchOutlined,
     FileSearchOutlined,
@@ -501,7 +502,7 @@ const chonKhachHang = async (khachHang) => {
         try {
             localStorage.setItem('khachHangBH', JSON.stringify(khachHang));
             localStorage.setItem('chonKH', true);
-            
+
 
 
             console.log('Đã lưu khách hàng vào localStorage:', khachHang);
@@ -518,9 +519,12 @@ const chonKhachHang = async (khachHang) => {
     }
 };
 
+
+
 // --- State cho tìm kiếm và dropdown ---
 const dropdownVisible = ref(false);
 const searchQuery = ref('');
+const searchQueryKH = ref('');
 const allProducts = ref([]); // Danh sách TẤT CẢ sản phẩm chi tiết lấy từ API/store
 
 
@@ -591,6 +595,32 @@ const changeRoute = (path) => {
     router.push(path);
 
 };
+
+
+
+// Computed để lọc danh sách khách hàng
+const filteredKhachHang = computed(() => {
+    if (!danhSachKhachHang.value || danhSachKhachHang.value.length === 0) {
+        return [];
+    }
+    if (!searchQueryKH.value) {
+        return danhSachKhachHang.value;
+    }
+
+    const normalizedQuery = normalizeString(searchQueryKH.value);
+    return danhSachKhachHang.value.filter(khachHang => {
+        const normalizedName = normalizeString(khachHang.tenKhachHang);
+        const normalizedPhone = normalizeString(khachHang.soDienThoai);
+        return normalizedName.includes(normalizedQuery) || normalizedPhone.includes(normalizedQuery);
+    });
+});
+
+// Xử lý sự kiện tìm kiếm
+const handleSearch = () => {
+    // Không cần thêm logic vì filteredKhachHang đã tự động cập nhật qua computed
+    console.log('Đang tìm kiếm:', searchQuery.value);
+};
+
 
 // --- Computed Properties ---
 // Lọc sản phẩm cho dropdown tìm kiếm
@@ -771,6 +801,10 @@ const calculatedChange = computed(() => {
 });
 
 const isPaymentDisabled = computed(() => {
+    if (currentInvoiceItems.value.length === 0) {
+        return true; // Không có sản phẩm nào trong hóa đơn
+
+    }
     if (activeTabData.value?.hd?.hinh_thuc_thanh_toan === 'Tiền mặt') {
         const total = activeTabData.value.hd.tong_tien_sau_giam || 0;
         const cash = tienKhachDua.value || 0;
@@ -1026,105 +1060,6 @@ const formatDate = (date) => {
     return d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-// Phương thức in hóa đơn
-// const printInvoice = () => {
-//     const doc = new jsPDF();
-//     // Thiết lập font chữ (mặc định của jsPDF là Helvetica)
-//     doc.setFont("Roboto");
-
-//     // Thêm logo
-//     const logoWidth = 30; // Chiều rộng logo (mm)
-//     const logoHeight = 20; // Chiều cao logo (mm)
-//     const pageWidth = doc.internal.pageSize.getWidth(); // Chiều rộng trang A4 (210mm)
-//     const logoX = (pageWidth - logoWidth) / 2; // Căn giữa logo theo chiều ngang
-//     doc.addImage(logo, 'PNG', logoX, 10, logoWidth, logoHeight); // Thêm logo vào PDF
-//     // Tiêu đề "HÓA ĐƠN BÁN HÀNG"
-//     doc.setFontSize(18);
-//     doc.setFont("Roboto", "bold");
-//     doc.text("HÓA ĐƠN BÁN HÀNG", 105, 50, { align: "center" });
-//     // Thông tin cửa hàng
-//     doc.setFontSize(16);
-//     doc.setFont("Roboto", "bold");
-//     doc.text("G&B SPORTS", 105, 60, { align: "center" });
-//     doc.setFontSize(10);
-//     doc.setFont("Roboto", "normal");
-//     doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 68, { align: "center" });
-//     doc.text("Điện thoại: 0123456789", 105, 74, { align: "center" });
-//     // Vẽ đường kẻ ngang
-//     doc.setLineWidth(0.5);
-//     doc.line(20, 78, 190, 78);
-//     // Thông tin hóa đơn
-//     doc.setFontSize(12);
-//     doc.setFont("Roboto", "normal");
-//     doc.text(`Mã hóa đơn: ${activeTabData.value.hd.ma_hoa_don || 'N/A'}`, 20, 86);
-//     doc.text(`Tên nhân viên: ${activeTabData.value.hd.ten_nhan_vien || 'N/A'}`, 20, 94);
-//     doc.text(`Ngày tạo: ${formatDate(activeTabData.value.hd.ngay_tao)}`, 20, 102);
-//     doc.text(`Tên khách hàng: ${activeTabData.value.hd.ho_ten || 'Khách lẻ'}`, 20, 110);
-//     // Danh sách sản phẩm
-//     let y = 120;
-//     doc.setFontSize(12);
-//     doc.setFont("Roboto", "bold");
-//     doc.text("Sản phẩm", 20, y);
-//     // Tiêu đề bảng
-//     doc.setFontSize(10);
-//     doc.setFont("Roboto", "bold");
-//     doc.text("Số lượng", 100, y, { align: "center" });
-//     doc.text("Đơn giá", 130, y, { align: "center" });
-//     doc.text("Tổng tiền", 170, y, { align: "center" });
-//     // Vẽ đường kẻ ngang dưới tiêu đề bảng
-//     y += 2;
-//     doc.setLineWidth(0.2);
-//     doc.line(20, y, 190, y);
-//     // Danh sách sản phẩm
-//     y += 6;
-//     doc.setFontSize(10);
-//     doc.setFont("Roboto", "normal");
-//     currentInvoiceItems.value.forEach((item, index) => {
-//         // Tên sản phẩm
-//         const productName = `${index + 1}. ${item.ten_san_pham} (${item.mau_sac} - ${item.kich_thuoc})`;
-//         const productLines = doc.splitTextToSize(productName, 80); // Chia nhỏ nếu tên quá dài
-//         doc.text(productLines, 20, y);
-
-//         // Số lượng
-//         doc.text(`${item.so_luong}`, 100, y, { align: "center" });
-
-//         // Đơn giá
-//         doc.text(`${formatCurrency(item.gia_ban)}`, 130, y, { align: "center" });
-
-//         // Thành tiền
-//         const thanhTien = item.gia_ban * item.so_luong;
-//         doc.text(`${formatCurrency(thanhTien)}`, 170, y, { align: "center" });
-
-//         // Tăng y dựa trên số dòng của tên sản phẩm
-//         y += productLines.length * 6 + 4;
-//     });
-//     // Vẽ đường kẻ ngang sau danh sách sản phẩm
-//     doc.setLineWidth(0.2);
-//     doc.line(20, y, 190, y);
-//     // Tổng tiền
-//     y += 10;
-//     doc.setFontSize(12);
-//     doc.setFont("Roboto", "normal");
-//     doc.text(`Tổng tiền hàng: ${formatCurrency(activeTabData.value.hd.tong_tien_truoc_giam)}`, 20, y);
-//     y += 6;
-//     const giamGia = (activeTabData.value.hd.tong_tien_truoc_giam || 0) +
-//         (activeTabData.value.hd.phi_van_chuyen || 0) -
-//         (activeTabData.value.hd.tong_tien_sau_giam || 0);
-//     doc.text(`Giảm giá: ${formatCurrency(giamGia)}`, 20, y);
-//     y += 6;
-//     doc.text(`Phí vận chuyển: ${formatCurrency(activeTabData.value.hd.phi_van_chuyen || 0)}`, 20, y);
-//     y += 6;
-//     doc.setFont("Roboto", "bold");
-//     doc.text(`Thành tiền: ${formatCurrency(activeTabData.value.hd.tong_tien_sau_giam)}`, 20, y);
-//     // Chân trang
-//     y += 10;
-//     doc.setFontSize(10);
-//     doc.setFont("Roboto", "normal");
-//     doc.text("Cảm ơn Quý Khách, hẹn gặp lại!", 105, y, { align: "center" });
-//     // Lưu file PDF
-//     doc.save(`HoaDon_${activeTabData.value.hd.ma_hoa_don}.pdf`);
-// };
-
 const printInvoice = async () => {
     const doc = new jsPDF();
     doc.setFont("Roboto");
@@ -1347,6 +1282,7 @@ const confirmPrint = async (shouldPrint) => {
         try {
             await store.trangThaiDonHang(activeTabData.value.hd.id_hoa_don);
             message.success('Thanh toán tiền mặt thành công!');
+            localStorage.removeItem('khachHangBH')
             window.location.href = 'http://localhost:5173/admin/banhang';
         } catch (error) {
             console.error('Lỗi khi thanh toán:', error);
@@ -1366,6 +1302,7 @@ const confirmPrint = async (shouldPrint) => {
             }
             localStorage.setItem('checkPaymentStatus', 'true');
             localStorage.setItem('idHDPayMent', JSON.stringify(activeTabData.value.hd.id_hoa_don));
+            localStorage.removeItem('khachHangBH')
             console.log(payment_info);
             await thanhToanService.handlePayOSPayment(payment_info);
 
@@ -1395,9 +1332,17 @@ const da = ref([]);
 
 // --- Lifecycle Hooks ---
 onMounted(async () => {
+    // Kiểm tra luuTTKHBH ngay khi component được gắn
+    await checkAndApplyLocalData();
     await loadData(); // Gọi lần đầu
     stopQrScanner();
     setupAutoReloadAtMidnight(); // Cài lịch chạy hằng ngày
+
+    // Bắt đầu kiểm tra liên tục
+    startChecking();
+
+    stopQrScanner();
+    setupAutoReloadAtMidnight();
 
     const checkPaymentStatus = localStorage.getItem('checkPaymentStatus');
     if (checkPaymentStatus === 'true') {
@@ -1412,7 +1357,9 @@ onMounted(async () => {
                 if (paystatus.status === "PAID") {
                     console.log("Paid:", idhdpay);
                     await store.trangThaiDonHang(idhdpay);
+                    router.push('/admin/banhang');
                     toast.success('Thanh toán thành công');
+                    await refreshHoaDon(idhdpay);
                 } else if (paystatus.status === "PENDING") {
                     console.log("Pending:", idhdpay);
                     toast.warning('Thanh toán đang chờ xử lý');
@@ -1430,6 +1377,22 @@ onMounted(async () => {
             // Xóa cờ sau khi kiểm tra xong
             localStorage.removeItem('checkPaymentStatus');
         }
+    }
+
+});
+
+// Thiết lập setInterval để kiểm tra luuTTKHBH liên tục
+let intervalId = null;
+const startChecking = () => {
+    intervalId = setInterval(async () => {
+        await checkAndApplyLocalData();
+    }, 1000); // Kiểm tra mỗi 1000ms
+};
+
+// Dọn dẹp interval khi component bị hủy
+onUnmounted(() => {
+    if (intervalId) {
+        clearInterval(intervalId);
     }
 });
 
@@ -1519,6 +1482,36 @@ watch(searchQuery, (newQuery) => {
     dropdownVisible.value = true;
 });
 
+const isLoading = ref(false);
+
+// Hàm kiểm tra luuTTKHBH với timeout
+const checkAndApplyLocalData = async () => {
+    const checkluuTTKHBH = JSON.parse(localStorage.getItem('luuTTKHBH'));
+    if (checkluuTTKHBH === true) {
+        console.log("Phát hiện luuTTKHBH = true, chờ 500ms để làm mới dữ liệu...");
+        isLoading.value = true;
+        // Chờ 500ms để đảm bảo API addKHHD hoàn tất
+        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            const idHoaDon = activeTabData.value.hd.id_hoa_don;
+            console.log("ID hóa đơn để làm mới:", idHoaDon);
+            await refreshHoaDon(idHoaDon);
+            await handlePhuongThucChange();
+            message.success("Đã làm mới thông tin hóa đơn!");
+        } catch (error) {
+            console.error("Lỗi khi làm mới dữ liệu:", error);
+            message.error("Không thể làm mới dữ liệu hóa đơn!");
+        } finally {
+            localStorage.removeItem('luuTTKHBH');
+            isLoading.value = false;
+        }
+    } else {
+        console.log("Không tìm thấy luuTTKHBH trong localStorage.");
+    }
+};
+
+
+
 
 function tachDiaChi(addressString) {
     if (!addressString) return null;
@@ -1539,7 +1532,7 @@ function tachDiaChi(addressString) {
 const handlePhuongThucChange = async () => {
     const idHD = activeTabData.value.hd.id_hoa_don;
     const diaChiNhan = activeTabData.value.hd.dia_chi; // chuỗi full địa chỉ
-
+    // const khachHangData = localStorage.getItem('khachHangBH');
     let phiShip = 0;
     const weight = 500; // gram — bạn có thể lấy từ thực tế hàng hóa
     const tongTienHoaDon = activeTabData.value.hd.tong_tien_sau_giam;
@@ -1566,98 +1559,89 @@ const handlePhuongThucChange = async () => {
                 tongTienHoaDon
             );
             console.log("Kết quả tính phí ship:", result);
-            phiShip = result.fee || 0;
+            phiShip = result.fee;
+            activeTabData.value.hd.phi_van_chuyen = phiShip;
             console.log("Phí ship:", phiShip);
         } else {
+            activeTabData.value.hd.phi_van_chuyen = 0;
             console.warn('⚠️ Không có địa chỉ giao hàng hợp lệ, phí = 0');
         }
-
+        // refreshHoaDon(idHD);
         await store.setTrangThaiNhanHang(idHD, 'Giao hàng', phiShip);
     }
 
-    refreshHoaDon(idHD);
+    // refreshHoaDon(idHD);
 };
 
 
 </script>
 
 <style scoped>
+/* Global Reset for Consistency */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Header Container */
 .header-container {
     height: 70px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border-bottom: 1px solid #eee;
+    padding: 0 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid #f0f0f0;
+    width: 100%;
 }
 
+/* Search Section */
 .search-section {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
+/* Dropdown Content */
 .dropdown-content-custom {
     width: 600px;
     max-height: 400px;
     background-color: #ffffff;
-    border: 1px solid #ddd;
+    border: 1px solid #e5e5e5;
     border-radius: 8px;
     padding: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
     overflow-y: auto;
     z-index: 1000;
 }
 
+/* Product Option */
 .product-option {
     display: flex;
     align-items: center;
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease;
 }
 
 .product-option:hover {
-    background-color: #f0f0f0;
+    background-color: #fff1f2;
 }
 
+/* Product Image */
 .product-image {
     width: 50px;
     height: 50px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 6px;
     margin-right: 12px;
+    border: 1px solid #f0f0f0;
 }
 
-.product-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.product-name {
-    font-weight: 600;
-}
-
-.product-details span {
-    display: block;
-    font-size: 12px;
-    color: #555;
-}
-
-.empty-result {
-    padding: 10px;
-    color: #999;
-    text-align: center;
-}
-
-
-.search-section {
-    position: relative;
-}
-
+/* Product Info Split */
 .product-info-split {
     display: flex;
     justify-content: space-between;
@@ -1666,103 +1650,56 @@ const handlePhuongThucChange = async () => {
     gap: 12px;
 }
 
+/* Info Left and Right */
 .info-left {
     flex: 1;
     display: flex;
     flex-direction: column;
 }
 
-.info-center {
-    width: 70px;
-    text-align: center;
-    font-size: 13px;
-    color: #333;
-    font-weight: 500;
-}
-
 .info-right {
     min-width: 90px;
     text-align: right;
-    font-weight: bold;
-    color: #d4380d;
+    font-weight: 600;
+    color: #f33b47;
 }
 
+/* Product Price and Name */
 .product-price {
     font-size: 14px;
 }
 
 .product-name {
     font-weight: 600;
+    color: #1f1f1f;
     margin-bottom: 4px;
 }
 
+/* Product Details */
 .product-details span {
     font-size: 12px;
-    color: #555;
+    color: #666;
     display: block;
 }
 
-
-
-
-/* Có thể cần thêm !important để ghi đè mạnh hơn style mặc định */
-
-.dropdown-content {
-    padding: 10px;
-    background: white;
-    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
-        0 6px 16px 0 rgba(0, 0, 0, 0.08),
-        0 9px 28px 8px rgba(0, 0, 0, 0.05);
+/* Empty Result */
+.empty-result {
+    padding: 16px;
+    color: #999;
+    text-align: center;
+    font-style: italic;
 }
 
-.product-image {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-/* Điều chỉnh style cho bảng trong dropdown */
-:deep(.product-dropdown .ant-table) {
-    margin: -8px -8px -8px -8px;
-}
-
-:deep(.product-dropdown .ant-table-container) {
-    border: none !important;
-}
-
-:deep(.product-dropdown .ant-table-thead > tr > th) {
-    background: #fafafa;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-}
-
-.search-section {
-    margin-right: 20px;
-}
-
+/* Invoice Tabs */
 .invoice-tabs {
     flex: 1;
     max-width: 600px;
 }
 
-.tabs-container {
-    display: flex;
-    align-items: center;
-}
-
-.tabs-container .ant-tabs {
-    flex: 1;
-}
-
-.add-invoice-btn {
-    margin-left: 8px;
-}
-
+/* Action Buttons */
 .action-buttons {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
 }
 
@@ -1770,69 +1707,72 @@ const handlePhuongThucChange = async () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #1890ff;
-    border-color: #1890ff;
+    background-color: #f33b47;
+    border-color: #f33b47;
     color: white;
+    transition: all 0.3s ease;
 }
 
 .action-btn:hover {
-    background-color: #40a9ff;
-    border-color: #40a9ff;
+    background-color: #e02b37;
+    border-color: #e02b37;
     color: white;
 }
 
+/* Custom Tab */
 .custom-tab {
     position: relative;
     padding-right: 4px;
     display: flex;
     align-items: center;
-    color: black;
+    color: #1f1f1f;
 }
 
+/* Close Icon */
 .close-icon {
     font-size: 12px;
     margin-left: 5px;
-    margin-right: 0px;
     opacity: 0;
-    transition: opacity 0.3s;
-    color: rgba(255, 255, 255, 0.65);
+    transition: opacity 0.3s ease;
+    color: #999;
 }
 
 .close-icon:hover {
-    color: white;
+    color: #f33b47;
 }
 
 .custom-tab:hover .close-icon {
     opacity: 1;
 }
 
-/* Overriding Ant Design styles for dark theme */
+/* Ant Design Overrides */
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab) {
-    background-color: rgb(235, 235, 235);
+    background-color: #f9f9f9;
     border: none;
-    color: black !important;
+    color: #1f1f1f !important;
+    border-radius: 6px;
+    margin-right: 4px;
 }
 
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab-active) {
-    background-color: #1890ff;
+    background-color: #f33b47;
     color: white !important;
 }
 
 :deep(.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn),
 :deep(.ant-tabs-card > div > .ant-tabs-nav .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn) {
     color: white !important;
-    text-shadow: none !important;
 }
-
 
 :deep(.ant-tabs-nav) {
     margin-bottom: 0;
 }
 
 :deep(.ant-select-selector) {
-    background-color: rgba(255, 255, 255, 0.9) !important;
+    background-color: #ffffff !important;
+    border-color: #d9d9d9 !important;
 }
 
 :deep(.ant-tabs-content) {
@@ -1841,21 +1781,367 @@ const handlePhuongThucChange = async () => {
 
 :deep(.ant-qrcode) {
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s ease;
+    border: 2px solid #f33b47;
+    border-radius: 6px;
 }
 
 :deep(.ant-qrcode:hover) {
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
-/* Style cho modal quét QR */
+:deep(.ant-input-search .ant-input) {
+    border-radius: 6px 0 0 6px;
+    border-color: #d9d9d9;
+}
+
+:deep(.ant-input-search .ant-btn) {
+    background-color: #f33b47;
+    border-color: #f33b47;
+    color: white;
+    border-radius: 0 6px 6px 0;
+}
+
+:deep(.ant-input-search .ant-btn:hover) {
+    background-color: #e02b37;
+    border-color: #e02b37;
+}
+
+:deep(.ant-btn-primary) {
+    background-color: #f33b47;
+    border-color: #f33b47;
+}
+
+:deep(.ant-btn-primary:hover) {
+    background-color: #e02b37;
+    border-color: #e02b37;
+}
+
+:deep(.ant-modal-header) {
+    background-color: #f33b47;
+    color: white;
+}
+
+:deep(.ant-modal-title) {
+    color: white;
+}
+
+:deep(.ant-table-thead > tr > th) {
+    background-color: #fff1f2;
+    color: #1f1f1f;
+    font-weight: 600;
+}
+
+:deep(.ant-table-row:hover > td) {
+    background-color: #fff8f8 !important;
+}
+
+/* Switch (Toggle) Styling */
+:deep(.ant-switch) {
+    background-color: #d9d9d9;
+}
+
+:deep(.ant-switch-checked) {
+    background-color: #f33b47;
+}
+
+:deep(.ant-switch-checked:hover:not(.ant-switch-disabled)) {
+    background-color: #e02b37;
+}
+
+:deep(.ant-switch-handle::before) {
+    background-color: #ffffff;
+}
+
+/* Payment Button Styling */
+:deep(.btn-primary) {
+    background-color: #f33b47 !important;
+    border-color: #f33b47 !important;
+    color: white !important;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+:deep(.btn-primary:hover:not(:disabled)) {
+    background-color: #e02b37 !important;
+    border-color: #e02b37 !important;
+}
+
+:deep(.btn-primary:disabled) {
+    background-color: #f4a6ac !important;
+    border-color: #f4a6ac !important;
+    color: #ffffff !important;
+    cursor: not-allowed;
+}
+
+/* QR Reader */
 #qr-reader {
     width: 100%;
     max-height: 400px;
+    border-radius: 8px;
 }
 
+/* QR Scanner Modal */
 .qr-scanner-modal :deep(.ant-modal-body) {
-    padding: 16px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f9f9f9;
+}
+
+/* Form Label with Logo */
+.form-label-with-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.ghtk-logo {
+    width: 100px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* Main Layout (Text Container) */
+.text {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    margin: 0;
+    padding: 10px 0;
+    /* Padding to match header */
+}
+
+/* Row Layout */
+.row {
+    display: flex;
+    width: 100%;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    align-items: stretch;
+    /* Đảm bảo bảng và form có chiều cao bằng nhau */
+}
+
+/* Columns */
+.col-8,
+.col-4 {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.col-8 {
+    flex: 2;
+    /* Bảng chiếm 2/3 không gian */
+}
+
+.col-4 {
+    flex: 1;
+    /* Form chiếm 1/3 không gian */
+    min-width: 300px;
+}
+
+/* Table Styling */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    height: auto;
+    /* Chiều cao động dựa trên nội dung */
+    min-height: 350px;
+    /* Chiều cao tối thiểu để căn với form */
+    overflow-y: auto;
+    margin: 0;
+    flex: 1;
+    /* Đảm bảo bảng chiếm toàn bộ không gian có sẵn */
+}
+
+.table {
+    background: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+/* Center text in specific columns */
+.table th:nth-child(1),
+.table td:nth-child(1),
+.table th:nth-child(4),
+.table td:nth-child(4),
+.table th:nth-child(5),
+.table td:nth-child(5),
+.table th:nth-child(6),
+.table td:nth-child(6),
+.table th:nth-child(7),
+.table td:nth-child(7) {
     text-align: center;
 }
+
+.table-hover tbody tr:hover {
+    background: #fff8f8;
+    transition: background 0.3s ease;
+}
+
+/* Ensure images in the table don't cause layout shifts */
+.invoice-item-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    height: auto;
+    /* Chiều cao động dựa trên nội dung */
+    min-height: 350px;
+    /* Chiều cao tối thiểu để căn với bảng */
+    overflow-y: auto;
+    /* Cho phép cuộn nếu nội dung vượt quá */
+    margin: 0;
+    flex: 1;
+    /* Đảm bảo form chiếm toàn bộ không gian có sẵn */
+}
+
+/* Form Inputs */
+:deep(.form-control) {
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+    padding: 8px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+:deep(.form-control:focus) {
+    border-color: #f33b47;
+    box-shadow: 0 0 0 3px rgba(243, 59, 71, 0.2);
+}
+
+/* Form Labels */
+label.form-label {
+    font-weight: 500;
+    color: #1f1f1f;
+    margin-bottom: 5px;
+    display: block;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Radio Buttons */
+:deep(.form-check) {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    margin-left: 20px;
+    padding: 0;
+}
+
+:deep(.form-check-inline) {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 16px;
+    margin-bottom: 0;
+}
+
+:deep(.form-check-input) {
+    appearance: none;
+    /* Loại bỏ kiểu mặc định của trình duyệt */
+    width: 16px;
+    height: 16px;
+    border: 2px solid #d9d9d9;
+    border-radius: 50%;
+    /* Làm tròn nút radio */
+    transition: all 0.3s ease;
+    margin-right: 8px;
+    margin-top: 0;
+    /* Đảm bảo không bị thụt vào */
+    background-color: #fff;
+    cursor: pointer;
+    vertical-align: middle;
+    flex-shrink: 0;
+    /* Ngăn nút radio bị co lại */
+}
+
+:deep(.form-check-input:checked) {
+    background-color: #f33b47;
+    border-color: #f33b47;
+    box-shadow: 0 0 0 2px rgba(243, 59, 71, 0.2);
+    /* Hiệu ứng khi chọn */
+}
+
+:deep(.form-check-label) {
+    font-size: 14px;
+    color: #1f1f1f;
+    line-height: 1.5;
+    margin-bottom: 0;
+    cursor: pointer;
+    /* Thêm con trỏ để nhấn vào nhãn */
+    vertical-align: middle;
+    /* Căn giữa nhãn với nút radio */
+}
+
+/* Remove unnecessary margins */
+.mb-3 {
+    margin-bottom: 0 !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        height: auto;
+        padding: 16px;
+    }
+
+    .search-section {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    .dropdown-content-custom {
+        width: 100%;
+    }
+
+    .invoice-tabs {
+        max-width: 100%;
+    }
+
+    .action-buttons {
+        justify-content: center;
+    }
+
+    .row {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .col-8,
+    .col-4 {
+        flex: 100%;
+    }
+
+    .table-responsive,
+    form {
+        height: auto;
+        min-height: 200px;
+        /* Adjusted for mobile */
+    }
+
+    :deep(.form-check-inline) {
+        display: flex;
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+}
+
 </style>

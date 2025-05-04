@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import home from './home-router.js';
 import admin from './admin-router.js';
-import test from './test-router.js';
-import sell from './sell-router.js';  
+// import test from './test-router.js';
+// import sell from './sell-router.js';  
 import dangNhapDangKy from './dangNhapDangKy.js';
 import Unauthorized403 from '@/components/admin-components/Error/error.vue';
-const routes = [...home, ...admin, ...test, ...sell, ...dangNhapDangKy, {
+
+const routes = [...home, ...admin, ...dangNhapDangKy, {
   path: '/unauthorized',
   name: 'unauthorized',
   component: Unauthorized403
@@ -44,7 +45,8 @@ router.beforeEach((to, from, next) => {
           to.name === 'admin-quan-ly-hoa-don' || 
           to.name === 'profile' || 
           to.name === 'admin-quan-ly-san-pham' ||
-          to.name === 'admin-hoa-don-chi-tiet' ) { // Thêm đường dẫn profile
+          to.name === 'admin-hoa-don-chi-tiet' ||
+          to.name === 'traHang') { // Thêm đường dẫn profile
         next(); // Cho phép truy cập
       } else if (to.path === '/admin') {
         next('/admin/banhang'); // Chuyển hướng về trang bán hàng

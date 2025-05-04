@@ -231,8 +231,8 @@ const validateBirthDate = () => {
     }
     if (age < 0) {
         errors.value.birthDate = 'Ngày sinh không hợp lệ';
-    } else if (age < 15) {
-        errors.value.birthDate = 'Bạn phải đủ 15 tuổi để đăng ký tài khoản';
+    } else if (age < 14) {
+        errors.value.birthDate = 'Bạn phải đủ 14 tuổi để đăng ký tài khoản';
     } else {
         errors.value.birthDate = '';
     }

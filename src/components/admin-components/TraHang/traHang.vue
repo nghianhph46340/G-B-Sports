@@ -12,28 +12,89 @@
               </p>
           </div>
 
-          <!-- Search Section -->
-          <div class="tracking-search" v-if="!orderFound">
-              <a-form layout="vertical" @submit.prevent="searchOrder" aria-label="Form tra cứu đơn hàng">
-                  <a-form-item label="Mã đơn hàng" name="orderCode">
-                      <a-input v-model:value="orderCode" placeholder="Nhập mã đơn hàng" :maxLength="50" :allowClear="true" size="large" />
-                  </a-form-item>
-                  <a-form-item>
-                      <a-button type="primary" html-type="submit" :loading="searching" size="large" block>
-                          <search-outlined /> Tra cứu
-                      </a-button>
-                  </a-form-item>
-              </a-form>
-          </div>
+        <!-- Search Section -->
+      <div class="tracking-search" v-if="!orderFound">
+        <a-form layout="vertical" @submit.prevent="searchOrder" aria-label="Form tra cứu đơn hàng">
+          <a-form-item label="Mã đơn hàng" name="orderCode">
+            <a-input v-model:value="orderCode" placeholder="Nhập mã đơn hàng" :maxLength="50" :allowClear="true" size="large" />
+          </a-form-item>
+          <a-form-item>
+            <a-row :gutter="16">
+              <a-col :span="12">
+                <a-button type="primary" html-type="submit" :loading="searching" size="large" block>
+                  <search-outlined /> Tra cứu
+                </a-button>
+              </a-col>
+              <a-col :span="12">
+                <a-button type="default" @click="showQrScanner" size="large" block>
+                  <scan-outlined /> Quét QR
+                </a-button>
+              </a-col>
+            </a-row>
+          </a-form-item>
+        </a-form>
+      </div>
 
-          <!-- Not Found State -->
-          <div v-if="!orderFound && searched" class="not-found">
-              <file-search-outlined class="not-found-icon" />
-              <h2>Không tìm thấy đơn hàng</h2>
-              <p>Không tìm thấy đơn hàng với mã bạn vừa nhập.</p>
-              <p>Vui lòng kiểm tra lại mã đơn hàng hoặc liên hệ với chúng tôi để được hỗ trợ.</p>
-              <a-button type="primary" @click="resetSearch" size="large">Thử lại</a-button>
-          </div>
+      <!-- Not Found State -->
+      <div v-if="!orderFound && searched" class="not-found">
+        <file-search-outlined class="not-found-icon" />
+        <h2>Không tìm thấy đơn hàng</h2>
+        <p>Không tìm thấy đơn hàng với mã bạn vừa nhập.</p>
+        <p>Vui lòng kiểm tra lại mã đơn hàng hoặc liên hệ với chúng tôi để được hỗ trợ.</p>
+        <a-button type="primary" @click="resetSearch" size="large">Thử lại</a-button>
+      </div>
+
+      <!-- Return Interface (shown when order is found) -->
+      <div v-if="orderFound" class="order-details">
+        
+
+        <!-- Quantity Input Modal -->
+        <a-modal
+          v-model:open="quantityModalVisible"
+          title="Nhập số lượng trả"
+          @ok="confirmQuantity"
+          @cancel="cancelQuantity"
+          :ok-button-props="{ disabled: !selectedQuantity || selectedQuantity < 1 || selectedQuantity > maxQuantity }"
+          aria-label="Modal nhập số lượng trả hàng"
+        >
+          <a-form layout="vertical">
+            <a-form-item label="Số lượng trả hàng">
+              <a-input-number
+                v-model:value="selectedQuantity"
+                :min="1"
+                :max="maxQuantity"
+                placeholder="Nhập số lượng"
+                style="width: 100%;"
+              />
+            </a-form-item>
+          </a-form>
+        </a-modal>
+
+        <!-- Print Confirmation Modal -->
+        <a-modal
+          v-model:open="showPrintConfirm"
+          title="Xác nhận xuất hóa đơn"
+          @ok="confirmPrint(true)"
+          @cancel="confirmPrint(false)"
+        >
+          <p>Bạn muốn xuất hóa đơn này phải không?</p>
+          <template #footer>
+            <a-button key="cancel" @click="confirmPrint(false)">Không</a-button>
+            <a-button key="ok" type="primary" @click="confirmPrint(true)">Đúng</a-button>
+          </template>
+        </a-modal>
+      </div>
+
+      <!-- QR Scanner Container -->
+      <div v-show="qrScannerVisible" class="qr-scanner-container">
+        <div class="qr-scanner-content">
+          <h2>Quét mã QR đơn hàng</h2>
+          <div ref="qrReader" id="qr-reader" class="qr-reader"></div>
+          <a-button type="default" @click="stopQrScanner" size="large" block>
+            Hủy
+          </a-button>
+        </div>
+      </div>
 
           <!-- Return Interface (shown when order is found) -->
           <div v-if="orderFound" class="order-details">
@@ -62,7 +123,8 @@
                                   <ul class="list-disc pl-5 space-y-2">
                                       <li>Sản phẩm còn <strong>nguyên tem, mác, chưa qua sử dụng hoặc giặt ủi</strong>.</li>
                                       <li>Sản phẩm bị <strong>lỗi do nhà sản xuất</strong> hoặc <strong>giao sai mẫu, size, màu sắc</strong>.</li>
-                                      <li>Yêu cầu trả hàng được gửi <strong>trong vòng 07 ngày</strong> kể từ ngày nhận hàng.</li>
+                                      <li>Yêu cầu trả hàng được gửi <strong>trong vòng 14 ngày</strong> kể từ ngày nhận hàng.</li>
+     
                                   </ul>
                               </a-col>
                               <a-col :span="12">
@@ -309,16 +371,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useGbStore } from '@/stores/gbStore';
 import { toast } from 'vue3-toastify';
-import { SearchOutlined, FileSearchOutlined } from '@ant-design/icons-vue';
+import { SearchOutlined, FileSearchOutlined, ScanOutlined } from '@ant-design/icons-vue';
 import { Row as ARow, Col as ACol, Button as AButton, Divider as ADivider, Form as AForm, FormItem as AFormItem, Input as AInput, Textarea as ATextarea, Table as ATable, InputNumber as AInputNumber, Spin as ASpin, Select as ASelect, SelectOption as ASelectOption, Modal as AModal, Checkbox as ACheckbox } from 'ant-design-vue';
+import { Html5Qrcode } from 'html5-qrcode';
 import jsPDF from 'jspdf';
 import { debounce } from 'lodash';
 import '../../../config/fonts/Roboto-normal';
 import '../../../config/fonts/Roboto-bold';
 import logo from '../../../images/logo/logo2.png';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
+import QRCode from 'qrcode';
 
 // Initialize store and reactive state
 const store = useGbStore();
@@ -353,6 +419,13 @@ let isNegativeRefundToastShown = ref(false);
 
 // Track displayed error messages to prevent duplicates
 const displayedErrors = ref(new Set());
+
+// State cho quét QR
+const qrScannerVisible = ref(false);
+const qrScanResult = ref('');
+const qrReader = ref(null); // Ref to the qr-reader element
+let html5QrCode = null;
+let isProcessing = ref(false);
 
 // Table columns for order and return products
 const orderColumns = [
@@ -686,9 +759,11 @@ const updateReturnTotal = () => {
 };
 
 // Print return invoice
-const printReturnInvoice = () => {
+const printReturnInvoice = async () => {
   const doc = new jsPDF();
   doc.setFont("Helvetica");
+
+  // Thêm logo
   const logoWidth = 30;
   const logoHeight = 20;
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -698,30 +773,67 @@ const printReturnInvoice = () => {
   } catch (e) {
     console.warn('Không thể thêm logo:', e);
   }
+
+  // Tiêu đề
   doc.setFontSize(18);
   doc.setFont("Roboto", "bold");
   doc.text("HÓA ĐƠN TRẢ HÀNG", 105, 50, { align: "center" });
+
   doc.setFontSize(16);
   doc.setFont("Roboto", "bold");
   doc.text("G&B SPORTS", 105, 60, { align: "center" });
+
   doc.setFontSize(10);
   doc.setFont("Roboto", "normal");
   doc.text("Địa chỉ: Phương Canh, Nam Từ Liêm, Hà Nội", 105, 68, { align: "center" });
-  doc.text("Điện thoại: 0123456789", 105, 74, { align: "center" });
+  doc.text("Điện thoại: 0397572262", 105, 74, { align: "center" });
+
   doc.setLineWidth(0.5);
   doc.line(20, 78, 190, 78);
+
+  // Thông tin hóa đơn
   doc.setFontSize(12);
   doc.setFont("Roboto", "normal");
   doc.text(`Mã hóa đơn: ${orderDetail.value.ma_hoa_don || 'N/A'}`, 20, 86);
   doc.text(`Ngày trả: ${formatDateTime(new Date())}`, 20, 94);
   doc.text(`Tên khách hàng: ${orderDetail.value.ho_ten || 'Khách lẻ'}`, 20, 102);
   doc.text(`Lý do trả hàng: ${returnForm.value.reason || 'N/A'}`, 20, 110);
+
   let y = 118;
+  y += 8;
+
+  // Bảng sản phẩm đã mua
   doc.setFontSize(12);
   doc.setFont("Roboto", "bold");
-  doc.text("Sản phẩm trả", 20, y);
-  y += 10;
+  doc.text("Thông tin sản phẩm đã mua", 20, y);
+  doc.text("Số lượng", 100, y, { align: "center" });
+  doc.text("Đơn giá", 130, y, { align: "center" });
+  doc.text("Thành tiền", 170, y, { align: "center" });
+  y += 2;
+  doc.setLineWidth(0.2);
+  doc.line(20, y, 190, y);
+  y += 6;
+
   doc.setFontSize(10);
+  doc.setFont("Roboto", "normal");
+  orderProducts.value.forEach((item, index) => {
+    const productName = `${index + 1}. ${item.ten_san_pham || 'N/A'} (Màu: ${item.ten_mau_sac || 'N/A'} - Size: ${item.kich_thuoc || 'N/A'})`;
+    const productLines = doc.splitTextToSize(productName, 80);
+    doc.text(productLines, 20, y);
+    doc.text(`${item.so_luong}`, 100, y, { align: "center" });
+    doc.text(`${formatCurrency(item.unit_price)} VNĐ`, 130, y, { align: "center" });
+    doc.text(`${formatCurrency(item.so_luong * item.unit_price)} VNĐ`, 170, y, { align: "center" });
+    y += productLines.length * 6 + 4;
+  });
+
+  doc.setLineWidth(0.2);
+  doc.line(20, y, 190, y);
+  y += 10;
+
+  // Bảng sản phẩm hoàn trả
+  doc.setFontSize(12);
+  doc.setFont("Roboto", "bold");
+  doc.text("Thông tin sản phẩm hoàn trả", 20, y);
   doc.setFont("Roboto", "bold");
   doc.text("Số lượng", 100, y, { align: "center" });
   doc.text("Đơn giá", 130, y, { align: "center" });
@@ -730,12 +842,13 @@ const printReturnInvoice = () => {
   doc.setLineWidth(0.2);
   doc.line(20, y, 190, y);
   y += 6;
+
   doc.setFontSize(10);
   doc.setFont("Roboto", "normal");
   returnableProducts.value
     .filter(item => item.return_quantity > 0)
     .forEach((item, index) => {
-      const productName = `${index + 1}. ${item.ten_san_pham} (${item.ten_mau_sac} - ${item.kich_thuoc})`;
+      const productName = `${index + 1}. ${item.ten_san_pham} (Màu: ${item.ten_mau_sac} - Size: ${item.kich_thuoc})`;
       const productLines = doc.splitTextToSize(productName, 80);
       doc.text(productLines, 20, y);
       doc.text(`${item.return_quantity}`, 100, y, { align: "center" });
@@ -744,9 +857,12 @@ const printReturnInvoice = () => {
       doc.text(`${formatCurrency(thanhTien)} VNĐ`, 170, y, { align: "center" });
       y += productLines.length * 6 + 4;
     });
+
   doc.setLineWidth(0.2);
   doc.line(20, y, 190, y);
   y += 10;
+
+  // Tổng tiền
   doc.setFontSize(12);
   doc.setFont("Roboto", "normal");
   doc.text(`Tổng tiền hàng: ${formatCurrency(store.hoaDonDetail.tong_tien_truoc_giam)} VNĐ`, 20, y);
@@ -761,13 +877,13 @@ const printReturnInvoice = () => {
   doc.setFont("Roboto", "bold");
   doc.text(`Tổng tiền khách đã trả: ${formatCurrency(store.hoaDonDetail.tong_tien_sau_giam || 0)} VNĐ`, 20, y);
   y += 6;
-  doc.setFont("Roboto", "bold");
   doc.text(`Tổng tiền hoàn trả lại khách: ${formatCurrency(totalRefundForDB.value)} VNĐ`, 20, y);
-  
+
   y += 10;
   doc.setFontSize(10);
   doc.setFont("Roboto", "normal");
   doc.text("Cảm ơn Quý Khách, hẹn gặp lại!", 105, y, { align: "center" });
+
   doc.save(`HoaDonTraHang_${orderDetail.value.ma_hoa_don}.pdf`);
 };
 
@@ -890,6 +1006,127 @@ const getReturnStatusDate = (status) => {
   return statusHistory ? statusHistory.ngay_tra || statusHistory.ngay_chuyen : null;
 };
 
+
+
+
+// Hiển thị QR scanner
+const showQrScanner = () => {
+  qrScannerVisible.value = true;
+  nextTick(() => {
+    if (!qrReader.value) {
+      console.error('QR reader element not found during initialization');
+      toast.error('Không thể khởi tạo máy quét QR. Vui lòng thử lại!');
+      qrScannerVisible.value = false;
+      return;
+    }
+    console.log('QR reader element available:', qrReader.value); // Debug log
+    initQrScanner();
+  });
+};
+
+// Khởi tạo máy quét QR
+const initQrScanner = () => {
+  if (!qrReader.value) {
+    console.error('QR reader element not found in initQrScanner');
+    toast.error('Không thể khởi tạo máy quét QR. Vui lòng thử lại!');
+    qrScannerVisible.value = false;
+    return;
+  }
+
+  console.log('Initializing QR scanner on element:', qrReader.value); // Debug log
+  try {
+    html5QrCode = new Html5Qrcode('qr-reader');
+    const qrCodeSuccessCallback = async (decodedText, decodedResult) => {
+      if (isProcessing.value) return;
+      isProcessing.value = true;
+      qrScanResult.value = decodedText;
+      console.log('QR code scanned:', decodedText); // Debug log
+      stopQrScanner();
+      await handleQrResult(decodedText);
+      isProcessing.value = false;
+    };
+    const qrCodeErrorCallback = (error) => {
+      console.warn(`QR scan error: ${error}`);
+    };
+
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      config,
+      qrCodeSuccessCallback,
+      qrCodeErrorCallback
+    ).catch(err => {
+      toast.error('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập!');
+      console.error('QR Scanner start error:', err);
+      qrScannerVisible.value = false;
+    });
+  } catch (err) {
+    console.error('Error initializing Html5Qrcode:', err);
+    toast.error('Không thể khởi tạo máy quét QR. Vui lòng thử lại!');
+    qrScannerVisible.value = false;
+  }
+};
+
+// Xử lý kết quả quét QR
+const handleQrResult = async (qrData) => {
+  try {
+    if (!qrData || !qrData.trim()) {
+      toast.error('Mã QR không hợp lệ!');
+      return;
+    }
+
+    let maHoaDon = qrData.trim();
+    // Handle different QR code formats
+    try {
+      // Case 1: QR code is JSON (e.g., {"ma_hoa_don": "HDISWGOJ"})
+      const parsedJson = JSON.parse(qrData);
+      if (parsedJson.ma_hoa_don) {
+        maHoaDon = parsedJson.ma_hoa_don.trim();
+      }
+    } catch (e) {
+      // Not JSON, try URL or plain text
+      try {
+        // Case 2: QR code is a URL (e.g., "https://example.com/invoice?ma_hoa_don=HDISWGOJ")
+        const url = new URL(qrData);
+        const urlMaHoaDon = url.searchParams.get('ma_hoa_don');
+        if (urlMaHoaDon) {
+          maHoaDon = urlMaHoaDon.trim();
+        }
+      } catch (e) {
+        // Case 3: QR code is plain text (e.g., "HDISWGOJ")
+        // Already set as maHoaDon
+      }
+    }
+
+    if (!maHoaDon) {
+      toast.error('Không tìm thấy mã hóa đơn trong mã QR!');
+      return;
+    }
+
+    console.log('Extracted ma_hoa_don:', maHoaDon); // Debug log
+    orderCode.value = maHoaDon;
+    await searchOrder();
+  } catch (error) {
+    console.error('Lỗi khi xử lý mã QR:', error);
+    toast.error('Có lỗi xảy ra khi xử lý mã QR!');
+  }
+};
+
+// Dừng máy quét QR
+const stopQrScanner = () => {
+  if (html5QrCode && html5QrCode.isScanning) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+      console.log('QR scanner stopped and cleared'); // Debug log
+    }).catch(err => {
+      console.error('Lỗi khi dừng QR scanner:', err);
+    });
+  }
+  qrScannerVisible.value = false;
+  qrScanResult.value = '';
+};
+
 // Initialize staff name on mount and cleanup on unmount
 onMounted(() => {
   returnForm.value.staff = store.userDetails?.tenNhanVien || store.userInfo?.ten_dang_nhap || 'N/A';
@@ -901,10 +1138,57 @@ onUnmounted(() => {
   isSubmitToastShown = false;
   isNegativeRefundToastShown.value = false;
   displayedErrors.value.clear();
+  stopQrScanner();
 });
 </script>
-
 <style scoped>
+/* QR Scanner container styling */
+.qr-scanner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.qr-scanner-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.qr-scanner-content h2 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  color: #2b3940;
+}
+
+.qr-reader {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 20px;
+  min-height: 250px; /* Ensure space for scanner */
+}
+
+@media (max-width: 576px) {
+  .qr-scanner-content {
+    width: 95%;
+    padding: 15px;
+  }
+
+  .qr-reader {
+    max-width: 100%;
+  }
+}
 .main-content {
   padding: 20px;
   background-color: #f7f9fc;

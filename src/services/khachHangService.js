@@ -157,13 +157,17 @@ const getUserDetail = async ({ username, id_roles }) => {
 
 const themKhachHangBH = async (data) => {
   try {
-    const response = await axiosInstance.post('/api/khach-hang/addKHMoi', data)
-    return response.data
+    const response = await axiosInstance.post('/api/khach-hang/addKHMoi', data);
+    console.log('khachHangService response:', response.data); // Log phản hồi
+    return response.data;
   } catch (error) {
-    console.error('Lỗi khi thêm khách hàng:', error)
-    return { error: true, message: 'Có lị xảy ra khi thêm khách hàng' }
+    console.error('Lỗi khi thêm khách hàng:', error);
+    console.log('Error response:', error.response); // Log chi tiết
+    console.log('Error message:', error.message); // Log thông báo lỗi
+    console.log('Error status:', error.response?.status); // Log mã trạng thái
+    throw error; // Truyền lỗi gốc từ axios
   }
-}
+};
 
 
 // Thêm địa chỉ mới

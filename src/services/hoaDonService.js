@@ -60,7 +60,15 @@ const searchHoaDon = async (keyword, page = 0, size = 5) => {
         return { error: true };
     }
 };
-
+const locHD = async (keyword, tuNgay, denNgay, trangThai, loaiHoaDon, page = 0, size = 5) => {
+    try {
+        const { data } = await axiosInstance.get(qlhd + `loc_hoa_don?keyword=${keyword}&tuNgay=${tuNgay}&denNgay=${denNgay}&trangThai=${trangThai}&loaiHoaDon=${loaiHoaDon}&page=${page}&size=${size}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API lọc hóa đơn:', error);
+        return { error: true, message: error.response?.data?.message || 'Không thể lấy dữ liệu hóa đơn.' };
+    }
+};
 // Lấy chi tiết hóa đơn theo mã hóa đơn
 const getCTHD = async (maHoaDon) => {
     try {
@@ -116,8 +124,18 @@ const cancelHoaDon = async (maHoaDon, nhanVienDoi, noiDungDoi) => {
         return { error: true };
     }
 };
+// Cập nhật phí ván chuyen trong hóa đơn
+const updatePhiShip = async (maHoaDon, phiVanChuyen) => {
+    try {
+        const { data } = await axiosInstance.post(qlhd + `update_phiShip?maHoaDon=${maHoaDon}&phiVanChuyen=${phiVanChuyen}`);
+        return data;
+    } catch (error) {
+        console.error('Lỗi API cập nhật phí vận chuyển:', error);
+        return { error: true };
+    }
+};
 // Cập nhật thông tin khách hàng trong hóa đơn
-const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
+const updateTTKH_in_HD = async (maHoaDon, ttkh, phiVanChuyen) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'update_ttkh', {
             maHoaDon,
@@ -125,6 +143,7 @@ const updateTTKH_in_HD = async (maHoaDon, ttkh) => {
             email: ttkh.email,
             sdtNguoiNhan: ttkh.sdtNguoiNhan,
             diaChi: ttkh.diaChi,
+            phiVanChuyen,
             nhanVienDoi: ttkh.nhanVienDoi // Thêm nhanVienDoi
         });
         return data;
@@ -175,10 +194,10 @@ const addProductsToInvoice = async (maHoaDon, products, nhanVienDoi) => {
         return { error: true };
     }
 };
-const removeProductFromInvoice = async (maHoaDon, idCTSP, soLuong, nhanVienDoi, noiDungDoi) => {
+const removeProductFromInvoice = async (maHoaDon, idCTSP, nhanVienDoi, noiDungDoi) => {
     try {
         const { data } = await axiosInstance.post(qlhd + 'removeSP_HD', null, {
-            params: { maHoaDon, idCTSP, soLuong, nhanVienDoi, noiDungDoi }
+            params: { maHoaDon, idCTSP, nhanVienDoi, noiDungDoi }
         });
         return data;
     } catch (error) {
@@ -257,11 +276,13 @@ export const hoaDonService = {
     getAllHoaDon,
     getListHoaDon,
     filterByTrangThai,
+    locHD,
     filterByDate,
     searchHoaDon,
     getCTHD,
     changeTrangThai,
     cancelHoaDon,
+    updatePhiShip,
     updateTTKH_in_HD,
     updateNote,
     getAllCTSP_HD,
