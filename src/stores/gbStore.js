@@ -152,56 +152,88 @@ export const useGbStore = defineStore('gbStore', {
   }),
 
   ///Đầu mút2
-  actions: {
-    // List sản phẩm theo tên sản phẩm(trang sản phẩm)
-    async getSanPhamByTenSP(keywords) {
-      console.log('Gọi getSanPhamByTenSP với:', keywords);
-      let tenSanPham = '';
-      if (Array.isArray(keywords)) {
-        tenSanPham = keywords.join(',');
-      } else if (typeof keywords === 'string') {
-        tenSanPham = keywords;
+    actions: {
+      // Sản phẩm siêu sale
+    // Thêm action mới cho siêu sale
+    async getSanPhamSieuSale() {
+      try {
+        this.isLoading = true;
+        this.error = null;
+        
+        const data = await sanPhamService.getSanPhamSieuSale();
+        if (!data.error) {
+          this.listSanPhamBanHang = data.map(item => ({
+            id: item.id_san_pham,
+            name: item.ten_san_pham,
+            price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+            oldPrice: Number(item.gia_max || 0),
+            brand: item.ten_thuong_hieu,
+            image: item.hinh_anh,
+            gender: item.gioi_tinh || '',
+            type: item.ten_danh_muc || '',
+            colors: item.mau_sac ? item.mau_sac.split(',') : [],
+            rating: item.danh_gia || 0,
+            reviews: item.so_luong_danh_gia || 0,
+          }));
+        } else {
+          this.error = data.message;
+        }
+      } catch (error) {
+        this.error = error.message;
+        console.error('Lỗi khi lấy sản phẩm siêu sale:', error);
+      } finally {
+        this.isLoading = false;
       }
-      const data = await sanPhamService.getSanPhamByTenSP(tenSanPham);
-      // Map lại field nếu cần
-      this.listSanPhamBanHang = data.map(item => ({
-        id: item.id_san_pham,
-        name: item.ten_san_pham,
-        price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
-        oldPrice: Number(item.gia_max || 0),
-        brand: item.ten_thuong_hieu,
-        image: item.hinh_anh,
-        gender: item.gioi_tinh || '',
-        type: item.ten_danh_muc || '',
-        colors: item.mau_sac ? item.mau_sac.split(',') : [],
-        rating: item.danh_gia || 0,
-        reviews: item.so_luong_danh_gia || 0,
-      }));
     },
-    // List sản phẩm theo tên danh mục(trang sản phẩm)
-    async getSanPhamByTenDM(keywords) {
-      let tenDanhMuc = '';
-      if (Array.isArray(keywords)) {
-        tenDanhMuc = keywords.join(',');
-      } else if (typeof keywords === 'string') {
-        tenDanhMuc = keywords;
-      }
-      // Nếu tenDanhMuc là '', backend nên trả về tất cả sản phẩm
-      const data = await sanPhamService.getSanPhamByTenDM(tenDanhMuc);
-      this.listSanPhamBanHang = data.map(item => ({
-        id: item.id_san_pham,
-        name: item.ten_san_pham,
-        price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
-        oldPrice: Number(item.gia_max || 0),
-        brand: item.ten_thuong_hieu,
-        image: item.hinh_anh,
-        gender: item.gioi_tinh || '',
-        type: item.ten_danh_muc || '',
-        colors: item.mau_sac ? item.mau_sac.split(',') : [],
-        rating: item.danh_gia || 0,
-        reviews: item.so_luong_danh_gia || 0,
-      }));
-    },
+// List sản phẩm theo tên sản phẩm(trang sản phẩm)
+      async getSanPhamByTenSP(keywords) {
+        console.log('Gọi getSanPhamByTenSP với:', keywords);
+        let tenSanPham = '';
+        if (Array.isArray(keywords)) {
+          tenSanPham = keywords.join(',');
+        } else if (typeof keywords === 'string') {
+          tenSanPham = keywords;
+        }
+        const data = await sanPhamService.getSanPhamByTenSP(tenSanPham);
+        // Map lại field nếu cần
+        this.listSanPhamBanHang = data.map(item => ({
+          id: item.id_san_pham,
+          name: item.ten_san_pham,
+          price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+          oldPrice: Number(item.gia_max || 0),
+          brand: item.ten_thuong_hieu,
+          image: item.hinh_anh,
+          gender: item.gioi_tinh || '',
+          type: item.ten_danh_muc || '',
+          colors: item.mau_sac ? item.mau_sac.split(',') : [],
+          rating: item.danh_gia || 0,
+          reviews: item.so_luong_danh_gia || 0,
+        }));
+      },  
+      // List sản phẩm theo tên danh mục(trang sản phẩm)
+      async getSanPhamByTenDM(keywords) {
+        let tenDanhMuc = '';
+        if (Array.isArray(keywords)) {
+          tenDanhMuc = keywords.join(',');
+        } else if (typeof keywords === 'string') {
+          tenDanhMuc = keywords;
+        }
+        // Nếu tenDanhMuc là '', backend nên trả về tất cả sản phẩm
+        const data = await sanPhamService.getSanPhamByTenDM(tenDanhMuc);
+        this.listSanPhamBanHang = data.map(item => ({
+          id: item.id_san_pham,
+          name: item.ten_san_pham,
+          price: Number(item.gia_ban || item.gia_khuyen_mai_cao_nhat || 0),
+          oldPrice: Number(item.gia_max || 0),
+          brand: item.ten_thuong_hieu,
+          image: item.hinh_anh,
+          gender: item.gioi_tinh || '',
+          type: item.ten_danh_muc || '',
+          colors: item.mau_sac ? item.mau_sac.split(',') : [],
+          rating: item.danh_gia || 0,
+          reviews: item.so_luong_danh_gia || 0,
+        }));
+      },
     //Giỏ hàng của khấch hàng có tài khoản
     async getGioHangByIdKH(idKH, idCTSP, soLuong) {
       try {
@@ -3581,4 +3613,6 @@ export const useGbStore = defineStore('gbStore', {
       }
     },
   },
+
+
 })

@@ -52,7 +52,7 @@ const home = [
             {
                 path: "hoTro",
                 name: "hoTro",
-                component: () => import('@/views/web/CuaHang/HoTro.vue')
+                component: () => import('@/views/web/CuaHang/HoTro.vue') 
             },
             {
                 path: "danhSachSanPham",

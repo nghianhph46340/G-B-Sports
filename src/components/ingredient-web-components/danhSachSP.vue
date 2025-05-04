@@ -226,13 +226,14 @@ function toggleColor(color) {
 const filteredProducts = computed(() => {
   if (!store.listSanPhamBanHang) return [];
   
-  console.log('Filter keywords:', filterKeywords.value);
-  
-  // Nếu không có filter thì trả về tất cả sản phẩm
-  if (!filterKeywords.value.length || (filterKeywords.value.length === 1 && !filterKeywords.value[0])) {
+  // Nếu là trang siêu sale, trả về trực tiếp danh sách từ API
+  if (filterKeywords.value.includes('supersale')) {
+    console.log('Hiển thị sản phẩm siêu sale:', store.listSanPhamBanHang.length);
     return store.listSanPhamBanHang;
   }
 
+  console.log('Filter keywords:', filterKeywords.value);
+  
   // Định nghĩa các danh mục
   const categoryKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
   
@@ -303,10 +304,19 @@ const breadcrumbMap = [
 ];
 
 function getBreadcrumbLabel(filterKeywords) {
-  if (!filterKeywords || filterKeywords.length === 0 || (filterKeywords.length === 1 && !filterKeywords[0])) {
+  if (filterKeywords && filterKeywords[0] === 'supersale') {
+    return 'Siêu sale sập sàn';
+  }
+  if (
+    !filterKeywords ||
+    filterKeywords.length === 0 ||
+    (filterKeywords.length === 1 && (!filterKeywords[0] || filterKeywords[0] === 'all'))
+  ) {
     return 'Tất cả sản phẩm';
   }
-
+  if (filterKeywords[0] === 'Sport') {
+    return 'Môn thể thao';
+  }
   // Danh sách từ khóa của môn thể thao
   const sportsKeywords = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
 
@@ -325,35 +335,35 @@ function getBreadcrumbLabel(filterKeywords) {
   return filterKeywords[0] || 'Tất cả sản phẩm';
 }
 
-onMounted(async () => {
-  try {
-    const filter = route.query.filter;
-    console.log('Filter từ route:', filter);
-
-    // Danh sách các danh mục
-    const categories = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
-    
-    // Danh sách các loại sản phẩm
-    const productTypes = ['Quần', 'Áo', 'Váy', 'Tank top'];
-
-    if (categories.includes(filter)) {
-      // Nếu filter là danh mục thì gọi API lấy theo danh mục
-      await store.getSanPhamByTenDM(filter);
-      console.log('Lấy sản phẩm theo danh mục:', filter);
-    } else if (productTypes.includes(filter)) {
-      // Nếu filter là loại sản phẩm thì gọi API lấy theo tên
-      await store.getSanPhamByTenSP(filter);
-      console.log('Lấy sản phẩm theo tên:', filter);
-    } else {
-      // Nếu không có filter hoặc filter không thuộc 2 nhóm trên
-      await store.getSanPhamByTenDM('');
-      console.log('Lấy tất cả sản phẩm');
-    }
-
-    console.log('Số sản phẩm:', store.listSanPhamBanHang?.length);
-  } catch (error) {
-    console.error('Lỗi khi lấy dữ liệu:', error);
+function fetchProductsByFilter(filter) {
+  if (filter === 'supersale') {
+    // Nếu là trang siêu sale thì chỉ gọi API lấy sản phẩm siêu sale
+    store.getSanPhamSieuSale();
+    return;
   }
+  
+  // Các logic filter khác giữ nguyên
+  const categories = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
+  const productTypes = ['Quần', 'Áo', 'Váy', 'Tank top'];
+
+  if (!filter || filter === 'all') {
+    store.getSanPhamByTenDM('');
+  } else if (filter === 'Sport') {
+    const sports = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga'];
+    store.getSanPhamByTenDM(sports);
+  } else if (categories.includes(filter)) {
+    store.getSanPhamByTenDM(filter);
+  } else if (productTypes.includes(filter)) {
+    store.getSanPhamByTenSP(filter);
+  }
+}
+
+onMounted(() => {
+  fetchProductsByFilter(route.query.filter);
+});
+
+watch(() => route.query.filter, (newFilter) => {
+  fetchProductsByFilter(newFilter);
 });
 
 // Thêm vào phần khai báo biến trong script setup

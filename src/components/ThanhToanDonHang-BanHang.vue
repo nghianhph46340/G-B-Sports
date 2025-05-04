@@ -548,6 +548,10 @@ const calculateShippingFee = async () => {
 
         console.log("Phi ship", result.value);
 
+        if  (subtotal.value >= 2000000) {
+            shippingFee.value = 0;
+            return;
+        }
         shippingFee.value = result.fee;
     } catch (error) {
         console.error('Lỗi khi tính phí vận chuyển:', error);

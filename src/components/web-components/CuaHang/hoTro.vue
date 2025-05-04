@@ -34,18 +34,10 @@
                             <phone-outlined />
                         </div>
                         <h3>Gọi điện</h3>
-                        <p>0989864737</p>
+                        <p>0989 864 737</p>
                         <span class="time">(8:00 - 21:00 mỗi ngày)</span>
                     </div>
 
-                    <div class="support-option">
-                        <div class="option-icon">
-                            <message-outlined />
-                        </div>
-                        <h3>Live Chat</h3>
-                        <p>Chat trực tiếp với nhân viên</p>
-                        <!-- <a-button type="primary" @click="openChat">Chat ngay</a-button> -->
-                    </div>
 
                     <div class="support-option">
                         <div class="option-icon">
@@ -62,6 +54,7 @@
                         </div>
                         <h3>Cửa hàng</h3>
                         <p>Ghé thăm cửa hàng G&B SPORTS</p>
+                        <a-button @click="router.push('/cuaHang')">Xem địa chỉ</a-button>
                     </div>
                 </div>
             </div>
@@ -103,8 +96,6 @@
                                     <ul>
                                         <li>Thanh toán khi nhận hàng (COD)</li>
                                         <li>Chuyển khoản ngân hàng</li>
-                                        <li>Thẻ tín dụng/ghi nợ (Visa, MasterCard)</li>
-                                        <li>Ví điện tử (Momo, ZaloPay, VNPay)</li>
                                     </ul>
                                 </a-collapse-panel>
                             </a-collapse>
@@ -187,7 +178,7 @@
                             <phone-outlined />
                             <div>
                                 <h4>Đường dây nóng</h4>
-                                <p>0987 654 321</p>
+                                <p>0989 864 737</p>
                             </div>
                         </div>
 
@@ -195,7 +186,7 @@
                             <mail-outlined />
                             <div>
                                 <h4>Email hỗ trợ</h4>
-                                <p>info@gbsports.com</p>
+                                <p>chinhhtph46334@fpt.edu.vn</p>
                             </div>
                         </div>
 
@@ -208,9 +199,11 @@
                         </div>
 
                         <div class="social-links">
-                            <a href="#" class="social-link"><facebook-outlined /></a>
-                            <a href="#" class="social-link"><instagram-outlined /></a>
-                            <a href="#" class="social-link"><youtube-outlined /></a>
+                            <a href="https://www.facebook.com/profile.php?id=100014810557839" class="social-link"><facebook-outlined /></a>
+                            <a href="https://zalo.me/0989864737" class="social-link" title="Zalo">
+                             <img src="../../../images/icons8-zalo-50 (1)_preview_rev_1.png" alt="">
+                            </a>
+                            <a href="https://www.instagram.com/hawin_syney/profilecard/?igsh=aG13dDhhZTJtNm41" class="social-link"><instagram-outlined /></a>
                         </div>
                     </div>
 
@@ -290,21 +283,21 @@
                         </div>
                         <h3>Bảo hành sản phẩm</h3>
                         <div class="counter-wrapper">
-                            <span class="counter" data-target="365">0</span>
+                            <span class="counter">365 </span>
                             <span>ngày</span>
                         </div>
                         <p>Tất cả sản phẩm chính hãng tại G&B SPORTS đều được bảo hành theo chính sách của nhà sản xuất,
                             từ 30 đến 365 ngày tùy loại sản phẩm.</p>
                     </div>
 
-                    <div class="policy-card">
+                    <!-- <div class="policy-card">
                         <div class="policy-icon">
                             <swap-outlined />
                         </div>
                         <h3>Đổi size miễn phí</h3>
                         <p>Khách hàng được miễn phí đổi size trong vòng 15 ngày nếu sản phẩm chưa qua sử dụng và còn
                             nguyên tem mác.</p>
-                    </div>
+                    </div> -->
 
                     <div class="policy-card">
                         <div class="policy-icon">
@@ -312,7 +305,7 @@
                         </div>
                         <h3>Giao hàng tận nơi</h3>
                         <p>Giao hàng nhanh chóng trên toàn quốc với chi phí hợp lý. Miễn phí vận chuyển cho đơn hàng từ
-                            500.000đ.</p>
+                            2.000.000đ.</p>
                     </div>
 
                     <div class="policy-card">
@@ -320,8 +313,7 @@
                             <gift-outlined />
                         </div>
                         <h3>Ưu đãi thành viên</h3>
-                        <p>Trở thành thành viên để nhận nhiều ưu đãi đặc biệt, quà tặng và tích lũy điểm thưởng cho mỗi
-                            lần mua hàng.</p>
+                        <p>Trở thành thành viên để nhận nhiều ưu đãi, theo dõi đơn hàng, yêu thích sản phẩm.</p>
                     </div>
                 </div>
             </div>
@@ -351,16 +343,13 @@
 <script setup>
 import {
     PhoneOutlined,
-    MessageOutlined,
     MailOutlined,
     ShopOutlined,
     EnvironmentOutlined,
     ClockCircleOutlined,
     FacebookOutlined,
     InstagramOutlined,
-    YoutubeOutlined,
     SafetyOutlined,
-    SwapOutlined,
     CarOutlined,
     GiftOutlined
 } from '@ant-design/icons-vue';
@@ -682,6 +671,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.social-link img {
+  width: 28px;
+  height: 28px;
+  filter: brightness(10) contrast(100) drop-shadow(0 0 2px #fff);
+}
 /* Base styles */
 .support-page {
     font-family: 'Roboto', sans-serif;

@@ -325,8 +325,8 @@ const validateForm = () => {
         errors.tenNhanVien.push('Vui lòng nhập tên nhân viên');
         isValid = false;
     } else {
-        if (formData.tenNhanVien.length < 2 || formData.tenNhanVien.length > 50) {
-            errors.tenNhanVien.push('Tên nhân viên phải từ 2 đến 50 ký tự');
+        if (formData.tenNhanVien.length < 2 || formData.tenNhanVien.length > 100) {
+            errors.tenNhanVien.push('Tên nhân viên phải từ 2 đến 100 ký tự');
             isValid = false;
         }
         if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(formData.tenNhanVien)) {
