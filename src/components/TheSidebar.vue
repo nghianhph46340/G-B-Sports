@@ -45,13 +45,6 @@ const isLoading = ref(false);
 
 // Truyền 1 hoặc nhiều keyword (dạng mảng hoặc chuỗi)
 async function handleSidebarClick(keywords) {
-<<<<<<< HEAD
-  store.setProductLoading(true);
-  await store.getSanPhamByTenDM(keywords);
-  store.setProductLoading(false);
-  // Truyền keyword qua query, nếu là mảng sẽ thành filter[]=a&filter[]=b
-  router.push({ name: 'danhSachSanPham', query: { filter: keywords } });
-=======
   isLoading.value = true;
   if (keywords === 'all') {
     await store.getSanPhamByTenDM('');
@@ -80,7 +73,6 @@ async function handleSieuSaleClick() {
   } finally {
     isLoading.value = false;
   }
->>>>>>> 1cdc2339346774a5caa9a7214f7012a4e80b799d
 }
 </script>
 

@@ -393,49 +393,6 @@ function toggleColor(color) {
 // Lọc sản phẩm từ store theo nhiều keyword
 const filteredProducts = computed(() => {
   if (!store.listSanPhamBanHang) return [];
-<<<<<<< HEAD
-  
-  let products = [...store.listSanPhamBanHang];
-  
-  // Áp dụng các bộ lọc
-  if (selectedTypes.value.length) {
-    products = products.filter(p => selectedTypes.value.includes(p.type));
-  }
-  
-  if (selectedGender.value) {
-    products = products.filter(p => p.gender === selectedGender.value);
-  }
-  
-  if (selectedBrands.value.length) {
-    products = products.filter(p => selectedBrands.value.includes(p.brand));
-  }
-  
-  if (selectedPrice.value[0] > minPrice || selectedPrice.value[1] < maxPrice) {
-    products = products.filter(p => 
-      p.price >= selectedPrice.value[0] && p.price <= selectedPrice.value[1]
-    );
-  }
-  
-  if (selectedColors.value.length) {
-    products = products.filter(p => 
-      p.colors?.some(color => selectedColors.value.includes(color))
-    );
-  }
-  
-  if (selectedMaterials.value.length) {
-    products = products.filter(p => 
-      p.materials?.some(material => selectedMaterials.value.includes(material))
-    );
-  }
-  
-  if (selectedSizes.value.length) {
-    products = products.filter(p => 
-      p.sizes?.some(size => selectedSizes.value.includes(size))
-    );
-  }
-  
-  return products;
-=======
 
   // Nếu là trang siêu sale, trả về trực tiếp danh sách từ API
   if (filterKeywords.value.includes('supersale')) {
@@ -467,7 +424,6 @@ const filteredProducts = computed(() => {
     // Phải thỏa mãn cả 2 điều kiện
     return matchCategory && matchProductType;
   });
->>>>>>> 1cdc2339346774a5caa9a7214f7012a4e80b799d
 });
 
 const sortedAndFilteredProducts = computed(() => {
@@ -515,14 +471,6 @@ const breadcrumbMap = [
   // Thêm các nhóm khác nếu cần
 ];
 
-<<<<<<< HEAD
-const getBreadcrumbLabel = computed(() => {
-  if (route.query.filter) {
-    return `Kết quả tìm kiếm: "${route.query.filter}"`;
-  }
-  
-  if (!filterKeywords.value || filterKeywords.value.length === 0) {
-=======
 function getBreadcrumbLabel(filterKeywords) {
   if (filterKeywords && filterKeywords[0] === 'supersale') {
     return 'Siêu sale sập sàn';
@@ -532,7 +480,6 @@ function getBreadcrumbLabel(filterKeywords) {
     filterKeywords.length === 0 ||
     (filterKeywords.length === 1 && (!filterKeywords[0] || filterKeywords[0] === 'all'))
   ) {
->>>>>>> 1cdc2339346774a5caa9a7214f7012a4e80b799d
     return 'Tất cả sản phẩm';
   }
 
@@ -583,8 +530,6 @@ onMounted(async () => {
   } catch (error) {
     console.error('Lỗi khi lấy dữ liệu:', error);
   }
-<<<<<<< HEAD
-=======
 
   // Các logic filter khác giữ nguyên
   const categories = ['Bóng đá', 'Bóng rổ', 'Cầu lông', 'Đạp xe', 'Chạy bộ', 'Yoga', 'Nam', 'Nữ'];
@@ -600,7 +545,7 @@ onMounted(async () => {
   } else if (productTypes.includes(filter)) {
     store.getSanPhamByTenSP(filter);
   }
-}
+})
 
 onMounted(() => {
   fetchProductsByFilter(route.query.filter);
@@ -608,7 +553,6 @@ onMounted(() => {
 
 watch(() => route.query.filter, (newFilter) => {
   fetchProductsByFilter(newFilter);
->>>>>>> 1cdc2339346774a5caa9a7214f7012a4e80b799d
 });
 
 const itemsPerPage = 20; // Số sản phẩm mỗi trang
