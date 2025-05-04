@@ -215,7 +215,7 @@ const offKhuyenMai = async (id) => {
 const dataKhuyenMai = computed(() => {
   let data = [];
   if (store.khuyenMaiSearchs && store.khuyenMaiSearchs.trim() !== '') {
-    data = store.khuyenMaiSearch.length > 0 ? [...store.khuyenMaiSearch] : [...store.getAllKhuyenMaiArr];
+    data = store.khuyenMaiSearch.length > 0 ? [...store.khuyenMaiSearch] : [];
   } else {
     data = [...store.getAllKhuyenMaiArr];
   }
