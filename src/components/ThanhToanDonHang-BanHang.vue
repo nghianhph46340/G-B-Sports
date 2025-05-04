@@ -884,10 +884,17 @@ const placeOrder = async () => {
                 // Log hóa đơn sau khi đã gán isChuyen = true:', JSON.stringify(hoaDon, null, 2));
 
                 const response = await banHangOnlineService.createOrder(hoaDon);
-                const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                let responseChiTiet;
+                if (store.getIsThanhToanMuaNgay()) {
+                    responseChiTiet = await banHangOnlineService.createOrderChiTietMuaNgay(orderData.hoaDonChiTiet);
+                } else {
+                    responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                }
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);
-
+                if (response && responseChiTiet) {
+                    store.setIsThanhToanMuaNgay(false);
+                }
                 // Lưu hóa đơn đã được cập nhật vào localStorage
                 localStorage.setItem('hoaDon', JSON.stringify(hoaDon));
                 if (response && responseChiTiet) {
@@ -959,13 +966,19 @@ const placeOrder = async () => {
             try {
                 // Tạo hóa đơn trong hệ thống
                 const response = await banHangOnlineService.createOrder(hoaDon);
-                const responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                let responseChiTiet;
+                if (store.getIsThanhToanMuaNgay()) {
+                    responseChiTiet = await banHangOnlineService.createOrderChiTietMuaNgay(orderData.hoaDonChiTiet);
+                } else {
+                    responseChiTiet = await banHangOnlineService.createOrderChiTiet(orderData.hoaDonChiTiet);
+                }
                 console.log('Response từ server:', response);
                 console.log('Response chi tiết từ server:', responseChiTiet);
 
                 // Lưu mã hóa đơn vào localStorage
                 if (response && response.ma_hoa_don) {
                     localStorage.setItem('lastOrderCode', response.ma_hoa_don);
+                    store.setIsThanhToanMuaNgay(false);
                 }
 
                 // Cập nhật trạng thái đơn hàng

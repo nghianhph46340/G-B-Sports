@@ -152,10 +152,29 @@ export const useGbStore = defineStore('gbStore', {
     // Thêm vào phần state
     filteredProductsData: [],
     isProductLoading: false, // Thêm state để quản lý trạng thái loading sản phẩm
+    //Biến check có phải thanh toán mua ngay không
+    isThanhToanMuaNgay: false,
   }),
 
   ///Đầu mút2
   actions: {
+    //Tạo hóa đơn chi tiết mua ngay
+    async createOrderChiTietMuaNgay(hoaDonChiTiet) {
+      const response = await banHangOnlineService.createOrderChiTietMuaNgay(hoaDonChiTiet);
+      if (response) {
+        this.isThanhToanMuaNgay = true;
+      } else {
+        this.isThanhToanMuaNgay = false;
+      }
+    },
+    //Chuyển biến thanh toán mua ngay
+    setIsThanhToanMuaNgay(value) {
+      this.isThanhToanMuaNgay = value;
+    },
+    //Lấy biến thanh toán mua ngay
+    getIsThanhToanMuaNgay() {
+      return this.isThanhToanMuaNgay;
+    },
     // List sản phẩm theo tên sản phẩm(trang sản phẩm)
     async getSanPhamByTenSP(keywords) {
       console.log('Gọi getSanPhamByTenSP với:', keywords);

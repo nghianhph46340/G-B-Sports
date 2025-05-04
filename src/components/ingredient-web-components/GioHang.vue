@@ -14,7 +14,7 @@
             <div class="cart-header">
                 <h1>Giỏ hàng của bạn</h1>
                 <p class="cart-count" v-if="cartItems.length > 0">
-                    Có {{ cartItems.length }} sản phẩm trong giỏ hàng
+                    Có {{ cartItems.filter((_item, index) => canBeSelected(index)).length }} sản phẩm trong giỏ hàng
                 </p>
             </div>
 
@@ -33,7 +33,7 @@
                 <div class="cart-items-list">
                     <div class="cart-toolbar">
                         <a-checkbox :checked="isAllSelected" @change="e => selectAll(e.target.checked)">
-                            <span class="select-all-text">Chọn tất cả ({{ cartItems.length }} sản phẩm)</span>
+                            <span class="select-all-text">Chọn tất cả ({{ cartItems.filter((_item, index) => canBeSelected(index)).length }} sản phẩm)</span>
                         </a-checkbox>
                         <a-button type="text" danger @click="removeSelectedItems"
                             :disabled="selectedItems.length === 0">
@@ -88,7 +88,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-quantity">
+                            <div class="col-quantity" v-if="canBeSelected(index)">
                                 <div class="quantity-controls">
                                     <a-button class="quantity-btn" @click="handleQuantityDecrease(index)"
                                         :class="{'remove-quantity-btn': item.quantity <= 1}">
@@ -109,8 +109,13 @@
                                     <a-tag color="red">Đã đạt giới hạn tồn kho</a-tag>
                                 </div>
                             </div>
+                            
+                            <!-- Thông báo khi sản phẩm không khả dụng -->
+                            <div class="unavailable-notice" v-if="!canBeSelected(index)">
+                                <a-tag color="default">Sản phẩm không khả dụng</a-tag>
+                            </div>
 
-                            <div class="col-total">
+                            <div class="col-total" v-if="canBeSelected(index)">
                                 <span class="total">{{ formatCurrency(item.price * item.quantity) }}</span>
                             </div>
 
@@ -1149,7 +1154,10 @@ onMounted(async () => {
         .unavailable-item img {
             filter: grayscale(100%);
         }
-    `
+    `;
+    
+    // Thêm style vào head
+    document.head.appendChild(styleSheet);
 
     // Thêm sự kiện focus vào cửa sổ để tự động kiểm tra lại khi người dùng quay lại trang
     window.addEventListener('focus', async () => {
@@ -1706,6 +1714,26 @@ onMounted(async () => {
 
 .unavailable-item img {
     filter: grayscale(100%);
+}
+
+/* CSS cho thông báo sản phẩm không khả dụng */
+.unavailable-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 20px;
+    min-width: 180px;
+    text-align: center;
+}
+
+.unavailable-notice .ant-tag {
+    margin-right: 0;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    border: 1px solid #d9d9d9;
+    color: #999;
 }
 
 @keyframes pulse {

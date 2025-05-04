@@ -1673,7 +1673,7 @@ const buyNow = () => {
 
     // Lưu vào store để trang thanh toán có thể sử dụng
     store.setCheckoutItems([checkoutItem]);
-
+    store.setIsThanhToanMuaNgay(true);
     // Chuyển hướng đến trang thanh toán
     router.push('/thanhtoan-banhang');
 };
